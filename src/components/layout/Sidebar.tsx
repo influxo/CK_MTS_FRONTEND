@@ -12,6 +12,8 @@ import {
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
 import { cn } from "../ui/utils";
+import { useEffect } from "react";
+import getApiUrl from "../../services/apiUrl";
 
 interface SidebarProps {
   activeTab: string;
@@ -75,6 +77,11 @@ export function Sidebar({
       setMobileOpen(false);
     }
   };
+
+  useEffect(() => {
+    const apiUrl = getApiUrl();
+    console.log("apiurl ",apiUrl);
+  }, []);
 
   return (
     <aside
