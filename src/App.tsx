@@ -1,4 +1,11 @@
 import { useState, useEffect } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Topbar } from "./components/layout/Topbar";
 import { Dashboard } from "./pages/Dashboard";
@@ -8,8 +15,7 @@ import { Forms } from "./pages/Forms";
 import { Reports } from "./pages/Reports";
 import { Employees } from "./pages/Employees";
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState("dashboard");
+function AppContent() {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     null
   );
@@ -21,23 +27,34 @@ export default function App() {
   >(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [ _isMobile,setIsMobile] = useState(false);
+  const location = useLocation();
 
-  // Check if screen is mobile
+  // Get current page title based on route
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path.startsWith("/projects")) {
+      return selectedSubProjectId ? "Sub-Project Details" : "Projects";
+    } else if (path.startsWith("/beneficiaries")) {
+      return selectedBeneficiaryId ? "Beneficiary Details" : "Beneficiaries";
+    }
+    return path === "/"
+      ? "Dashboard"
+      : path.charAt(1).toUpperCase() + path.slice(2);
+  };
+
   useEffect(() => {
     const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth < 768) {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
         setSidebarCollapsed(true);
       }
     };
 
     checkIfMobile();
     window.addEventListener("resize", checkIfMobile);
-
-    return () => {
-      window.removeEventListener("resize", checkIfMobile);
-    };
+    return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
   const handleProjectSelect = (projectId: string) => {
@@ -49,10 +66,6 @@ export default function App() {
     setSelectedSubProjectId(subProjectId);
   };
 
-  const handleBeneficiarySelect = (beneficiaryId: string) => {
-    setSelectedBeneficiaryId(beneficiaryId);
-  };
-
   const handleBackToProjects = () => {
     setSelectedProjectId(null);
     setSelectedSubProjectId(null);
@@ -62,101 +75,76 @@ export default function App() {
     setSelectedSubProjectId(null);
   };
 
+  const handleBeneficiarySelect = (beneficiaryId: string) => {
+    setSelectedBeneficiaryId(beneficiaryId);
+  };
+
   const handleBackToBeneficiaries = () => {
     setSelectedBeneficiaryId(null);
   };
 
-  const toggleMobileSidebar = () => {
-    setMobileSidebarOpen(!mobileSidebarOpen);
-  };
-
-  // Get current page title
-  const getCurrentPageTitle = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return "Dashboard";
-      case "projects":
-        return selectedSubProjectId
-          ? "Sub-Project Details"
-          : selectedProjectId
-          ? "Project Details"
-          : "Projects";
-      case "beneficiaries":
-        return selectedBeneficiaryId ? "Beneficiary Details" : "Beneficiaries";
-      case "forms":
-        return "Forms";
-      case "reports":
-        return "Reports";
-      case "employees":
-        return "Employees";
-      default:
-        return "ProjectPulse";
-    }
-  };
-
-  const renderCurrentPage = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return <Dashboard />;
-      case "projects":
-        return (
-          <Projects
-            selectedProjectId={selectedProjectId}
-            selectedSubProjectId={selectedSubProjectId}
-            onProjectSelect={handleProjectSelect}
-            onSubProjectSelect={handleSubProjectSelect}
-            onBackToProjects={handleBackToProjects}
-            onBackToProject={handleBackToProject}
-          />
-        );
-      case "beneficiaries":
-        return (
-          <Beneficiaries
-            selectedBeneficiaryId={selectedBeneficiaryId}
-            onBeneficiarySelect={handleBeneficiarySelect}
-            onBackToBeneficiaries={handleBackToBeneficiaries}
-          />
-        );
-      case "forms":
-        return <Forms />;
-      case "reports":
-        return <Reports />;
-      case "employees":
-        return <Employees />;
-      default:
-        return <Dashboard />;
-    }
-  };
-
   return (
-    // <div className="flex h-screen bg-background">
-    <div className="flex h-screen">
-      {/* Sidebar */}
+    <div className="flex h-screen bg-gray-50">
       <Sidebar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
         collapsed={sidebarCollapsed}
-        setCollapsed={setSidebarCollapsed}
-        isMobile={isMobile}
         mobileOpen={mobileSidebarOpen}
-        setMobileOpen={setMobileSidebarOpen}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
       />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar
-          title={getCurrentPageTitle()}
-          toggleMobileSidebar={toggleMobileSidebar}
+          title={getPageTitle()}
+          toggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           isMobileMenuOpen={mobileSidebarOpen}
         />
 
-        <main className="flex-1 overflow-auto p-6">{renderCurrentPage()}</main>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route
+              path="/projects"
+              element={
+                <Projects
+                  selectedProjectId={selectedProjectId}
+                  selectedSubProjectId={selectedSubProjectId}
+                  onProjectSelect={handleProjectSelect}
+                  onSubProjectSelect={handleSubProjectSelect}
+                  onBackToProjects={handleBackToProjects}
+                  onBackToProject={handleBackToProject}
+                />
+              }
+            />
+            <Route
+              path="/beneficiaries"
+              element={
+                <Beneficiaries
+                  selectedBeneficiaryId={selectedBeneficiaryId}
+                  onBeneficiarySelect={handleBeneficiarySelect}
+                  onBackToBeneficiaries={handleBackToBeneficiaries}
+                />
+              }
+            />
+            <Route path="/forms" element={<Forms />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/employees" element={<Employees />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </main>
 
-        {/* <footer className="border-t border-border p-4 text-center text-sm text-muted-foreground"> */}
-        <footer className="border-t  p-4 text-center text-sm text-muted-foreground">
-          © 2025 ProjectPulse. All rights reserved.
+        <footer className="border-t p-4 text-center text-sm text-muted-foreground">
+          2025 ProjectPulse. All rights reserved.
         </footer>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }
