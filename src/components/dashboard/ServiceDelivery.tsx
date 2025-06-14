@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Badge } from "../ui/badge";
-import { Progress } from "../ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import { Badge } from "../ui/data-display/badge";
+import { Progress } from "../ui/feedback/progress";
 
 export function ServiceDelivery() {
   const services = [

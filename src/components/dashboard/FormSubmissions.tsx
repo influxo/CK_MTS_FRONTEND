@@ -1,7 +1,7 @@
 import { MoreHorizontal, TrendingDown, TrendingUp } from "lucide-react";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Badge } from "../ui/data-display/badge";
+import { Button } from "../ui/button/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
 
 export function FormSubmissions() {
   const submissions = [

@@ -12,9 +12,9 @@ import {
   UserCircle,
 } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Badge } from "../ui/data-display/badge";
+import { Button } from "../ui/button/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -23,18 +23,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { ScrollArea } from "../ui/scroll-area";
+} from "../ui/overlay/dialog";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
+import { ScrollArea } from "../ui/layout/scroll-area";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Switch } from "../ui/switch";
+} from "../ui/form/select";
+import { Switch } from "../ui/form/switch";
 import {
   Table,
   TableBody,
@@ -42,8 +42,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+} from "../ui/data-display/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 
 // Mock data for a saved report
 const mockReportData = {

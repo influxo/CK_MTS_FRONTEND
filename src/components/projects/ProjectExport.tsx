@@ -1,16 +1,16 @@
 import { Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Checkbox } from "../ui/checkbox";
-import { Label } from "../ui/label";
+import { Button } from "../ui/button/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import { Checkbox } from "../ui/form/checkbox";
+import { Label } from "../ui/form/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+} from "../ui/form/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 
 interface ProjectExportProps {
   projectId: string;

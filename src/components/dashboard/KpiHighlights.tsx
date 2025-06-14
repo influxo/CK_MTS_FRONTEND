@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Progress } from "../ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import { Progress } from "../ui/feedback/progress";
 
 export function KpiHighlights() {
   const kpis = [

@@ -18,17 +18,17 @@ import {
   User,
 } from "lucide-react";
 import { useState } from "react";
-import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
+import { Avatar, AvatarFallback } from "../ui/data-display/avatar";
+import { Badge } from "../ui/data-display/badge";
+import { Button } from "../ui/button/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../ui/card";
-import { Checkbox } from "../ui/checkbox";
+} from "../ui/data-display/card";
+import { Checkbox } from "../ui/form/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -36,19 +36,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { ScrollArea } from "../ui/scroll-area";
+} from "../ui/overlay/dialog";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
+import { ScrollArea } from "../ui/layout/scroll-area";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Separator } from "../ui/separator";
-import { Switch } from "../ui/switch";
+} from "../ui/form/select";
+import { Separator } from "../ui/layout/separator";
+import { Switch } from "../ui/form/switch";
 import {
   Table,
   TableBody,
@@ -56,8 +56,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+} from "../ui/data-display/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 
 // Mock data for an employee
 const mockEmployee = {

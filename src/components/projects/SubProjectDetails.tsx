@@ -8,9 +8,9 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Card, CardContent } from "../ui/card";
+import { Badge } from "../ui/data-display/badge";
+import { Button } from "../ui/button/button";
+import { Card, CardContent } from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -19,18 +19,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+} from "../ui/overlay/dialog";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Textarea } from "../ui/textarea";
+} from "../ui/form/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import { Textarea } from "../ui/form/textarea";
 
 import { SubProjectActivities } from "./SubProjectActivities";
 import { SubProjectBeneficiaries } from "./SubProjectBeneficiaries";

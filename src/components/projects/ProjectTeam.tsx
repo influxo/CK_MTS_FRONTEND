@@ -1,9 +1,9 @@
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
+import { Badge } from "../ui/data-display/badge";
+import { Button } from "../ui/button/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -12,15 +12,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
-import { Label } from "../ui/label";
+} from "../ui/overlay/dialog";
+import { Label } from "../ui/form/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "../ui/form/select";
 
 interface ProjectTeamProps {
   projectId: string;

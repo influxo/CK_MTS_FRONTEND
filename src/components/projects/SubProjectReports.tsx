@@ -10,19 +10,19 @@ import {
   Printer,
 } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Checkbox } from "../ui/checkbox";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+import { Badge } from "../ui/data-display/badge";
+import { Button } from "../ui/button/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import { Checkbox } from "../ui/form/checkbox";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "../ui/form/select";
 import {
   Table,
   TableBody,
@@ -30,8 +30,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+} from "../ui/data-display/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 
 interface SubProjectReportsProps {
   subProjectId: string;

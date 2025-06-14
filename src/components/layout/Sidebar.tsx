@@ -10,9 +10,9 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { Button } from "../ui/button";
-import { ScrollArea } from "../ui/scroll-area";
-import { cn } from "../ui/utils";
+import { Button } from "../ui/button/button";
+import { ScrollArea } from "../ui/layout/scroll-area";
+import { cn } from "../ui/utils/utils";
 import { useEffect } from "react";
 import getApiUrl from "../../services/apiUrl";
 
