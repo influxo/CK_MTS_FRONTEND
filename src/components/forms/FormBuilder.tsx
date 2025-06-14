@@ -17,11 +17,17 @@ import {
   Trash,
   Type,
   Upload,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import { Checkbox } from "../ui/form/checkbox";
 import {
   Dialog,
@@ -43,7 +49,12 @@ import {
 } from "../ui/form/select";
 import { Separator } from "../ui/layout/separator";
 import { Switch } from "../ui/form/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 import { FormField } from "./FormField";
 
@@ -200,6 +211,38 @@ interface FormBuilderProps {
   onBack: () => void;
   onSave: (formData: any) => void;
 }
+interface FormFieldOption {
+  value: string;
+  label: string;
+}
+
+interface FormField {
+  id: string;
+  type: string;
+  label: string;
+  required?: boolean;
+  placeholder?: string;
+  helpText?: string;
+  options?: FormFieldOption[];
+  validations?: {
+    minLength?: number;
+    maxLength?: number;
+    min?: number;
+    max?: number;
+  };
+  // Add other field properties as needed
+}
+interface FormData {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  status: string;
+  version: string;
+  fields: FormField[];
+  lastUpdated?: string;
+  // Add other form properties as needed
+}
 
 export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
   // If formId is provided, we're editing an existing form, otherwise creating a new one
@@ -207,7 +250,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
 
   // For a real app, we would fetch the form template data based on formId
   // For this demo, we're using mock data
-  const [formData, setFormData] = useState(
+  const [formData, setFormData] = useState<FormData>(
     isEditing
       ? mockFormTemplate
       : {
@@ -221,7 +264,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
         }
   );
 
-  const [activeTab, setActiveTab] = useState("builder");
+  // const [activeTab, setActiveTab] = useState("builder");
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const [isAddFieldDialogOpen, setIsAddFieldDialogOpen] = useState(false);
   const [showFormJson, setShowFormJson] = useState(false);
@@ -234,53 +277,53 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
 
   // Add a new field to the form
   const handleAddField = (fieldType: string) => {
-    const newField = {
-      id: `field-${Date.now()}`, // Generate a unique ID
+    const baseField: FormField = {
+      id: `field-${Date.now()}`,
       type: fieldType,
       label: `New ${
         fieldType.charAt(0).toUpperCase() + fieldType.slice(1)
       } Field`,
       required: false,
-      // Add type-specific defaults
+    };
+
+    // Add type-specific properties
+    const fieldWithType: FormField = {
+      ...baseField,
       ...(fieldType === "text" && { placeholder: "Enter text" }),
       ...(fieldType === "textarea" && { placeholder: "Enter longer text" }),
       ...(fieldType === "number" && { placeholder: "Enter number" }),
-      ...(fieldType === "dropdown" && {
-        options: [{ value: "option1", label: "Option 1" }],
-      }),
-      ...(fieldType === "radio" && {
-        options: [{ value: "option1", label: "Option 1" }],
-      }),
-      ...(fieldType === "checkbox" && {
+      ...((fieldType === "dropdown" ||
+        fieldType === "radio" ||
+        fieldType === "checkbox") && {
         options: [{ value: "option1", label: "Option 1" }],
       }),
     };
 
-    setFormData({
-      ...formData,
-      fields: [...formData.fields, newField],
-    });
+    setFormData((prev) => ({
+      ...prev,
+      fields: [...prev.fields, fieldWithType],
+    }));
 
-    setSelectedField(newField.id);
+    setSelectedField(fieldWithType.id);
     setIsAddFieldDialogOpen(false);
   };
 
   // Update field properties
-  const handleFieldUpdate = (fieldId: string, updates: any) => {
-    setFormData({
-      ...formData,
-      fields: formData.fields.map((field) =>
+  const handleFieldUpdate = (fieldId: string, updates: Partial<FormField>) => {
+    setFormData((prev) => ({
+      ...prev,
+      fields: prev.fields.map((field) =>
         field.id === fieldId ? { ...field, ...updates } : field
       ),
-    });
+    }));
   };
 
   // Delete a field
   const handleDeleteField = (fieldId: string) => {
-    setFormData({
-      ...formData,
-      fields: formData.fields.filter((field) => field.id !== fieldId),
-    });
+    setFormData((prev) => ({
+      ...prev,
+      fields: prev.fields.filter((field) => field.id !== fieldId),
+    }));
 
     if (selectedField === fieldId) {
       setSelectedField(null);
@@ -575,15 +618,41 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                               rows={2}
                             />
                           </div>
-
-                          {(selectedFieldData.type === "dropdown" ||
-                            selectedFieldData.type === "radio" ||
-                            selectedFieldData.type === "checkbox") && (
+                          {(selectedFieldData?.type === "dropdown" ||
+                            selectedFieldData?.type === "radio" ||
+                            selectedFieldData?.type === "checkbox") && (
                             <div className="space-y-2">
-                              <Label>Options</Label>
+                              <div className="flex justify-between items-center">
+                                <Label>Options</Label>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const newOption = {
+                                      value: `option${
+                                        (selectedFieldData.options?.length ||
+                                          0) + 1
+                                      }`,
+                                      label: `Option ${
+                                        (selectedFieldData.options?.length ||
+                                          0) + 1
+                                      }`,
+                                    };
+                                    handleFieldUpdate(selectedField!, {
+                                      options: [
+                                        ...(selectedFieldData.options || []),
+                                        newOption,
+                                      ],
+                                    });
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4 mr-1" />
+                                  Add Option
+                                </Button>
+                              </div>
                               <div className="space-y-2 border rounded-md p-3">
-                                {selectedFieldData?.options?.map(
-                                  (option: any, index: number) => (
+                                {selectedFieldData.options?.map(
+                                  (option, index) => (
                                     <div
                                       key={index}
                                       className="flex items-center gap-2"
@@ -592,64 +661,40 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                         value={option.label}
                                         onChange={(e) => {
                                           const updatedOptions = [
-                                            ...selectedFieldData.options,
+                                            ...(selectedFieldData.options ||
+                                              []),
                                           ];
                                           updatedOptions[index] = {
                                             ...updatedOptions[index],
                                             label: e.target.value,
                                             value: e.target.value
                                               .toLowerCase()
-                                              .replace(/\s+/g, "_"),
+                                              .replace(/\s+/g, "-"),
                                           };
                                           handleFieldUpdate(selectedField!, {
                                             options: updatedOptions,
                                           });
                                         }}
-                                        className="flex-1"
                                       />
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-8 w-8 p-0"
                                         onClick={() => {
-                                          const updatedOptions =
-                                            selectedFieldData.options.filter(
-                                              (_: any, i: number) => i !== index
-                                            );
+                                          const updatedOptions = [
+                                            ...(selectedFieldData.options ||
+                                              []),
+                                          ];
+                                          updatedOptions.splice(index, 1);
                                           handleFieldUpdate(selectedField!, {
                                             options: updatedOptions,
                                           });
                                         }}
                                       >
-                                        <Trash className="h-4 w-4 text-muted-foreground" />
+                                        <X className="h-4 w-4" />
                                       </Button>
                                     </div>
                                   )
                                 )}
-                                <Button
-                                  variant="outline"
-                                  className="w-full"
-                                  size="sm"
-                                  onClick={() => {
-                                    const updatedOptions = [
-                                      ...selectedFieldData.options,
-                                      {
-                                        value: `option${
-                                          selectedFieldData.options.length + 1
-                                        }`,
-                                        label: `Option ${
-                                          selectedFieldData.options.length + 1
-                                        }`,
-                                      },
-                                    ];
-                                    handleFieldUpdate(selectedField!, {
-                                      options: updatedOptions,
-                                    });
-                                  }}
-                                >
-                                  <Plus className="h-4 w-4 mr-2" />
-                                  Add Option
-                                </Button>
                               </div>
                             </div>
                           )}

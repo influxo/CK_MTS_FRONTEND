@@ -539,7 +539,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </CardHeader>
                   <CardContent className="p-6 h-[300px] flex flex-col justify-between">
                     <div className="flex-1 flex items-end gap-2">
-                      {report.chartData.bar.labels.map((label, index) => {
+                      {report.chartData.bar.labels.map((_label, index) => {
                         const percentage =
                           (report.chartData.bar.data[index] /
                             Math.max(...report.chartData.bar.data)) *

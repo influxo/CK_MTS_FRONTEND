@@ -23,8 +23,6 @@ import { Button } from "../ui/button/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "../ui/data-display/card";
