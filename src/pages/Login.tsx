@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Form, useNavigate } from 'react-router-dom';
-import type { LoginRequest } from '../services/auth/authModels';
-import authService from '../services/auth/authService';
+import { Form, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/data-display/card';
 import { Alert, AlertDescription } from '../components/ui/feedback/alert';
 import { Label } from '../components/ui/form/label';
@@ -10,19 +9,24 @@ import { Button } from '../components/ui/button/button';
 
 const Login = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<LoginRequest>({
+  const location = useLocation();
+  const { login, isAuthenticated, isLoading: authLoading, error: authError } = useAuth();
+  
+  const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Get the intended destination from location state, or default to dashboard
+  const from = location.state?.from?.pathname || '/dashboard';
 
   useEffect(() => {
-    // Check if user is already logged in and redirect if needed
-    if (authService.isAuthenticated()) {
-      navigate('/dashboard');
+    // Only redirect if already authenticated
+    if (isAuthenticated) {
+      navigate(from, { replace: true });
     }
-  }, [navigate]); // Add navigate to the dependency array
+  }, [isAuthenticated, navigate, from]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -34,25 +38,19 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
+    setIsSubmitting(true);
+    
     try {
-      const response = await authService.login(formData);
-      
-      if (response.success) {
-        // Redirect to dashboard on successful login
-        navigate('/dashboard');
-      } else {
-        setError(response.message);
-      }
+      await login(formData);
+      // Navigation is handled in the useEffect
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
       console.error('Login error:', err);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
+
+  const isLoading = authLoading || isSubmitting;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -64,9 +62,9 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {error && (
+          {authError && (
             <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{authError}</AlertDescription>
             </Alert>
           )}
           <Form onSubmit={handleSubmit} className="space-y-4">

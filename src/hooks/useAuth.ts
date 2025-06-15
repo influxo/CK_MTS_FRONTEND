@@ -31,7 +31,8 @@ export const useAuth = () => {
     const result = await dispatch(loginUser(credentials));
     if (loginUser.fulfilled.match(result)) {
       if (result.payload.success) {
-        navigate('/dashboard');
+        // Navigation will be handled by the useEffect in Login component
+        // that watches the isAuthenticated state
         return true;
       }
     }
@@ -43,7 +44,8 @@ export const useAuth = () => {
    */
   const logout = async () => {
     await dispatch(logoutUser());
-    navigate('/login');
+    // Navigation will be handled by the ProtectedRoute component
+    // when isAuthenticated becomes false
   };
 
   /**
