@@ -75,11 +75,6 @@ export function Sidebar({
 
   const { logout } = useAuth();
 
-  useEffect(() => {
-    const apiUrl = getApiUrl();
-    console.log("apiurl ", apiUrl);
-  }, []);
-
   return (
     <aside
       className={cn(
