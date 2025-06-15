@@ -1,5 +1,4 @@
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import { 
   loginUser, 
   logoutUser, 
@@ -16,9 +15,7 @@ import type { AppDispatch } from '../store';
  * Custom hook for authentication related functionality
  */
 export const useAuth = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
-  
+  const dispatch = useDispatch<AppDispatch>();  
   const user = useSelector(selectCurrentUser);
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const isLoading = useSelector(selectAuthLoading);

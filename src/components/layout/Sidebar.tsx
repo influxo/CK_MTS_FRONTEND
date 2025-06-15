@@ -14,8 +14,6 @@ import {
 import { Button } from "../ui/button/button";
 import { ScrollArea } from "../ui/layout/scroll-area";
 import { cn } from "../ui/utils/utils";
-import { useEffect } from "react";
-import getApiUrl from "../../services/apiUrl";
 import { useAuth } from "../../hooks/useAuth";
 
 interface SidebarProps {
