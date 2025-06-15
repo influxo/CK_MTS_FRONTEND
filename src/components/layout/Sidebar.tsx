@@ -6,6 +6,7 @@ import {
   ClipboardList,
   FolderKanban,
   LayoutDashboard,
+  LogOut,
   PieChart,
   Users,
   X,
@@ -15,6 +16,7 @@ import { ScrollArea } from "../ui/layout/scroll-area";
 import { cn } from "../ui/utils/utils";
 import { useEffect } from "react";
 import getApiUrl from "../../services/apiUrl";
+import { useAuth } from "../../hooks/useAuth";
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -70,6 +72,8 @@ export function Sidebar({
       onCloseMobile();
     }
   };
+
+  const { logout } = useAuth();
 
   useEffect(() => {
     const apiUrl = getApiUrl();
@@ -162,6 +166,20 @@ export function Sidebar({
             </span>
           </div>
         )}
+        
+        {/* Logout Button */}
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-full justify-start font-normal text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-red-100 mb-2",
+            collapsed && "justify-center px-2"
+          )}
+          onClick={logout}
+        >
+          <LogOut className={cn("h-5 w-5", !collapsed && "mr-2")} />
+          {!collapsed && <span>Logout</span>}
+        </Button>
+        
         <Button
           variant="ghost"
           className={cn(
