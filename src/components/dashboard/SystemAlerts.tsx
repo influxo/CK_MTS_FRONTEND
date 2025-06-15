@@ -1,6 +1,6 @@
 import { AlertTriangle, CheckCircle, Info } from "lucide-react";
-import { Badge } from "../ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Badge } from "../ui/data-display/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
 
 export function SystemAlerts() {
   const alerts = [

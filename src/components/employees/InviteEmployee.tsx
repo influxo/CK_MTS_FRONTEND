@@ -1,27 +1,27 @@
 import { ArrowLeft, Check, Copy, Info, Mail, UserPlus } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
+import { Badge } from "../ui/data-display/badge";
+import { Button } from "../ui/button/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../ui/card";
-import { Checkbox } from "../ui/checkbox";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+} from "../ui/data-display/card";
+import { Checkbox } from "../ui/form/checkbox";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Separator } from "../ui/separator";
-import { Switch } from "../ui/switch";
-import { Textarea } from "../ui/textarea";
+} from "../ui/form/select";
+import { Separator } from "../ui/layout/separator";
+import { Switch } from "../ui/form/switch";
+import { Textarea } from "../ui/form/textarea";
 
 // Mock data for projects
 const mockProjects = [

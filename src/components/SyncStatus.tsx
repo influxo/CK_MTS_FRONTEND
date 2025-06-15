@@ -1,6 +1,6 @@
 import { Cloud, CloudOff } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Progress } from "./ui/progress";
+import { Progress } from "./ui/feedback/progress";
 
 export function SyncStatus() {
   return (

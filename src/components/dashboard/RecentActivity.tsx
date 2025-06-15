@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Badge } from "../ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
+import { Badge } from "../ui/data-display/badge";
 
 export function RecentActivity() {
   const activities = [

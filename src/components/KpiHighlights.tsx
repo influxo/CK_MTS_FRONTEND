@@ -1,6 +1,6 @@
 import { Activity, CheckCircle, Target, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Progress } from "./ui/progress";
+import { Progress } from "./ui/feedback/progress";
 
 interface KpiCardProps {
   icon: React.ReactNode;

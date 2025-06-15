@@ -8,17 +8,17 @@ import {
   Settings,
   User,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Button } from "../ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
+import { Button } from "../ui/button/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { Input } from "../ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
+} from "../ui/overlay/dropdown-menu";
+import { Input } from "../ui/form/input";
+import { Sheet, SheetContent, SheetTrigger } from "../ui/overlay/sheet";
 
 interface TopbarProps {
   title?: string;

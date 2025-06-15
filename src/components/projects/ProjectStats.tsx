@@ -6,8 +6,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Progress } from "../ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import { Progress } from "../ui/feedback/progress";
 
 interface ProjectStatsProps {
   projectId: string;

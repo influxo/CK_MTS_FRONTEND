@@ -4,25 +4,25 @@ import * as React from "react";
 import { type VariantProps, cva } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
 
-import { Button } from "./button";
-import { Input } from "./input";
-import { Separator } from "./separator";
+import { Button } from "./button/button";
+import { Input } from "./form/input";
+import { Separator } from "./layout/separator";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "./sheet";
-import { Skeleton } from "./skeleton";
+} from "./overlay/sheet";
+import { Skeleton } from "./feedback/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./tooltip";
-import { useIsMobile } from "./use-mobile";
-import { cn } from "./utils";
+} from "./overlay/tooltip";
+import { useIsMobile } from "./utils/use-mobile";
+import { cn } from "./utils/utils";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;

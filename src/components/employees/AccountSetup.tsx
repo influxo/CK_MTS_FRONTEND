@@ -8,10 +8,10 @@ import {
   Smartphone,
 } from "lucide-react";
 import { useState } from "react";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
+import { Alert, AlertDescription, AlertTitle } from "../ui/feedback/alert";
+import { Avatar, AvatarFallback } from "../ui/data-display/avatar";
+import { Badge } from "../ui/data-display/badge";
+import { Button } from "../ui/button/button";
 import {
   Card,
   CardContent,
@@ -19,11 +19,11 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "../ui/card";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Progress } from "../ui/progress";
-import { Switch } from "../ui/switch";
+} from "../ui/data-display/card";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
+import { Progress } from "../ui/feedback/progress";
+import { Switch } from "../ui/form/switch";
 
 interface AccountSetupProps {
   token: string;
