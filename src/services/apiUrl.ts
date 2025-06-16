@@ -9,7 +9,7 @@ const getApiUrl = () => {
     } else if (env === "DEVELOPMENT") {
         return devUrl;
     } else {
-        return "no environment";
+        return 'http://localhost:3001/api';
     }
 }
 
