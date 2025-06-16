@@ -46,6 +46,21 @@ export const useAuth = () => {
   };
 
   /**
+   * Reset user password
+   */
+  const resetPassword = async (credentials: ResetPasswordRequest) => {
+    const result = await dispatch(resetPasswordUser(credentials));
+    if (resetPasswordUser.fulfilled.match(result)) {
+      if (result.payload.success) {
+        // Navigation will be handled by the useEffect in ResetPassword component
+        // that watches the isAuthenticated state
+        return true;
+      }
+    }
+    return false;
+  };
+
+  /**
    * Get current user profile
    */
   const getProfile = async () => {
@@ -59,6 +74,7 @@ export const useAuth = () => {
     error,
     login,
     logout,
+    resetPassword,
     getProfile
   };
 };

@@ -9,6 +9,11 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+export interface ResetPasswordRequest {
+  password: string;
+  confirmPassword: string;
+}
+
 // Response types
 export interface Role {
   id: number;

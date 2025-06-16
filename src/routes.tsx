@@ -5,7 +5,9 @@ import { Beneficiaries } from "./pages/Beneficiaries";
 import { Forms } from "./pages/Forms";
 import { Reports } from "./pages/Reports";
 import { Employees } from "./pages/Employees";
-import Login from "./pages/Login";
+import Login from "./pages/auth/Login";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
@@ -20,6 +22,14 @@ const routes = [
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/forgot-password",
+    element: <ForgotPassword />,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPassword />,
   },
   {
     path: "/",
