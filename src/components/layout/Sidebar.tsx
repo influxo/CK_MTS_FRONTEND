@@ -76,10 +76,12 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "flex flex-col border-r bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out",
+        "flex flex-col border-r bg-sidebar bg-gray-50 text-sidebar-foreground transition-all duration-300 ease-in-out",
         collapsed ? "w-[70px]" : "w-[240px]",
-        mobileOpen && "fixed inset-y-0 left-0 z-50 shadow-xl",
-        mobileOpen && !mobileOpen && "hidden"
+        "lg:relative fixed inset-y-0 left-0 z-50 lg:z-auto transform",
+        mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        "lg:shadow-none",
+        mobileOpen && "shadow-xl"
       )}
     >
       {/* Sidebar Header */}

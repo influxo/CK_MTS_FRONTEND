@@ -1,6 +1,6 @@
 import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
-import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Button } from "./ui/button/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/data-display/card";
 
 export function SystemAlerts() {
   return (

@@ -1,5 +1,5 @@
 import { Activity, CheckCircle, FileText, Users } from "lucide-react";
-import { Card, CardContent } from "./ui/card";
+import { Card, CardContent } from "./ui/data-display/card";
 
 interface MetricCardProps {
   icon: React.ReactNode;
@@ -39,7 +39,7 @@ function MetricCard({
             </div>
           )}
         </div>
-        <div className="bg-muted p-2 rounded-md">{icon}</div>
+        <div className="bg-gray-100 p-2 rounded-md">{icon}</div>
       </CardContent>
     </Card>
   );

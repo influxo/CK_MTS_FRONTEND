@@ -1,13 +1,13 @@
 import { ChevronDown, Filter } from "lucide-react";
-import { Button } from "./ui/button";
-import { Card } from "./ui/card";
+import { Button } from "./ui/button/button";
+import { Card } from "./ui/data-display/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
+} from "./ui/form/select";
 
 export function FilterControls() {
   return (
@@ -36,7 +36,7 @@ export function FilterControls() {
               Program
             </label>
             <Select defaultValue="all-programs">
-              <SelectTrigger>
+              <SelectTrigger className="bg-gray-100">
                 <SelectValue placeholder="All Programs" />
               </SelectTrigger>
               <SelectContent>
@@ -52,7 +52,7 @@ export function FilterControls() {
               Project
             </label>
             <Select defaultValue="all-projects">
-              <SelectTrigger>
+              <SelectTrigger className="bg-gray-100">
                 <SelectValue placeholder="All Projects" />
               </SelectTrigger>
               <SelectContent>
@@ -71,7 +71,7 @@ export function FilterControls() {
               Sub-Project
             </label>
             <Select defaultValue="all-sub-projects">
-              <SelectTrigger>
+              <SelectTrigger className="bg-gray-100">
                 <SelectValue placeholder="All Sub-Projects" />
               </SelectTrigger>
               <SelectContent>
@@ -93,8 +93,9 @@ export function FilterControls() {
             </div>
           </div>
         </div>
-        <div className="mt-3 flex justify-end">
-          <Button size="sm" className="px-6">
+
+        <div className="mt-3 flex justify-end ">
+          <Button size="sm" className="px-4 py-2 mb-4 bg-black text-white">
             Apply
           </Button>
         </div>

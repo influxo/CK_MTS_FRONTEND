@@ -1,5 +1,5 @@
 import { Activity, CheckCircle, Target, Users } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/data-display/card";
 import { Progress } from "./ui/feedback/progress";
 
 interface KpiCardProps {
