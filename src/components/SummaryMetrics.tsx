@@ -47,7 +47,7 @@ function MetricCard({
 
 export function SummaryMetrics() {
   return (
-    <div className="grid grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <MetricCard
         icon={<Activity className="h-5 w-5" />}
         title="Projects"
