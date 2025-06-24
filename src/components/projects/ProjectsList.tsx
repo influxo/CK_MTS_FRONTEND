@@ -141,6 +141,75 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    category: "",
+    type: "",
+    status: "",
+    startDate: "",
+    endDate: "",
+    description: "",
+  });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleSelectField = (value: string, fieldName: string) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      [fieldName]: value,
+    }));
+  };
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    
+    // Check required fields
+    if (!formData.title.trim()) errors.title = "Title is required";
+    if (!formData.category) errors.category = "Category is required";
+    if (!formData.type) errors.type = "Type is required";
+    if (!formData.startDate) errors.startDate = "Start date is required";
+    if (!formData.endDate) errors.endDate = "End date is required";
+    
+    // Additional validation could be added here
+    // For example, check if end date is after start date
+    if (formData.startDate && formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
+      errors.endDate = "End date must be after start date";
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleCreateProject = () => {
+    if (validateForm()) {
+      submitCreateProject();
+      setIsCreateDialogOpen(false);
+      // Reset form after successful submission
+      setFormData({
+        title: "",
+        category: "",
+        type: "",
+        status: "",
+        startDate: "",
+        endDate: "",
+        description: "",
+      });
+    } else {
+      console.log("Form validation failed", formErrors);
+    }
+  };
+
+  const submitCreateProject = () => {
+    console.log("Form Data Submitted:", formData);
+    // Here you would typically send the data to an API
+  }
 
   // Filter projects based on search and filters
   const filteredProjects = mockProjects.filter((project) => {
@@ -188,16 +257,25 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 </Label>
                 <Input
                   id="title"
-                  className="col-span-3"
+                  name="title"
+                  className={`col-span-3 ${formErrors.title ? 'border-red-500' : ''}`}
                   placeholder="Project title"
+                  value={formData.title}
+                  onChange={handleInputChange}
                 />
+                {formErrors.title && (
+                  <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.title}</p>
+                )}
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right">
                   Category *
                 </Label>
-                <Select>
-                  <SelectTrigger className="col-span-3">
+                <Select 
+                  value={formData.category} 
+                  onValueChange={(value) => handleSelectField(value, 'category')}
+                >
+                  <SelectTrigger className={`col-span-3 ${formErrors.category ? 'border-red-500' : ''}`}>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -209,13 +287,19 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
+                {formErrors.category && (
+                  <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.category}</p>
+                )}
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="type" className="text-right">
                   Type *
                 </Label>
-                <Select>
-                  <SelectTrigger className="col-span-3">
+                <Select 
+                  value={formData.type} 
+                  onValueChange={(value) => handleSelectField(value, 'type')}
+                >
+                  <SelectTrigger className={`col-span-3 ${formErrors.type ? 'border-red-500' : ''}`}>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -228,12 +312,15 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                     <SelectItem value="research">Research</SelectItem>
                   </SelectContent>
                 </Select>
+                {formErrors.type && (
+                  <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.type}</p>
+                )}
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="status" className="text-right">
                   Status
                 </Label>
-                <Select defaultValue="active">
+                <Select defaultValue="active" value={formData.status} onValueChange={(value) => handleSelectField(value, 'status')}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -248,13 +335,33 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 <Label htmlFor="start-date" className="text-right">
                   Start Date *
                 </Label>
-                <Input id="start-date" type="date" className="col-span-3" />
+                <Input 
+                  id="start-date" 
+                  name="startDate"
+                  type="date" 
+                  className={`col-span-3 ${formErrors.startDate ? 'border-red-500' : ''}`}
+                  value={formData.startDate} 
+                  onChange={handleInputChange}
+                />
+                {formErrors.startDate && (
+                  <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.startDate}</p>
+                )}
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="end-date" className="text-right">
                   End Date *
                 </Label>
-                <Input id="end-date" type="date" className="col-span-3" />
+                <Input 
+                  id="end-date" 
+                  name="endDate"
+                  type="date" 
+                  className={`col-span-3 ${formErrors.endDate ? 'border-red-500' : ''}`}
+                  value={formData.endDate} 
+                  onChange={handleInputChange}
+                />
+                {formErrors.endDate && (
+                  <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.endDate}</p>
+                )}
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="description" className="text-right pt-2">
@@ -262,9 +369,12 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 </Label>
                 <Textarea
                   id="description"
+                  name="description"
                   className="col-span-3"
                   placeholder="Provide a description of the project"
                   rows={3}
+                  value={formData.description}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -275,9 +385,7 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
               >
                 Cancel
               </Button>
-              <Button onClick={() => setIsCreateDialogOpen(false)}>
-                Create Project
-              </Button>
+              <Button onClick={handleCreateProject}>Create Project</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
