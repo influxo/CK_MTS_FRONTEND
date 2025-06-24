@@ -396,12 +396,14 @@ export function InviteEmployee({
                     <UserPlus className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h4 className="font-medium">Invitation to ProjectPulse</h4>
+                    <h4 className="font-medium">
+                      Invitation to CaritasMotherTeresa
+                    </h4>
                   </div>
                 </div>
 
                 <p className="text-sm mb-3">
-                  You've been invited to join ProjectPulse as
+                  You've been invited to join CaritasMotherTeresa as
                   {inviteData.role ? (
                     <Badge className="ml-1">{inviteData.role}</Badge>
                   ) : (

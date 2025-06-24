@@ -94,7 +94,7 @@ export function Sidebar({
         {!collapsed && (
           <NavLink to="/dashboard" className="flex items-center gap-2">
             <PieChart className="h-6 w-6 text-sidebar-primary" />
-            <h1 className="font-semibold text-lg">ProjectPulse</h1>
+            <h1 className="font-semibold text-lg">CaritasMotherTeresa</h1>
           </NavLink>
         )}
 
@@ -161,7 +161,7 @@ export function Sidebar({
             </span>
           </div>
         )}
-        
+
         {/* Logout Button */}
         <Button
           variant="ghost"
@@ -174,7 +174,7 @@ export function Sidebar({
           <LogOut className={cn("h-5 w-5", !collapsed && "mr-2")} />
           {!collapsed && <span>Logout</span>}
         </Button>
-        
+
         <Button
           variant="ghost"
           className={cn(

@@ -4,9 +4,15 @@ import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
 const AppLayout = () => {
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [selectedSubProjectId, setSelectedSubProjectId] = useState<string | null>(null);
-  const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    null
+  );
+  const [selectedSubProjectId, setSelectedSubProjectId] = useState<
+    string | null
+  >(null);
+  const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState<
+    string | null
+  >(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [_isMobile, setIsMobile] = useState(false);
@@ -56,18 +62,20 @@ const AppLayout = () => {
         />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <Outlet context={{
-            selectedProjectId,
-            selectedSubProjectId,
-            selectedBeneficiaryId,
-            setSelectedProjectId,
-            setSelectedSubProjectId,
-            setSelectedBeneficiaryId
-          }} />
+          <Outlet
+            context={{
+              selectedProjectId,
+              selectedSubProjectId,
+              selectedBeneficiaryId,
+              setSelectedProjectId,
+              setSelectedSubProjectId,
+              setSelectedBeneficiaryId,
+            }}
+          />
         </main>
 
         <footer className="border-t p-4 text-center text-sm text-muted-foreground">
-          2025 ProjectPulse. All rights reserved.
+          2025 CaritasMotherTeresa. All rights reserved.
         </footer>
       </div>
     </div>
