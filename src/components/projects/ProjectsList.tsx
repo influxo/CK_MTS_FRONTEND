@@ -9,7 +9,12 @@ import {
 import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +41,7 @@ import {
 } from "../ui/form/select";
 import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
+import { Progress } from "../ui/feedback/progress";
 
 interface ProjectsListProps {
   onProjectSelect: (projectId: string) => void;
@@ -237,7 +243,7 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-black text-white">
               <Plus className="h-4 w-4 mr-2" />
               Create Project
             </Button>
@@ -436,9 +442,19 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
           onValueChange={setViewType}
           className="w-full sm:w-auto"
         >
-          <TabsList className="grid w-full sm:w-[180px] grid-cols-2">
-            <TabsTrigger value="grid">Grid View</TabsTrigger>
-            <TabsTrigger value="list">List View</TabsTrigger>
+          <TabsList className="grid w-full sm:w-[180px] grid-cols-2 bg-gray-200 rounded-full">
+            <TabsTrigger
+              value="grid"
+              className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full transition-colors"
+            >
+              Grid View
+            </TabsTrigger>
+            <TabsTrigger
+              value="list"
+              className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full transition-colors"
+            >
+              List View
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -492,14 +508,11 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                   <div className="mt-4 space-y-3">
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Progress</span>
+                        <span className="text-gray-500">Progress</span>
                         <span>{project.progress}%</span>
                       </div>
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary"
-                          style={{ width: `${project.progress}%` }}
-                        ></div>
+                        <Progress value={project.progress} />
                       </div>
                     </div>
 

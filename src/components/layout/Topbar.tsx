@@ -49,7 +49,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         {/* Search */}
         <div className="relative hidden sm:block max-w-[400px] w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search..." className="pl-9 w-full" />
+          <Input placeholder="Search..." className="pl-9 w-full bg-gray-100" />
         </div>
       </div>
 

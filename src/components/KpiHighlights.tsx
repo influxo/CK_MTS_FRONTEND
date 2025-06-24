@@ -1,5 +1,5 @@
 import { Activity, CheckCircle, Target, Users } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/data-display/card";
 import { Progress } from "./ui/feedback/progress";
 
 interface KpiCardProps {
@@ -24,7 +24,7 @@ function KpiCard({
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-2">
           <h4 className="text-sm text-muted-foreground">{title}</h4>
-          <div className="bg-muted p-1.5 rounded-md">{icon}</div>
+          <div className="bg-gray-100 p-1.5 rounded-md">{icon}</div>
         </div>
         <div className="flex items-baseline gap-2">
           <span className="text-xl font-medium">{value}</span>
