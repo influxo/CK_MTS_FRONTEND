@@ -42,6 +42,11 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 import { Progress } from "../ui/feedback/progress";
+import type {
+  CreateProjectRequest,
+  CreateProjectResponse,
+} from "../../services/projects/projectModels";
+import projectService from "../../services/projects/projectService";
 
 interface ProjectsListProps {
   onProjectSelect: (projectId: string) => void;
@@ -51,7 +56,8 @@ interface ProjectsListProps {
 const mockProjects = [
   {
     id: "proj-001",
-    title: "Rural Healthcare Initiative",
+    // name o kan title
+    name: "Rural Healthcare Initiative",
     category: "Healthcare",
     type: "Service Delivery",
     status: "active",
@@ -66,7 +72,7 @@ const mockProjects = [
   },
   {
     id: "proj-002",
-    title: "Primary Education Support",
+    name: "Primary Education Support",
     category: "Education",
     type: "Training",
     status: "active",
@@ -81,7 +87,7 @@ const mockProjects = [
   },
   {
     id: "proj-003",
-    title: "Water Sanitation Program",
+    name: "Water Sanitation Program",
     category: "Infrastructure",
     type: "Construction",
     status: "active",
@@ -96,7 +102,7 @@ const mockProjects = [
   },
   {
     id: "proj-004",
-    title: "Youth Employment Initiative",
+    name: "Youth Employment Initiative",
     category: "Economic Development",
     type: "Training",
     status: "inactive",
@@ -111,7 +117,7 @@ const mockProjects = [
   },
   {
     id: "proj-005",
-    title: "Maternal Health Outreach",
+    name: "Maternal Health Outreach",
     category: "Healthcare",
     type: "Service Delivery",
     status: "active",
@@ -126,7 +132,7 @@ const mockProjects = [
   },
   {
     id: "proj-006",
-    title: "Food Security Program",
+    name: "Food Security Program",
     category: "Nutrition",
     type: "Distribution",
     status: "active",
@@ -147,18 +153,20 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
+  const [formData, setFormData] = useState<CreateProjectRequest>({
+    name: "",
     category: "",
-    type: "",
-    status: "",
-    startDate: "",
-    endDate: "",
+    // type: "",
+    status: "active",
+    // startDate: "",
+    // endDate: "",
     description: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -173,22 +181,24 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
     }));
   };
 
+  console.log("Form Data", formData);
+
   const validateForm = () => {
     const errors: Record<string, string> = {};
-    
+
     // Check required fields
-    if (!formData.title.trim()) errors.title = "Title is required";
+    if (!formData.name.trim()) errors.name = "Name is required";
     if (!formData.category) errors.category = "Category is required";
-    if (!formData.type) errors.type = "Type is required";
-    if (!formData.startDate) errors.startDate = "Start date is required";
-    if (!formData.endDate) errors.endDate = "End date is required";
-    
+    // if (!formData.type) errors.type = "Type is required";
+    // if (!formData.startDate) errors.startDate = "Start date is required";
+    // if (!formData.endDate) errors.endDate = "End date is required";
+
     // Additional validation could be added here
     // For example, check if end date is after start date
-    if (formData.startDate && formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
-      errors.endDate = "End date must be after start date";
-    }
-    
+    // if (formData.startDate && formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
+    //   errors.endDate = "End date must be after start date";
+    // }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -199,12 +209,12 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
       setIsCreateDialogOpen(false);
       // Reset form after successful submission
       setFormData({
-        title: "",
+        name: "",
         category: "",
-        type: "",
-        status: "",
-        startDate: "",
-        endDate: "",
+        // type: "",
+        status: "active",
+        // startDate: "",
+        // endDate: "",
         description: "",
       });
     } else {
@@ -212,15 +222,29 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
     }
   };
 
-  const submitCreateProject = () => {
+  const submitCreateProject = async () => {
     console.log("Form Data Submitted:", formData);
-    // Here you would typically send the data to an API
-  }
+
+    try {
+      const response: CreateProjectResponse =
+        await projectService.createProject(formData);
+
+      if (response.success && response.data) {
+        console.log("Project created successfully:", response.data);
+        // Optionally redirect or reset form
+        // setFormData({ name: "", category: "", status: "active", description: "" });
+      } else {
+        console.error("Error:", response.message);
+      }
+    } catch (err) {
+      console.error("Unexpected error while creating project:", err);
+    }
+  };
 
   // Filter projects based on search and filters
   const filteredProjects = mockProjects.filter((project) => {
     const matchesSearch =
-      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       project.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || project.status === statusFilter;
@@ -263,25 +287,35 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 </Label>
                 <Input
                   id="title"
-                  name="title"
-                  className={`col-span-3 ${formErrors.title ? 'border-red-500' : ''}`}
+                  name="name"
+                  className={`col-span-3 ${
+                    formErrors.name ? "border-red-500" : ""
+                  }`}
                   placeholder="Project title"
-                  value={formData.title}
+                  value={formData.name}
                   onChange={handleInputChange}
                 />
-                {formErrors.title && (
-                  <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.title}</p>
+                {formErrors.name && (
+                  <p className="text-red-500 text-sm col-span-3 col-start-2">
+                    {formErrors.name}
+                  </p>
                 )}
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right">
                   Category *
                 </Label>
-                <Select 
-                  value={formData.category} 
-                  onValueChange={(value) => handleSelectField(value, 'category')}
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) =>
+                    handleSelectField(value, "category")
+                  }
                 >
-                  <SelectTrigger className={`col-span-3 ${formErrors.category ? 'border-red-500' : ''}`}>
+                  <SelectTrigger
+                    className={`col-span-3 ${
+                      formErrors.category ? "border-red-500" : ""
+                    }`}
+                  >
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -294,10 +328,12 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                   </SelectContent>
                 </Select>
                 {formErrors.category && (
-                  <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.category}</p>
+                  <p className="text-red-500 text-sm col-span-3 col-start-2">
+                    {formErrors.category}
+                  </p>
                 )}
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
+              {/* <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="type" className="text-right">
                   Type *
                 </Label>
@@ -321,23 +357,27 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 {formErrors.type && (
                   <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.type}</p>
                 )}
-              </div>
+              </div> */}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="status" className="text-right">
                   Status
                 </Label>
-                <Select defaultValue="active" value={formData.status} onValueChange={(value) => handleSelectField(value, 'status')}>
+                <Select
+                  defaultValue="active"
+                  value={formData.status}
+                  onValueChange={(value) => handleSelectField(value, "status")}
+                >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="planning">Planning</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
+              {/* <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="start-date" className="text-right">
                   Start Date *
                 </Label>
@@ -352,8 +392,8 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 {formErrors.startDate && (
                   <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.startDate}</p>
                 )}
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
+              </div> */}
+              {/* <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="end-date" className="text-right">
                   End Date *
                 </Label>
@@ -368,7 +408,7 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 {formErrors.endDate && (
                   <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.endDate}</p>
                 )}
-              </div>
+              </div> */}
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="description" className="text-right pt-2">
                   Description
@@ -467,7 +507,7 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
-                      <h3 className="text-base font-medium">{project.title}</h3>
+                      <h3 className="text-base font-medium">{project.name}</h3>
                       <div className="flex gap-2">
                         <Badge variant="outline">{project.category}</Badge>
                         <Badge
@@ -559,7 +599,8 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 {filteredProjects.map((project) => (
                   <tr key={project.id} className="border-b">
                     <td className="p-3">
-                      <div className="font-medium">{project.title}</div>
+                      {/* Project Name o kan project.title */}
+                      <div className="font-medium">{project.name}</div>
                       <div className="text-muted-foreground text-sm line-clamp-1">
                         {project.description}
                       </div>
