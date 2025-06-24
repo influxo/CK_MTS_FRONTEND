@@ -11,7 +11,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
     // <header className="border-b border-border px-6 py-3 flex items-center justify-between bg-card">
     <header className="border-b  px-6 py-3 flex items-center justify-between bg-card">
       <div className="flex items-center gap-6">
-        <h1 className="font-medium">ProjectPulse</h1>
+        <h1 className="font-medium">CaritasMotherTeresa</h1>
         <nav className="flex items-center gap-5">
           <a
             href="#"
