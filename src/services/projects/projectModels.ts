@@ -23,3 +23,9 @@ export interface CreateProjectResponse {
   message: string;
   data?: Project;
 }
+
+export interface GetProjectsResponse {
+  success: boolean;
+  message?: string;
+  data: Project[];
+}
