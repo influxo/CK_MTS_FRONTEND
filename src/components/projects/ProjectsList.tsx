@@ -305,28 +305,16 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 <Label htmlFor="category" className="text-right">
                   Category *
                 </Label>
-                <Select
+                <Input
+                  id="category"
+                  name="category"
+                  className={`col-span-3 ${
+                    formErrors.category ? "border-red-500" : ""
+                  }`}
+                  placeholder="Project Category"
                   value={formData.category}
-                  onValueChange={(value) =>
-                    handleSelectField(value, "category")
-                  }
-                >
-                  <SelectTrigger
-                    className={`col-span-3 ${
-                      formErrors.category ? "border-red-500" : ""
-                    }`}
-                  >
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category.toLowerCase()}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+                  onChange={handleInputChange}
+                />
                 {formErrors.category && (
                   <p className="text-red-500 text-sm col-span-3 col-start-2">
                     {formErrors.category}
