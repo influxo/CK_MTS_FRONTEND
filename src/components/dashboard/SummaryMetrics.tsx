@@ -1,4 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import { Badge } from "../ui/data-display/badge";
 import {
   TrendingUp,

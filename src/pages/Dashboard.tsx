@@ -18,22 +18,26 @@ export function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2">
           <KpiHighlights />
+          <div className="lg:col-span-2 py-6">
+            <BeneficiaryDemographics />
+          </div>
+          <div className="lg:col-span-2">
+            <KpiHighlights />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-1 py-6 gap-6 mb-6">
+            <ServiceDelivery />
+          </div>
         </div>
-        <div className="space-y-6">
+        <div className=" space-y-6">
           <SyncStatus />
           <SystemAlerts />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <BeneficiaryDemographics />
-        <ServiceDelivery />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
           <RecentActivity />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6"></div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div>{/* Empty space for future components or expansion */}</div>
       </div>
     </>
