@@ -303,7 +303,7 @@ export function ProjectDetails({
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full border-b bg-transparent p-0 h-auto">
-          <div className="flex gap-4">
+         <div className="flex gap-4">
             <TabsTrigger
               value="overview"
               className={`rounded-none border-b-2 border-transparent pb-3 ${

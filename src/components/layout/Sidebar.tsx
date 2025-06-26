@@ -6,6 +6,7 @@ import {
   ClipboardList,
   FolderKanban,
   LayoutDashboard,
+  LogOut,
   PieChart,
   Users,
   X,
@@ -13,8 +14,7 @@ import {
 import { Button } from "../ui/button/button";
 import { ScrollArea } from "../ui/layout/scroll-area";
 import { cn } from "../ui/utils/utils";
-import { useEffect } from "react";
-import getApiUrl from "../../services/apiUrl";
+import { useAuth } from "../../hooks/useAuth";
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -71,18 +71,17 @@ export function Sidebar({
     }
   };
 
-  useEffect(() => {
-    const apiUrl = getApiUrl();
-    console.log("apiurl ", apiUrl);
-  }, []);
+  const { logout } = useAuth();
 
   return (
     <aside
       className={cn(
-        "flex flex-col border-r bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out",
+        "flex flex-col border-r bg-sidebar bg-gray-50 text-sidebar-foreground transition-all duration-300 ease-in-out",
         collapsed ? "w-[70px]" : "w-[240px]",
-        mobileOpen && "fixed inset-y-0 left-0 z-50 shadow-xl",
-        mobileOpen && !mobileOpen && "hidden"
+        "lg:relative fixed inset-y-0 left-0 z-50 lg:z-auto transform",
+        mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        "lg:shadow-none",
+        mobileOpen && "shadow-xl"
       )}
     >
       {/* Sidebar Header */}
@@ -95,7 +94,7 @@ export function Sidebar({
         {!collapsed && (
           <NavLink to="/dashboard" className="flex items-center gap-2">
             <PieChart className="h-6 w-6 text-sidebar-primary" />
-            <h1 className="font-semibold text-lg">ProjectPulse</h1>
+            <h1 className="font-semibold text-lg">CaritasMotherTeresa</h1>
           </NavLink>
         )}
 
@@ -162,6 +161,20 @@ export function Sidebar({
             </span>
           </div>
         )}
+
+        {/* Logout Button */}
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-full justify-start font-normal text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-red-100 mb-2",
+            collapsed && "justify-center px-2"
+          )}
+          onClick={logout}
+        >
+          <LogOut className={cn("h-5 w-5", !collapsed && "mr-2")} />
+          {!collapsed && <span>Logout</span>}
+        </Button>
+
         <Button
           variant="ghost"
           className={cn(
