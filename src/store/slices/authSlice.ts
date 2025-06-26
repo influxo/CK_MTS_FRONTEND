@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import authService from '../../services/auth/authService';
-import type { User, LoginRequest, LoginResponse } from '../../services/auth/authModels';
+import type { LoginRequest, LoginResponse, ResetPasswordRequest, ApiResponse } from '../../services/auth/authModels';
+import type { User } from '../../services/globalModels/User';
 
 // Define the auth state interface
 interface AuthState {
@@ -54,6 +55,22 @@ export const fetchUserProfile = createAsyncThunk<
     return response.data;
   } catch (error: any) {
     return rejectWithValue(error.message || 'Failed to fetch profile');
+  }
+});
+
+export const resetPassword = createAsyncThunk<
+  ApiResponse,
+  ResetPasswordRequest,
+  { rejectValue: string }
+>('auth/resetPassword', async (credentials, { rejectWithValue }) => {
+  try {
+    const response = await authService.resetPassword(credentials);
+    if (!response.success) {
+      return rejectWithValue(response.message);
+    }
+    return response;
+  } catch (error: any) {
+    return rejectWithValue(error.message || 'Password reset failed');
   }
 });
 
@@ -115,6 +132,19 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+      })
+      // Reset password cases
+      .addCase(resetPassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state, action) => {
+        state.isLoading = false;
+        // We don't update auth state here as the user will need to log in after reset
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       });
   },
 });

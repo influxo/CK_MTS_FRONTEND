@@ -1,21 +1,25 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { 
-  loginUser, 
-  logoutUser, 
+import { useSelector, useDispatch } from "react-redux";
+import {
+  loginUser,
+  logoutUser,
   fetchUserProfile,
-  selectCurrentUser, 
-  selectIsAuthenticated, 
-  selectAuthLoading, 
-  selectAuthError 
-} from '../store/slices/authSlice';
-import type { LoginRequest } from '../services/auth/authModels';
-import type { AppDispatch } from '../store';
+  resetPassword,
+  selectCurrentUser,
+  selectIsAuthenticated,
+  selectAuthLoading,
+  selectAuthError,
+} from "../store/slices/authSlice";
+import type {
+  LoginRequest,
+  ResetPasswordRequest,
+} from "../services/auth/authModels";
+import type { AppDispatch } from "../store";
 
 /**
  * Custom hook for authentication related functionality
  */
 export const useAuth = () => {
-  const dispatch = useDispatch<AppDispatch>();  
+  const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(selectCurrentUser);
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const isLoading = useSelector(selectAuthLoading);
@@ -48,9 +52,9 @@ export const useAuth = () => {
   /**
    * Reset user password
    */
-  const resetPassword = async (credentials: ResetPasswordRequest) => {
-    const result = await dispatch(resetPasswordUser(credentials));
-    if (resetPasswordUser.fulfilled.match(result)) {
+  const resetPasswordUser = async (credentials: ResetPasswordRequest) => {
+    const result = await dispatch(resetPassword(credentials));
+    if (resetPassword.fulfilled.match(result)) {
       if (result.payload.success) {
         // Navigation will be handled by the useEffect in ResetPassword component
         // that watches the isAuthenticated state
@@ -74,7 +78,7 @@ export const useAuth = () => {
     error,
     login,
     logout,
-    resetPassword,
-    getProfile
+    resetPasswordUser,
+    getProfile,
   };
 };

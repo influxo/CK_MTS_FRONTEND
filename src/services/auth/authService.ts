@@ -5,6 +5,7 @@ import type {
   LoginResponse, 
   ProfileResponse, 
   ChangePasswordRequest, 
+  ResetPasswordRequest,
   ApiResponse,
 } from "./authModels";
 
@@ -129,6 +130,33 @@ class AuthService {
       return {
         success: false,
         message: error.message || 'Failed to verify email. Please try again.'
+      };
+    }
+  }
+
+  /**
+   * Reset user password
+   * @param resetData Password reset data
+   * @returns Promise with API response
+   */
+  async resetPassword(resetData: ResetPasswordRequest): Promise<ApiResponse> {
+    try {
+      const response = await axiosInstance.post<ApiResponse>(
+        `${this.authEndpoint}/reset-password`,
+        resetData
+      );
+      
+      return response.data;
+    } catch (error: any) {
+      // Handle error response from server
+      if (error.response) {
+        return error.response.data as ApiResponse;
+      }
+      
+      // Handle network or other errors
+      return {
+        success: false,
+        message: error.message || 'Failed to reset password. Please try again.'
       };
     }
   }
