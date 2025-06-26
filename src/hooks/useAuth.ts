@@ -1,21 +1,23 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { 
-  loginUser, 
-  logoutUser, 
+import { useSelector, useDispatch } from "react-redux";
+import {
+  loginUser,
+  logoutUser,
   fetchUserProfile,
-  selectCurrentUser, 
-  selectIsAuthenticated, 
-  selectAuthLoading, 
-  selectAuthError 
-} from '../store/slices/authSlice';
-import type { LoginRequest } from '../services/auth/authModels';
-import type { AppDispatch } from '../store';
+  selectCurrentUser,
+  selectIsAuthenticated,
+  selectAuthLoading,
+  selectAuthError,
+} from "../store/slices/authSlice";
+import type { LoginRequest } from "../services/auth/authModels";
+import type { AppDispatch } from "../store";
+
+// TODO: This has some errors, need to fix them
 
 /**
  * Custom hook for authentication related functionality
  */
 export const useAuth = () => {
-  const dispatch = useDispatch<AppDispatch>();  
+  const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(selectCurrentUser);
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const isLoading = useSelector(selectAuthLoading);
@@ -75,6 +77,6 @@ export const useAuth = () => {
     login,
     logout,
     resetPassword,
-    getProfile
+    getProfile,
   };
 };
