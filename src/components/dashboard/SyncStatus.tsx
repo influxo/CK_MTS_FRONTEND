@@ -1,6 +1,11 @@
 import { AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { Badge } from "../ui/data-display/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 
 export function SyncStatus() {
   const syncItems = [
