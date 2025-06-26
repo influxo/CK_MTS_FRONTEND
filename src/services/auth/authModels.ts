@@ -1,3 +1,5 @@
+import type { User } from "../globalModels/User";
+
 // Request types
 export interface LoginRequest {
   email: string;
@@ -14,23 +16,13 @@ export interface ResetPasswordRequest {
   confirmPassword: string;
 }
 
-// Response types
-export interface Role {
-  id: number;
-  name: string;
-  description?: string;
-}
-
-export interface User {
-  id: number;
+export interface InviteUserRequest {
   firstName: string;
   lastName: string;
   email: string;
-  roles: Role[];
-  status?: string;
-  twoFactorEnabled?: boolean;
-  lastLogin?: Date;
+  roleIds: number[];
 }
+
 
 export interface LoginResponse {
   success: boolean;
@@ -51,4 +43,14 @@ export interface ApiResponse {
   success: boolean;
   message: string;
   data?: any;
+}
+
+export interface InviteUserResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    user: User;
+    verificationToken?: string;
+    verificationLink?: string;
+  };
 }

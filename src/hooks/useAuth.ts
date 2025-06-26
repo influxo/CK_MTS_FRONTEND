@@ -3,12 +3,13 @@ import {
   loginUser, 
   logoutUser, 
   fetchUserProfile,
+  resetPassword,
   selectCurrentUser, 
   selectIsAuthenticated, 
   selectAuthLoading, 
   selectAuthError 
 } from '../store/slices/authSlice';
-import type { LoginRequest } from '../services/auth/authModels';
+import type { LoginRequest, ResetPasswordRequest } from '../services/auth/authModels';
 import type { AppDispatch } from '../store';
 
 /**
@@ -48,9 +49,9 @@ export const useAuth = () => {
   /**
    * Reset user password
    */
-  const resetPassword = async (credentials: ResetPasswordRequest) => {
-    const result = await dispatch(resetPasswordUser(credentials));
-    if (resetPasswordUser.fulfilled.match(result)) {
+  const resetPasswordUser = async (credentials: ResetPasswordRequest) => {
+    const result = await dispatch(resetPassword(credentials));
+    if (resetPassword.fulfilled.match(result)) {
       if (result.payload.success) {
         // Navigation will be handled by the useEffect in ResetPassword component
         // that watches the isAuthenticated state
@@ -74,7 +75,7 @@ export const useAuth = () => {
     error,
     login,
     logout,
-    resetPassword,
+    resetPasswordUser,
     getProfile
   };
 };
