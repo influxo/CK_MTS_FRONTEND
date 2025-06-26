@@ -1,12 +1,12 @@
-import { FilterControls } from "../components/FilterControls";
-import { SummaryMetrics } from "../components/SummaryMetrics";
-import { FormSubmissions } from "../components/FormSubmissions";
-import { KpiHighlights } from "../components/KpiHighlights";
-import { SyncStatus } from "../components/SyncStatus";
-import { SystemAlerts } from "../components/SystemAlerts";
-import { BeneficiaryDemographics } from "../components/BeneficiaryDemographics";
-import { ServiceDelivery } from "../components/ServiceDelivery";
-import { RecentActivity } from "../components/RecentActivity";
+import { FilterControls } from "../components/dashboard/FilterControls";
+import { SummaryMetrics } from "../components/dashboard/SummaryMetrics";
+import { FormSubmissions } from "../components/dashboard/FormSubmissions";
+import { KpiHighlights } from "../components/dashboard/KpiHighlights";
+import { SyncStatus } from "../components/dashboard/SyncStatus";
+import { SystemAlerts } from "../components/dashboard/SystemAlerts";
+import { BeneficiaryDemographics } from "../components/dashboard/BeneficiaryDemographics";
+import { ServiceDelivery } from "../components/dashboard/ServiceDelivery";
+import { RecentActivity } from "../components/dashboard/RecentActivity";
 export function Dashboard() {
   return (
     <>
