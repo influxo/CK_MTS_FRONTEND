@@ -1,10 +1,12 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './slices/authSlice';
+import { configureStore } from "@reduxjs/toolkit";
+import authReducer from "./slices/authSlice";
+import projectsReducer from "./slices/projectsSlice";
 
 // Configure the Redux store
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    projects: projectsReducer,
     // Add other reducers here as your app grows
   },
   // Add middleware or other configuration options here if needed

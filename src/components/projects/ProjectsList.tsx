@@ -48,6 +48,13 @@ import type {
   Project,
 } from "../../services/projects/projectModels";
 import projectService from "../../services/projects/projectService";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store";
+import {
+  createProject,
+  selectCreateSuccessMessage,
+  selectProjectsError,
+} from "../../store/slices/projectsSlice";
 
 interface ProjectsListProps {
   onProjectSelect: (projectId: string) => void;
@@ -166,6 +173,10 @@ export function ProjectsList({ onProjectSelect, projects }: ProjectsListProps) {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
+  const dispatch = useDispatch<AppDispatch>();
+  const error = useSelector(selectProjectsError);
+  const successMessage = useSelector(selectCreateSuccessMessage);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -222,25 +233,28 @@ export function ProjectsList({ onProjectSelect, projects }: ProjectsListProps) {
     }
   };
 
-  const submitCreateProject = async () => {
-    console.log("Form Data Submitted:", formData);
+  // const submitCreateProject = async () => {
+  //   console.log("Form Data Submitted:", formData);
 
-    try {
-      const response: CreateProjectResponse =
-        await projectService.createProject(formData);
+  //   try {
+  //     const response: CreateProjectResponse =
+  //       await projectService.createProject(formData);
 
-      if (response.success && response.data) {
-        console.log("Project created successfully:", response.data);
-        // Optionally redirect or reset form
-        // setFormData({ name: "", category: "", status: "active", description: "" });
-      } else {
-        console.error("Error:", response.message);
-      }
-    } catch (err) {
-      console.error("Unexpected error while creating project:", err);
-    }
+  //     if (response.success && response.data) {
+  //       console.log("Project created successfully:", response.data);
+  //       // Optionally redirect or reset form
+  //       // setFormData({ name: "", category: "", status: "active", description: "" });
+  //     } else {
+  //       console.error("Error:", response.message);
+  //     }
+  //   } catch (err) {
+  //     console.error("Unexpected error while creating project:", err);
+  //   }
+  // };
+
+  const submitCreateProject = () => {
+    dispatch(createProject(formData));
   };
-
   // Filter projects based on search and filters
   // const filteredProjects = mockProjects.filter((project) => {
   //   const matchesSearch =

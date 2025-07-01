@@ -1,10 +1,16 @@
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useOutletContext } from "react-router-dom";
-import { ProjectsList } from "../components/projects/ProjectsList";
 import { ProjectDetails } from "../components/projects/ProjectDetails";
+import { ProjectsList } from "../components/projects/ProjectsList";
 import { SubProjectDetails } from "../components/projects/SubProjectDetails";
-import type { Project } from "../services/projects/projectModels";
-import { useEffect, useState } from "react";
-import projectService from "../services/projects/projectService";
+import type { AppDispatch } from "../store";
+import {
+  fetchProjects,
+  selectAllProjects,
+  selectProjectsError,
+  selectProjectsLoading,
+} from "../store/slices/projectsSlice";
 
 type AppLayoutContext = {
   selectedProjectId: string | null;
@@ -21,23 +27,21 @@ export function Projects() {
     setSelectedSubProjectId,
   } = useOutletContext<AppLayoutContext>();
 
-  const [projects, setProjects] = useState<Project[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
+  const projects = useSelector(selectAllProjects);
+  const isLoading = useSelector(selectProjectsLoading);
+  const error = useSelector(selectProjectsError);
+
+  // const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      const response = await projectService.getAllProjects(); // returns GetProjectsResponse
-
-      if (response.success) {
-        setProjects(response.data);
-      } else {
-        console.error(response.message || "Failed to load projects.");
-      }
-    };
-
-    fetchProjects();
-  }, []);
+    dispatch(fetchProjects());
+  }, [dispatch]);
 
   console.log("Projects", projects);
+
+  if (isLoading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
 
   const handleProjectSelect = (projectId: string) => {
     setSelectedProjectId(projectId);
