@@ -1,6 +1,6 @@
 import { CheckCircle, XCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/data-display/card";
+import { Tabs, TabsList, TabsTrigger } from "./ui/navigation/tabs";
 
 export function FormSubmissions() {
   return (

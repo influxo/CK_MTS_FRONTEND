@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Copy, Info, Mail, UserPlus } from "lucide-react";
+import { ArrowLeft, Check, Copy, Info, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
@@ -22,6 +22,9 @@ import {
 import { Separator } from "../ui/layout/separator";
 import { Switch } from "../ui/form/switch";
 import { Textarea } from "../ui/form/textarea";
+import userService from "../../services/users/userService";
+import { toast } from "react-hot-toast";
+import type { InviteUserRequest } from "../../services/users/userModels";
 
 // Mock data for projects
 const mockProjects = [
@@ -53,7 +56,12 @@ const mockProjects = [
 ];
 
 // Mock roles
-const mockRoles = ["Admin", "Program Manager", "Field Staff", "Data Analyst"];
+const mockRoles = [
+  { id: 1, name: "Admin" },
+  { id: 2, name: "Program Manager" },
+  { id: 3, name: "Field Staff" },
+  { id: 4, name: "Data Analyst" },
+];
 
 interface InviteEmployeeProps {
   onBack: () => void;
@@ -66,12 +74,16 @@ export function InviteEmployee({
 }: InviteEmployeeProps) {
   // State for the invite form
   const [inviteData, setInviteData] = useState({
-    emails: "",
+    firstName: "",
+    lastName: "",
+    email: "",
     role: "",
     message: "",
     expiration: "7",
     sendCopy: true,
     allProjects: false,
+    projectIds: [],
+    subProjectIds: [],
   });
 
   // State for project selection
@@ -82,6 +94,10 @@ export function InviteEmployee({
   const [inviteLink, setInviteLink] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLinkCopied, setIsLinkCopied] = useState(false);
+
+  // State for loading
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Handle input changes
   const handleInputChange = (
@@ -157,29 +173,82 @@ export function InviteEmployee({
   };
 
   // Submit the invite form
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
-    // Create a random invite link
-    const randomString = Math.random().toString(36).substring(2, 10);
-    const link = `https://projectpulse.example.com/account-setup/${randomString}`;
-    setInviteLink(link);
+    try {
+      // Get the role ID from the selected role name
+      const selectedRole = mockRoles.find((role) => role.name === inviteData.role);
 
-    // Create invite data object
-    const inviteDataObj = {
-      ...inviteData,
-      projects: inviteData.allProjects ? ["All Projects"] : selectedProjects,
-      subProjects: inviteData.allProjects
-        ? ["All Sub-Projects"]
-        : selectedSubProjects,
-      link,
-    };
+      if (!selectedRole) {
+        throw new Error("Please select a valid role");
+      }
 
-    // Set submitted state
-    setIsSubmitted(true);
+      if (!inviteData.firstName || !inviteData.lastName || !inviteData.email) {
+        throw new Error("Please fill in all required fields");
+      }
 
-    // Call the parent component's handler
-    onInviteCreated(inviteDataObj);
+      // Create the invite request
+      const inviteRequest: InviteUserRequest = {
+        firstName: inviteData.firstName,
+        lastName: inviteData.lastName,
+        email: inviteData.email,
+        roleIds: [selectedRole.id],
+        expiration: inviteData.expiration,
+        message: inviteData.message,
+        projectIds: selectedProjects.map((projectName) => {
+          const project = mockProjects.find((p) => p.title === projectName);
+          return project ? parseInt(project.id.split("-")[1]) : 0;
+        }).filter((id) => id !== 0),
+        subProjectIds: selectedSubProjects.map((subProjectName) => {
+          // Find which project contains this subproject
+          for (const project of mockProjects) {
+            const subProject = project.subProjects.find(
+              (sp) => sp.title === subProjectName
+            );
+            if (subProject) return parseInt(subProject.id.split("-")[1]);
+          }
+          return 0;
+        }).filter((id) => id !== 0),
+      };
+
+      // Call the API to invite the user
+      const response = await userService.inviteUser(inviteRequest);
+
+      if (!response.success) {
+        throw new Error(response.message || "Failed to invite user");
+      }
+
+      // Set the verification link from the response
+      const verificationLink = response.data?.verificationLink || "";
+      setInviteLink(verificationLink);
+
+      // Create invite data object for parent component
+      const inviteDataObj = {
+        ...inviteData,
+        projects: inviteData.allProjects ? ["All Projects"] : selectedProjects,
+        subProjects: inviteData.allProjects
+          ? ["All Sub-Projects"]
+          : selectedSubProjects,
+        link: verificationLink,
+      };
+
+      // Set submitted state
+      setIsSubmitted(true);
+
+      // Show success message
+      toast.success("User invited successfully");
+
+      // Call the parent component's handler
+      onInviteCreated(inviteDataObj);
+    } catch (err: any) {
+      setError(err.message || "Failed to invite user");
+      toast.error(err.message || "Failed to invite user");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Copy invite link to clipboard
@@ -193,8 +262,13 @@ export function InviteEmployee({
     }, 2000);
   };
 
-  // Validate the form
-  const isFormValid = inviteData.emails.trim() !== "" && inviteData.role !== "";
+  // Check if form is valid for submission
+  const isFormValid = (
+    inviteData.firstName.trim() !== "" &&
+    inviteData.lastName.trim() !== "" &&
+    inviteData.email.trim() !== "" &&
+    inviteData.role !== ""
+  );
 
   return (
     <div className="space-y-6">
@@ -213,171 +287,204 @@ export function InviteEmployee({
           <CardHeader>
             <CardTitle>Invite Details</CardTitle>
             <CardDescription>
-              Send an invitation to join your organization.
+              Enter the details for the new employee invitation.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="emails">Email Addresses*</Label>
+                  <Label htmlFor="firstName">First Name</Label>
                   <Input
-                    id="emails"
-                    name="emails"
-                    placeholder="Enter email addresses separated by commas"
-                    value={inviteData.emails}
+                    id="firstName"
+                    name="firstName"
+                    placeholder="Enter first name"
+                    value={inviteData.firstName}
                     onChange={handleInputChange}
                     required
                   />
-                  <p className="text-xs text-muted-foreground">
-                    You can invite multiple people by separating email addresses
-                    with commas.
-                  </p>
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role*</Label>
-                  <Select
-                    value={inviteData.role}
-                    onValueChange={handleRoleChange}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockRoles.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {role}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="message">Personal Message</Label>
-                  <Textarea
-                    id="message"
-                    name="message"
-                    placeholder="Add a personal message to the invitation email"
-                    value={inviteData.message}
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    placeholder="Enter last name"
+                    value={inviteData.lastName}
                     onChange={handleInputChange}
-                    rows={3}
+                    required
                   />
-                </div>
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <Label>Project Access</Label>
-                  <div className="flex items-center space-x-2 mt-2">
-                    <Checkbox
-                      id="allProjects"
-                      checked={inviteData.allProjects}
-                      onCheckedChange={handleAllProjectsToggle}
-                    />
-                    <Label htmlFor="allProjects" className="font-normal">
-                      Grant access to all projects and sub-projects
-                    </Label>
-                  </div>
-
-                  {!inviteData.allProjects && (
-                    <div className="mt-4 space-y-4">
-                      <p className="text-sm text-muted-foreground">
-                        Select specific projects and sub-projects:
-                      </p>
-
-                      {mockProjects.map((project) => (
-                        <div key={project.id} className="border rounded-md p-4">
-                          <div className="flex items-center space-x-2 mb-4">
-                            <Checkbox
-                              id={project.id}
-                              checked={selectedProjects.includes(project.title)}
-                              onCheckedChange={() =>
-                                handleProjectToggle(project.title)
-                              }
-                            />
-                            <Label htmlFor={project.id} className="font-medium">
-                              {project.title}
-                            </Label>
-                          </div>
-
-                          <div className="pl-6 border-l ml-2 space-y-2">
-                            {project.subProjects.map((subProject) => (
-                              <div
-                                key={subProject.id}
-                                className="flex items-center space-x-2"
-                              >
-                                <Checkbox
-                                  id={subProject.id}
-                                  checked={selectedSubProjects.includes(
-                                    subProject.title
-                                  )}
-                                  onCheckedChange={() =>
-                                    handleSubProjectToggle(
-                                      subProject.title,
-                                      project.title
-                                    )
-                                  }
-                                  disabled={
-                                    !selectedProjects.includes(project.title)
-                                  }
-                                />
-                                <Label
-                                  htmlFor={subProject.id}
-                                  className="font-normal"
-                                >
-                                  {subProject.title}
-                                </Label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <Label htmlFor="expiration">Invitation Expiration</Label>
-                  <Select
-                    value={inviteData.expiration}
-                    onValueChange={handleExpirationChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select expiration period" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="3">3 days</SelectItem>
-                      <SelectItem value="7">7 days</SelectItem>
-                      <SelectItem value="14">14 days</SelectItem>
-                      <SelectItem value="30">30 days</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="sendCopy"
-                    checked={inviteData.sendCopy}
-                    onCheckedChange={handleSendCopyToggle}
-                  />
-                  <Label htmlFor="sendCopy" className="font-normal">
-                    Send me a copy of the invitation
-                  </Label>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={onBack}>
-                  Cancel
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="Enter email address"
+                  value={inviteData.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Select
+                  value={inviteData.role}
+                  onValueChange={handleRoleChange}
+                >
+                  <SelectTrigger id="role">
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mockRoles.map((role) => (
+                      <SelectItem key={role.id} value={role.name}>
+                        {role.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="message">Personal Message</Label>
+                <Textarea
+                  id="message"
+                  name="message"
+                  placeholder="Add a personal message to the invitation email"
+                  value={inviteData.message}
+                  onChange={handleInputChange}
+                  rows={3}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <Label>Project Access</Label>
+                <div className="flex items-center space-x-2 mt-2">
+                  <Checkbox
+                    id="allProjects"
+                    checked={inviteData.allProjects}
+                    onCheckedChange={handleAllProjectsToggle}
+                  />
+                  <Label htmlFor="allProjects" className="font-normal">
+                    Grant access to all projects and sub-projects
+                  </Label>
+                </div>
+
+                {!inviteData.allProjects && (
+                  <div className="mt-4 space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Select specific projects and sub-projects:
+                    </p>
+
+                    {mockProjects.map((project) => (
+                      <div key={project.id} className="border rounded-md p-4">
+                        <div className="flex items-center space-x-2 mb-4">
+                          <Checkbox
+                            id={project.id}
+                            checked={selectedProjects.includes(project.title)}
+                            onCheckedChange={() =>
+                              handleProjectToggle(project.title)
+                            }
+                          />
+                          <Label htmlFor={project.id} className="font-medium">
+                            {project.title}
+                          </Label>
+                        </div>
+
+                        <div className="pl-6 border-l ml-2 space-y-2">
+                          {project.subProjects.map((subProject) => (
+                            <div
+                              key={subProject.id}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                id={subProject.id}
+                                checked={selectedSubProjects.includes(
+                                  subProject.title
+                                )}
+                                onCheckedChange={() =>
+                                  handleSubProjectToggle(
+                                    subProject.title,
+                                    project.title
+                                  )
+                                }
+                                disabled={
+                                  !selectedProjects.includes(project.title)
+                                }
+                              />
+                              <Label
+                                htmlFor={subProject.id}
+                                className="font-normal"
+                              >
+                                {subProject.title}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <Label htmlFor="expiration">Invitation Expiration</Label>
+                <Select
+                  value={inviteData.expiration}
+                  onValueChange={handleExpirationChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select expiration period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">3 days</SelectItem>
+                    <SelectItem value="7">7 days</SelectItem>
+                    <SelectItem value="14">14 days</SelectItem>
+                    <SelectItem value="30">30 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="sendCopy"
+                  checked={inviteData.sendCopy}
+                  onCheckedChange={handleSendCopyToggle}
+                />
+                <Label htmlFor="sendCopy" className="font-normal">
+                  Send me a copy of the invitation
+                </Label>
+              </div>
+
+              <div className="flex justify-between">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onBack}
+                  disabled={isLoading}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
                 </Button>
-                <Button type="submit" disabled={!isFormValid}>
-                  <Mail className="h-4 w-4 mr-2" />
-                  Send Invitation
+                <Button type="submit" className="w-full" disabled={isLoading || !isFormValid}>
+                  {isLoading ? (
+                    "Sending Invitation..."
+                  ) : isSubmitted ? (
+                    "Invitation Sent"
+                  ) : (
+                    <>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Send Invitation
+                    </>
+                  )}
                 </Button>
               </div>
             </form>
@@ -396,12 +503,14 @@ export function InviteEmployee({
                     <UserPlus className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h4 className="font-medium">Invitation to ProjectPulse</h4>
+                    <h4 className="font-medium">
+                      Invitation to CaritasMotherTeresa
+                    </h4>
                   </div>
                 </div>
 
                 <p className="text-sm mb-3">
-                  You've been invited to join ProjectPulse as
+                  You've been invited to join CaritasMotherTeresa as
                   {inviteData.role ? (
                     <Badge className="ml-1">{inviteData.role}</Badge>
                   ) : (
@@ -476,8 +585,7 @@ export function InviteEmployee({
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm">
-                  The invitation has been sent to the email address(es) you
-                  provided.
+                  The invitation has been sent to {inviteData.email}.
                 </p>
 
                 <div className="border rounded-md p-3 space-y-2">
@@ -504,6 +612,14 @@ export function InviteEmployee({
                     You can share this link manually if needed.
                   </p>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {error && (
+            <Card className="border-red-500">
+              <CardContent className="pt-6">
+                <p className="text-red-500">{error}</p>
               </CardContent>
             </Card>
           )}

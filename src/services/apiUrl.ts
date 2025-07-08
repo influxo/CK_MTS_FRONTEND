@@ -1,13 +1,15 @@
 const env = import.meta.env.VITE_NODE_ENV;
+const devUrl = import.meta.env.VITE_DEV_API_URL;
+const prodUrl = import.meta.env.VITE_PROD_API_URL;
 
-const getApiUrl =() => {
+const getApiUrl = () => {
 
     if (env === "PRODUCTION") {
-        return "";
+        return prodUrl;
     } else if (env === "DEVELOPMENT") {
-        return "http://localhost:3001";
+        return devUrl;
     } else {
-        return "no environment";
+        return 'http://localhost:3001/api';
     }
 }
 

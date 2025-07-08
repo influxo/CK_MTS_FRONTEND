@@ -287,7 +287,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
             onOpenChange={setIsNewFormDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-black text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Form
               </Button>
@@ -449,8 +449,8 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
             onValueChange={setViewType}
             className="w-[180px]"
           >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="grid">Grid View</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-gray-200 rounded-full">
+              <TabsTrigger value="grid" className="rounded-full bg-white">Grid View</TabsTrigger>
               <TabsTrigger value="list">List View</TabsTrigger>
             </TabsList>
           </Tabs>
@@ -651,7 +651,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                   </div>
                 </div>
               </CardContent>
-              <div className="px-6 py-4 bg-muted/50 flex justify-between">
+              <div className="px-6 py-4 bg-gray-100 flex justify-between">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -661,7 +661,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                   <Settings className="h-4 w-4 mr-2" />
                   Configure
                 </Button>
-                <Button size="sm" onClick={() => handleEditClick(template.id)}>
+                <Button size="sm" onClick={() => handleEditClick(template.id)} className="rounded-md bg-black text-white">
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Form
                 </Button>

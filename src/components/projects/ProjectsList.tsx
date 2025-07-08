@@ -9,7 +9,12 @@ import {
 import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +41,12 @@ import {
 } from "../ui/form/select";
 import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
+import { Progress } from "../ui/feedback/progress";
+import type {
+  CreateProjectRequest,
+  CreateProjectResponse,
+} from "../../services/projects/projectModels";
+import projectService from "../../services/projects/projectService";
 
 interface ProjectsListProps {
   onProjectSelect: (projectId: string) => void;
@@ -45,7 +56,8 @@ interface ProjectsListProps {
 const mockProjects = [
   {
     id: "proj-001",
-    title: "Rural Healthcare Initiative",
+    // name o kan title
+    name: "Rural Healthcare Initiative",
     category: "Healthcare",
     type: "Service Delivery",
     status: "active",
@@ -54,13 +66,14 @@ const mockProjects = [
     beneficiaries: 1245,
     startDate: "2025-01-15",
     endDate: "2025-07-15",
-    leads: ["Jane Smith", "Robert Johnson"],
+    leads: ["Pal Baftijaj", "Alfred Pjetri"],
+    services: ["Sherbime Infermierore", ],
     description:
       "Comprehensive healthcare services for underserved rural communities in the northern region.",
   },
   {
     id: "proj-002",
-    title: "Primary Education Support",
+    name: "Primary Education Support",
     category: "Education",
     type: "Training",
     status: "active",
@@ -75,7 +88,7 @@ const mockProjects = [
   },
   {
     id: "proj-003",
-    title: "Water Sanitation Program",
+    name: "Water Sanitation Program",
     category: "Infrastructure",
     type: "Construction",
     status: "active",
@@ -90,7 +103,7 @@ const mockProjects = [
   },
   {
     id: "proj-004",
-    title: "Youth Employment Initiative",
+    name: "Youth Employment Initiative",
     category: "Economic Development",
     type: "Training",
     status: "inactive",
@@ -105,7 +118,7 @@ const mockProjects = [
   },
   {
     id: "proj-005",
-    title: "Maternal Health Outreach",
+    name: "Maternal Health Outreach",
     category: "Healthcare",
     type: "Service Delivery",
     status: "active",
@@ -120,7 +133,7 @@ const mockProjects = [
   },
   {
     id: "proj-006",
-    title: "Food Security Program",
+    name: "Food Security Program",
     category: "Nutrition",
     type: "Distribution",
     status: "active",
@@ -141,11 +154,98 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [formData, setFormData] = useState<CreateProjectRequest>({
+    name: "",
+    category: "",
+    // type: "",
+    status: "active",
+    // startDate: "",
+    // endDate: "",
+    description: "",
+  });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleSelectField = (value: string, fieldName: string) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      [fieldName]: value,
+    }));
+  };
+
+  console.log("Form Data", formData);
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    // Check required fields
+    if (!formData.name.trim()) errors.name = "Name is required";
+    if (!formData.category) errors.category = "Category is required";
+    // if (!formData.type) errors.type = "Type is required";
+    // if (!formData.startDate) errors.startDate = "Start date is required";
+    // if (!formData.endDate) errors.endDate = "End date is required";
+
+    // Additional validation could be added here
+    // For example, check if end date is after start date
+    // if (formData.startDate && formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
+    //   errors.endDate = "End date must be after start date";
+    // }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleCreateProject = () => {
+    if (validateForm()) {
+      submitCreateProject();
+      setIsCreateDialogOpen(false);
+      // Reset form after successful submission
+      setFormData({
+        name: "",
+        category: "",
+        // type: "",
+        status: "active",
+        // startDate: "",
+        // endDate: "",
+        description: "",
+      });
+    } else {
+      console.log("Form validation failed", formErrors);
+    }
+  };
+
+  const submitCreateProject = async () => {
+    console.log("Form Data Submitted:", formData);
+
+    try {
+      const response: CreateProjectResponse =
+        await projectService.createProject(formData);
+
+      if (response.success && response.data) {
+        console.log("Project created successfully:", response.data);
+        // Optionally redirect or reset form
+        // setFormData({ name: "", category: "", status: "active", description: "" });
+      } else {
+        console.error("Error:", response.message);
+      }
+    } catch (err) {
+      console.error("Unexpected error while creating project:", err);
+    }
+  };
 
   // Filter projects based on search and filters
   const filteredProjects = mockProjects.filter((project) => {
     const matchesSearch =
-      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       project.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || project.status === statusFilter;
@@ -168,7 +268,7 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-black text-white">
               <Plus className="h-4 w-4 mr-2" />
               Create Project
             </Button>
@@ -188,34 +288,49 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 </Label>
                 <Input
                   id="title"
-                  className="col-span-3"
+                  name="name"
+                  className={`col-span-3 ${
+                    formErrors.name ? "border-red-500" : ""
+                  }`}
                   placeholder="Project title"
+                  value={formData.name}
+                  onChange={handleInputChange}
                 />
+                {formErrors.name && (
+                  <p className="text-red-500 text-sm col-span-3 col-start-2">
+                    {formErrors.name}
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right">
                   Category *
                 </Label>
-                <Select>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category.toLowerCase()}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="category"
+                  name="category"
+                  className={`col-span-3 ${
+                    formErrors.category ? "border-red-500" : ""
+                  }`}
+                  placeholder="Project Category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                />
+                {formErrors.category && (
+                  <p className="text-red-500 text-sm col-span-3 col-start-2">
+                    {formErrors.category}
+                  </p>
+                )}
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
+              {/* <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="type" className="text-right">
                   Type *
                 </Label>
-                <Select>
-                  <SelectTrigger className="col-span-3">
+                <Select 
+                  value={formData.type} 
+                  onValueChange={(value) => handleSelectField(value, 'type')}
+                >
+                  <SelectTrigger className={`col-span-3 ${formErrors.type ? 'border-red-500' : ''}`}>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -228,43 +343,73 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                     <SelectItem value="research">Research</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+                {formErrors.type && (
+                  <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.type}</p>
+                )}
+              </div> */}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="status" className="text-right">
                   Status
                 </Label>
-                <Select defaultValue="active">
+                <Select
+                  defaultValue="active"
+                  value={formData.status}
+                  onValueChange={(value) => handleSelectField(value, "status")}
+                >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="planning">Planning</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
+              {/* <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="start-date" className="text-right">
                   Start Date *
                 </Label>
-                <Input id="start-date" type="date" className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
+                <Input 
+                  id="start-date" 
+                  name="startDate"
+                  type="date" 
+                  className={`col-span-3 ${formErrors.startDate ? 'border-red-500' : ''}`}
+                  value={formData.startDate} 
+                  onChange={handleInputChange}
+                />
+                {formErrors.startDate && (
+                  <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.startDate}</p>
+                )}
+              </div> */}
+              {/* <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="end-date" className="text-right">
                   End Date *
                 </Label>
-                <Input id="end-date" type="date" className="col-span-3" />
-              </div>
+                <Input 
+                  id="end-date" 
+                  name="endDate"
+                  type="date" 
+                  className={`col-span-3 ${formErrors.endDate ? 'border-red-500' : ''}`}
+                  value={formData.endDate} 
+                  onChange={handleInputChange}
+                />
+                {formErrors.endDate && (
+                  <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.endDate}</p>
+                )}
+              </div> */}
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="description" className="text-right pt-2">
                   Description
                 </Label>
                 <Textarea
                   id="description"
+                  name="description"
                   className="col-span-3"
                   placeholder="Provide a description of the project"
                   rows={3}
+                  value={formData.description}
+                  onChange={handleInputChange}
                 />
               </div>
             </div>
@@ -275,9 +420,7 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
               >
                 Cancel
               </Button>
-              <Button onClick={() => setIsCreateDialogOpen(false)}>
-                Create Project
-              </Button>
+              <Button onClick={handleCreateProject}>Create Project</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -328,9 +471,19 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
           onValueChange={setViewType}
           className="w-full sm:w-auto"
         >
-          <TabsList className="grid w-full sm:w-[180px] grid-cols-2">
-            <TabsTrigger value="grid">Grid View</TabsTrigger>
-            <TabsTrigger value="list">List View</TabsTrigger>
+          <TabsList className="grid w-full sm:w-[180px] grid-cols-2 bg-gray-200 rounded-full">
+            <TabsTrigger
+              value="grid"
+              className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full transition-colors"
+            >
+              Grid View
+            </TabsTrigger>
+            <TabsTrigger
+              value="list"
+              className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full transition-colors"
+            >
+              List View
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -343,7 +496,7 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
-                      <h3 className="text-base font-medium">{project.title}</h3>
+                      <h3 className="text-base font-medium">{project.name}</h3>
                       <div className="flex gap-2">
                         <Badge variant="outline">{project.category}</Badge>
                         <Badge
@@ -384,14 +537,11 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                   <div className="mt-4 space-y-3">
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Progress</span>
+                        <span className="text-gray-500">Progress</span>
                         <span>{project.progress}%</span>
                       </div>
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary"
-                          style={{ width: `${project.progress}%` }}
-                        ></div>
+                        <Progress value={project.progress} />
                       </div>
                     </div>
 
@@ -438,7 +588,8 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 {filteredProjects.map((project) => (
                   <tr key={project.id} className="border-b">
                     <td className="p-3">
-                      <div className="font-medium">{project.title}</div>
+                      {/* Project Name o kan project.title */}
+                      <div className="font-medium">{project.name}</div>
                       <div className="text-muted-foreground text-sm line-clamp-1">
                         {project.description}
                       </div>

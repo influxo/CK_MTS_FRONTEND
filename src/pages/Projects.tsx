@@ -1,35 +1,51 @@
-import { useState } from "react";
+import { useOutletContext } from "react-router-dom";
 import { ProjectsList } from "../components/projects/ProjectsList";
 import { ProjectDetails } from "../components/projects/ProjectDetails";
 import { SubProjectDetails } from "../components/projects/SubProjectDetails";
 
-interface ProjectsProps {
+type AppLayoutContext = {
   selectedProjectId: string | null;
   selectedSubProjectId: string | null;
-  onProjectSelect: (projectId: string) => void;
-  onSubProjectSelect: (subProjectId: string) => void;
-  onBackToProjects: () => void;
-  onBackToProject: () => void;
-}
+  setSelectedProjectId: (id: string | null) => void;
+  setSelectedSubProjectId: (id: string | null) => void;
+};
 
-export function Projects({
-  selectedProjectId,
-  selectedSubProjectId,
-  onProjectSelect,
-  onSubProjectSelect,
-  onBackToProjects,
-  onBackToProject,
-}: ProjectsProps) {
+export function Projects() {
+  const {
+    selectedProjectId,
+    selectedSubProjectId,
+    setSelectedProjectId,
+    setSelectedSubProjectId
+  } = useOutletContext<AppLayoutContext>();
+
+  const handleProjectSelect = (projectId: string) => {
+    setSelectedProjectId(projectId);
+    setSelectedSubProjectId(null);
+  };
+
+  const handleSubProjectSelect = (subProjectId: string) => {
+    setSelectedSubProjectId(subProjectId);
+  };
+
+  const handleBackToProjects = () => {
+    setSelectedProjectId(null);
+    setSelectedSubProjectId(null);
+  };
+
+  const handleBackToProject = () => {
+    setSelectedSubProjectId(null);
+  };
+
   if (!selectedProjectId) {
-    return <ProjectsList onProjectSelect={onProjectSelect} />;
+    return <ProjectsList onProjectSelect={handleProjectSelect} />;
   }
 
   if (selectedProjectId && !selectedSubProjectId) {
     return (
       <ProjectDetails
         projectId={selectedProjectId}
-        onBack={onBackToProjects}
-        onSubProjectSelect={onSubProjectSelect}
+        onBack={handleBackToProjects}
+        onSubProjectSelect={handleSubProjectSelect}
       />
     );
   }
@@ -39,7 +55,7 @@ export function Projects({
       <SubProjectDetails
         projectId={selectedProjectId}
         subProjectId={selectedSubProjectId}
-        onBack={onBackToProject}
+        onBack={handleBackToProject}
       />
     );
   }

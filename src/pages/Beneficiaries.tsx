@@ -1,25 +1,34 @@
+import { useOutletContext } from "react-router-dom";
 import { BeneficiariesList } from "../components/beneficiaries/BeneficiariesList";
 import { BeneficiaryDetails } from "../components/beneficiaries/BeneficiaryDetails";
 
-interface BeneficiariesProps {
+type AppLayoutContext = {
   selectedBeneficiaryId: string | null;
-  onBeneficiarySelect: (beneficiaryId: string) => void;
-  onBackToBeneficiaries: () => void;
-}
+  setSelectedBeneficiaryId: (id: string | null) => void;
+};
 
-export function Beneficiaries({
-  selectedBeneficiaryId,
-  onBeneficiarySelect,
-  onBackToBeneficiaries,
-}: BeneficiariesProps) {
+export function Beneficiaries() {
+  const {
+    selectedBeneficiaryId,
+    setSelectedBeneficiaryId
+  } = useOutletContext<AppLayoutContext>();
+
+  const handleBeneficiarySelect = (beneficiaryId: string) => {
+    setSelectedBeneficiaryId(beneficiaryId);
+  };
+
+  const handleBackToBeneficiaries = () => {
+    setSelectedBeneficiaryId(null);
+  };
+
   if (!selectedBeneficiaryId) {
-    return <BeneficiariesList onBeneficiarySelect={onBeneficiarySelect} />;
+    return <BeneficiariesList onBeneficiarySelect={handleBeneficiarySelect} />;
   }
 
   return (
     <BeneficiaryDetails
       beneficiaryId={selectedBeneficiaryId}
-      onBack={onBackToBeneficiaries}
+      onBack={handleBackToBeneficiaries}
     />
   );
 }

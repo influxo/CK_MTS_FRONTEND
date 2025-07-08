@@ -49,7 +49,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         {/* Search */}
         <div className="relative hidden sm:block max-w-[400px] w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search..." className="pl-9 w-full" />
+          <Input placeholder="Search..." className="pl-9 w-full bg-gray-100" />
         </div>
       </div>
 
@@ -79,7 +79,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
               <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[300px]">
+          <DropdownMenuContent align="end" className="w-[300px] bg-white">
             <div className="flex items-center justify-between p-2">
               <span className="font-medium">Notifications</span>
               <Button variant="ghost" size="sm">
@@ -168,7 +168,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="bg-white">
             <DropdownMenuItem>
               <User className="h-4 w-4 mr-2" />
               Profile
