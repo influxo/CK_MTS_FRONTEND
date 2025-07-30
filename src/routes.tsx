@@ -8,11 +8,10 @@ import { Employees } from "./pages/Employees";
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import { ProjectDetails } from "./components/projects/ProjectDetails";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
-
-
 
 const routes = [
   {
@@ -46,6 +45,10 @@ const routes = [
       {
         path: "projects",
         element: <Projects />,
+      },
+      {
+        path: "projects/:id",
+        element: <ProjectDetails />,
       },
       {
         path: "beneficiaries",

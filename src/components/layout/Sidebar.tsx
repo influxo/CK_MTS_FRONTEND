@@ -15,6 +15,9 @@ import { Button } from "../ui/button/button";
 import { ScrollArea } from "../ui/layout/scroll-area";
 import { cn } from "../ui/utils/utils";
 import { useAuth } from "../../hooks/useAuth";
+import type { Project } from "../../services/projects/projectModels";
+import { useState } from "react";
+import * as Collapsible from "@radix-ui/react-collapsible";
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -22,6 +25,9 @@ interface SidebarProps {
   onToggleCollapse?: () => void;
   onCloseMobile?: () => void;
   mobileOpen?: boolean;
+  projects?: Project[]; // <-- Add this
+  projectsLoading?: boolean; // optional
+  projectsError?: string | null; // optional
 }
 
 export function Sidebar({
@@ -29,6 +35,9 @@ export function Sidebar({
   onToggleCollapse,
   onCloseMobile,
   mobileOpen = false,
+  projects,
+  projectsLoading,
+  projectsError,
 }: SidebarProps) {
   // Navigation items
   const navItems = [
@@ -63,6 +72,8 @@ export function Sidebar({
       to: "/employees",
     },
   ];
+
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Close mobile sidebar when clicking a nav item
   const handleNavClick = () => {
@@ -127,27 +138,158 @@ export function Sidebar({
       </div>
 
       {/* Navigation */}
+
       <ScrollArea className="flex-1 py-4">
         <nav className="flex flex-col gap-1 px-2">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                  collapsed && "justify-center px-2"
-                )
-              }
-              onClick={handleNavClick}
-            >
-              {item.icon}
-              {!collapsed && <span className="ml-2">{item.title}</span>}
-            </NavLink>
-          ))}
+          {navItems.map((item) => {
+            // if (item.title === "Projects") {
+            //   return (
+            //     <div key={item.to} className="flex flex-col">
+            //       <button
+            //         onClick={() => setIsExpanded((prev) => !prev)}
+            //         className={cn(
+            //           "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors w-full text-left",
+            //           "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-red-600 before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
+            //           isExpanded
+            //             ? "text-red-700 bg-red-50 before:scale-x-100"
+            //             : "text-gray-600 hover:text-red-600 hover:bg-gray-50 before:scale-x-0",
+            //           collapsed && "justify-center px-2"
+            //         )}
+            //       >
+            //         {item.icon}
+            //         {!collapsed && (
+            //           <span className="ml-2 flex-1 text-left">
+            //             {item.title}
+            //           </span>
+            //         )}
+            //       </button>
+
+            //       {!collapsed && isExpanded && projects && (
+            //         <div className="ml-8 mt-1 flex flex-col gap-1">
+            //           {projectsLoading && (
+            //             <span className="text-xs text-gray-400">
+            //               Loading...
+            //             </span>
+            //           )}
+            //           {projectsError && (
+            //             <span className="text-xs text-red-500">
+            //               Error loading projects
+            //             </span>
+            //           )}
+            //           {projects.map((project) => (
+            //             <NavLink
+            //               key={project.id}
+            //               to={`/projects/${project.id}`}
+            //               className={({ isActive }) =>
+            //                 cn(
+            //                   "text-sm px-2 py-1 rounded-md transition-colors",
+            //                   isActive
+            //                     ? "bg-red-100 text-red-700"
+            //                     : "text-gray-600 hover:bg-gray-100 hover:text-red-600"
+            //                 )
+            //               }
+            //               onClick={handleNavClick}
+            //             >
+            //               {project.name}
+            //             </NavLink>
+            //           ))}
+            //         </div>
+            //       )}
+            //     </div>
+            //   );
+            // }
+
+            // Render all other nav items as usual
+            if (item.title === "Projects") {
+              return (
+                <Collapsible.Root
+                  key={item.to}
+                  open={isExpanded}
+                  onOpenChange={setIsExpanded}
+                >
+                  <Collapsible.Trigger asChild>
+                    <button
+                      className={cn(
+                        "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors w-full text-left",
+                        "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-red-600 before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
+                        isExpanded
+                          ? "text-red-700 bg-red-50 before:scale-x-100"
+                          : "text-gray-600 hover:text-red-600 hover:bg-gray-50 before:scale-x-0",
+                        collapsed && "justify-center px-2"
+                      )}
+                    >
+                      {item.icon}
+                      {!collapsed && (
+                        <span className="ml-2 flex-1 text-left">
+                          {item.title}
+                        </span>
+                      )}
+                    </button>
+                  </Collapsible.Trigger>
+
+                  {/* Animated dropdown content */}
+                  <Collapsible.Content
+                    className={cn(
+                      "data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden",
+                      !collapsed && "ml-8 mt-1"
+                    )}
+                  >
+                    {projects && (
+                      <div className="flex flex-col gap-1">
+                        {projectsLoading && (
+                          <span className="text-xs text-gray-400">
+                            Loading...
+                          </span>
+                        )}
+                        {projectsError && (
+                          <span className="text-xs text-red-500">
+                            Error loading projects
+                          </span>
+                        )}
+                        {projects.map((project) => (
+                          <NavLink
+                            key={project.id}
+                            to={`/projects/${project.id}`}
+                            className={({ isActive }) =>
+                              cn(
+                                "text-sm px-2 py-1 rounded-md transition-colors",
+                                isActive
+                                  ? "bg-red-100 text-red-700"
+                                  : "text-gray-600 hover:bg-gray-100 hover:text-red-600"
+                              )
+                            }
+                            onClick={handleNavClick}
+                          >
+                            {project.name}
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
+                  </Collapsible.Content>
+                </Collapsible.Root>
+              );
+            }
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  cn(
+                    "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-red-600 before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
+                    isActive
+                      ? "text-red-700 bg-red-50 before:scale-x-100"
+                      : "text-gray-600 hover:text-red-600 hover:bg-gray-50 before:scale-x-0",
+                    collapsed && "justify-center px-2"
+                  )
+                }
+                onClick={handleNavClick}
+              >
+                {item.icon}
+                {!collapsed && <span className="ml-2">{item.title}</span>}
+              </NavLink>
+            );
+          })}
         </nav>
       </ScrollArea>
 

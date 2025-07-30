@@ -10,10 +10,16 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -51,7 +57,6 @@ import { Textarea } from "../ui/form/textarea";
 
 interface SubProjectsProps {
   projectId: string;
-  onSubProjectSelect: (subProjectId: string) => void;
 }
 
 // Mock sub-project data
@@ -162,10 +167,8 @@ const mockSubProjects = [
   },
 ];
 
-export function SubProjects({
-  projectId,
-  onSubProjectSelect,
-}: SubProjectsProps) {
+export function SubProjects({ projectId }: SubProjectsProps) {
+  const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [viewType, setViewType] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
@@ -194,6 +197,14 @@ export function SubProjects({
         .map((s) => s.category)
     ),
   ];
+
+  const handleViewSubProject = (subProjectId: string) => {
+    // In the future, we could implement a route like /projects/:projectId/subprojects/:subprojectId
+    // For now, we'll just log the action
+    console.log(`Navigate to subproject: ${subProjectId}`);
+    // Example of future implementation:
+    // navigate(`/projects/${projectId}/subprojects/${subProjectId}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -418,7 +429,7 @@ export function SubProjects({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => onSubProjectSelect(subProject.id)}
+                        onClick={() => handleViewSubProject(subProject.id)}
                       >
                         View Details
                       </DropdownMenuItem>
@@ -488,7 +499,7 @@ export function SubProjects({
                   variant="ghost"
                   size="sm"
                   className="text-primary"
-                  onClick={() => onSubProjectSelect(subProject.id)}
+                  onClick={() => handleViewSubProject(subProject.id)}
                 >
                   View Details
                 </Button>
@@ -518,7 +529,7 @@ export function SubProjects({
                   <TableCell className="font-medium">
                     <div
                       className="hover:text-primary cursor-pointer"
-                      onClick={() => onSubProjectSelect(subProject.id)}
+                      onClick={() => handleViewSubProject(subProject.id)}
                     >
                       {subProject.title}
                     </div>
@@ -590,7 +601,7 @@ export function SubProjects({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => onSubProjectSelect(subProject.id)}
+                        onClick={() => handleViewSubProject(subProject.id)}
                       >
                         View
                       </Button>

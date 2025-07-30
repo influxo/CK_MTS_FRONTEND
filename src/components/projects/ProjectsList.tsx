@@ -55,11 +55,7 @@ import {
   selectCreateSuccessMessage,
   selectProjectsError,
 } from "../../store/slices/projectsSlice";
-
-interface ProjectsListProps {
-  onProjectSelect: (projectId: string) => void;
-  projects: Project[];
-}
+import { useNavigate } from "react-router-dom";
 
 // Mock project data
 const mockProjects = [
@@ -156,7 +152,11 @@ const mockProjects = [
   },
 ];
 
-export function ProjectsList({ onProjectSelect, projects }: ProjectsListProps) {
+interface ProjectsListProps {
+  projects: Project[];
+}
+
+export function ProjectsList({ projects }: ProjectsListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewType, setViewType] = useState("grid");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -176,6 +176,7 @@ export function ProjectsList({ onProjectSelect, projects }: ProjectsListProps) {
   const dispatch = useDispatch<AppDispatch>();
   const error = useSelector(selectProjectsError);
   const successMessage = useSelector(selectCreateSuccessMessage);
+  const navigate = useNavigate();
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -531,7 +532,7 @@ export function ProjectsList({ onProjectSelect, projects }: ProjectsListProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => onProjectSelect(project.id)}
+                          onClick={() => navigate(`/projects/${project.id}`)}
                         >
                           View Details
                         </DropdownMenuItem>
@@ -629,11 +630,8 @@ export function ProjectsList({ onProjectSelect, projects }: ProjectsListProps) {
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary"
-                            // style={{ width: `${project.progress}%` }}
-                            style={{ width: `50%` }}
-                          ></div>
+                          {/* <Progress value={project.progress} /> */}
+                          <Progress value={50} />
                         </div>
                         {/* <span className="text-sm">{project.progress}%</span> */}
                         <span className="text-sm">50%</span>
@@ -664,7 +662,7 @@ export function ProjectsList({ onProjectSelect, projects }: ProjectsListProps) {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => onProjectSelect(project.id)}
+                          onClick={() => navigate(`/projects/${project.id}`)}
                         >
                           View
                         </Button>
