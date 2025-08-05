@@ -35,7 +35,7 @@ export interface CreateSubProjectResponse {
 
 // Get SubProject By Id Request
 export interface GetSubProjectByIdRequest {
-  id: string; // this is a query parameter
+  id: string;
 }
 
 // Get SubProject By Id Response
@@ -92,18 +92,19 @@ export interface AssignUserToSubProjectRequest {
 }
 
 // ?????
-// export interface AssignUserToSubProjectResponse {
-//     success: boolean;
-//     message: string;
-//     data: SubProject;
-// }
+export interface AssignUserToSubProjectResponse {
+  success?: boolean;
+  message?: string;
+  data?: SubProject;
+}
 
 export interface RemoveUserFromSubProjectRequest {
   subProjectId: string; // this is a query parameter
   userId: string; // this is a query parameter
 }
 
-// export interface RemoveUserFromSubProjectResponse {
-//     success: boolean;
-//     message: string;
-// }
+// ?????
+export interface RemoveUserFromSubProjectResponse {
+  success?: boolean;
+  message?: string;
+}

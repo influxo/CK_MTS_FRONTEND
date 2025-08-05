@@ -534,22 +534,22 @@ export function ProjectDetails() {
 
         <TabsContent value="subprojects" className="mt-6">
           {/* <SubProjects projectId={enhancedProject.id}" /> */}
-          <SubProjects projectId="proj-001" />
+          <SubProjects projectId={enhancedProject.id} />
         </TabsContent>
 
         <TabsContent value="team" className="pt-6">
           {/* <ProjectTeam projectId={enhancedProject.id} /> */}
-          <ProjectTeam projectId="proj-001" />
+          <ProjectTeam projectId={enhancedProject.id} />
         </TabsContent>
 
         <TabsContent value="activity" className="pt-6">
           {/* <ProjectActivity projectId={enhancedProject.id} /> */}
-          <ProjectActivity projectId="proj-001" />
+          <ProjectActivity projectId={enhancedProject.id} />
         </TabsContent>
 
         <TabsContent value="reports" className="pt-6">
           {/* <ProjectExport projectId={enhancedProject.id} /> */}
-          <ProjectExport projectId="proj-001" />
+          <ProjectExport projectId={enhancedProject.id} />
         </TabsContent>
       </Tabs>
     </div>
