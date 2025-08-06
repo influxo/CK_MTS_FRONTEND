@@ -1,4 +1,4 @@
-// import { NavLink } from "react-router-dom";
+// import { NavLink, useNavigate } from "react-router-dom";
 // import {
 //   BarChart3,
 //   ChevronLeft,
@@ -16,8 +16,18 @@
 // import { cn } from "../ui/utils/utils";
 // import { useAuth } from "../../hooks/useAuth";
 // import type { Project } from "../../services/projects/projectModels";
-// import { useState } from "react";
+// import { useState, useEffect } from "react";
 // import * as Collapsible from "@radix-ui/react-collapsible";
+// import { useDispatch } from "react-redux";
+
+// import { useSelector } from "react-redux";
+// import {
+//   fetchSubProjectsByProjectId,
+//   selectAllSubprojects,
+//   selectSubprojectsError,
+//   selectSubprojectsLoading,
+// } from "../../store/slices/subProjectSlice";
+// import type { AppDispatch } from "../../store";
 
 // interface SidebarProps {
 //   collapsed?: boolean;
@@ -25,9 +35,9 @@
 //   onToggleCollapse?: () => void;
 //   onCloseMobile?: () => void;
 //   mobileOpen?: boolean;
-//   projects?: Project[]; // <-- Add this
-//   projectsLoading?: boolean; // optional
-//   projectsError?: string | null; // optional
+//   projects?: Project[];
+//   projectsLoading?: boolean;
+//   projectsError?: string | null;
 // }
 
 // export function Sidebar({
@@ -39,7 +49,39 @@
 //   projectsLoading,
 //   projectsError,
 // }: SidebarProps) {
-//   // Navigation items
+//   const [isProjectsExpanded, setIsProjectsExpanded] = useState(false);
+//   const [expandedProjectIds, setExpandedProjectIds] = useState<string[]>([]);
+
+//   const dispatch = useDispatch<AppDispatch>();
+//   const subprojects = useSelector(selectAllSubprojects);
+//   const subprojectsLoading = useSelector(selectSubprojectsLoading);
+//   const subprojectsError = useSelector(selectSubprojectsError);
+
+//   const navigate = useNavigate();
+
+//   const { logout } = useAuth();
+
+//   // Toggle subprojects for a specific project
+//   const toggleProjectSubprojects = (projectId: string) => {
+//     if (expandedProjectIds.includes(projectId)) {
+//       // Collapse
+//       setExpandedProjectIds(
+//         expandedProjectIds.filter((id) => id !== projectId)
+//       );
+//     } else {
+//       // Expand
+//       setExpandedProjectIds([...expandedProjectIds, projectId]);
+//       // Fetch subprojects for this project
+//       dispatch(fetchSubProjectsByProjectId({ projectId }));
+//     }
+//   };
+
+//   // Close mobile sidebar when clicking a nav item
+//   const handleNavClick = () => {
+//     if (onCloseMobile) onCloseMobile();
+//   };
+
+//   // Navigation items (except Projects handled separately)
 //   const navItems = [
 //     {
 //       title: "Dashboard",
@@ -72,17 +114,6 @@
 //       to: "/employees",
 //     },
 //   ];
-
-//   const [isExpanded, setIsExpanded] = useState(false);
-
-//   // Close mobile sidebar when clicking a nav item
-//   const handleNavClick = () => {
-//     if (onCloseMobile) {
-//       onCloseMobile();
-//     }
-//   };
-
-//   const { logout } = useAuth();
 
 //   return (
 //     <aside
@@ -138,81 +169,131 @@
 //       </div>
 
 //       {/* Navigation */}
-
+//       {/* Navigation */}
 //       <ScrollArea className="flex-1 py-4">
 //         <nav className="flex flex-col gap-1 px-2">
-//           {navItems.map((item) => {
-//             // Render all other nav items as usual
-//             if (item.title === "Projects") {
-//               return (
-//                 <Collapsible.Root
-//                   key={item.to}
-//                   open={isExpanded}
-//                   onOpenChange={setIsExpanded}
+//           {navItems.map((item) =>
+//             item.title === "Projects" ? (
+//               <div key={item.to}>
+//                 <button
+//                   onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
+//                   className={cn(
+//                     "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors w-full text-left",
+//                     "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-red-600 before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
+//                     isProjectsExpanded
+//                       ? "text-red-700 bg-red-50 before:scale-x-100"
+//                       : "text-gray-600 hover:text-red-600 hover:bg-gray-50 before:scale-x-0",
+//                     collapsed && "justify-center px-2"
+//                   )}
 //                 >
-//                   <Collapsible.Trigger asChild>
-//                     <button
+//                   <FolderKanban className="h-5 w-5" />
+//                   {!collapsed && (
+//                     <span className="ml-2 flex-1 text-left">Projects</span>
+//                   )}
+//                   {!collapsed && (
+//                     <ChevronRight
+//                       size={18}
 //                       className={cn(
-//                         "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors w-full text-left",
-//                         "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-red-600 before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
-//                         isExpanded
-//                           ? "text-red-700 bg-red-50 before:scale-x-100"
-//                           : "text-gray-600 hover:text-red-600 hover:bg-gray-50 before:scale-x-0",
-//                         collapsed && "justify-center px-2"
+//                         "ml-auto transition-transform duration-300",
+//                         isProjectsExpanded && "rotate-90"
 //                       )}
-//                     >
-//                       {item.icon}
-//                       {!collapsed && (
-//                         <span className="ml-2 flex-1 text-left">
-//                           {item.title}
-//                         </span>
-//                       )}
-//                     </button>
-//                   </Collapsible.Trigger>
+//                     />
+//                   )}
+//                 </button>
 
-//                   {/* Animated dropdown content */}
+//                 {/* Projects list */}
+//                 <Collapsible.Root
+//                   open={isProjectsExpanded}
+//                   onOpenChange={setIsProjectsExpanded}
+//                 >
 //                   <Collapsible.Content
 //                     className={cn(
 //                       "data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden",
 //                       !collapsed && "ml-8 mt-1"
 //                     )}
 //                   >
-//                     {projects && (
-//                       <div className="flex flex-col gap-1">
-//                         {projectsLoading && (
-//                           <span className="text-xs text-gray-400">
-//                             Loading...
-//                           </span>
-//                         )}
-//                         {projectsError && (
-//                           <span className="text-xs text-red-500">
-//                             Error loading projects
-//                           </span>
-//                         )}
-//                         {projects.map((project) => (
-//                           <NavLink
-//                             key={project.id}
-//                             to={`/projects/${project.id}`}
-//                             className={({ isActive }) =>
-//                               cn(
-//                                 "text-sm px-2 py-1 rounded-md transition-colors",
-//                                 isActive
-//                                   ? "bg-red-100 text-red-700"
-//                                   : "text-gray-600 hover:bg-gray-100 hover:text-red-600"
-//                               )
-//                             }
-//                             onClick={handleNavClick}
+//                     {projectsLoading && (
+//                       <span className="text-xs text-gray-400">Loading...</span>
+//                     )}
+//                     {projectsError && (
+//                       <span className="text-xs text-red-500">
+//                         Error loading projects
+//                       </span>
+//                     )}
+//                     {projects?.map((project) => {
+//                       const isProjectExpanded = expandedProjectIds.includes(
+//                         project.id
+//                       );
+//                       return (
+//                         <div key={project.id} className="mb-1">
+//                           <button
+//                             onClick={() => {
+//                               toggleProjectSubprojects(project.id);
+//                               navigate(`/projects/${project.id}`);
+//                             }}
+//                             className={cn(
+//                               "flex items-center w-full text-left rounded-md px-2 py-1 text-sm transition-colors",
+//                               isProjectExpanded
+//                                 ? "bg-red-100 text-red-700"
+//                                 : "text-gray-600 hover:bg-gray-100 hover:text-red-600"
+//                             )}
 //                           >
 //                             {project.name}
-//                           </NavLink>
-//                         ))}
-//                       </div>
-//                     )}
+//                             <ChevronRight
+//                               className={cn(
+//                                 "ml-auto transition-transform duration-300",
+//                                 isProjectExpanded && "rotate-90"
+//                               )}
+//                               size={16}
+//                             />
+//                           </button>
+
+//                           {/* Subprojects list */}
+//                           <Collapsible.Root open={isProjectExpanded}>
+//                             <Collapsible.Content
+//                               className={cn(
+//                                 "data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden ml-4",
+//                                 collapsed && "ml-0"
+//                               )}
+//                             >
+//                               {subprojectsLoading && isProjectExpanded && (
+//                                 <span className="text-xs text-gray-400">
+//                                   Loading subprojects...
+//                                 </span>
+//                               )}
+//                               {subprojectsError && isProjectExpanded && (
+//                                 <span className="text-xs text-red-500">
+//                                   Error loading subprojects
+//                                 </span>
+//                               )}
+//                               {subprojects
+//                                 .filter((sp) => sp.projectId === project.id)
+//                                 .map((subproject) => (
+//                                   <NavLink
+//                                     key={subproject.id}
+//                                     to={`/projects/${project.id}/subprojects/${subproject.id}`}
+//                                     className={({ isActive }) =>
+//                                       cn(
+//                                         "block text-sm px-3 py-1 rounded-md transition-colors",
+//                                         isActive
+//                                           ? "bg-red-200 text-red-800"
+//                                           : "text-gray-600 hover:bg-gray-100 hover:text-red-600"
+//                                       )
+//                                     }
+//                                     onClick={handleNavClick}
+//                                   >
+//                                     {subproject.name}
+//                                   </NavLink>
+//                                 ))}
+//                             </Collapsible.Content>
+//                           </Collapsible.Root>
+//                         </div>
+//                       );
+//                     })}
 //                   </Collapsible.Content>
 //                 </Collapsible.Root>
-//               );
-//             }
-//             return (
+//               </div>
+//             ) : (
 //               <NavLink
 //                 key={item.to}
 //                 to={item.to}
@@ -231,8 +312,8 @@
 //                 {item.icon}
 //                 {!collapsed && <span className="ml-2">{item.title}</span>}
 //               </NavLink>
-//             );
-//           })}
+//             )
+//           )}
 //         </nav>
 //       </ScrollArea>
 
@@ -280,7 +361,7 @@
 //   );
 // }
 
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation, matchPath } from "react-router-dom";
 import {
   BarChart3,
   ChevronLeft,
@@ -298,11 +379,9 @@ import { ScrollArea } from "../ui/layout/scroll-area";
 import { cn } from "../ui/utils/utils";
 import { useAuth } from "../../hooks/useAuth";
 import type { Project } from "../../services/projects/projectModels";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useDispatch } from "react-redux";
-
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   fetchSubProjectsByProjectId,
   selectAllSubprojects,
@@ -338,32 +417,35 @@ export function Sidebar({
   const subprojects = useSelector(selectAllSubprojects);
   const subprojectsLoading = useSelector(selectSubprojectsLoading);
   const subprojectsError = useSelector(selectSubprojectsError);
-
   const navigate = useNavigate();
-
   const { logout } = useAuth();
 
-  // Toggle subprojects for a specific project
+  const location = useLocation();
+  const matchProject = matchPath("/projects/:projectId", location.pathname);
+  const matchSubproject = matchPath(
+    "/projects/:projectId/subprojects/:subprojectId",
+    location.pathname
+  );
+  const selectedProjectId =
+    matchSubproject?.params.projectId || matchProject?.params.projectId;
+
   const toggleProjectSubprojects = (projectId: string) => {
-    if (expandedProjectIds.includes(projectId)) {
-      // Collapse
+    const alreadyExpanded = expandedProjectIds.includes(projectId);
+
+    if (alreadyExpanded) {
       setExpandedProjectIds(
         expandedProjectIds.filter((id) => id !== projectId)
       );
     } else {
-      // Expand
       setExpandedProjectIds([...expandedProjectIds, projectId]);
-      // Fetch subprojects for this project
       dispatch(fetchSubProjectsByProjectId({ projectId }));
     }
   };
 
-  // Close mobile sidebar when clicking a nav item
   const handleNavClick = () => {
     if (onCloseMobile) onCloseMobile();
   };
 
-  // Navigation items (except Projects handled separately)
   const navItems = [
     {
       title: "Dashboard",
@@ -408,7 +490,6 @@ export function Sidebar({
         mobileOpen && "shadow-xl"
       )}
     >
-      {/* Sidebar Header */}
       <div
         className={cn(
           "flex h-16 items-center border-b px-4",
@@ -421,11 +502,9 @@ export function Sidebar({
             <h1 className="font-semibold text-lg">CaritasMotherTeresa</h1>
           </NavLink>
         )}
-
         {collapsed && !mobileOpen && (
           <PieChart className="h-6 w-6 text-sidebar-primary" />
         )}
-
         {!mobileOpen ? (
           <Button
             variant="ghost"
@@ -450,8 +529,6 @@ export function Sidebar({
         )}
       </div>
 
-      {/* Navigation */}
-      {/* Navigation */}
       <ScrollArea className="flex-1 py-4">
         <nav className="flex flex-col gap-1 px-2">
           {navItems.map((item) =>
@@ -483,7 +560,6 @@ export function Sidebar({
                   )}
                 </button>
 
-                {/* Projects list */}
                 <Collapsible.Root
                   open={isProjectsExpanded}
                   onOpenChange={setIsProjectsExpanded}
@@ -503,9 +579,14 @@ export function Sidebar({
                       </span>
                     )}
                     {projects?.map((project) => {
-                      const isProjectExpanded = expandedProjectIds.includes(
-                        project.id
+                      const relatedSubprojects = subprojects.filter(
+                        (sp) => sp.projectId === project.id
                       );
+                      const isProjectExpanded =
+                        expandedProjectIds.includes(project.id) ||
+                        selectedProjectId === project.id;
+                      const isSelected = selectedProjectId === project.id;
+
                       return (
                         <div key={project.id} className="mb-1">
                           <button
@@ -515,42 +596,48 @@ export function Sidebar({
                             }}
                             className={cn(
                               "flex items-center w-full text-left rounded-md px-2 py-1 text-sm transition-colors",
-                              isProjectExpanded
+                              isSelected
                                 ? "bg-red-100 text-red-700"
                                 : "text-gray-600 hover:bg-gray-100 hover:text-red-600"
                             )}
                           >
                             {project.name}
-                            <ChevronRight
-                              className={cn(
-                                "ml-auto transition-transform duration-300",
-                                isProjectExpanded && "rotate-90"
-                              )}
-                              size={16}
-                            />
+                            {relatedSubprojects.length > 0 && (
+                              <ChevronRight
+                                className={cn(
+                                  "ml-auto transition-transform duration-300",
+                                  isProjectExpanded && "rotate-90"
+                                )}
+                                size={16}
+                              />
+                            )}
                           </button>
 
-                          {/* Subprojects list */}
-                          <Collapsible.Root open={isProjectExpanded}>
-                            <Collapsible.Content
-                              className={cn(
-                                "data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden ml-4",
-                                collapsed && "ml-0"
-                              )}
+                          {/* Subprojects */}
+                          {relatedSubprojects.length > 0 && (
+                            <Collapsible.Root
+                              open={isProjectExpanded}
+                              onOpenChange={(open) =>
+                                toggleProjectSubprojects(project.id)
+                              }
                             >
-                              {subprojectsLoading && isProjectExpanded && (
-                                <span className="text-xs text-gray-400">
-                                  Loading subprojects...
-                                </span>
-                              )}
-                              {subprojectsError && isProjectExpanded && (
-                                <span className="text-xs text-red-500">
-                                  Error loading subprojects
-                                </span>
-                              )}
-                              {subprojects
-                                .filter((sp) => sp.projectId === project.id)
-                                .map((subproject) => (
+                              <Collapsible.Content
+                                className={cn(
+                                  "data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden ml-4",
+                                  collapsed && "ml-0"
+                                )}
+                              >
+                                {subprojectsLoading && isProjectExpanded && (
+                                  <span className="text-xs text-gray-400">
+                                    Loading subprojects...
+                                  </span>
+                                )}
+                                {subprojectsError && isProjectExpanded && (
+                                  <span className="text-xs text-red-500">
+                                    Error loading subprojects
+                                  </span>
+                                )}
+                                {relatedSubprojects.map((subproject) => (
                                   <NavLink
                                     key={subproject.id}
                                     to={`/projects/${project.id}/subprojects/${subproject.id}`}
@@ -567,8 +654,9 @@ export function Sidebar({
                                     {subproject.name}
                                   </NavLink>
                                 ))}
-                            </Collapsible.Content>
-                          </Collapsible.Root>
+                              </Collapsible.Content>
+                            </Collapsible.Root>
+                          )}
                         </div>
                       );
                     })}
@@ -599,7 +687,6 @@ export function Sidebar({
         </nav>
       </ScrollArea>
 
-      {/* Sidebar Footer */}
       <div className="mt-auto border-t p-4">
         {!collapsed && (
           <div className="flex items-center gap-2 mb-2">
@@ -610,7 +697,6 @@ export function Sidebar({
           </div>
         )}
 
-        {/* Logout Button */}
         <Button
           variant="ghost"
           className={cn(
