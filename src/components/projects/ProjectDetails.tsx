@@ -6,7 +6,10 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { toast } from "sonner";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
 import { Card, CardContent } from "../ui/data-display/card";
@@ -28,70 +31,202 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/form/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 import { ProjectActivity } from "./ProjectActivity";
 import { ProjectExport } from "./ProjectExport";
 import { ProjectStats } from "./ProjectStats";
 import { ProjectTeam } from "./ProjectTeam";
 import { SubProjects } from "./SubProjects";
+import {
+  selectAllProjects,
+  selectProjectsLoading,
+} from "../../store/slices/projectsSlice";
+import type { AppDispatch } from "../../store";
+import projectService from "../../services/projects/projectService";
+import type { Project } from "../../services/projects/projectModels";
+import { Progress } from "../ui/feedback/progress";
 
-interface ProjectDetailsProps {
-  projectId: string;
-  onBack: () => void;
-  onSubProjectSelect: (subProjectId: string) => void;
-}
+// Mock project data for enhanced details
+const mockProjectDetails = {
+  id: "proj-001",
+  title: "Rural Healthcare Initiative",
+  category: "Healthcare",
+  type: "Service Delivery",
+  status: "active",
+  progress: 65,
+  subProjects: 4,
+  beneficiaries: 1245,
+  startDate: "2025-01-15",
+  endDate: "2025-07-15",
+  leads: ["Jane Smith", "Robert Johnson"],
+  description:
+    "Comprehensive healthcare services for underserved rural communities in the northern region. This project aims to provide basic healthcare services to communities with limited access to medical facilities. Services include regular health checkups, vaccinations, maternal care, and health education.",
+  objectives: [
+    "Provide healthcare services to at least 2,000 beneficiaries",
+    "Conduct 5,000 health consultations",
+    "Establish 5 temporary health clinics in remote areas",
+    "Train 30 community health workers",
+  ],
+  budget: 450000,
+  fundingSource: "Global Health Fund",
+};
 
-// Mock project data
-const mockProjects = [
-  {
-    id: "proj-001",
-    title: "Rural Healthcare Initiative",
-    category: "Healthcare",
-    type: "Service Delivery",
-    status: "active",
-    progress: 65,
-    subProjects: 4,
-    beneficiaries: 1245,
-    startDate: "2025-01-15",
-    endDate: "2025-07-15",
-    leads: ["Jane Smith", "Robert Johnson"],
-    description:
-      "Comprehensive healthcare services for underserved rural communities in the northern region. This project aims to provide basic healthcare services to communities with limited access to medical facilities. Services include regular health checkups, vaccinations, maternal care, and health education.",
-    objectives: [
-      "Provide healthcare services to at least 2,000 beneficiaries",
-      "Conduct 5,000 health consultations",
-      "Establish 5 temporary health clinics in remote areas",
-      "Train 30 community health workers",
-    ],
-    budget: 450000,
-    fundingSource: "Global Health Fund",
-  },
-];
+export function ProjectDetails() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
-export function ProjectDetails({
-  projectId,
-  onBack,
-  onSubProjectSelect,
-}: ProjectDetailsProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [project, setProject] = useState<Project | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedSubProjectId, setSelectedSubProjectId] = useState<
+    string | null
+  >(null);
 
-  // Find the current project
-  const project = mockProjects.find((p) => p.id === projectId);
+  // Get projects from Redux store
+  const allProjects = useSelector(selectAllProjects);
+  const storeLoading = useSelector(selectProjectsLoading);
+
+  useEffect(() => {
+    const fetchProjectDetails = async () => {
+      if (!id) {
+        toast.error("Project ID is missing");
+        navigate("/projects");
+        return;
+      }
+
+      // First check if we already have the project in the Redux store
+      const projectFromStore = allProjects.find((p) => p.id === id);
+
+      if (projectFromStore) {
+        setProject(projectFromStore);
+        return;
+      }
+
+      // If not in store, fetch from API
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await projectService.getAllProjects();
+        if (response.success) {
+          const foundProject = response.data.find((p) => p.id === id);
+
+          if (foundProject) {
+            setProject(foundProject);
+          } else {
+            // toast.error({
+            //   title: "Project not found",
+            //   description:
+            //     "The project you're trying to view doesn't exist or has been removed.",
+            //   action: {
+            //     label: "Back to Projects",
+            //     onClick: () => navigate("/projects"),
+            //   },
+            // });
+            navigate("/projects");
+          }
+        } else {
+          throw new Error(response.message || "Failed to fetch project");
+        }
+      } catch (err: any) {
+        setError(err.message || "An error occurred while fetching the project");
+        toast.error("Failed to load project details", {
+          description: err.message || "Please try again later",
+          action: {
+            label: "Back to Projects",
+            onClick: () => navigate("/projects"),
+          },
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjectDetails();
+  }, [id, allProjects, navigate]);
+
+  const handleSubProjectSelect = (subProjectId: string) => {
+    setSelectedSubProjectId(subProjectId);
+  };
+
+  const handleBackToProject = () => {
+    setSelectedSubProjectId(null);
+  };
+
+  if (isLoading || storeLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4">Loading project details...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <h2 className="text-xl font-semibold text-destructive">
+          Error loading project
+        </h2>
+        <p className="mt-2 text-muted-foreground">{error}</p>
+        <Button className="mt-4" onClick={() => navigate("/projects")}>
+          Back to Projects
+        </Button>
+      </div>
+    );
+  }
 
   if (!project) {
-    return <div>Project not found</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <h2 className="text-xl font-semibold">Project not found</h2>
+        <p className="mt-2 text-muted-foreground">
+          The project you're looking for doesn't exist or has been removed.
+        </p>
+        <Button className="mt-4" onClick={() => navigate("/projects")}>
+          Back to Projects
+        </Button>
+      </div>
+    );
   }
+
+  // Merge the API project data with mock data for enhanced UI
+  const enhancedProject = {
+    ...project,
+    title: project.name,
+    type: mockProjectDetails.type,
+    progress: mockProjectDetails.progress,
+    subProjects: mockProjectDetails.subProjects,
+    beneficiaries: mockProjectDetails.beneficiaries,
+    startDate: project.createdAt,
+    endDate: project.updatedAt,
+    leads: mockProjectDetails.leads,
+    objectives: mockProjectDetails.objectives,
+    budget: mockProjectDetails.budget,
+    fundingSource: mockProjectDetails.fundingSource,
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={onBack}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/projects")}
+        >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Projects
         </Button>
-        <h2>{project.title}</h2>
+        <h2>{enhancedProject.title}</h2>
       </div>
 
       <Card>
@@ -99,18 +234,22 @@ export function ProjectDetails({
           <div className="flex justify-between">
             <div className="space-y-3 max-w-3xl">
               <div className="flex gap-2">
-                <Badge variant="outline">{project.category}</Badge>
-                <Badge variant="outline">{project.type}</Badge>
+                <Badge variant="outline">{enhancedProject.category}</Badge>
+                <Badge variant="outline">{enhancedProject.type}</Badge>
                 <Badge
                   variant={
-                    project.status === "active" ? "default" : "secondary"
+                    enhancedProject.status === "active"
+                      ? "default"
+                      : "secondary"
                   }
                 >
-                  {project.status === "active" ? "Active" : "Inactive"}
+                  {enhancedProject.status === "active" ? "Active" : "Inactive"}
                 </Badge>
               </div>
 
-              <p className="text-muted-foreground">{project.description}</p>
+              <p className="text-muted-foreground">
+                {enhancedProject.description}
+              </p>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                 <div>
@@ -118,8 +257,8 @@ export function ProjectDetails({
                   <div className="flex items-center gap-1 mt-1">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {new Date(project.startDate).toLocaleDateString()} -{" "}
-                      {new Date(project.endDate).toLocaleDateString()}
+                      {new Date(enhancedProject.startDate).toLocaleDateString()}{" "}
+                      - {new Date(enhancedProject.endDate).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
@@ -130,7 +269,7 @@ export function ProjectDetails({
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span>{project.leads.join(", ")}</span>
+                    <span>{enhancedProject.leads.join(", ")}</span>
                   </div>
                 </div>
 
@@ -140,7 +279,7 @@ export function ProjectDetails({
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                    <span>{project.subProjects} Sub-projects</span>
+                    <span>{enhancedProject.subProjects} Sub-projects</span>
                   </div>
                 </div>
 
@@ -150,7 +289,7 @@ export function ProjectDetails({
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>{project.beneficiaries} Beneficiaries</span>
+                    <span>{enhancedProject.beneficiaries} Beneficiaries</span>
                   </div>
                 </div>
               </div>
@@ -183,14 +322,16 @@ export function ProjectDetails({
                       <Input
                         id="title"
                         className="col-span-3"
-                        defaultValue={project.title}
+                        defaultValue={enhancedProject.title}
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="category" className="text-right">
                         Category *
                       </Label>
-                      <Select defaultValue={project.category.toLowerCase()}>
+                      <Select
+                        defaultValue={enhancedProject.category.toLowerCase()}
+                      >
                         <SelectTrigger className="col-span-3">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
@@ -212,7 +353,7 @@ export function ProjectDetails({
                         Type *
                       </Label>
                       <Select
-                        defaultValue={project.type
+                        defaultValue={enhancedProject.type
                           .toLowerCase()
                           .replace(" ", "-")}
                       >
@@ -238,7 +379,7 @@ export function ProjectDetails({
                       <Label htmlFor="status" className="text-right">
                         Status
                       </Label>
-                      <Select defaultValue={project.status}>
+                      <Select defaultValue={enhancedProject.status}>
                         <SelectTrigger className="col-span-3">
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
@@ -257,7 +398,7 @@ export function ProjectDetails({
                         id="start-date"
                         type="date"
                         className="col-span-3"
-                        defaultValue={project.startDate}
+                        defaultValue={enhancedProject.startDate.split("T")[0]}
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -268,7 +409,7 @@ export function ProjectDetails({
                         id="end-date"
                         type="date"
                         className="col-span-3"
-                        defaultValue={project.endDate}
+                        defaultValue={enhancedProject.endDate.split("T")[0]}
                       />
                     </div>
                     <div className="grid grid-cols-4 items-start gap-4">
@@ -278,7 +419,7 @@ export function ProjectDetails({
                       <Textarea
                         id="description"
                         className="col-span-3"
-                        defaultValue={project.description}
+                        defaultValue={enhancedProject.description}
                         rows={3}
                       />
                     </div>
@@ -303,7 +444,7 @@ export function ProjectDetails({
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full border-b bg-transparent p-0 h-auto">
-         <div className="flex gap-4">
+          <div className="flex gap-4">
             <TabsTrigger
               value="overview"
               className={`rounded-none border-b-2 border-transparent pb-3 ${
@@ -329,6 +470,14 @@ export function ProjectDetails({
               Team
             </TabsTrigger>
             <TabsTrigger
+              value="activity"
+              className={`rounded-none border-b-2 border-transparent pb-3 ${
+                activeTab === "activity" ? "border-primary" : ""
+              }`}
+            >
+              Activity
+            </TabsTrigger>
+            <TabsTrigger
               value="reports"
               className={`rounded-none border-b-2 border-transparent pb-3 ${
                 activeTab === "reports" ? "border-primary" : ""
@@ -342,14 +491,14 @@ export function ProjectDetails({
         <TabsContent value="overview" className="pt-6">
           <div className="grid grid-cols-3 gap-6">
             <div className="col-span-2 space-y-6">
-              <ProjectStats projectId={projectId} />
+              <ProjectStats projectId={enhancedProject.id} />
             </div>
             <div className="space-y-6">
               <Card>
                 <CardContent className="p-6">
                   <h3 className="mb-3">Project Objectives</h3>
                   <ul className="space-y-2">
-                    {project.objectives.map((objective, index) => (
+                    {enhancedProject.objectives.map((objective, index) => (
                       <li key={index} className="flex items-baseline gap-2">
                         <CheckCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                         <span className="text-sm">{objective}</span>
@@ -363,36 +512,44 @@ export function ProjectDetails({
                         Budget
                       </span>
                       <div className="text-xl font-medium">
-                        ${project.budget.toLocaleString()}
+                        ${enhancedProject.budget.toLocaleString()}
                       </div>
                     </div>
                     <div>
                       <span className="text-sm text-muted-foreground">
                         Funding Source
                       </span>
-                      <div>{project.fundingSource}</div>
+                      <div>{enhancedProject.fundingSource}</div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              <ProjectActivity projectId={projectId} />
+              <ProjectActivity projectId={enhancedProject.id} />
             </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="subprojects" className="pt-6">
-          <SubProjects
-            projectId={projectId}
-            onSubProjectSelect={onSubProjectSelect}
-          />
+        {/* IMPORTANT: */}
+        {/* TODO: projectId duhet me shku prej struktures tone, tash shkon statikisht prej mock data*/}
+
+        <TabsContent value="subprojects" className="mt-6">
+          {/* <SubProjects projectId={enhancedProject.id}" /> */}
+          <SubProjects projectId={enhancedProject.id} />
         </TabsContent>
 
         <TabsContent value="team" className="pt-6">
-          <ProjectTeam projectId={projectId} />
+          {/* <ProjectTeam projectId={enhancedProject.id} /> */}
+          <ProjectTeam projectId={enhancedProject.id} />
+        </TabsContent>
+
+        <TabsContent value="activity" className="pt-6">
+          {/* <ProjectActivity projectId={enhancedProject.id} /> */}
+          <ProjectActivity projectId={enhancedProject.id} />
         </TabsContent>
 
         <TabsContent value="reports" className="pt-6">
-          <ProjectExport projectId={projectId} />
+          {/* <ProjectExport projectId={enhancedProject.id} /> */}
+          <ProjectExport projectId={enhancedProject.id} />
         </TabsContent>
       </Tabs>
     </div>

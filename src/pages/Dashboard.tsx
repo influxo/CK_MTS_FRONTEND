@@ -1,12 +1,12 @@
-import { FilterControls } from "../components/FilterControls";
-import { SummaryMetrics } from "../components/SummaryMetrics";
-import { FormSubmissions } from "../components/FormSubmissions";
-import { KpiHighlights } from "../components/KpiHighlights";
-import { SyncStatus } from "../components/SyncStatus";
-import { SystemAlerts } from "../components/SystemAlerts";
-import { BeneficiaryDemographics } from "../components/BeneficiaryDemographics";
-import { ServiceDelivery } from "../components/ServiceDelivery";
-import { RecentActivity } from "../components/RecentActivity";
+import { FilterControls } from "../components/dashboard/FilterControls";
+import { SummaryMetrics } from "../components/dashboard/SummaryMetrics";
+import { FormSubmissions } from "../components/dashboard/FormSubmissions";
+import { KpiHighlights } from "../components/dashboard/KpiHighlights";
+import { SyncStatus } from "../components/dashboard/SyncStatus";
+import { SystemAlerts } from "../components/dashboard/SystemAlerts";
+import { BeneficiaryDemographics } from "../components/dashboard/BeneficiaryDemographics";
+import { ServiceDelivery } from "../components/dashboard/ServiceDelivery";
+import { RecentActivity } from "../components/dashboard/RecentActivity";
 export function Dashboard() {
   return (
     <>
@@ -18,22 +18,26 @@ export function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2">
           <KpiHighlights />
+          <div className="lg:col-span-2 py-6">
+            <BeneficiaryDemographics />
+          </div>
+          <div className="lg:col-span-2">
+            <KpiHighlights />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-1 py-6 gap-6 mb-6">
+            <ServiceDelivery />
+          </div>
         </div>
-        <div className="space-y-6">
+        <div className=" space-y-6">
           <SyncStatus />
           <SystemAlerts />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <BeneficiaryDemographics />
-        <ServiceDelivery />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
           <RecentActivity />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6"></div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div>{/* Empty space for future components or expansion */}</div>
       </div>
     </>

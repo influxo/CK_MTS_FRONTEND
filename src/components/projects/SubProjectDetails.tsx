@@ -6,8 +6,9 @@ import {
   MapPin,
   User,
   Users,
+  ArrowLeft,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
 import { Card, CardContent } from "../ui/data-display/card";
@@ -29,7 +30,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/form/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 
 import { SubProjectActivities } from "./SubProjectActivities";
@@ -37,116 +43,126 @@ import { SubProjectBeneficiaries } from "./SubProjectBeneficiaries";
 import { SubProjectForms } from "./SubProjectForms";
 import { SubProjectReports } from "./SubProjectReports";
 import { SubProjectTeam } from "./SubProjectTeam";
+import { useParams, useNavigate } from "react-router-dom";
+import type { AppDispatch, RootState } from "../../store";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  getSubProjectById,
+  selectSelectedSubproject,
+  selectSubprojectsError,
+  selectSubprojectsLoading,
+} from "../../store/slices/subProjectSlice";
+import { Progress } from "../ui/feedback/progress";
+import { toast } from "sonner";
+// We don't need to import the SubProject type directly as it's already used in Redux selectors
 
+// TODO: remove this mockSubProjectEnhancement, it's just for testing since we dont have that data yet
+//  we fetch the subproject data from the API and enhance it with this data
 interface SubProjectDetailsProps {
-  projectId: string;
-  subProjectId: string;
-  onBack: () => void;
+  onBack?: () => void;
 }
 
-// Mock sub-project data
-const mockSubProjects = [
-  {
-    id: "sub-001",
-    projectId: "proj-001",
-    title: "Maternal Health Services",
-    category: "Healthcare",
-    type: "Service Delivery",
-    status: "active",
-    progress: 72,
-    startDate: "2025-01-20",
-    endDate: "2025-06-30",
-    beneficiaries: 345,
-    lead: "Jane Smith",
-    leadAvatar: "",
-    leadInitials: "JS",
-    description:
-      "Providing maternal health services and education in rural communities. This sub-project focuses on prenatal care, safe deliveries, and postnatal follow-up for mothers and newborns in underserved areas. Services include regular checkups, health education, and emergency referrals when needed.",
-    activities: 48,
-    forms: 125,
-    services: 320,
-    lastSync: "2025-05-23T14:30:00",
-    location: "Northern District",
-    objectives: [
-      "Provide prenatal care to at least 500 pregnant women",
-      "Conduct 100 health education sessions on maternal nutrition",
-      "Train 30 traditional birth attendants on safe delivery practices",
-      "Reduce maternal complications by 30%",
-    ],
-    budget: 120000,
-    fundingSource: "Global Health Fund",
-    recentReports: [
-      {
-        id: "report-001",
-        title: "Monthly Activity Report - April 2025",
-        createdDate: "2025-05-05T10:30:00",
-        type: "activity",
-      },
-      {
-        id: "report-003",
-        title: "Service Delivery Summary",
-        createdDate: "2025-05-15T09:15:00",
-        type: "service",
-      },
-    ],
-  },
-  {
-    id: "sub-002",
-    projectId: "proj-001",
-    title: "Child Vaccination Campaign",
-    category: "Healthcare",
-    type: "Service Delivery",
-    status: "active",
-    progress: 85,
-    startDate: "2025-02-01",
-    endDate: "2025-05-31",
-    beneficiaries: 520,
-    lead: "Robert Johnson",
-    leadAvatar: "",
-    leadInitials: "RJ",
-    description:
-      "Immunization campaign for children under 5 years in rural areas.",
-    activities: 62,
-    forms: 204,
-    services: 518,
-    lastSync: "2025-05-24T09:15:00",
-    location: "Eastern Region",
-    objectives: [
-      "Vaccinate 1,000 children under 5 years",
-      "Establish 10 mobile vaccination clinics",
-      "Train 20 community health workers on vaccination",
-      "Achieve 90% immunization coverage in target areas",
-    ],
-    budget: 85000,
-    fundingSource: "Global Health Fund",
-    recentReports: [],
-  },
-];
+// Mock enhancement data for subprojects to provide UI-specific properties that aren't in the API model
+const mockSubProjectEnhancement = {
+  title: "", // We'll map this from name
+  type: "Service Delivery",
+  progress: 45,
+  beneficiaries: 350,
+  startDate: "2025-02-01",
+  endDate: "2025-06-30",
+  leads: ["Project Coordinator"],
+  objectives: ["Provide services to beneficiaries", "Document all activities"],
+  activities: ["15"],
+  services: ["345"],
+  forms: ["12"],
+  budget: 120000,
+  fundingSource: "Project Funding",
+  location: "Project Area",
+  lastSync: new Date().toISOString(),
+  recentReports: [
+    {
+      id: "rep-001",
+      title: "Progress Report",
+      type: "Monthly",
+      createdDate: new Date().toISOString(),
+    },
+  ],
+};
 
-export function SubProjectDetails({
-  projectId,
-  subProjectId,
-  onBack,
-}: SubProjectDetailsProps) {
+export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  console.log("projectId, veq sa me i ik unused declaration", projectId);
-  console.log("onBack, veq sa me i ik unused declaration", onBack);
-  // Find the current sub-project
-  const subProject = mockSubProjects.find((sp) => sp.id === subProjectId);
 
-  if (!subProject) {
-    return <div>Sub-Project not found</div>;
-  }
+  const params = useParams<{ projectId: string; subprojectId: string }>();
+  const projectId = params.projectId;
+  const subprojectId = params.subprojectId; // Note: URL param is 'subprojectId' (lowercase 'p')
+  const navigate = useNavigate();
+
+  const dispatch = useDispatch<AppDispatch>();
+
+  const subProject = useSelector((state: RootState) =>
+    selectSelectedSubproject(state)
+  );
+  const loading = useSelector((state: RootState) =>
+    selectSubprojectsLoading(state)
+  );
+  const error = useSelector((state: RootState) =>
+    selectSubprojectsError(state)
+  );
+
+  useEffect(() => {
+    if (subprojectId) {
+      dispatch(getSubProjectById({ id: subprojectId }));
+    } else {
+      toast.error("Subproject ID is missing");
+      if (projectId) {
+        navigate(`/projects/${projectId}`);
+      } else {
+        navigate("/projects");
+      }
+    }
+  }, [subprojectId, projectId, dispatch, navigate]);
+
+  const handleBackToProject = () => {
+    if (onBack) {
+      onBack();
+    } else if (projectId) {
+      navigate(`/projects/${projectId}`);
+    } else {
+      navigate("/projects");
+    }
+  };
+
+  if (loading)
+    return (
+      <div className="p-8 flex justify-center">
+        <div>Loading subproject details...</div>
+      </div>
+    );
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  if (!subProject) return <div className="p-8">No Subproject Found</div>;
+
+  // Enhance the subproject data with UI properties
+  const enhancedSubProject = {
+    ...mockSubProjectEnhancement,
+    id: subProject.id,
+    title: subProject.name, // Map name to title
+    description: subProject.description,
+    category: subProject.category,
+    status: subProject.status,
+    projectId: subProject.projectId,
+    createdAt: subProject.createdAt,
+    updatedAt: subProject.updatedAt,
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        {/* <Button variant="outline" size="sm" onClick={onBack}>
+        <Button variant="outline" size="sm" onClick={handleBackToProject}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Project
-        </Button> */}
-        <h2>{subProject.title}</h2>
+        </Button>
+        <h2>{enhancedSubProject.title}</h2>
       </div>
 
       <Card>
@@ -154,18 +170,24 @@ export function SubProjectDetails({
           <div className="flex justify-between">
             <div className="space-y-3 max-w-3xl">
               <div className="flex gap-2">
-                <Badge variant="outline">{subProject.category}</Badge>
-                <Badge variant="outline">{subProject.type}</Badge>
+                <Badge variant="outline">{enhancedSubProject.category}</Badge>
+                <Badge variant="outline">{enhancedSubProject.type}</Badge>
                 <Badge
                   variant={
-                    subProject.status === "active" ? "default" : "secondary"
+                    enhancedSubProject.status === "active"
+                      ? "default"
+                      : "secondary"
                   }
                 >
-                  {subProject.status === "active" ? "Active" : "Inactive"}
+                  {enhancedSubProject.status === "active"
+                    ? "Active"
+                    : "Inactive"}
                 </Badge>
               </div>
 
-              <p className="text-muted-foreground">{subProject.description}</p>
+              <p className="text-muted-foreground">
+                {enhancedSubProject.description}
+              </p>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                 <div>
@@ -173,8 +195,13 @@ export function SubProjectDetails({
                   <div className="flex items-center gap-1 mt-1">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {new Date(subProject.startDate).toLocaleDateString()} -{" "}
-                      {new Date(subProject.endDate).toLocaleDateString()}
+                      {new Date(
+                        enhancedSubProject.startDate
+                      ).toLocaleDateString()}{" "}
+                      -{" "}
+                      {new Date(
+                        enhancedSubProject.endDate
+                      ).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
@@ -183,7 +210,12 @@ export function SubProjectDetails({
                   <div className="text-sm text-muted-foreground">Lead</div>
                   <div className="flex items-center gap-1 mt-1">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span>{subProject.lead}</span>
+                    <span>
+                      {enhancedSubProject.leads &&
+                      enhancedSubProject.leads.length > 0
+                        ? enhancedSubProject.leads[0]
+                        : "No lead assigned"}
+                    </span>
                   </div>
                 </div>
 
@@ -191,7 +223,7 @@ export function SubProjectDetails({
                   <div className="text-sm text-muted-foreground">Location</div>
                   <div className="flex items-center gap-1 mt-1">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{subProject.location}</span>
+                    <span>{enhancedSubProject.location}</span>
                   </div>
                 </div>
 
@@ -201,7 +233,9 @@ export function SubProjectDetails({
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>{subProject.beneficiaries} Beneficiaries</span>
+                    <span>
+                      {enhancedSubProject.beneficiaries} Beneficiaries
+                    </span>
                   </div>
                 </div>
               </div>
@@ -209,13 +243,10 @@ export function SubProjectDetails({
               <div className="mt-4">
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-muted-foreground">Progress</span>
-                  <span>{subProject.progress}%</span>
+                  <span>{enhancedSubProject.progress}%</span>
                 </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary"
-                    style={{ width: `${subProject.progress}%` }}
-                  ></div>
+                <div className="progress-bar h-2 mt-1 w-full overflow-hidden rounded">
+                  <Progress value={enhancedSubProject.progress} />
                 </div>
               </div>
             </div>
@@ -247,14 +278,16 @@ export function SubProjectDetails({
                       <Input
                         id="title"
                         className="col-span-3"
-                        defaultValue={subProject.title}
+                        defaultValue={enhancedSubProject.title}
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="category" className="text-right">
                         Category *
                       </Label>
-                      <Select defaultValue={subProject.category.toLowerCase()}>
+                      <Select
+                        defaultValue={enhancedSubProject.category.toLowerCase()}
+                      >
                         <SelectTrigger className="col-span-3">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
@@ -273,7 +306,7 @@ export function SubProjectDetails({
                         Type *
                       </Label>
                       <Select
-                        defaultValue={subProject.type
+                        defaultValue={enhancedSubProject.type
                           .toLowerCase()
                           .replace(" ", "-")}
                       >
@@ -299,7 +332,7 @@ export function SubProjectDetails({
                       <Label htmlFor="status" className="text-right">
                         Status
                       </Label>
-                      <Select defaultValue={subProject.status}>
+                      <Select defaultValue={enhancedSubProject.status}>
                         <SelectTrigger className="col-span-3">
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
@@ -317,7 +350,7 @@ export function SubProjectDetails({
                       <Input
                         id="location"
                         className="col-span-3"
-                        defaultValue={subProject.location}
+                        defaultValue={enhancedSubProject.location}
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -328,7 +361,7 @@ export function SubProjectDetails({
                         id="start-date"
                         type="date"
                         className="col-span-3"
-                        defaultValue={subProject.startDate}
+                        defaultValue={enhancedSubProject.startDate}
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
@@ -339,7 +372,7 @@ export function SubProjectDetails({
                         id="end-date"
                         type="date"
                         className="col-span-3"
-                        defaultValue={subProject.endDate}
+                        defaultValue={enhancedSubProject.endDate}
                       />
                     </div>
                     <div className="grid grid-cols-4 items-start gap-4">
@@ -349,7 +382,7 @@ export function SubProjectDetails({
                       <Textarea
                         id="description"
                         className="col-span-3"
-                        defaultValue={subProject.description}
+                        defaultValue={enhancedSubProject.description}
                         rows={3}
                       />
                     </div>
@@ -439,7 +472,7 @@ export function SubProjectDetails({
                         Activities
                       </div>
                       <div className="text-2xl font-medium">
-                        {subProject.activities}
+                        {enhancedSubProject.activities}
                       </div>
                       <div className="text-muted-foreground text-sm">
                         Total activities
@@ -451,7 +484,7 @@ export function SubProjectDetails({
                         Beneficiaries
                       </div>
                       <div className="text-2xl font-medium">
-                        {subProject.beneficiaries}
+                        {enhancedSubProject.beneficiaries}
                       </div>
                       <div className="text-muted-foreground text-sm">
                         Registered individuals
@@ -461,7 +494,7 @@ export function SubProjectDetails({
                     <div className="space-y-1">
                       <div className="text-muted-foreground text-sm">Forms</div>
                       <div className="text-2xl font-medium">
-                        {subProject.forms}
+                        {enhancedSubProject.forms}
                       </div>
                       <div className="text-muted-foreground text-sm">
                         Submissions collected
@@ -473,7 +506,7 @@ export function SubProjectDetails({
                         Services
                       </div>
                       <div className="text-2xl font-medium">
-                        {subProject.services}
+                        {enhancedSubProject.services}
                       </div>
                       <div className="text-muted-foreground text-sm">
                         Services delivered
@@ -553,7 +586,7 @@ export function SubProjectDetails({
                 <CardContent className="p-6">
                   <h3 className="mb-3">Sub-Project Objectives</h3>
                   <ul className="space-y-2">
-                    {subProject.objectives.map((objective, index) => (
+                    {enhancedSubProject.objectives.map((objective, index) => (
                       <li key={index} className="flex items-baseline gap-2">
                         <CheckCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                         <span className="text-sm">{objective}</span>
@@ -567,14 +600,14 @@ export function SubProjectDetails({
                         Budget
                       </span>
                       <div className="text-xl font-medium">
-                        ${subProject.budget.toLocaleString()}
+                        ${enhancedSubProject.budget.toLocaleString()}
                       </div>
                     </div>
                     <div>
                       <span className="text-sm text-muted-foreground">
                         Funding Source
                       </span>
-                      <div>{subProject.fundingSource}</div>
+                      <div>{enhancedSubProject.fundingSource}</div>
                     </div>
                   </div>
                 </CardContent>
@@ -590,7 +623,7 @@ export function SubProjectDetails({
                         Last synced
                       </span>
                       <span className="text-sm">
-                        {new Date(subProject.lastSync).toLocaleString()}
+                        {new Date(enhancedSubProject.lastSync).toLocaleString()}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -613,7 +646,7 @@ export function SubProjectDetails({
                 </CardContent>
               </Card>
 
-              {subProject.recentReports.length > 0 && (
+              {enhancedSubProject.recentReports.length > 0 && (
                 <Card>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-center mb-3">
@@ -628,7 +661,7 @@ export function SubProjectDetails({
                     </div>
 
                     <div className="space-y-3">
-                      {subProject.recentReports.map((report) => (
+                      {enhancedSubProject.recentReports.map((report) => (
                         <div key={report.id} className="flex items-start gap-3">
                           <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -666,23 +699,23 @@ export function SubProjectDetails({
         </TabsContent>
 
         <TabsContent value="forms" className="pt-6">
-          <SubProjectForms subProjectId={subProjectId} />
+          <SubProjectForms subProjectId={subprojectId || ""} />
         </TabsContent>
 
         <TabsContent value="activities" className="pt-6">
-          <SubProjectActivities subProjectId={subProjectId} />
+          <SubProjectActivities subProjectId={subprojectId || ""} />
         </TabsContent>
 
         <TabsContent value="beneficiaries" className="pt-6">
-          <SubProjectBeneficiaries subProjectId={subProjectId} />
+          <SubProjectBeneficiaries subProjectId={subprojectId || ""} />
         </TabsContent>
 
         <TabsContent value="team" className="pt-6">
-          <SubProjectTeam subProjectId={subProjectId} />
+          <SubProjectTeam subProjectId={subprojectId || ""} />
         </TabsContent>
 
         <TabsContent value="reports" className="pt-6">
-          <SubProjectReports subProjectId={subProjectId} />
+          <SubProjectReports subProjectId={subprojectId || ""} />
         </TabsContent>
       </Tabs>
     </div>

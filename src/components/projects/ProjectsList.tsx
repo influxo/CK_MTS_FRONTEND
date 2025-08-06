@@ -45,12 +45,17 @@ import { Progress } from "../ui/feedback/progress";
 import type {
   CreateProjectRequest,
   CreateProjectResponse,
+  Project,
 } from "../../services/projects/projectModels";
 import projectService from "../../services/projects/projectService";
-
-interface ProjectsListProps {
-  onProjectSelect: (projectId: string) => void;
-}
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store";
+import {
+  createProject,
+  selectCreateSuccessMessage,
+  selectProjectsError,
+} from "../../store/slices/projectsSlice";
+import { useNavigate } from "react-router-dom";
 
 // Mock project data
 const mockProjects = [
@@ -148,7 +153,11 @@ const mockProjects = [
   },
 ];
 
-export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
+interface ProjectsListProps {
+  projects: Project[];
+}
+
+export function ProjectsList({ projects }: ProjectsListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewType, setViewType] = useState("grid");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -164,6 +173,11 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
     description: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const dispatch = useDispatch<AppDispatch>();
+  const error = useSelector(selectProjectsError);
+  const successMessage = useSelector(selectCreateSuccessMessage);
+  const navigate = useNavigate();
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -181,8 +195,6 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
       [fieldName]: value,
     }));
   };
-
-  console.log("Form Data", formData);
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -223,37 +235,40 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
     }
   };
 
-  const submitCreateProject = async () => {
-    console.log("Form Data Submitted:", formData);
+  // const submitCreateProject = async () => {
+  //   console.log("Form Data Submitted:", formData);
 
-    try {
-      const response: CreateProjectResponse =
-        await projectService.createProject(formData);
+  //   try {
+  //     const response: CreateProjectResponse =
+  //       await projectService.createProject(formData);
 
-      if (response.success && response.data) {
-        console.log("Project created successfully:", response.data);
-        // Optionally redirect or reset form
-        // setFormData({ name: "", category: "", status: "active", description: "" });
-      } else {
-        console.error("Error:", response.message);
-      }
-    } catch (err) {
-      console.error("Unexpected error while creating project:", err);
-    }
+  //     if (response.success && response.data) {
+  //       console.log("Project created successfully:", response.data);
+  //       // Optionally redirect or reset form
+  //       // setFormData({ name: "", category: "", status: "active", description: "" });
+  //     } else {
+  //       console.error("Error:", response.message);
+  //     }
+  //   } catch (err) {
+  //     console.error("Unexpected error while creating project:", err);
+  //   }
+  // };
+
+  const submitCreateProject = () => {
+    dispatch(createProject(formData));
   };
-
   // Filter projects based on search and filters
-  const filteredProjects = mockProjects.filter((project) => {
-    const matchesSearch =
-      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || project.status === statusFilter;
-    const matchesCategory =
-      categoryFilter === "all" || project.category === categoryFilter;
+  // const filteredProjects = mockProjects.filter((project) => {
+  //   const matchesSearch =
+  //     project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     project.description.toLowerCase().includes(searchQuery.toLowerCase());
+  //   const matchesStatus =
+  //     statusFilter === "all" || project.status === statusFilter;
+  //   const matchesCategory =
+  //     categoryFilter === "all" || project.category === categoryFilter;
 
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
+  //   return matchesSearch && matchesStatus && matchesCategory;
+  // });
 
   const categories = [...new Set(mockProjects.map((p) => p.category))];
 
@@ -491,7 +506,7 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
       <div className="mt-6">
         {viewType === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => (
+            {projects.map((project) => (
               <Card key={project.id} className="overflow-hidden">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
@@ -518,7 +533,7 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => onProjectSelect(project.id)}
+                          onClick={() => navigate(`/projects/${project.id}`)}
                         >
                           View Details
                         </DropdownMenuItem>
@@ -538,21 +553,25 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Progress</span>
-                        <span>{project.progress}%</span>
+                        {/* <span>{project.progress}%</span> */}
+                        <span>50%</span>
                       </div>
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <Progress value={project.progress} />
+                        {/* <Progress value={project.progress} /> */}
+                        <Progress value={50} />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div className="flex items-center gap-1">
                         <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                        <span>{project.subProjects} Sub-projects</span>
+                        {/* <span>{project.subProjects} Sub-projects</span> */}
+                        <span>5 Sub-projects</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{project.beneficiaries} Beneficiaries</span>
+                        {/* <span>{project.beneficiaries} Beneficiaries</span> */}
+                        <span>100 Beneficiaries</span>
                       </div>
                     </div>
                   </div>
@@ -560,11 +579,13 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 <CardFooter className="border-t pt-3 flex justify-between text-sm">
                   <div>
                     <span className="text-muted-foreground">Start: </span>
-                    {new Date(project.startDate).toLocaleDateString()}
+                    {/* {new Date(project.startDate).toLocaleDateString()} */}
+                    {new Date(project.createdAt).toLocaleDateString()}
                   </div>
                   <div>
                     <span className="text-muted-foreground">End: </span>
-                    {new Date(project.endDate).toLocaleDateString()}
+                    {/* {new Date(project.endDate).toLocaleDateString()} */}
+                    {new Date(project.updatedAt).toLocaleDateString()}
                   </div>
                 </CardFooter>
               </Card>
@@ -585,7 +606,8 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                 </tr>
               </thead>
               <tbody>
-                {filteredProjects.map((project) => (
+                {/* {filteredProjects.map((project) => ( */}
+                {projects.map((project) => (
                   <tr key={project.id} className="border-b">
                     <td className="p-3">
                       {/* Project Name o kan project.title */}
@@ -609,29 +631,31 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary"
-                            style={{ width: `${project.progress}%` }}
-                          ></div>
+                          {/* <Progress value={project.progress} /> */}
+                          <Progress value={50} />
                         </div>
-                        <span className="text-sm">{project.progress}%</span>
+                        {/* <span className="text-sm">{project.progress}%</span> */}
+                        <span className="text-sm">50%</span>
                       </div>
                     </td>
                     <td className="p-3 text-sm">
                       <div>
-                        {new Date(project.startDate).toLocaleDateString()}
+                        {/* {new Date(project.startDate).toLocaleDateString()} */}
+                        {new Date(project.createdAt).toLocaleDateString()}
                       </div>
                       <div className="text-muted-foreground">to</div>
                       <div>
-                        {new Date(project.endDate).toLocaleDateString()}
+                        {/* {new Date(project.endDate).toLocaleDateString()} */}
+                        {new Date(project.updatedAt).toLocaleDateString()}
                       </div>
                     </td>
                     <td className="p-3">
                       <div className="text-sm">
-                        {project.subProjects} Sub-projects
+                        {/* {project.subProjects} Sub-projects */}5 Sub-projects
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {project.beneficiaries} Beneficiaries
+                        {/* {project.beneficiaries} Beneficiaries */}
+                        100 Beneficiaries
                       </div>
                     </td>
                     <td className="p-3">
@@ -639,7 +663,7 @@ export function ProjectsList({ onProjectSelect }: ProjectsListProps) {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => onProjectSelect(project.id)}
+                          onClick={() => navigate(`/projects/${project.id}`)}
                         >
                           View
                         </Button>

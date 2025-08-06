@@ -1,64 +1,28 @@
-import { useOutletContext } from "react-router-dom";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { ProjectsList } from "../components/projects/ProjectsList";
-import { ProjectDetails } from "../components/projects/ProjectDetails";
-import { SubProjectDetails } from "../components/projects/SubProjectDetails";
-
-type AppLayoutContext = {
-  selectedProjectId: string | null;
-  selectedSubProjectId: string | null;
-  setSelectedProjectId: (id: string | null) => void;
-  setSelectedSubProjectId: (id: string | null) => void;
-};
+import type { AppDispatch } from "../store";
+import {
+  fetchProjects,
+  selectAllProjects,
+  selectProjectsError,
+  selectProjectsLoading,
+} from "../store/slices/projectsSlice";
 
 export function Projects() {
-  const {
-    selectedProjectId,
-    selectedSubProjectId,
-    setSelectedProjectId,
-    setSelectedSubProjectId
-  } = useOutletContext<AppLayoutContext>();
+  const dispatch = useDispatch<AppDispatch>();
+  const projects = useSelector(selectAllProjects);
+  const isLoading = useSelector(selectProjectsLoading);
+  const error = useSelector(selectProjectsError);
 
-  const handleProjectSelect = (projectId: string) => {
-    setSelectedProjectId(projectId);
-    setSelectedSubProjectId(null);
-  };
+  useEffect(() => {
+    dispatch(fetchProjects());
+  }, [dispatch]);
 
-  const handleSubProjectSelect = (subProjectId: string) => {
-    setSelectedSubProjectId(subProjectId);
-  };
+  console.log("Projects", projects);
 
-  const handleBackToProjects = () => {
-    setSelectedProjectId(null);
-    setSelectedSubProjectId(null);
-  };
+  if (isLoading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
 
-  const handleBackToProject = () => {
-    setSelectedSubProjectId(null);
-  };
-
-  if (!selectedProjectId) {
-    return <ProjectsList onProjectSelect={handleProjectSelect} />;
-  }
-
-  if (selectedProjectId && !selectedSubProjectId) {
-    return (
-      <ProjectDetails
-        projectId={selectedProjectId}
-        onBack={handleBackToProjects}
-        onSubProjectSelect={handleSubProjectSelect}
-      />
-    );
-  }
-
-  if (selectedProjectId && selectedSubProjectId) {
-    return (
-      <SubProjectDetails
-        projectId={selectedProjectId}
-        subProjectId={selectedSubProjectId}
-        onBack={handleBackToProject}
-      />
-    );
-  }
-
-  return null;
+  return <ProjectsList projects={projects} />;
 }

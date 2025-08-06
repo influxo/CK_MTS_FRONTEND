@@ -10,7 +10,7 @@ import {
 
 export function FilterControls() {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-card rounded-lg border">
+    <div className="flex flex-col  bg-[#F7F9FB] sm:flex-row gap-4 mb-6 p-4 bg-card rounded-lg border">
       <div className="flex flex-wrap gap-4 flex-1">
         <Select defaultValue="all-projects">
           <SelectTrigger className="w-[200px]">

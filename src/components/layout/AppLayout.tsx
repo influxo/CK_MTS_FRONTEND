@@ -2,6 +2,14 @@ import { useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchProjects,
+  selectAllProjects,
+  selectProjectsError,
+  selectProjectsLoading,
+} from "../../store/slices/projectsSlice";
+import type { AppDispatch } from "../../store";
 
 const AppLayout = () => {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
@@ -45,6 +53,17 @@ const AppLayout = () => {
     return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
+  const dispatch = useDispatch<AppDispatch>();
+  const projects = useSelector(selectAllProjects);
+  const isLoading = useSelector(selectProjectsLoading);
+  const error = useSelector(selectProjectsError);
+
+  useEffect(() => {
+    if (projects.length === 0) {
+      dispatch(fetchProjects());
+    }
+  }, [dispatch, projects.length]);
+
   return (
     <div className="flex h-screen bg-white">
       <Sidebar
@@ -52,6 +71,9 @@ const AppLayout = () => {
         mobileOpen={mobileSidebarOpen}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         onCloseMobile={() => setMobileSidebarOpen(false)}
+        projects={projects} // pass projects as prop (optional, or use Redux in Sidebar)
+        projectsLoading={isLoading}
+        projectsError={error}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">

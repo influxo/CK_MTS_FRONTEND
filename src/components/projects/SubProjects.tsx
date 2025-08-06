@@ -9,19 +9,33 @@ import {
   Trash,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../store";
+
+import type {
+  CreateSubProjectRequest,
+  SubProject,
+} from "../../services/subprojects/subprojectModels";
+
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "../ui/overlay/dialog";
 import {
   DropdownMenu,
@@ -48,152 +62,112 @@ import {
 } from "../ui/data-display/table";
 import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
+import {
+  clearSubprojectMessages,
+  createSubProject,
+  fetchSubProjectsByProjectId,
+  selectAllSubprojects,
+  selectSubprojectsError,
+  selectSubprojectsLoading,
+} from "../../store/slices/subProjectSlice";
+import { selectCreateSuccessMessage } from "../../store/slices/projectsSlice";
 
 interface SubProjectsProps {
-  projectId: string;
-  onSubProjectSelect: (subProjectId: string) => void;
+  projectId?: string;
 }
 
-// Mock sub-project data
-const mockSubProjects = [
-  {
-    id: "sub-001",
-    projectId: "proj-001",
-    title: "Maternal Health Services",
-    category: "Healthcare",
-    status: "active",
-    progress: 72,
-    startDate: "2025-01-20",
-    endDate: "2025-06-30",
-    beneficiaries: 345,
-    lead: "Jane Smith",
-    leadAvatar: "",
-    leadInitials: "JS",
-    description:
-      "Providing maternal health services and education in rural communities.",
-    activities: 48,
-    forms: 125,
-    services: 320,
-    lastSync: "2025-05-23T14:30:00",
-    location: "Northern District",
-  },
-  {
-    id: "sub-002",
-    projectId: "proj-001",
-    title: "Child Vaccination Campaign",
-    category: "Healthcare",
-    status: "active",
-    progress: 85,
-    startDate: "2025-02-01",
-    endDate: "2025-05-31",
-    beneficiaries: 520,
-    lead: "Robert Johnson",
-    leadAvatar: "",
-    leadInitials: "RJ",
-    description:
-      "Immunization campaign for children under 5 years in rural areas.",
-    activities: 62,
-    forms: 204,
-    services: 518,
-    lastSync: "2025-05-24T09:15:00",
-    location: "Eastern Region",
-  },
-  {
-    id: "sub-003",
-    projectId: "proj-001",
-    title: "Community Health Worker Training",
-    category: "Training",
-    status: "active",
-    progress: 60,
-    startDate: "2025-02-15",
-    endDate: "2025-04-15",
-    beneficiaries: 28,
-    lead: "Sarah Adams",
-    leadAvatar: "",
-    leadInitials: "SA",
-    description:
-      "Training local community health workers in basic healthcare provision.",
-    activities: 18,
-    forms: 42,
-    services: 0,
-    lastSync: "2025-05-22T16:45:00",
-    location: "Central District",
-  },
-  {
-    id: "sub-004",
-    projectId: "proj-001",
-    title: "Rural Health Clinic Setup",
-    category: "Infrastructure",
-    status: "active",
-    progress: 45,
-    startDate: "2025-03-01",
-    endDate: "2025-07-15",
-    beneficiaries: 0,
-    lead: "David Miller",
-    leadAvatar: "",
-    leadInitials: "DM",
-    description: "Establishing temporary health clinics in 5 remote locations.",
-    activities: 24,
-    forms: 36,
-    services: 0,
-    lastSync: "2025-05-21T11:20:00",
-    location: "Western Region",
-  },
-  {
-    id: "sub-005",
-    projectId: "proj-002",
-    title: "Teacher Training Program",
-    category: "Education",
-    status: "active",
-    progress: 50,
-    startDate: "2025-02-10",
-    endDate: "2025-05-10",
-    beneficiaries: 75,
-    lead: "Michael Wong",
-    leadAvatar: "",
-    leadInitials: "MW",
-    description:
-      "Training primary school teachers in improved teaching methodologies.",
-    activities: 35,
-    forms: 82,
-    services: 150,
-    lastSync: "2025-05-20T15:30:00",
-    location: "Southern Region",
-  },
-];
+export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
+  const navigate = useNavigate();
+  const { projectId: paramProjectId } = useParams<{ projectId: string }>();
+  const projectId = paramProjectId || propProjectId || "";
+  const dispatch = useDispatch<AppDispatch>();
 
-export function SubProjects({
-  projectId,
-  onSubProjectSelect,
-}: SubProjectsProps) {
+  const subprojects = useSelector((state: RootState) =>
+    selectAllSubprojects(state)
+  );
+  const isLoading = useSelector((state: RootState) =>
+    selectSubprojectsLoading(state)
+  );
+  const error = useSelector((state: RootState) =>
+    selectSubprojectsError(state)
+  );
+  const createSuccessMessage = useSelector((state: RootState) =>
+    selectCreateSuccessMessage(state)
+  );
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [viewType, setViewType] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
-  // Filter sub-projects for this project
-  const filteredSubProjects = mockSubProjects.filter((subProject) => {
-    const matchesProject = subProject.projectId === projectId;
+  // Form state for creation
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [status, setStatus] = useState<"active" | "inactive" | "pending">(
+    "active"
+  );
+
+  useEffect(() => {
+    if (projectId) {
+      dispatch(fetchSubProjectsByProjectId({ projectId: projectId }));
+    }
+  }, [projectId, dispatch]);
+
+  useEffect(() => {
+    if (isCreateDialogOpen) {
+      dispatch(clearSubprojectMessages());
+    }
+  }, [isCreateDialogOpen, dispatch]);
+
+  useEffect(() => {
+    if (createSuccessMessage) {
+      setName("");
+      setDescription("");
+      setCategory("");
+      setStatus("active");
+      const t = setTimeout(() => {
+        setIsCreateDialogOpen(false);
+        dispatch(clearSubprojectMessages());
+      }, 1000);
+      return () => clearTimeout(t);
+    }
+  }, [createSuccessMessage, dispatch]);
+
+  const handleViewSubProject = (subProjectId: string) => {
+    console.log(`Navigate to subproject: ${subProjectId}`);
+    // e.g., navigate(`/projects/${projectId}/subprojects/${subProjectId}`);
+  };
+
+  const handleCreateSubmit = async () => {
+    if (!projectId) return;
+    if (!name.trim() || !category.trim()) {
+      return;
+    }
+
+    const payload: CreateSubProjectRequest = {
+      name: name.trim(),
+      description: description.trim(),
+      category: category.trim(),
+      status,
+      projectId,
+    };
+
+    await dispatch(createSubProject(payload));
+  };
+
+  const filteredSubProjects = subprojects.filter((sp: SubProject) => {
+    const matchesProject = sp.projectId === projectId;
     const matchesSearch =
-      subProject.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      subProject.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || subProject.status === statusFilter;
+      sp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      sp.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || sp.status === statusFilter;
     const matchesCategory =
       categoryFilter === "all" ||
-      subProject.category.toLowerCase() === categoryFilter;
-
+      sp.category.toLowerCase() === categoryFilter.toLowerCase();
     return matchesProject && matchesSearch && matchesStatus && matchesCategory;
   });
-
-  const categories = [
-    ...new Set(
-      mockSubProjects
-        .filter((s) => s.projectId === projectId)
-        .map((s) => s.category)
-    ),
-  ];
 
   return (
     <div className="space-y-6">
@@ -223,24 +197,29 @@ export function SubProjects({
                   id="title"
                   className="col-span-3"
                   placeholder="Sub-project title"
+                  value={name}
+                  onChange={(e) => setName(e.currentTarget.value)}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right">
                   Category *
                 </Label>
-                <Select>
+                <Select
+                  value={category}
+                  onValueChange={(val) => setCategory(val as string)}
+                >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="healthcare">Healthcare</SelectItem>
-                    <SelectItem value="education">Education</SelectItem>
-                    <SelectItem value="infrastructure">
+                    <SelectItem value="Healthcare">Healthcare</SelectItem>
+                    <SelectItem value="Education">Education</SelectItem>
+                    <SelectItem value="Infrastructure">
                       Infrastructure
                     </SelectItem>
-                    <SelectItem value="training">Training</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="Training">Training</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -248,67 +227,22 @@ export function SubProjects({
                 <Label htmlFor="status" className="text-right">
                   Status
                 </Label>
-                <Select defaultValue="active">
+                <Select
+                  value={status}
+                  onValueChange={(val) =>
+                    setStatus(val as "active" | "inactive" | "pending")
+                  }
+                  defaultValue="active"
+                >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="planning">Planning</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="lead" className="text-right">
-                  Lead *
-                </Label>
-                <Select>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select lead" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="jane-smith">Jane Smith</SelectItem>
-                    <SelectItem value="robert-johnson">
-                      Robert Johnson
-                    </SelectItem>
-                    <SelectItem value="sarah-adams">Sarah Adams</SelectItem>
-                    <SelectItem value="david-miller">David Miller</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="location" className="text-right">
-                  Location *
-                </Label>
-                <Input
-                  id="location"
-                  className="col-span-3"
-                  placeholder="Project location"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="start-date" className="text-right">
-                  Start Date *
-                </Label>
-                <Input id="start-date" type="date" className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="end-date" className="text-right">
-                  End Date *
-                </Label>
-                <Input id="end-date" type="date" className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="beneficiaries" className="text-right">
-                  Beneficiaries
-                </Label>
-                <Input
-                  id="beneficiaries"
-                  type="number"
-                  className="col-span-3"
-                  placeholder="0"
-                />
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="description" className="text-right pt-2">
@@ -319,18 +253,34 @@ export function SubProjects({
                   className="col-span-3"
                   placeholder="Provide a description of the sub-project"
                   rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.currentTarget.value)}
                 />
               </div>
             </div>
+            {error && (
+              <div className="text-destructive text-sm mb-2">{error}</div>
+            )}
+            {createSuccessMessage && (
+              <div className="text-green-600 text-sm mb-2">
+                {createSuccessMessage}
+              </div>
+            )}
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => setIsCreateDialogOpen(false)}
+                onClick={() => {
+                  setIsCreateDialogOpen(false);
+                  dispatch(clearSubprojectMessages());
+                }}
               >
                 Cancel
               </Button>
-              <Button onClick={() => setIsCreateDialogOpen(false)}>
-                Create Sub-Project
+              <Button
+                onClick={handleCreateSubmit}
+                disabled={isLoading || !name.trim() || !category.trim()}
+              >
+                {isLoading ? "Creating..." : "Create Sub-Project"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -358,7 +308,7 @@ export function SubProjects({
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="planning">Planning</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -368,11 +318,6 @@ export function SubProjects({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category.toLowerCase()}>
-                    {category}
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
           </div>
@@ -391,12 +336,12 @@ export function SubProjects({
 
       {viewType === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredSubProjects.map((subProject) => (
+          {filteredSubProjects.map((subProject: SubProject) => (
             <Card key={subProject.id}>
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
-                    <h4 className="font-medium">{subProject.title}</h4>
+                    <h4 className="font-medium">{subProject.name}</h4>
                     <div className="flex gap-2">
                       <Badge variant="outline">{subProject.category}</Badge>
                       <Badge
@@ -418,7 +363,7 @@ export function SubProjects({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => onSubProjectSelect(subProject.id)}
+                        onClick={() => handleViewSubProject(subProject.id)}
                       >
                         View Details
                       </DropdownMenuItem>
@@ -438,57 +383,52 @@ export function SubProjects({
                 <p className="text-muted-foreground text-sm line-clamp-2 mb-4">
                   {subProject.description}
                 </p>
-
                 <div className="flex items-center gap-3 mb-4">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={subProject.leadAvatar}
-                      alt={subProject.lead}
-                    />
-                    <AvatarFallback>{subProject.leadInitials}</AvatarFallback>
+                    <AvatarImage src="" alt={subProject.name} />
+                    <AvatarFallback>
+                      {subProject.name.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="text-sm">
-                    <div>{subProject.lead}</div>
+                    <div>{/* lead placeholder */}</div>
                     <div className="text-muted-foreground">Project Lead</div>
                   </div>
                 </div>
-
                 <div className="space-y-3">
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Progress</span>
-                      <span>{subProject.progress}%</span>
+                      <span>—</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
                         className="h-full bg-primary"
-                        style={{ width: `${subProject.progress}%` }}
+                        style={{ width: `0%` }}
                       ></div>
                     </div>
                   </div>
-
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="flex items-center gap-1">
                       <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                      <span>{subProject.activities} Activities</span>
+                      <span>— Activities</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>{subProject.beneficiaries} Beneficiaries</span>
+                      <span>— Beneficiaries</span>
                     </div>
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="border-t pt-3 flex justify-between text-sm">
                 <div>
-                  <span className="text-muted-foreground">Location: </span>
-                  {subProject.location}
+                  <span className="text-muted-foreground">Location: </span>—
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="text-primary"
-                  onClick={() => onSubProjectSelect(subProject.id)}
+                  onClick={() => handleViewSubProject(subProject.id)}
                 >
                   View Details
                 </Button>
@@ -513,14 +453,14 @@ export function SubProjects({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSubProjects.map((subProject) => (
+              {filteredSubProjects.map((subProject: SubProject) => (
                 <TableRow key={subProject.id}>
                   <TableCell className="font-medium">
                     <div
                       className="hover:text-primary cursor-pointer"
-                      onClick={() => onSubProjectSelect(subProject.id)}
+                      onClick={() => handleViewSubProject(subProject.id)}
                     >
-                      {subProject.title}
+                      {subProject.name}
                     </div>
                     <div className="text-muted-foreground text-sm line-clamp-1">
                       {subProject.description}
@@ -543,45 +483,38 @@ export function SubProjects({
                       <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
                         <div
                           className="h-full bg-primary"
-                          style={{ width: `${subProject.progress}%` }}
+                          style={{ width: `0%` }}
                         ></div>
                       </div>
-                      <span className="text-sm">{subProject.progress}%</span>
+                      <span className="text-sm">—%</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      <span>
-                        {new Date(subProject.startDate).toLocaleDateString()} -{" "}
-                        {new Date(subProject.endDate).toLocaleDateString()}
-                      </span>
+                      <span>— - —</span>
                     </div>
                   </TableCell>
-                  <TableCell>{subProject.location}</TableCell>
+                  <TableCell>—</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
-                        <AvatarImage
-                          src={subProject.leadAvatar}
-                          alt={subProject.lead}
-                        />
                         <AvatarFallback>
-                          {subProject.leadInitials}
+                          {subProject.name.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span>{subProject.lead}</span>
+                      <span>—</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm space-y-1">
                       <div className="flex items-center gap-1">
                         <Users className="h-3 w-3 text-muted-foreground" />
-                        <span>{subProject.beneficiaries} Beneficiaries</span>
+                        <span>— Beneficiaries</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <CheckCircle className="h-3 w-3 text-muted-foreground" />
-                        <span>{subProject.activities} Activities</span>
+                        <span>— Activities</span>
                       </div>
                     </div>
                   </TableCell>
@@ -590,7 +523,7 @@ export function SubProjects({
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => onSubProjectSelect(subProject.id)}
+                        onClick={() => handleViewSubProject(subProject.id)}
                       >
                         View
                       </Button>

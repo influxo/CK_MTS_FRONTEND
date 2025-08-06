@@ -3,6 +3,7 @@ import getApiUrl from "../apiUrl";
 import type {
   CreateProjectRequest,
   CreateProjectResponse,
+  GetProjectsResponse,
 } from "./projectModels";
 
 class ProjectService {
@@ -27,6 +28,24 @@ class ProjectService {
       return {
         success: false,
         message: error.message || "Failed to create project",
+      };
+    }
+  }
+
+  async getAllProjects(): Promise<GetProjectsResponse> {
+    try {
+      const response = await axiosInstance.get<GetProjectsResponse>(
+        `${this.projectEndpoint}`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as GetProjectsResponse;
+      }
+      return {
+        success: false,
+        message: error.message || "Failed to fetch projects.",
+        data: [],
       };
     }
   }
