@@ -280,7 +280,7 @@
 //   );
 // }
 
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   ChevronLeft,
@@ -338,6 +338,8 @@ export function Sidebar({
   const subprojects = useSelector(selectAllSubprojects);
   const subprojectsLoading = useSelector(selectSubprojectsLoading);
   const subprojectsError = useSelector(selectSubprojectsError);
+
+  const navigate = useNavigate();
 
   const { logout } = useAuth();
 
@@ -507,7 +509,10 @@ export function Sidebar({
                       return (
                         <div key={project.id} className="mb-1">
                           <button
-                            onClick={() => toggleProjectSubprojects(project.id)}
+                            onClick={() => {
+                              toggleProjectSubprojects(project.id);
+                              navigate(`/projects/${project.id}`);
+                            }}
                             className={cn(
                               "flex items-center w-full text-left rounded-md px-2 py-1 text-sm transition-colors",
                               isProjectExpanded

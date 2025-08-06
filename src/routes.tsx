@@ -12,6 +12,7 @@ import { ProjectDetails } from "./components/projects/ProjectDetails";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
+import { SubProjectDetails } from "./components/projects/SubProjectDetails";
 
 const routes = [
   {
@@ -49,6 +50,10 @@ const routes = [
       {
         path: "projects/:id",
         element: <ProjectDetails />,
+      },
+      {
+        path: "projects/:id/subprojects/:subprojectId",
+        element: <SubProjectDetails />,
       },
       {
         path: "beneficiaries",
