@@ -31,7 +31,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
 
   return (
     // <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b  px-4 sm:px-6">
+    <header className="sticky top-0 z-40 flex h-16 items-center bg-gray-50 gap-4 drop-shadow-md    px-4 sm:px-6">
       <div className="flex flex-1 items-center gap-4">
         {/* Mobile Menu Button */}
         <Button

@@ -481,8 +481,11 @@ export function Sidebar({
 
   return (
     <aside
+      style={{
+        boxShadow: "0 24px 40px rgba(0, 0, 0, 0.1)",
+      }}
       className={cn(
-        "flex flex-col border-r bg-sidebar bg-gray-50 text-sidebar-foreground transition-all duration-300 ease-in-out",
+        "flex flex-col  bg-sidebar bg-white shadow-lg text-sidebar-foreground transition-all duration-300 ease-in-out",
         collapsed ? "w-[70px]" : "w-[240px]",
         "lg:relative fixed inset-y-0 left-0 z-50 lg:z-auto transform",
         mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
@@ -492,7 +495,7 @@ export function Sidebar({
     >
       <div
         className={cn(
-          "flex h-16 items-center border-b px-4",
+          "flex h-16 items-center  px-4",
           collapsed ? "justify-center" : "justify-between"
         )}
       >

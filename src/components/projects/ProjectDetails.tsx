@@ -226,17 +226,20 @@ export function ProjectDetails() {
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Projects
         </Button>
-        <h2>{enhancedProject.title}</h2>
+        <h2 className="text-3xl font-semibold capitalize">
+          {enhancedProject.title}
+        </h2>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex justify-between">
-            <div className="space-y-3 max-w-3xl">
+      <Card className="flex  bg-white   drop-shadow-md ">
+        <CardContent className="p-6 w-full">
+          <div className="flex flex-col md:flex-row gap-6 w-full">
+            <div className="flex-1 space-y-5">
               <div className="flex gap-2">
                 <Badge variant="outline">{enhancedProject.category}</Badge>
                 <Badge variant="outline">{enhancedProject.type}</Badge>
                 <Badge
+                  style={{ backgroundColor: "#FF5E3A" }}
                   variant={
                     enhancedProject.status === "active"
                       ? "default"
@@ -246,13 +249,13 @@ export function ProjectDetails() {
                   {enhancedProject.status === "active" ? "Active" : "Inactive"}
                 </Badge>
               </div>
-
-              <p className="text-muted-foreground">
+              {/* TODO:   */}
+              <h3 className="text-xl font-normal  capitalize">
                 {enhancedProject.description}
-              </p>
+              </h3>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                <div>
+              <div className="flex flex-wrap gap-6 mt-4 justify-start space-x-24">
+                <div className="border min-w-[250px] bg-white rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">Timeline</div>
                   <div className="flex items-center gap-1 mt-1">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -263,7 +266,7 @@ export function ProjectDetails() {
                   </div>
                 </div>
 
-                <div>
+                <div className="border min-w-[250px] bg-white rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">
                     Project Leads
                   </div>
@@ -273,7 +276,7 @@ export function ProjectDetails() {
                   </div>
                 </div>
 
-                <div>
+                <div className="border min-w-[250px] bg-white rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">
                     Sub-Projects
                   </div>
@@ -283,7 +286,7 @@ export function ProjectDetails() {
                   </div>
                 </div>
 
-                <div>
+                <div className="border min-w-[250px] bg-white rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">
                     Beneficiaries
                   </div>
@@ -301,7 +304,7 @@ export function ProjectDetails() {
                 onOpenChange={setIsEditDialogOpen}
               >
                 <DialogTrigger asChild>
-                  <Button variant="outline">
+                  <Button variant="outline" className="bg-[#2B2B2B] text-white">
                     <FileEdit className="h-4 w-4 mr-2" />
                     Edit Project
                   </Button>
