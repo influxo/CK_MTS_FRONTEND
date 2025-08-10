@@ -1,11 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SubProjectSelection } from "../components/data-entry/SubProjectSelection";
 import { FormActivitySelection } from "../components/data-entry/FormActivitySelection";
 import { FormSubmission } from "../components/data-entry/FormSubmission";
+import type { AppDispatch } from "../store";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchFormTemplates,
+  selectFormTemplates,
+  selectFormTemplatesError,
+  selectFormTemplatesLoading,
+} from "../store/slices/formSlice";
 
 interface DataEntryModuleProps {}
 
 export function DataEntry({}: DataEntryModuleProps) {
+  const dispatch = useDispatch<AppDispatch>();
+  const templates = useSelector(selectFormTemplates);
+  const loading = useSelector(selectFormTemplatesLoading);
+  const error = useSelector(selectFormTemplatesError);
+
+  useEffect(() => {
+    dispatch(fetchFormTemplates({ page: 1, limit: 20 }));
+  }, [dispatch]);
+
+  console.log("Templates: ", templates);
+
   const [selectedSubProjectId, setSelectedSubProjectId] = useState<
     string | null
   >(null);

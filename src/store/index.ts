@@ -2,12 +2,14 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
 import projectsReducer from "./slices/projectsSlice";
 import subprojectsReducer from "./slices/subProjectSlice";
+import formsReducer from "./slices/formSlice";
 // Configure the Redux store
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     projects: projectsReducer,
     subprojects: subprojectsReducer,
+    forms: formsReducer,
     // Add other reducers here as your app grows
   },
   // Add middleware or other configuration options here if needed
