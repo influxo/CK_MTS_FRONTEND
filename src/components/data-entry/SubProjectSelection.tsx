@@ -8,7 +8,7 @@ import {
   Calendar,
   ArrowRight,
 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "../ui/data-display/card";
+import { Card, CardContent } from "../ui/data-display/card";
 import { Input } from "../ui/form/input";
 import {
   Select,
@@ -19,6 +19,15 @@ import {
 } from "../ui/form/select";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
+import { ScrollArea } from "../ui/layout/scroll-area";
 
 interface SubProjectSelectionProps {
   onSubProjectSelect: (subProjectId: string) => void;
@@ -298,65 +307,59 @@ export function SubProjectSelection({
         </Select>
       </div>
 
-      {/* SubProjects Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredSubProjects.map((subProject) => (
-          <Card
-            key={subProject.id}
-            className="overflow-hidden hover:shadow-md transition-shadow"
-          >
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-start">
-                <div className="space-y-2">
-                  <h3 className="font-medium">{subProject.name}</h3>
-                  <div className="flex gap-2 flex-wrap">
+      {/* SubProjects Table */}
+      <Card>
+        <ScrollArea className="h-[600px]">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[300px]">Sub-Project</TableHead>
+                <TableHead>Project</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Forms</TableHead>
+                <TableHead>Activities</TableHead>
+                <TableHead>Team</TableHead>
+                <TableHead>Last</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredSubProjects.map((subProject) => (
+                <TableRow key={subProject.id}>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="font-medium">{subProject.name}</div>
+                      <div className="text-sm text-muted-foreground line-clamp-1">
+                        {subProject.description}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     <Badge variant="outline">{subProject.projectName}</Badge>
+                  </TableCell>
+                  <TableCell>
                     <Badge variant="secondary" className="text-xs">
                       {subProject.location}
                     </Badge>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {subProject.description}
-              </p>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-1">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span>{subProject.formsCount} forms</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>{subProject.activitiesCount} activities</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span>{subProject.teamSize} members</span>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Last: {getTimeSinceLastSubmission(subProject.lastSubmission)}
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center pt-2 border-t">
-                <div className="text-xs text-muted-foreground">
-                  <div>
-                    Status:{" "}
-                    <span className="text-green-600 font-medium">Active</span>
-                  </div>
-                </div>
-                <Button onClick={() => onSubProjectSelect(subProject.id)}>
-                  Select
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  </TableCell>
+                  <TableCell>{subProject.formsCount}</TableCell>
+                  <TableCell>{subProject.activitiesCount}</TableCell>
+                  <TableCell>{subProject.teamSize}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {getTimeSinceLastSubmission(subProject.lastSubmission)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button onClick={() => onSubProjectSelect(subProject.id)} size="sm">
+                      Select
+                      <ArrowRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </ScrollArea>
+      </Card>
 
       {filteredSubProjects.length === 0 && (
         <div className="text-center py-12">
