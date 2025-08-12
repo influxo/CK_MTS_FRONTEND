@@ -1,72 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { SubProjectSelection } from "../components/data-entry/SubProjectSelection";
-import { FormActivitySelection } from "../components/data-entry/FormActivitySelection";
-import { FormSubmission } from "../components/data-entry/FormSubmission";
 import type { AppDispatch } from "../store";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  fetchFormTemplates,
-  selectFormTemplates,
-  selectFormTemplatesError,
-  selectFormTemplatesLoading,
-} from "../store/slices/formSlice";
+import { useDispatch } from "react-redux";
+import { fetchProjects } from "../store/slices/projectsSlice";
+import { fetchAllSubProjects } from "../store/slices/subProjectSlice";
 
 interface DataEntryModuleProps {}
 
+// TODO: ksajna i vyn my bo check ma mire!!!
+
 export function DataEntry({}: DataEntryModuleProps) {
   const dispatch = useDispatch<AppDispatch>();
-  const templates = useSelector(selectFormTemplates);
-  const loading = useSelector(selectFormTemplatesLoading);
-  const error = useSelector(selectFormTemplatesError);
 
   useEffect(() => {
-    dispatch(fetchFormTemplates({ page: 1, limit: 20 }));
+    // Load projects and subprojects for aggregation table
+    dispatch(fetchProjects());
+    dispatch(fetchAllSubProjects());
   }, [dispatch]);
-
-  console.log("Templates: ", templates);
-
-  const [selectedSubProjectId, setSelectedSubProjectId] = useState<
-    string | null
-  >(null);
-  const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
-  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(
-    null
-  );
-
-  const handleSubProjectSelect = (subProjectId: string) => {
-    setSelectedSubProjectId(subProjectId);
-    setSelectedFormId(null);
-    setSelectedActivityId(null);
-  };
-
-  const handleFormSelect = (formId: string, activityId?: string) => {
-    setSelectedFormId(formId);
-    setSelectedActivityId(activityId || null);
-  };
-
-  const handleBackToSubProjects = () => {
-    setSelectedSubProjectId(null);
-    setSelectedFormId(null);
-    setSelectedActivityId(null);
-  };
-
-  const handleBackToForms = () => {
-    setSelectedFormId(null);
-    setSelectedActivityId(null);
-  };
-
-  const handleSubmissionComplete = () => {
-    // After submission, go back to form selection to allow more submissions
-    setSelectedFormId(null);
-    setSelectedActivityId(null);
-  };
 
   return (
     <div className="space-y-6">
-      {!selectedSubProjectId && (
-        <SubProjectSelection onSubProjectSelect={handleSubProjectSelect} />
-      )}
-
+      {/* 
       {selectedSubProjectId && !selectedFormId && (
         <FormActivitySelection
           subProjectId={selectedSubProjectId}
@@ -84,6 +38,8 @@ export function DataEntry({}: DataEntryModuleProps) {
           onSubmissionComplete={handleSubmissionComplete}
         />
       )}
+      */}
+      <SubProjectSelection />
     </div>
   );
 }

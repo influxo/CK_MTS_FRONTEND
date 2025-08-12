@@ -14,6 +14,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 import { SubProjectDetails } from "./components/projects/SubProjectDetails";
 import DataEntry from "./pages/DataEntry";
+import DataEntryTemplates from "./pages/DataEntryTemplates";
 
 const routes = [
   {
@@ -67,6 +68,10 @@ const routes = [
       {
         path: "data-entry",
         element: <DataEntry />,
+      },
+      {
+        path: "data-entry/templates",
+        element: <DataEntryTemplates />,
       },
       {
         path: "reports",

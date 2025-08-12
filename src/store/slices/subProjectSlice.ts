@@ -7,6 +7,7 @@ import type {
   CreateSubProjectResponse,
   DeleteSubProjectRequest,
   DeleteSubProjectResponse,
+  GetAllSubProjectsResponse,
   GetSubProjectByIdRequest,
   GetSubProjectByIdResponse,
   GetSubProjectsByProjectIdRequest,
@@ -50,6 +51,19 @@ export const fetchSubProjectsByProjectId = createAsyncThunk<
   { rejectValue: string }
 >("subprojects/fetchByProjectId", async (req, { rejectWithValue }) => {
   const response = await subProjectService.getSubProjectsByProjectId(req);
+  if (!response.success) {
+    return rejectWithValue(response.message || "Failed to fetch subprojects");
+  }
+  return response;
+});
+
+// Fetch all subprojects
+export const fetchAllSubProjects = createAsyncThunk<
+  GetAllSubProjectsResponse,
+  void,
+  { rejectValue: string }
+>("subprojects/fetch", async (_, { rejectWithValue }) => {
+  const response = await subProjectService.getAllSubProjects();
   if (!response.success) {
     return rejectWithValue(response.message || "Failed to fetch subprojects");
   }
@@ -150,6 +164,19 @@ const subprojectsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // fetch all subprojects
+      .addCase(fetchAllSubProjects.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllSubProjects.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.subprojects = action.payload.data;
+      })
+      .addCase(fetchAllSubProjects.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? "Failed to fetch all subprojects";
+      })
       // fetchByProjectId
       .addCase(fetchSubProjectsByProjectId.pending, (state) => {
         state.isLoading = true;
