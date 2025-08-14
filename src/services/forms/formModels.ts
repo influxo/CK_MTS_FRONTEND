@@ -20,7 +20,7 @@ export interface FormField {
 }
 
 export interface FormTemplate {
-  id?: string;
+  id: string;
   name: string;
   description: string;
   category: string;
@@ -31,11 +31,27 @@ export interface FormTemplate {
   createdBy?: string;
 }
 
+
+
+export interface FormTemplatePagination {
+  page: number;
+  limit: number;
+  totalPages: number;
+  totalCount: number;
+}
+
+export interface FormTemplateAndPagination {
+  templates: FormTemplate[];
+  pagination: FormTemplatePagination;
+}
+
+
 // API Response Types
 export interface ApiResponse<T> {
   success: boolean;
   message?: string;
-  data?: T;
+  // data?: T;
+  data?: any;
 }
 
 export interface GetFormsResponse extends ApiResponse<FormTemplate[]> {}

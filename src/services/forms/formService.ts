@@ -12,7 +12,7 @@ import type {
 
 class FormService {
   private baseUrl = getApiUrl();
-  private formsEndpoint = `${this.baseUrl}/forms`;
+  private formsEndpoint = `${this.baseUrl}/forms/templates`;
 
   async getForms(): Promise<GetFormsResponse> {
     try {
