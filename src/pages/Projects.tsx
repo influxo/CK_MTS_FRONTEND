@@ -19,8 +19,6 @@ export function Projects() {
     dispatch(fetchProjects());
   }, [dispatch]);
 
-  console.log("Projects", projects);
-
   if (isLoading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
 

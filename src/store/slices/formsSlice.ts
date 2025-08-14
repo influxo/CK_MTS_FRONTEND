@@ -7,11 +7,13 @@ import type {
   UpdateFormRequest,
   UpdateFormResponse,
   DeleteFormResponse,
+  FormTemplatePagination,
+  FormTemplateAndPagination,
 } from "../../services/forms/formModels";
 import formService from "../../services/forms/formService";
 
 interface FormsState {
-  forms: FormTemplate[];
+  forms: FormTemplateAndPagination;
   currentForm: FormTemplate | null;
   isLoading: boolean;
   error: string | null;
@@ -19,7 +21,7 @@ interface FormsState {
 }
 
 const initialState: FormsState = {
-  forms: [],
+  forms: {templates: [], pagination: {page: 0, limit: 0, totalPages: 0, totalCount: 0}},
   currentForm: null,
   isLoading: false,
   error: null,
@@ -27,7 +29,7 @@ const initialState: FormsState = {
 };
 
 export const fetchForms = createAsyncThunk<GetFormsResponse, void, { rejectValue: string }>(
-  'forms/fetchForms',
+  'forms/templates',
   async (_, { rejectWithValue }) => {
     const response = await formService.getForms();
     if (!response.success) {
@@ -38,7 +40,7 @@ export const fetchForms = createAsyncThunk<GetFormsResponse, void, { rejectValue
 );
 
 export const fetchFormById = createAsyncThunk<FormTemplate, string, { rejectValue: string }>(
-  'forms/fetchFormById',
+  'forms/templates/fetchFormById',
   async (formId, { rejectWithValue }) => {
     const response = await formService.getFormById(formId);
     if (!response.success || !response.data) {
@@ -49,7 +51,7 @@ export const fetchFormById = createAsyncThunk<FormTemplate, string, { rejectValu
 );
 
 export const createForm = createAsyncThunk<CreateFormResponse, CreateFormRequest, { rejectValue: string }>(
-  'forms/createForm',
+  'forms/createTemplate',
   async (formData, { rejectWithValue }) => {
     const response = await formService.createForm(formData);
     if (!response.success) {
@@ -135,8 +137,8 @@ const formsSlice = createSlice({
       .addCase(createForm.fulfilled, (state, action) => {
         state.isLoading = false;
         if (action.payload.data) {
-          state.forms.push(action.payload.data);
-          state.successMessage = 'Form created successfully';
+          // state.forms.push(action.payload.data);
+          // state.successMessage = 'Form created successfully';
         }
       })
       .addCase(createForm.rejected, (state, action) => {
@@ -153,10 +155,10 @@ const formsSlice = createSlice({
       .addCase(updateForm.fulfilled, (state, action) => {
         state.isLoading = false;
         if (action.payload.data) {
-          const index = state.forms.findIndex(form => form.id === action.payload.data?.id);
-          if (index !== -1) {
-            state.forms[index] = action.payload.data;
-          }
+          // const index = state.forms.findIndex(form => form.id === action.payload.data?.id);
+          // if (index !== -1) {
+          //   state.forms[index] = action.payload.data;
+          // }
           state.currentForm = action.payload.data;
           state.successMessage = 'Form updated successfully';
         }
@@ -174,10 +176,10 @@ const formsSlice = createSlice({
       })
       .addCase(deleteForm.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.forms = state.forms.filter(form => form.id !== action.meta.arg);
-        if (state.currentForm?.id === action.meta.arg) {
-          state.currentForm = null;
-        }
+        // state.forms = state.forms.filter(form => form.id !== action.meta.arg);
+        // if (state.currentForm?.id === action.meta.arg) {
+        //   state.currentForm = null;
+        // }
         state.successMessage = 'Form deleted successfully';
       })
       .addCase(deleteForm.rejected, (state, action) => {
@@ -188,7 +190,6 @@ const formsSlice = createSlice({
 });
 
 export const { clearFormMessages, setCurrentForm, clearCurrentForm } = formsSlice.actions;
-
 export const selectAllForms = (state: { forms: FormsState }) => state.forms.forms;
 export const selectCurrentForm = (state: { forms: FormsState }) => state.forms.currentForm;
 export const selectFormsLoading = (state: { forms: FormsState }) => state.forms.isLoading;

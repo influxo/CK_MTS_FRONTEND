@@ -15,18 +15,16 @@ import {
   Search,
   Settings,
   SlidersHorizontal,
-  Trash,
+  Trash2,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from 'react-redux';
+import type { AppDispatch } from '../../store';
+import { fetchProjects, selectAllProjects, selectProjectsLoading } from '../../store/slices/projectsSlice';
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../ui/data-display/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -61,188 +59,44 @@ import {
 } from "../ui/data-display/table";
 import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
-
-// Mock data for form templates
-const mockFormTemplates = [
-  {
-    id: "form-001",
-    name: "Maternal Health Assessment",
-    description: "Assessment form for pregnant women and new mothers",
-    category: "health",
-    lastUpdated: "2025-05-10T14:30:00",
-    status: "active",
-    fieldCount: 24,
-    version: "1.2",
-    createdBy: "Jane Smith",
-    associatedProjects: ["Rural Healthcare Initiative"],
-    associatedSubProjects: ["Maternal Health Services"],
-    submissions: 152,
-    lastSubmission: "2025-05-20T09:15:00",
-  },
-  {
-    id: "form-002",
-    name: "Agricultural Productivity Survey",
-    description: "Survey for measuring farm productivity and practices",
-    category: "agriculture",
-    lastUpdated: "2025-04-22T11:45:00",
-    status: "active",
-    fieldCount: 18,
-    version: "2.0",
-    createdBy: "Robert Johnson",
-    associatedProjects: ["Community Development"],
-    associatedSubProjects: ["Food Security Initiative"],
-    submissions: 87,
-    lastSubmission: "2025-05-18T16:30:00",
-  },
-  {
-    id: "form-003",
-    name: "Water Access Questionnaire",
-    description: "Questionnaire to assess community water access and quality",
-    category: "wash",
-    lastUpdated: "2025-05-05T10:15:00",
-    status: "active",
-    fieldCount: 15,
-    version: "1.0",
-    createdBy: "Michael Lee",
-    associatedProjects: ["Community Development"],
-    associatedSubProjects: ["Water Access Program"],
-    submissions: 65,
-    lastSubmission: "2025-05-19T11:20:00",
-  },
-  {
-    id: "form-004",
-    name: "Nutrition Screening Tool",
-    description: "Screening tool for child nutrition status",
-    category: "health",
-    lastUpdated: "2025-04-15T09:30:00",
-    status: "active",
-    fieldCount: 12,
-    version: "1.1",
-    createdBy: "Sarah Johnson",
-    associatedProjects: ["Rural Healthcare Initiative"],
-    associatedSubProjects: ["Nutrition Support"],
-    submissions: 98,
-    lastSubmission: "2025-05-21T08:45:00",
-  },
-  {
-    id: "form-005",
-    name: "Education Needs Assessment",
-    description: "Assessment of educational needs for youth programs",
-    category: "education",
-    lastUpdated: "2025-04-28T15:45:00",
-    status: "draft",
-    fieldCount: 20,
-    version: "0.9",
-    createdBy: "Jennifer Davis",
-    associatedProjects: ["Youth Empowerment Program"],
-    associatedSubProjects: ["Education Support"],
-    submissions: 0,
-    lastSubmission: null,
-  },
-  {
-    id: "form-006",
-    name: "Skills Training Feedback",
-    description: "Feedback form for vocational skills training sessions",
-    category: "training",
-    lastUpdated: "2025-05-14T13:20:00",
-    status: "active",
-    fieldCount: 10,
-    version: "1.0",
-    createdBy: "Thomas Brown",
-    associatedProjects: ["Youth Empowerment Program"],
-    associatedSubProjects: ["Skills Training"],
-    submissions: 45,
-    lastSubmission: "2025-05-19T15:30:00",
-  },
-  {
-    id: "form-007",
-    name: "Child Vaccination Record",
-    description: "Form for tracking child vaccinations",
-    category: "health",
-    lastUpdated: "2025-05-02T11:00:00",
-    status: "archived",
-    fieldCount: 15,
-    version: "2.1",
-    createdBy: "Jane Smith",
-    associatedProjects: ["Rural Healthcare Initiative"],
-    associatedSubProjects: ["Child Vaccination Campaign"],
-    submissions: 215,
-    lastSubmission: "2025-05-01T14:20:00",
-  },
-];
-
-// Mock data for projects
-const mockProjects = [
-  {
-    id: "proj-001",
-    title: "Rural Healthcare Initiative",
-    subProjects: [
-      { id: "sub-001", title: "Maternal Health Services" },
-      { id: "sub-002", title: "Child Vaccination Campaign" },
-      { id: "sub-004", title: "Nutrition Support" },
-    ],
-  },
-  {
-    id: "proj-002",
-    title: "Community Development",
-    subProjects: [
-      { id: "sub-003", title: "Water Access Program" },
-      { id: "sub-005", title: "Food Security Initiative" },
-    ],
-  },
-  {
-    id: "proj-003",
-    title: "Youth Empowerment Program",
-    subProjects: [
-      { id: "sub-006", title: "Education Support" },
-      { id: "sub-007", title: "Skills Training" },
-    ],
-  },
-];
+import type { FormTemplate } from "../../services/forms/formModels";
+import { deleteForm } from "../../store/slices/formsSlice";
+import { toast } from "sonner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/overlay/alert-dialog";
 
 // Interface for component props
 interface FormsListProps {
+  formTemplates: FormTemplate[];
   onCreateForm: () => void;
   onEditForm: (formId: string) => void;
 }
 
-export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
-  const [viewType, setViewType] = useState("list");
+export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsListProps) {
+  const dispatch = useDispatch<AppDispatch>();
+  const projects = useSelector(selectAllProjects);
+  const isLoadingProjects = useSelector(selectProjectsLoading);
+
+  // Fetch projects when component mounts
+  useEffect(() => {
+    dispatch(fetchProjects());
+  }, [dispatch]);
+
+  console.log("FormTemplatesQN", formTemplates);
+  console.log("Projects", projects);
+
+  const [viewType, setViewType] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [isNewFormDialogOpen, setIsNewFormDialogOpen] = useState(false);
+  const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [newFormName, setNewFormName] = useState("");
   const [newFormDescription, setNewFormDescription] = useState("");
   const [newFormCategory, setNewFormCategory] = useState("");
   const [newFormProject, setNewFormProject] = useState("");
   const [newFormSubProject, setNewFormSubProject] = useState("");
-
-  // Filter form templates based on selected filters
-  const filteredTemplates = mockFormTemplates.filter((template) => {
-    const matchesSearch =
-      template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      template.description.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesCategory =
-      categoryFilter === "all" || template.category === categoryFilter;
-
-    const matchesStatus =
-      statusFilter === "all" || template.status === statusFilter;
-
-    const matchesProject =
-      projectFilter === "all" ||
-      template.associatedProjects.some((project) => project === projectFilter);
-
-    return matchesSearch && matchesCategory && matchesStatus && matchesProject;
-  });
-
-  // Get available categories from templates
-  const categories = Array.from(
-    new Set(mockFormTemplates.map((template) => template.category))
-  );
+  const [formToDelete, setFormToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Handle form creation
   const handleCreateForm = () => {
@@ -255,8 +109,8 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
       subProject: newFormSubProject,
     });
 
-    setIsNewFormDialogOpen(false);
-    // Call the parent component's handler
+    setIsCreateFormOpen(false);
+    // // Call the parent component's handler
     onCreateForm();
   };
 
@@ -265,9 +119,30 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
     onEditForm(formId);
   };
 
+  const handleDeleteClick = (formId: string) => {
+    setFormToDelete(formId);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!formToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteForm(formToDelete)).unwrap();
+      toast.success('Form deleted successfully');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete form');
+    } finally {
+      setIsDeleting(false);
+      setFormToDelete(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setFormToDelete(null);
+  };
+
   // Get the filtered subprojects based on selected project
-  const filteredSubprojects =
-    mockProjects.find((p) => p.id === newFormProject)?.subProjects || [];
 
   return (
     <div className="space-y-6">
@@ -281,19 +156,18 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
         <div className="flex gap-3">
           <Button
             variant="outline"
-            className="bg-black/10 text-black"
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            onClick={() => setProjectFilter("all")}
           >
-            <SlidersHorizontal className="h-4 w-4 mr-2 " />
+            <SlidersHorizontal className="h-4 w-4 mr-2" />
             Advanced Filters
           </Button>
 
           <Dialog
-            open={isNewFormDialogOpen}
-            onOpenChange={setIsNewFormDialogOpen}
+            open={isCreateFormOpen}
+            onOpenChange={setIsCreateFormOpen}
           >
             <DialogTrigger asChild>
-              <Button className="bg-[#2E343E] text-white">
+              <Button className="bg-black text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Form
               </Button>
@@ -350,14 +224,17 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                   <Select
                     value={newFormProject}
                     onValueChange={setNewFormProject}
+                    disabled={isLoadingProjects}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a project" />
+                      <SelectValue placeholder={
+                        isLoadingProjects ? "Loading projects..." : "Select a project"
+                      } />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockProjects.map((project) => (
+                      {projects.map((project) => (
                         <SelectItem key={project.id} value={project.id}>
-                          {project.title}
+                          {project.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -376,9 +253,9 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                         <SelectValue placeholder="Select a sub-project" />
                       </SelectTrigger>
                       <SelectContent>
-                        {filteredSubprojects.map((subProject) => (
+                        {projects.map((subProject) => (
                           <SelectItem key={subProject.id} value={subProject.id}>
-                            {subProject.title}
+                            {subProject.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -389,7 +266,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
               <DialogFooter>
                 <Button
                   variant="outline"
-                  onClick={() => setIsNewFormDialogOpen(false)}
+                  onClick={() => setIsCreateFormOpen(false)}
                 >
                   Cancel
                 </Button>
@@ -408,31 +285,31 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
       <div className="flex flex-col lg:flex-row gap-4 justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground " />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search forms..."
-              className="pl-9 bg-black/5 border-0"
+              className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex gap-3">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[150px] bg-black/5 border-0">
-                <Filter className="h-4 w-4 mr-2 " />
+              <SelectTrigger className="w-[150px]">
+                <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
+                {/* {categories.map((category) => (
                   <SelectItem key={category} value={category}>
                     {category.charAt(0).toUpperCase() + category.slice(1)}
                   </SelectItem>
-                ))}
+                ))} */}
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px] bg-black/5 border-0">
+              <SelectTrigger className="w-[150px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -446,31 +323,38 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
           </div>
         </div>
         <div className="flex gap-3">
-          <Button
-            variant="outline"
-            className="bg-[#2E343E] text-white border-0"
-          >
+          <Button variant="outline">
             <FileDown className="h-4 w-4 mr-2" />
             Export
           </Button>
+          <Tabs
+            value={viewType}
+            onValueChange={setViewType}
+            className="w-[180px]"
+          >
+            <TabsList className="grid w-full grid-cols-2 bg-gray-200 rounded-full">
+              <TabsTrigger value="grid" className="rounded-full bg-white">Grid View</TabsTrigger>
+              <TabsTrigger value="list">List View</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 
-      {showAdvancedFilters && (
+      {projectFilter !== "all" && (
         <Card className="mb-6">
           <CardContent className="py-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Project</Label>
                 <Select value={projectFilter} onValueChange={setProjectFilter}>
-                  <SelectTrigger className="mt-2 bg-black/5 border-0">
+                  <SelectTrigger className="mt-2">
                     <SelectValue placeholder="All projects" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Projects</SelectItem>
-                    {mockProjects.map((project) => (
-                      <SelectItem key={project.id} value={project.title}>
-                        {project.title}
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.name}>
+                        {project.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -479,7 +363,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
               <div>
                 <Label>Created By</Label>
                 <Select>
-                  <SelectTrigger className="mt-2 bg-black/5 border-0">
+                  <SelectTrigger className="mt-2">
                     <SelectValue placeholder="All users" />
                   </SelectTrigger>
                   <SelectContent>
@@ -496,7 +380,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
               <div>
                 <Label>Last Updated</Label>
                 <Select>
-                  <SelectTrigger className="mt-2 bg-black/5 border-0">
+                  <SelectTrigger className="mt-2">
                     <SelectValue placeholder="Any time" />
                   </SelectTrigger>
                   <SelectContent>
@@ -510,16 +394,10 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
               </div>
             </div>
             <div className="flex justify-end mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="mr-2 bg-black/10 border-0"
-              >
+              <Button variant="outline" size="sm" className="mr-2">
                 Reset Filters
               </Button>
-              <Button size="sm" className="bg-[#2E343E] text-white border-0">
-                Apply Filters
-              </Button>
+              <Button size="sm">Apply Filters</Button>
             </div>
           </CardContent>
         </Card>
@@ -527,17 +405,19 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
 
       {viewType === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTemplates.map((template) => (
-            <Card key={template.id} className="overflow-hidden">
+          {
+            formTemplates.map((formTes) => (
+              // <div>{formTes.name}</div>
+              <Card key={formTes.id} className="overflow-hidden">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="h-5 w-5 text-muted-foreground" />
-                      <span>{template.name}</span>
+                      <span>{formTes.name}</span>
                     </CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {template.description}
+                      {formTes.description}
                     </p>
                   </div>
                   <DropdownMenu>
@@ -548,7 +428,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => handleEditClick(template.id)}
+                        onClick={() => handleEditClick(formTes.id)}
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit Form
@@ -569,7 +449,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                         <Link className="h-4 w-4 mr-2" />
                         Assign to Project
                       </DropdownMenuItem>
-                      {template.status !== "archived" ? (
+                      {formTes.status !== "archived" ? (
                         <DropdownMenuItem>
                           <AlertCircle className="h-4 w-4 mr-2" />
                           Archive
@@ -580,8 +460,11 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                           Restore
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash className="h-4 w-4 mr-2" />
+                      <DropdownMenuItem 
+                        className="text-destructive"
+                        onClick={() => handleDeleteClick(formTes.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -592,45 +475,44 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                 <div className="space-y-4">
                   <div className="flex flex-wrap gap-1.5">
                     <Badge
-                      variant="default"
-                      className={
-                        template.status === "active"
-                          ? "bg-[#FF5E3A] text-white"
-                          : template.status === "draft"
-                          ? "bg-gray-300 text-gray-700"
-                          : "bg-[#2B2B2B] text-white"
+                      variant={
+                        formTes.status === "active"
+                          ? "default"
+                          : formTes.status === "draft"
+                          ? "outline"
+                          : "secondary"
                       }
                     >
-                      {template.status}
+                      {formTes.status}
                     </Badge>
                     <Badge variant="outline" className="capitalize">
-                      {template.category}
+                      {formTes.category}
                     </Badge>
-                    <Badge variant="outline">v{template.version}</Badge>
+                    <Badge variant="outline">v{formTes.version}</Badge>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
                       <span className="text-muted-foreground">Fields:</span>
-                      <div>{template.fieldCount}</div>
+                      <div>{formTes.schema.fields.length}</div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">
                         Submissions:
                       </span>
-                      <div>{template.submissions}</div>
+                      {/* <div>{formTes.submissions}</div> */}
                     </div>
                     <div className="col-span-2">
                       <span className="text-muted-foreground">
                         Last updated:
                       </span>
                       <div>
-                        {new Date(template.lastUpdated).toLocaleDateString()}
+                        {formTes.updatedAt && new Date(formTes.updatedAt).toLocaleDateString()}
                       </div>
                     </div>
                     <div className="col-span-2">
                       <span className="text-muted-foreground">Created by:</span>
-                      <div>{template.createdBy}</div>
+                      <div>{formTes.createdAt && new Date(formTes.createdAt).toLocaleDateString()}</div>
                     </div>
                   </div>
 
@@ -639,20 +521,21 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                       Projects:
                     </span>
                     <div className="mt-1 space-y-1">
-                      {template.associatedProjects.map((project, index) => (
+                      {formTes.entityAssociations?.map((association, index) => (
                         <div
-                          key={index}
+                          key={`${association.id}-${index}`}
                           className="text-sm flex items-center gap-1"
                         >
                           <Users className="h-3 w-3 text-muted-foreground" />
-                          <span>{project}</span>
-                          {template.associatedSubProjects[index] && (
-                            <span className="text-xs text-muted-foreground">
-                              ({template.associatedSubProjects[index]})
-                            </span>
-                          )}
+                          <span className="capitalize">{association.entityType}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {association.entityId}
+                          </span>
                         </div>
                       ))}
+                      {(!formTes.entityAssociations || formTes.entityAssociations.length === 0) && (
+                        <span className="text-xs text-muted-foreground">No associated projects</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -662,22 +545,19 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                   variant="ghost"
                   size="sm"
                   className="text-muted-foreground"
-                  onClick={() => handleEditClick(template.id)}
+                  onClick={() => handleEditClick(formTes.id)}
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Configure
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={() => handleEditClick(template.id)}
-                  className="rounded-md bg-black text-white"
-                >
+                <Button size="sm" onClick={() => handleEditClick(formTes.id)} className="rounded-md bg-black text-white">
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Form
                 </Button>
               </div>
             </Card>
-          ))}
+            ))
+          }
 
           {/* Create new form card */}
           <Card className="border-dashed flex flex-col items-center justify-center p-6">
@@ -688,7 +568,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
             <p className="text-sm text-muted-foreground text-center mb-3">
               Design a custom data collection form for your projects
             </p>
-            <Button onClick={() => setIsNewFormDialogOpen(true)}>
+            <Button onClick={() => setIsCreateFormOpen(true)}>
               Create Form
             </Button>
           </Card>
@@ -696,7 +576,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
       ) : (
         <div className="rounded-md border overflow-hidden">
           <Table>
-            <TableHeader className="bg-[#E5ECF6]">
+            <TableHeader>
               <TableRow>
                 <TableHead className="w-[250px]">Form Name</TableHead>
                 <TableHead>Category</TableHead>
@@ -709,8 +589,8 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="bg-[#F7F9FB]">
-              {filteredTemplates.map((template) => (
+            <TableBody>
+              {formTemplates.map((template) => (
                 <TableRow key={template.id}>
                   <TableCell>
                     <div>
@@ -727,29 +607,28 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant="default"
-                      className={
+                      variant={
                         template.status === "active"
-                          ? "bg-[#2E343E] text-white"
+                          ? "default"
                           : template.status === "draft"
-                          ? "bg-amber-50 text-amber-700"
-                          : "bg-[#FFFBD4] text-[#FFC555]"
+                          ? "outline"
+                          : "secondary"
                       }
                     >
                       {template.status}
                     </Badge>
                   </TableCell>
                   <TableCell>v{template.version}</TableCell>
-                  <TableCell>{template.fieldCount}</TableCell>
-                  <TableCell>{template.submissions}</TableCell>
+                  <TableCell>{template.schema.fields.length}</TableCell>
+                  {/* <TableCell>{template.submissions}</TableCell> */}
                   <TableCell>
                     <div className="space-y-1 max-w-[150px]">
-                      {template.associatedProjects.map((project, index) => (
+                      {template.entityAssociations.map((entityAssociation, index) => (
                         <div key={index} className="text-sm truncate">
-                          {project}
-                          {template.associatedSubProjects[index] && (
+                          {entityAssociation.entityId}
+                          {entityAssociation.entityType && (
                             <span className="text-xs text-muted-foreground block">
-                              {template.associatedSubProjects[index]}
+                              {entityAssociation.entityType}
                             </span>
                           )}
                         </div>
@@ -758,10 +637,10 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                   </TableCell>
                   <TableCell>
                     <div>
-                      {new Date(template.lastUpdated).toLocaleDateString()}
+                      {template.updatedAt && new Date(template.updatedAt).toLocaleDateString()}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      by {template.createdBy}
+                      by WHO
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
@@ -812,8 +691,11 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                               Restore
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash className="h-4 w-4 mr-2" />
+                          <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={() => handleDeleteClick(template.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -827,7 +709,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
         </div>
       )}
 
-      {filteredTemplates.length === 0 && (
+      {formTemplates.length === 0 && (
         <div className="text-center py-10 border rounded-lg">
           <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
           <h3 className="text-lg mb-2">No forms found</h3>
@@ -839,19 +721,41 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          Showing {filteredTemplates.length} of {mockFormTemplates.length} forms
+          Showing {formTemplates.length} of {formTemplates.length} forms
         </div>
         <div className="space-x-2">
-          <Button variant="outline" size="sm" className="bg-black/10 border-0">
+          <Button variant="outline" size="sm">
             <HelpCircle className="h-4 w-4 mr-2" />
             Form Templates
           </Button>
-          <Button variant="outline" size="sm" className="bg-black/10 border-0">
+          <Button variant="outline" size="sm">
             <FileJson className="h-4 w-4 mr-2" />
             Import JSON
           </Button>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!formToDelete} onOpenChange={(open) => !open && handleCancelDelete()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the form and all its data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
