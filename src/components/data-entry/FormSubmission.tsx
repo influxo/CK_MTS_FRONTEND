@@ -25,14 +25,53 @@ import {
 } from "lucide-react";
 import { Progress } from "../ui/feedback/progress";
 import { Alert, AlertDescription } from "../ui/feedback/alert";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store";
+import {
+  submitFormResponse,
+  selectFormSubmitLoading,
+  selectFormSubmitError,
+} from "../../store/slices/formSlice";
+import type { FormTemplate } from "../../services/forms/formModels";
+import { MapPin } from "lucide-react";
+import { enqueueSubmission, flushQueue, peekQueue } from "../../utils/offlineQueue";
 
-interface FormSubmissionProps {
-  subProjectId: string;
-  formId: string;
-  activityId?: string | null;
+interface DynamicFormSubmissionProps {
+  template?: FormTemplate;
+  entityId?: string;
+  entityType?: string; // "project" | "subproject" | "activity"
   onBack: () => void;
   onSubmissionComplete: () => void;
+  // Backward compatibility props (used only by legacy mock flow)
+  subProjectId?: string;
+  formId?: string;
+  activityId?: string | null;
 }
+
+const mapFieldType = (t: string | undefined) => {
+  const type = (t || "").toLowerCase();
+  switch (type) {
+    case "text":
+    case "string":
+      return "text";
+    case "number":
+      return "number";
+    case "date":
+      return "date";
+    case "textarea":
+      return "textarea";
+    case "dropdown":
+    case "select":
+      return "select";
+    case "radio":
+      return "radio";
+    case "checkbox":
+    case "checkbox-group":
+      return "checkbox-group";
+    default:
+      return "text";
+  }
+};
 
 // Mock subproject and activity details
 const subProjectDetails = {
@@ -325,26 +364,112 @@ const formStructures = {
 };
 
 export function FormSubmission({
+  template,
+  entityId,
+  entityType,
+  onBack,
+  onSubmissionComplete,
   subProjectId,
   formId,
   activityId,
-  onBack,
-  onSubmissionComplete,
-}: FormSubmissionProps) {
+}: DynamicFormSubmissionProps) {
+  const dispatch = useDispatch<AppDispatch>();
+  const submitLoading = useSelector(selectFormSubmitLoading);
+  const submitError = useSelector(selectFormSubmitError);
   const [formData, setFormData] = useState<Record<string, any>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // used only by legacy flow
   const [isDraft, setIsDraft] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
   const [progress, setProgress] = useState(0);
+  const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsError, setGpsError] = useState<string | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== "undefined" ? navigator.onLine : true);
+  const [syncing, setSyncing] = useState(false);
+  const [queueCount, setQueueCount] = useState(0);
+  const [localNotice, setLocalNotice] = useState<string | null>(null);
+  const isMobileOrTablet =
+    typeof navigator !== "undefined" &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
 
-  const subProject =
-    subProjectDetails[subProjectId as keyof typeof subProjectDetails];
+  // Build dynamic structure from API template when provided
+  const dynamicFormStructure = template
+    ? {
+        id: template.id,
+        title: template.name,
+        estimatedTime: "",
+        fields: (template.schema?.fields || []).map((f: any) => ({
+          id: f.name,
+          type: mapFieldType(f.type),
+          label: f.label || f.name,
+          required: !!f.required,
+          options: f.options,
+        })),
+      }
+    : null;
+
+  const subProject = subProjectId
+    ? subProjectDetails[subProjectId as keyof typeof subProjectDetails]
+    : null;
   const activity = activityId
     ? activityDetails[activityId as keyof typeof activityDetails]
     : null;
-  const formStructure = formStructures[formId as keyof typeof formStructures];
+  const formStructure =
+    dynamicFormStructure || (formId ? formStructures[formId as keyof typeof formStructures] : null);
+
+  const requestGps = async (): Promise<{ lat: number; lng: number }> => {
+    setGpsError(null);
+    setGpsLoading(true);
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        if (!navigator?.geolocation) {
+          reject(new Error("Geolocation is not supported by this browser."));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      });
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const coords = { lat, lng };
+      setGps(coords);
+      return coords;
+    } catch (e: any) {
+      // Fallback: retry with low accuracy and longer timeout (useful for laptops using network provider)
+      try {
+        const position2 = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            { enableHighAccuracy: false, timeout: 60000, maximumAge: 60000 }
+          );
+        });
+        const lat = position2.coords.latitude;
+        const lng = position2.coords.longitude;
+        const coords = { lat, lng };
+        setGps(coords);
+        return coords;
+      } catch (e2: any) {
+        // Provide clearer guidance for offline devices without GPS hardware
+        const offline = typeof navigator !== "undefined" && !navigator.onLine;
+        const errMsg =
+          offline
+            ? "Offline geolocation is not available on this device. Use a tablet/phone with built-in GPS or re-enable internet to assist location."
+            : (e2?.message || e?.message || "Failed to retrieve GPS location. Please enable location services and grant permission.");
+        setGpsError(errMsg);
+        throw e2;
+      }
+    } finally {
+      setGpsLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Calculate progress based on filled required fields
@@ -365,7 +490,61 @@ export function FormSubmission({
     setProgress(progressPercent);
   }, [formData, formStructure]);
 
-  if (!subProject || !formStructure) {
+  // Watch online/offline and try to flush queue when online
+  useEffect(() => {
+    const updateOnline = () => setIsOnline(true);
+    const updateOffline = () => setIsOnline(false);
+    window.addEventListener("online", updateOnline);
+    window.addEventListener("offline", updateOffline);
+    // initialize queue count and attempt flush if online
+    setQueueCount(peekQueue().length);
+    if (navigator.onLine) {
+      (async () => {
+        try {
+          setSyncing(true);
+          await flushQueue(async (templateId, payload) => {
+            await (dispatch(submitFormResponse({ templateId, payload })) as any).unwrap();
+          });
+        } catch (_) {
+          // keep remaining in queue
+        } finally {
+          setQueueCount(peekQueue().length);
+          setSyncing(false);
+        }
+      })();
+    }
+    return () => {
+      window.removeEventListener("online", updateOnline);
+      window.removeEventListener("offline", updateOffline);
+    };
+  }, [dispatch]);
+
+  // Continuously watch GPS for smoother UX and better accuracy
+  useEffect(() => {
+    if (!navigator?.geolocation) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        if (gpsError) setGpsError(null);
+      },
+      (err) => {
+        // don't override an already captured GPS
+        if (!gps) {
+          const offline = typeof navigator !== "undefined" && !navigator.onLine;
+          const errMsg =
+            offline
+              ? "Offline geolocation is not available on this device. Use a tablet/phone with built-in GPS or re-enable internet to assist location."
+              : (err?.message || "Unable to watch position.");
+          setGpsError(errMsg);
+        }
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 60000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!formStructure) {
     return (
       <div className="text-center py-12">
         <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -423,20 +602,62 @@ export function FormSubmission({
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
+    if (!validateForm()) return;
+
+    // Dynamic/API-driven submission
+    if (template && template.id && entityId && entityType) {
+      try {
+        // Ensure GPS is available
+        let coords = gps;
+        if (!coords) {
+          if (isMobileOrTablet) {
+            coords = await requestGps();
+          } else {
+            // Desktop/laptop: GPS optional, submit with 0,0
+            coords = { lat: 0, lng: 0 };
+          }
+        }
+        const payload = {
+          entityId,
+          entityType,
+          data: formData,
+          latitude: coords.lat,
+          longitude: coords.lng,
+        };
+
+        if (!isOnline) {
+          enqueueSubmission(template.id, payload);
+          setQueueCount(peekQueue().length);
+          setLocalNotice("Submission saved offline. It will sync automatically when you're back online.");
+          onSubmissionComplete();
+          return;
+        }
+
+        try {
+          await (dispatch(
+            submitFormResponse({ templateId: template.id, payload })
+          ) as any).unwrap();
+          onSubmissionComplete();
+        } catch (e) {
+          // On failure (likely network), save offline
+          enqueueSubmission(template.id, payload);
+          setQueueCount(peekQueue().length);
+          setLocalNotice("Network issue detected. Submission saved offline and will auto-sync.");
+          onSubmissionComplete();
+        }
+      } catch (e) {
+        // submitError selector will show the error alert
+        console.error("Submit failed", e);
+      }
       return;
     }
 
+    // Legacy mock submission
     setIsSubmitting(true);
-
     try {
-      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Success
       onSubmissionComplete();
     } catch (error) {
-      // Handle error
       console.error("Submission failed:", error);
     } finally {
       setIsSubmitting(false);
@@ -604,14 +825,58 @@ export function FormSubmission({
         <div>
           <h2>{formStructure.title}</h2>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Badge variant="outline">{subProject.projectName}</Badge>
-            <span>•</span>
-            <span>{subProject.name}</span>
-            <span>•</span>
+            {subProject && (
+              <>
+                <Badge variant="outline">{subProject.projectName}</Badge>
+                <span>•</span>
+                <span>{subProject.name}</span>
+                <span>•</span>
+              </>
+            )}
             <Clock className="h-4 w-4" />
             <span>{formStructure.estimatedTime}</span>
           </div>
         </div>
+      </div>
+
+      {/* Location & connectivity status */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <MapPin className="h-4 w-4" />
+        {gps ? (
+          <span>
+            Location captured: {gps.lat.toFixed(5)}, {gps.lng.toFixed(5)}
+          </span>
+        ) : (
+          <>
+            <span>{isMobileOrTablet ? "Location required for submission." : "Location optional on this device."}</span>
+            <Button variant="outline" size="sm" onClick={requestGps} disabled={gpsLoading}>
+              {gpsLoading ? "Detecting..." : "Get GPS"}
+            </Button>
+          </>
+        )}
+        <span>•</span>
+        <span>{isOnline ? "Online" : "Offline"}</span>
+        {queueCount > 0 && (
+          <>
+            <span>•</span>
+            <span>{queueCount} queued</span>
+            {isOnline && (
+              <Button variant="outline" size="sm" disabled={syncing} onClick={async () => {
+                try {
+                  setSyncing(true);
+                  await flushQueue(async (templateId, payload) => {
+                    await (dispatch(submitFormResponse({ templateId, payload })) as any).unwrap();
+                  });
+                } finally {
+                  setQueueCount(peekQueue().length);
+                  setSyncing(false);
+                }
+              }}>
+                {syncing ? "Syncing..." : "Sync Now"}
+              </Button>
+            )}
+          </>
+        )}
       </div>
 
       {/* Context Information */}
@@ -669,6 +934,25 @@ export function FormSubmission({
         </Alert>
       )}
 
+      {/* Submission Error */}
+      {submitError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{submitError}</AlertDescription>
+        </Alert>
+      )}
+      {localNotice && (
+        <Alert>
+          <AlertDescription>{localNotice}</AlertDescription>
+        </Alert>
+      )}
+      {gpsError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{gpsError}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 justify-end">
         <Button variant="outline" onClick={handleSaveDraft} disabled={isDraft}>
@@ -684,9 +968,15 @@ export function FormSubmission({
 
         <Button
           onClick={handleSubmit}
-          disabled={isSubmitting || progress < 100}
+          disabled={
+            submitLoading ||
+            isSubmitting ||
+            gpsLoading ||
+            (isMobileOrTablet && !gps) ||
+            progress < 100
+          }
         >
-          {isSubmitting ? (
+          {submitLoading || isSubmitting || gpsLoading ? (
             <>Submitting...</>
           ) : (
             <>

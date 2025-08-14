@@ -62,4 +62,62 @@ export interface GetFormTemplatesResponse {
   };
 }
 
- 
+// Get single Form Template by id response
+export interface GetFormTemplateByIdResponse {
+  success: boolean;
+  message?: string;
+  data: FormTemplate;
+}
+
+// Request for submitting a form
+export interface FormSubmissionRequest {
+  /**
+   * UUID of the form template (provided as a path param in the API)
+   */
+  // id: string; // This is in the path, not in the request body
+
+  /**
+   * UUID of the entity (project, subproject, or activity) this submission belongs to
+   */
+  entityId: string;
+
+  /**
+   * The entity type this form is associated with
+   * Example: "project" | "subproject" | "activity"
+   */
+  entityType: string;
+
+  /**
+   * Dynamic form field values
+   * Keys come from FormField.name in the template
+   */
+  data: Record<string, any>;
+
+  /**
+   * GPS coordinates where the form was submitted
+   */
+  latitude: number;
+  longitude: number;
+}
+
+// Data returned when a form is successfully submitted
+export interface FormSubmissionData {
+  createdAt: string;
+  updatedAt: string;
+  id: string;
+  formTemplateId: string;
+  entityId: string;
+  entityType: string;
+  submittedBy: string;
+  data: Record<string, any>;
+  latitude: string; // API returns these as strings
+  longitude: string;
+  submittedAt: string;
+}
+
+// API response for a form submission
+export interface FormSubmissionResponse {
+  success: boolean;
+  message: string;
+  data: FormSubmissionData;
+}

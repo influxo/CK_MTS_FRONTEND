@@ -4,6 +4,9 @@ import type {
   Pagination,
   GetFormTemplatesRequest,
   GetFormTemplatesResponse,
+  GetFormTemplateByIdResponse,
+  FormSubmissionRequest,
+  FormSubmissionResponse,
 } from "../../services/forms/formModels";
 import formService from "../../services/forms/formServices";
 
@@ -12,6 +15,14 @@ interface FormTemplatesState {
   pagination: Pagination | null;
   isLoading: boolean;
   error: string | null;
+  // submission state
+  submitLoading: boolean;
+  submitError: string | null;
+  lastSubmission: FormSubmissionResponse | null;
+  // selected template state
+  selectedTemplate: FormTemplate | null;
+  selectedTemplateLoading: boolean;
+  selectedTemplateError: string | null;
 }
 
 const initialState: FormTemplatesState = {
@@ -19,6 +30,12 @@ const initialState: FormTemplatesState = {
   pagination: null,
   isLoading: false,
   error: null,
+  submitLoading: false,
+  submitError: null,
+  lastSubmission: null,
+  selectedTemplate: null,
+  selectedTemplateLoading: false,
+  selectedTemplateError: null,
 };
 
 export const fetchFormTemplates = createAsyncThunk<
@@ -35,12 +52,37 @@ export const fetchFormTemplates = createAsyncThunk<
   return response;
 });
 
+export const submitFormResponse = createAsyncThunk<
+  FormSubmissionResponse,
+  { templateId: string; payload: FormSubmissionRequest },
+  { rejectValue: string }
+>("forms/submitFormResponse", async ({ templateId, payload }, { rejectWithValue }) => {
+  const response = await formService.submitForm(templateId, payload);
+  if (!response.success) {
+    return rejectWithValue(response.message || "Failed to submit form response");
+  }
+  return response;
+});
+
+export const fetchFormTemplateById = createAsyncThunk<
+  GetFormTemplateByIdResponse,
+  { id: string },
+  { rejectValue: string }
+>("forms/fetchFormTemplateById", async ({ id }, { rejectWithValue }) => {
+  const response = await formService.getFormTemplateById(id);
+  if (!response.success) {
+    return rejectWithValue(response.message || "Failed to fetch form template");
+  }
+  return response;
+});
+
 const formSlice = createSlice({
   name: "forms",
   initialState,
   reducers: {
     clearFormErrors(state) {
       state.error = null;
+      state.submitError = null;
     },
   },
   extraReducers: (builder) => {
@@ -57,6 +99,34 @@ const formSlice = createSlice({
       .addCase(fetchFormTemplates.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload ?? "Failed to fetch form templates";
+      })
+      // submit form response
+      .addCase(submitFormResponse.pending, (state) => {
+        state.submitLoading = true;
+        state.submitError = null;
+        state.lastSubmission = null;
+      })
+      .addCase(submitFormResponse.fulfilled, (state, action) => {
+        state.submitLoading = false;
+        state.lastSubmission = action.payload;
+      })
+      .addCase(submitFormResponse.rejected, (state, action) => {
+        state.submitLoading = false;
+        state.submitError = action.payload ?? "Failed to submit form response";
+      })
+      // fetch single template by id
+      .addCase(fetchFormTemplateById.pending, (state) => {
+        state.selectedTemplateLoading = true;
+        state.selectedTemplateError = null;
+        state.selectedTemplate = null;
+      })
+      .addCase(fetchFormTemplateById.fulfilled, (state, action) => {
+        state.selectedTemplateLoading = false;
+        state.selectedTemplate = action.payload.data;
+      })
+      .addCase(fetchFormTemplateById.rejected, (state, action) => {
+        state.selectedTemplateLoading = false;
+        state.selectedTemplateError = action.payload ?? "Failed to fetch form template";
       });
   },
 });
@@ -74,5 +144,18 @@ export const selectFormTemplatesError = (state: {
 export const selectFormTemplatesPagination = (state: {
   forms: FormTemplatesState;
 }) => state.forms.pagination;
+export const selectFormSubmitLoading = (state: { forms: FormTemplatesState }) =>
+  state.forms.submitLoading;
+export const selectFormSubmitError = (state: { forms: FormTemplatesState }) =>
+  state.forms.submitError;
+export const selectLastFormSubmission = (state: { forms: FormTemplatesState }) =>
+  state.forms.lastSubmission;
+export const selectSelectedTemplate = (state: { forms: FormTemplatesState }) =>
+  state.forms.selectedTemplate;
+export const selectSelectedTemplateLoading = (state: {
+  forms: FormTemplatesState;
+}) => state.forms.selectedTemplateLoading;
+export const selectSelectedTemplateError = (state: { forms: FormTemplatesState }) =>
+  state.forms.selectedTemplateError;
 
 export default formSlice.reducer;

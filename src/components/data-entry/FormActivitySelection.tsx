@@ -192,7 +192,7 @@ export function FormActivitySelection({
   subProjectId,
   onFormSelect,
   onBack,
-}: FormActivitySelectionProps) {
+}: any) {
   const [selectedActivityId, setSelectedActivityId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");

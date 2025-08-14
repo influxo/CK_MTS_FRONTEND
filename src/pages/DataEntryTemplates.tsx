@@ -7,6 +7,10 @@ import {
   selectFormTemplates,
   selectFormTemplatesError,
   selectFormTemplatesLoading,
+  fetchFormTemplateById,
+  selectSelectedTemplate,
+  selectSelectedTemplateError,
+  selectSelectedTemplateLoading,
 } from "../store/slices/formSlice";
 import { Card } from "../components/ui/data-display/card";
 import { Button } from "../components/ui/button/button";
@@ -21,6 +25,7 @@ import {
 } from "../components/ui/data-display/table";
 import { Alert, AlertDescription } from "../components/ui/feedback/alert";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { FormSubmission } from "../components/data-entry/FormSubmission";
 
 export function DataEntryTemplates() {
   const dispatch = useDispatch<AppDispatch>();
@@ -35,6 +40,9 @@ export function DataEntryTemplates() {
   const loading = useSelector(selectFormTemplatesLoading);
   const error = useSelector(selectFormTemplatesError);
   const templates = useSelector(selectFormTemplates);
+  const selectedTemplate = useSelector(selectSelectedTemplate);
+  const selectedTemplateLoading = useSelector(selectSelectedTemplateLoading);
+  const selectedTemplateError = useSelector(selectSelectedTemplateError);
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     null
@@ -55,6 +63,13 @@ export function DataEntryTemplates() {
     );
   }, [dispatch, projectId, subprojectId, isValid]);
 
+  // When a template is selected, fetch its full schema
+  useEffect(() => {
+    if (selectedTemplateId) {
+      dispatch(fetchFormTemplateById({ id: selectedTemplateId }));
+    }
+  }, [dispatch, selectedTemplateId]);
+
   const pageTitle = useMemo(() => {
     if (projectId) return "Templates for Project";
     if (subprojectId) return "Templates for Subproject";
@@ -64,23 +79,36 @@ export function DataEntryTemplates() {
   if (!isValid) {
     return (
       <div className="space-y-4">
-        <Button variant="outline" size="sm" onClick={() => navigate("/data-entry") }>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/data-entry")}
+        >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Data Entry
         </Button>
         <Alert variant="destructive">
           <AlertDescription>
-            Missing required parameter. Provide either projectId or subprojectId in the URL.
+            Missing required parameter. Provide either projectId or subprojectId
+            in the URL.
           </AlertDescription>
         </Alert>
       </div>
     );
   }
 
+  // Determine entity info for submission
+  const entityId = projectId ?? subprojectId ?? undefined;
+  const entityType = projectId ? "project" : subprojectId ? "subproject" : undefined;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={() => navigate("/data-entry") }>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/data-entry")}
+        >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back
         </Button>
@@ -88,9 +116,13 @@ export function DataEntryTemplates() {
           <h2>{pageTitle}</h2>
           <div className="text-sm text-muted-foreground">
             {projectId ? (
-              <>projectId: <Badge variant="outline">{projectId}</Badge></>
+              <>
+                projectId: <Badge variant="outline">{projectId}</Badge>
+              </>
             ) : (
-              <>subprojectId: <Badge variant="outline">{subprojectId}</Badge></>
+              <>
+                subprojectId: <Badge variant="outline">{subprojectId}</Badge>
+              </>
             )}
           </div>
         </div>
@@ -129,10 +161,16 @@ export function DataEntryTemplates() {
                         <div className="flex gap-2 justify-end">
                           <Button
                             size="sm"
-                            variant={selectedTemplateId === tpl.id ? "default" : "outline"}
+                            variant={
+                              selectedTemplateId === tpl.id
+                                ? "default"
+                                : "outline"
+                            }
                             onClick={() => setSelectedTemplateId(tpl.id)}
                           >
-                            {selectedTemplateId === tpl.id ? "Selected" : "Select"}
+                            {selectedTemplateId === tpl.id
+                              ? "Selected"
+                              : "Select"}
                           </Button>
                         </div>
                       </TableCell>
@@ -140,7 +178,10 @@ export function DataEntryTemplates() {
                   ))}
                   {templates.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-muted-foreground">
+                      <TableCell
+                        colSpan={3}
+                        className="text-center text-muted-foreground"
+                      >
                         No templates found for this selection.
                       </TableCell>
                     </TableRow>
@@ -148,15 +189,28 @@ export function DataEntryTemplates() {
                 </TableBody>
               </Table>
 
+              {/* Dynamic Form Rendering Area */}
               {selectedTemplateId && (
-                <div className="flex justify-end">
-                  <Button onClick={() => {
-                    // Placeholder: integrate with submission flow when ready
-                    // For now, navigate back or keep selection state
-                    navigate("/data-entry");
-                  }}>
-                    Continue
-                  </Button>
+                <div className="space-y-4">
+                  {selectedTemplateLoading && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Loading template...
+                    </div>
+                  )}
+                  {!selectedTemplateLoading && selectedTemplateError && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{selectedTemplateError}</AlertDescription>
+                    </Alert>
+                  )}
+                  {!selectedTemplateLoading && selectedTemplate && entityId && entityType && (
+                    <FormSubmission
+                      template={selectedTemplate}
+                      entityId={entityId}
+                      entityType={entityType}
+                      onBack={() => setSelectedTemplateId(null)}
+                      onSubmissionComplete={() => navigate("/data-entry")}
+                    />
+                  )}
                 </div>
               )}
             </div>
