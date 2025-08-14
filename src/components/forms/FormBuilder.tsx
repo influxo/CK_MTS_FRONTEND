@@ -57,6 +57,9 @@ import {
 } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 import { FormField } from "./FormField";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../../store";
+import { createForm } from "../../store/slices/formsSlice";
 
 // Field types available for forms
 const fieldTypes = [
@@ -91,7 +94,7 @@ const fieldTypes = [
 // Mock form template for editing
 const mockFormTemplate = {
   id: "form-001",
-  name: "Maternal Health Assessment",
+  name: "Maternal Health Assessmentaa",
   description: "Assessment form for pregnant women and new mothers",
   category: "health",
   lastUpdated: "2025-05-10T14:30:00",
@@ -269,6 +272,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
   const [isAddFieldDialogOpen, setIsAddFieldDialogOpen] = useState(false);
   const [showFormJson, setShowFormJson] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
 
   // Handle form field selection
   const handleFieldSelect = (fieldId: string) => {
@@ -336,10 +340,34 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
     const updatedForm = {
       ...formData,
       lastUpdated: new Date().toISOString(),
+      entities: [
+        {
+          id: "68c87ec2-2dd2-4914-8ce9-76a7f308b527",
+          type: "project"
+        }
+      ],
+      schema: {
+        fields: [
+          {
+            name: "string",
+            label: "string",
+            type: "Text",
+            required: true,
+            options: [
+              "string"
+            ]
+          }
+        ]
+      }
     };
 
     // Call the parent's save handler
-    onSave(updatedForm);
+    // onSave(updatedForm);
+    // console.log(updatedForm);
+    const test = dispatch(createForm(updatedForm));
+
+    console.log(test);
+    console.log('ttt');
   };
 
   // Get the selected field data

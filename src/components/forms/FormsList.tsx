@@ -59,14 +59,14 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
+import type { FormTemplate } from "../../services/forms/formModels";
 
 // Mock data for form templates
 const mockFormTemplates = [
   {
     id: "form-001",
-    name: "Maternal Health Assessment",
+    name: "Maternal Health Assessmentqq",
     description: "Assessment form for pregnant women and new mothers",
     category: "health",
     lastUpdated: "2025-05-10T14:30:00",
@@ -78,96 +78,6 @@ const mockFormTemplates = [
     associatedSubProjects: ["Maternal Health Services"],
     submissions: 152,
     lastSubmission: "2025-05-20T09:15:00",
-  },
-  {
-    id: "form-002",
-    name: "Agricultural Productivity Survey",
-    description: "Survey for measuring farm productivity and practices",
-    category: "agriculture",
-    lastUpdated: "2025-04-22T11:45:00",
-    status: "active",
-    fieldCount: 18,
-    version: "2.0",
-    createdBy: "Robert Johnson",
-    associatedProjects: ["Community Development"],
-    associatedSubProjects: ["Food Security Initiative"],
-    submissions: 87,
-    lastSubmission: "2025-05-18T16:30:00",
-  },
-  {
-    id: "form-003",
-    name: "Water Access Questionnaire",
-    description: "Questionnaire to assess community water access and quality",
-    category: "wash",
-    lastUpdated: "2025-05-05T10:15:00",
-    status: "active",
-    fieldCount: 15,
-    version: "1.0",
-    createdBy: "Michael Lee",
-    associatedProjects: ["Community Development"],
-    associatedSubProjects: ["Water Access Program"],
-    submissions: 65,
-    lastSubmission: "2025-05-19T11:20:00",
-  },
-  {
-    id: "form-004",
-    name: "Nutrition Screening Tool",
-    description: "Screening tool for child nutrition status",
-    category: "health",
-    lastUpdated: "2025-04-15T09:30:00",
-    status: "active",
-    fieldCount: 12,
-    version: "1.1",
-    createdBy: "Sarah Johnson",
-    associatedProjects: ["Rural Healthcare Initiative"],
-    associatedSubProjects: ["Nutrition Support"],
-    submissions: 98,
-    lastSubmission: "2025-05-21T08:45:00",
-  },
-  {
-    id: "form-005",
-    name: "Education Needs Assessment",
-    description: "Assessment of educational needs for youth programs",
-    category: "education",
-    lastUpdated: "2025-04-28T15:45:00",
-    status: "draft",
-    fieldCount: 20,
-    version: "0.9",
-    createdBy: "Jennifer Davis",
-    associatedProjects: ["Youth Empowerment Program"],
-    associatedSubProjects: ["Education Support"],
-    submissions: 0,
-    lastSubmission: null,
-  },
-  {
-    id: "form-006",
-    name: "Skills Training Feedback",
-    description: "Feedback form for vocational skills training sessions",
-    category: "training",
-    lastUpdated: "2025-05-14T13:20:00",
-    status: "active",
-    fieldCount: 10,
-    version: "1.0",
-    createdBy: "Thomas Brown",
-    associatedProjects: ["Youth Empowerment Program"],
-    associatedSubProjects: ["Skills Training"],
-    submissions: 45,
-    lastSubmission: "2025-05-19T15:30:00",
-  },
-  {
-    id: "form-007",
-    name: "Child Vaccination Record",
-    description: "Form for tracking child vaccinations",
-    category: "health",
-    lastUpdated: "2025-05-02T11:00:00",
-    status: "archived",
-    fieldCount: 15,
-    version: "2.1",
-    createdBy: "Jane Smith",
-    associatedProjects: ["Rural Healthcare Initiative"],
-    associatedSubProjects: ["Child Vaccination Campaign"],
-    submissions: 215,
-    lastSubmission: "2025-05-01T14:20:00",
   },
 ];
 
@@ -202,12 +112,15 @@ const mockProjects = [
 
 // Interface for component props
 interface FormsListProps {
+  formTemplates: FormTemplate[];
   onCreateForm: () => void;
   onEditForm: (formId: string) => void;
 }
 
-export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
-  const [viewType, setViewType] = useState("list");
+export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsListProps) {
+  // const [viewType, setViewType] = useState("list");
+
+  const [viewType, setViewType] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -220,7 +133,6 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
   const [newFormProject, setNewFormProject] = useState("");
   const [newFormSubProject, setNewFormSubProject] = useState("");
 
-  // Filter form templates based on selected filters
   const filteredTemplates = mockFormTemplates.filter((template) => {
     const matchesSearch =
       template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -527,6 +439,12 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
 
       {viewType === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {
+            formTemplates.map((formTes) => (
+              <div>{formTes.name}</div>
+            ))
+          }
+
           {filteredTemplates.map((template) => (
             <Card key={template.id} className="overflow-hidden">
               <CardHeader className="pb-3">

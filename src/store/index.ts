@@ -12,6 +12,7 @@ import userProjectsReducer from "./slices/userProjectsSlice";
 import serviceMetricsReducer from "./slices/serviceMetricsSlice";
 import kpiReducer from "./slices/kpiSlice";
 import demographicsReducer from "./slices/demographicsSlice";
+
 // Configure the Redux store
 export const store = configureStore({
   reducer: {
