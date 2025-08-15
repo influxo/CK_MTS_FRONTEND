@@ -18,6 +18,8 @@ import {
   Type,
   Upload,
   X,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
@@ -57,9 +59,8 @@ import {
 } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 import { FormField } from "./FormField";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../../store";
-import { createForm } from "../../store/slices/formsSlice";
+// import { useDispatch } from "react-redux";
+// import type { AppDispatch } from "../../store";
 
 // Field types available for forms
 const fieldTypes = [
@@ -90,130 +91,14 @@ const fieldTypes = [
   { id: "file", name: "File Upload", icon: <Upload className="h-4 w-4" /> },
   { id: "boolean", name: "Yes/No", icon: <ToggleLeft className="h-4 w-4" /> },
 ];
-
-// Mock form template for editing
-const mockFormTemplate = {
-  id: "form-001",
-  name: "Maternal Health Assessmentaa",
-  description: "Assessment form for pregnant women and new mothers",
-  category: "health",
-  lastUpdated: "2025-05-10T14:30:00",
-  status: "active",
-  version: "1.2",
-  createdBy: "Jane Smith",
-  associatedProjects: ["Rural Healthcare Initiative"],
-  associatedSubProjects: ["Maternal Health Services"],
-  fields: [
-    {
-      id: "field-001",
-      type: "text",
-      label: "Full Name",
-      placeholder: "Enter full name",
-      required: true,
-      helpText:
-        "Enter the beneficiary's full name as it appears on ID documents",
-      validations: { minLength: 2, maxLength: 100 },
-    },
-    {
-      id: "field-002",
-      type: "radio",
-      label: "Pregnancy Status",
-      required: true,
-      options: [
-        { value: "pregnant", label: "Currently Pregnant" },
-        { value: "postpartum", label: "Postpartum (within 42 days)" },
-        { value: "not_pregnant", label: "Not Pregnant" },
-      ],
-      helpText: "Select the current pregnancy status",
-    },
-    {
-      id: "field-003",
-      type: "number",
-      label: "Age",
-      placeholder: "Enter age",
-      required: true,
-      validations: { min: 12, max: 65 },
-    },
-    {
-      id: "field-004",
-      type: "date",
-      label: "Date of Last Visit",
-      required: false,
-      helpText: "If this is the first visit, leave blank",
-    },
-    {
-      id: "field-005",
-      type: "checkbox",
-      label: "Symptoms",
-      required: false,
-      options: [
-        { value: "fever", label: "Fever" },
-        { value: "headache", label: "Headache" },
-        { value: "nausea", label: "Nausea/Vomiting" },
-        { value: "fatigue", label: "Fatigue" },
-        { value: "abdominal_pain", label: "Abdominal Pain" },
-      ],
-      helpText: "Select all symptoms that apply",
-    },
-    {
-      id: "field-006",
-      type: "dropdown",
-      label: "Number of Previous Pregnancies",
-      required: true,
-      options: [
-        { value: "0", label: "0 (First pregnancy)" },
-        { value: "1", label: "1" },
-        { value: "2", label: "2" },
-        { value: "3", label: "3" },
-        { value: "4", label: "4" },
-        { value: "5_plus", label: "5 or more" },
-      ],
-    },
-    {
-      id: "field-007",
-      type: "textarea",
-      label: "Additional Notes",
-      placeholder: "Enter any additional information",
-      required: false,
-      validations: { maxLength: 1000 },
-    },
-  ],
-};
-
-// Mock data for projects
-const mockProjects = [
-  {
-    id: "proj-001",
-    title: "Rural Healthcare Initiative",
-    subProjects: [
-      { id: "sub-001", title: "Maternal Health Services" },
-      { id: "sub-002", title: "Child Vaccination Campaign" },
-      { id: "sub-004", title: "Nutrition Support" },
-    ],
-  },
-  {
-    id: "proj-002",
-    title: "Community Development",
-    subProjects: [
-      { id: "sub-003", title: "Water Access Program" },
-      { id: "sub-005", title: "Food Security Initiative" },
-    ],
-  },
-  {
-    id: "proj-003",
-    title: "Youth Empowerment Program",
-    subProjects: [
-      { id: "sub-006", title: "Education Support" },
-      { id: "sub-007", title: "Skills Training" },
-    ],
-  },
-];
-
 interface FormBuilderProps {
   formId?: string;
   onBack: () => void;
   onSave: (formData: any) => void;
+  isSaving?: boolean;
+  error?: string | null;
 }
+
 interface FormFieldOption {
   value: string;
   label: string;
@@ -221,6 +106,7 @@ interface FormFieldOption {
 
 interface FormField {
   id: string;
+  name: string;
   type: string;
   label: string;
   required?: boolean;
@@ -235,6 +121,7 @@ interface FormField {
   };
   // Add other field properties as needed
 }
+
 interface FormData {
   id: string;
   name: string;
@@ -247,7 +134,13 @@ interface FormData {
   // Add other form properties as needed
 }
 
-export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
+export function FormBuilder({
+  formId,
+  onBack,
+  onSave,
+  isSaving = false,
+  error,
+}: FormBuilderProps) {
   // If formId is provided, we're editing an existing form, otherwise creating a new one
   const isEditing = !!formId;
 
@@ -255,7 +148,15 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
   // For this demo, we're using mock data
   const [formData, setFormData] = useState<FormData>(
     isEditing
-      ? mockFormTemplate
+      ? {
+          id: "",
+          name: "",
+          description: "",
+          category: "",
+          status: "draft",
+          version: "0.1",
+          fields: [],
+        }
       : {
           id: "",
           name: "",
@@ -272,7 +173,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
   const [isAddFieldDialogOpen, setIsAddFieldDialogOpen] = useState(false);
   const [showFormJson, setShowFormJson] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
-  const dispatch = useDispatch<AppDispatch>();
+  // const dispatch = useDispatch<AppDispatch>();
 
   // Handle form field selection
   const handleFieldSelect = (fieldId: string) => {
@@ -282,6 +183,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
   // Add a new field to the form
   const handleAddField = (fieldType: string) => {
     const baseField: FormField = {
+      name: `field-${Date.now()}`,
       id: `field-${Date.now()}`,
       type: fieldType,
       label: `New ${
@@ -336,38 +238,40 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
 
   // Save the form
   const handleSaveForm = () => {
-    // Update last updated timestamp
-    const updatedForm = {
-      ...formData,
-      lastUpdated: new Date().toISOString(),
+    // Ensure fields is always an array, even if undefined
+    const fields = Array.isArray(formData.fields) ? formData.fields : [];
+
+    // Format the form data to match the required API structure
+    const formattedData = {
+      name: formData.name,
       entities: [
         {
-          id: "68c87ec2-2dd2-4914-8ce9-76a7f308b527",
-          type: "project"
+          id: 'd0c24c09-d9e9-46b7-8255-cb4414a3e850',
+          type: 'project'
         }
       ],
       schema: {
-        fields: [
+        fields: fields.length > 0 ? fields.map(field => ({
+          name: field.name || 'field',
+          label: field.label || 'Field',
+          type: field.type ? field.type.charAt(0).toUpperCase() + field.type.slice(1) : 'Text',
+          required: field.required || false,
+          options: field.options?.map(opt => opt.value) || []
+        })) : [
+          // Default field if no fields are added
           {
-            name: "string",
-            label: "string",
-            type: "Text",
+            name: 'field1',
+            label: 'Field 1',
+            type: 'Text',
             required: true,
-            options: [
-              "string"
-            ]
+            options: []
           }
         ]
       }
     };
 
-    // Call the parent's save handler
-    // onSave(updatedForm);
-    // console.log(updatedForm);
-    const test = dispatch(createForm(updatedForm));
-
-    console.log(test);
-    console.log('ttt');
+    console.log('Saving form data:', formattedData);
+    onSave(formattedData);
   };
 
   // Get the selected field data
@@ -397,9 +301,21 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
             <Eye className="h-4 w-4 mr-2" />
             {previewMode ? "Exit Preview" : "Preview"}
           </Button>
-          <Button className="bg-[#2E343E] text-white" onClick={handleSaveForm}>
-            <Save className="h-4 w-4 mr-2" />
-            Save Form
+          <Button
+            onClick={handleSaveForm}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Save Form
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -914,11 +830,11 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                             <SelectValue placeholder="Select a project" />
                           </SelectTrigger>
                           <SelectContent>
-                            {mockProjects.map((project) => (
+                            {/* {mockProjects.map((project) => (
                               <SelectItem key={project.id} value={project.id}>
                                 {project.title}
                               </SelectItem>
-                            ))}
+                            ))} */}
                           </SelectContent>
                         </Select>
                       </div>
@@ -933,7 +849,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                             <SelectValue placeholder="Select a sub-project" />
                           </SelectTrigger>
                           <SelectContent>
-                            {mockProjects.flatMap((project) =>
+                            {/* {mockProjects.flatMap((project) =>
                               project.subProjects.map((subProject) => (
                                 <SelectItem
                                   key={subProject.id}
@@ -942,7 +858,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                   {subProject.title} ({project.title})
                                 </SelectItem>
                               ))
-                            )}
+                            )} */}
                           </SelectContent>
                         </Select>
                       </div>
@@ -1051,4 +967,11 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
       )}
     </div>
   );
+
+  {error && (
+    <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md">
+      <AlertCircle className="h-4 w-4 inline mr-2" />
+      {error}
+    </div>
+  )}
 }
