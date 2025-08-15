@@ -19,19 +19,37 @@ export interface FormField {
   };
 }
 
+export interface EntityReference {
+  id: string;
+  entityType: string;
+  formTemplateId: string;
+  entityId: string;
+}
+
+export interface FormFieldForTemplate {
+  name: string;
+  label: string;
+  type: string;
+  required: boolean;
+  options?: string[];
+}
+
+export interface FormSchema {
+  fields: FormFieldForTemplate[];
+}
+
 export interface FormTemplate {
   id: string;
   name: string;
-  description: string;
-  category: string;
-  status: string;
-  version: string;
-  fields: FormField[];
-  lastUpdated?: string;
-  createdBy?: string;
+  description?: string;
+  category?: string;
+  status?: string;
+  version?: string;
+  entityAssociations: EntityReference[];
+  schema: FormSchema;
+  updatedAt?: string;
+  createdAt?: string;
 }
-
-
 
 export interface FormTemplatePagination {
   page: number;
