@@ -158,6 +158,7 @@ interface ProjectsListProps {
 }
 
 export function ProjectsList({ projects }: ProjectsListProps) {
+
   const [searchQuery, setSearchQuery] = useState("");
   const [viewType, setViewType] = useState("grid");
   const [statusFilter, setStatusFilter] = useState("all");

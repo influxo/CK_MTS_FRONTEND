@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { FormsList } from "./FormsList";
 import { FormBuilder } from "./FormBuilder";
+import type { FormTemplate, FormTemplateAndPagination } from "../../services/forms/formModels";
 
-export function FormsModule() {
+export function FormsModule({ forms }: { forms: FormTemplateAndPagination }) {
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [isCreatingForm, setIsCreatingForm] = useState(false);
 
@@ -31,15 +32,17 @@ export function FormsModule() {
 
   if (selectedFormId || isCreatingForm) {
     return (
-      <FormBuilder
-        formId={selectedFormId}
-        onBack={handleBackToForms}
-        onSave={handleSaveForm}
-      />
+      selectedFormId && (
+        <FormBuilder
+          formId={selectedFormId}
+          onBack={handleBackToForms}
+          onSave={handleSaveForm}
+        />
+      )
     );
   }
 
   return (
-    <FormsList onCreateForm={handleCreateForm} onEditForm={handleEditForm} />
+    <FormsList onCreateForm={handleCreateForm} onEditForm={handleEditForm} formTemplates={forms.templates} />
   );
 }
