@@ -7,7 +7,12 @@ import type { FormTemplateAndPagination } from "../../services/forms/formModels"
 import { createForm } from "../../store/slices/formsSlice";
 import { toast } from "sonner";
 
-export function FormsModule({ forms }: { forms: FormTemplateAndPagination }) {
+interface FormsModuleProps {
+  forms: FormTemplateAndPagination;
+  onFormCreated?: () => void;
+}
+
+export function FormsModule({ forms, onFormCreated }: FormsModuleProps) {
   const dispatch = useDispatch<AppDispatch>();
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [isCreatingForm, setIsCreatingForm] = useState(false);
@@ -31,11 +36,25 @@ export function FormsModule({ forms }: { forms: FormTemplateAndPagination }) {
     try {
       const result = await dispatch(createForm(formData)).unwrap();
       console.log("Form saved successfully:", result);
-      toast('Form saved successfully');
+      
+      // Call the onFormCreated callback if provided
+      if (onFormCreated) {
+        onFormCreated();
+      }
+      
+      // Show success toast
+      toast.success(`"${formData.name}" created successfully!`, {
+        description: 'The form has been saved and is now available in your forms list.',
+        duration: 5000,
+      });
+      
       handleBackToForms();
     } catch (err) {
       console.error("Failed to save form:", err);
-      toast('Failed to save form');
+      toast.error('Failed to save form', {
+        description: err instanceof Error ? err.message : 'An unknown error occurred',
+        duration: 5000,
+      });
     }
   };
 
