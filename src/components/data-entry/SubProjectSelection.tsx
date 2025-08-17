@@ -109,7 +109,7 @@ export function SubProjectSelection() {
               <FolderKanban className="h-5 w-5 text-blue-500" />
               <div>
                 <div className="text-sm text-muted-foreground">
-                  Available SubProjects
+                  Available Sub Projects
                 </div>
                 <div className="text-xl font-medium">56</div>
               </div>

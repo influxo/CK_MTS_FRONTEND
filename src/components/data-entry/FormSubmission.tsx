@@ -34,7 +34,11 @@ import {
 } from "../../store/slices/formSlice";
 import type { FormTemplate } from "../../services/forms/formModels";
 import { MapPin } from "lucide-react";
-import { enqueueSubmission, flushQueue, peekQueue } from "../../utils/offlineQueue";
+import {
+  enqueueSubmission,
+  flushQueue,
+  peekQueue,
+} from "../../utils/offlineQueue";
 
 interface DynamicFormSubmissionProps {
   template?: FormTemplate;
@@ -386,7 +390,9 @@ export function FormSubmission({
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
-  const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== "undefined" ? navigator.onLine : true);
+  const [isOnline, setIsOnline] = useState<boolean>(
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
   const [syncing, setSyncing] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
   const [localNotice, setLocalNotice] = useState<string | null>(null);
@@ -419,23 +425,26 @@ export function FormSubmission({
     ? activityDetails[activityId as keyof typeof activityDetails]
     : null;
   const formStructure =
-    dynamicFormStructure || (formId ? formStructures[formId as keyof typeof formStructures] : null);
+    dynamicFormStructure ||
+    (formId ? formStructures[formId as keyof typeof formStructures] : null);
 
   const requestGps = async (): Promise<{ lat: number; lng: number }> => {
     setGpsError(null);
     setGpsLoading(true);
     try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        if (!navigator?.geolocation) {
-          reject(new Error("Geolocation is not supported by this browser."));
-          return;
+      const position = await new Promise<GeolocationPosition>(
+        (resolve, reject) => {
+          if (!navigator?.geolocation) {
+            reject(new Error("Geolocation is not supported by this browser."));
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0,
+          });
         }
-        navigator.geolocation.getCurrentPosition(
-          resolve,
-          reject,
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-        );
-      });
+      );
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
       const coords = { lat, lng };
@@ -444,13 +453,15 @@ export function FormSubmission({
     } catch (e: any) {
       // Fallback: retry with low accuracy and longer timeout (useful for laptops using network provider)
       try {
-        const position2 = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(
-            resolve,
-            reject,
-            { enableHighAccuracy: false, timeout: 60000, maximumAge: 60000 }
-          );
-        });
+        const position2 = await new Promise<GeolocationPosition>(
+          (resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: false,
+              timeout: 60000,
+              maximumAge: 60000,
+            });
+          }
+        );
         const lat = position2.coords.latitude;
         const lng = position2.coords.longitude;
         const coords = { lat, lng };
@@ -459,10 +470,11 @@ export function FormSubmission({
       } catch (e2: any) {
         // Provide clearer guidance for offline devices without GPS hardware
         const offline = typeof navigator !== "undefined" && !navigator.onLine;
-        const errMsg =
-          offline
-            ? "Offline geolocation is not available on this device. Use a tablet/phone with built-in GPS or re-enable internet to assist location."
-            : (e2?.message || e?.message || "Failed to retrieve GPS location. Please enable location services and grant permission.");
+        const errMsg = offline
+          ? "Offline geolocation is not available on this device. Use a tablet/phone with built-in GPS or re-enable internet to assist location."
+          : e2?.message ||
+            e?.message ||
+            "Failed to retrieve GPS location. Please enable location services and grant permission.";
         setGpsError(errMsg);
         throw e2;
       }
@@ -503,7 +515,9 @@ export function FormSubmission({
         try {
           setSyncing(true);
           await flushQueue(async (templateId, payload) => {
-            await (dispatch(submitFormResponse({ templateId, payload })) as any).unwrap();
+            await (
+              dispatch(submitFormResponse({ templateId, payload })) as any
+            ).unwrap();
           });
         } catch (_) {
           // keep remaining in queue
@@ -531,10 +545,9 @@ export function FormSubmission({
         // don't override an already captured GPS
         if (!gps) {
           const offline = typeof navigator !== "undefined" && !navigator.onLine;
-          const errMsg =
-            offline
-              ? "Offline geolocation is not available on this device. Use a tablet/phone with built-in GPS or re-enable internet to assist location."
-              : (err?.message || "Unable to watch position.");
+          const errMsg = offline
+            ? "Offline geolocation is not available on this device. Use a tablet/phone with built-in GPS or re-enable internet to assist location."
+            : err?.message || "Unable to watch position.";
           setGpsError(errMsg);
         }
       },
@@ -628,21 +641,27 @@ export function FormSubmission({
         if (!isOnline) {
           enqueueSubmission(template.id, payload);
           setQueueCount(peekQueue().length);
-          setLocalNotice("Submission saved offline. It will sync automatically when you're back online.");
+          setLocalNotice(
+            "Submission saved offline. It will sync automatically when you're back online."
+          );
           onSubmissionComplete();
           return;
         }
 
         try {
-          await (dispatch(
-            submitFormResponse({ templateId: template.id, payload })
-          ) as any).unwrap();
+          await (
+            dispatch(
+              submitFormResponse({ templateId: template.id, payload })
+            ) as any
+          ).unwrap();
           onSubmissionComplete();
         } catch (e) {
           // On failure (likely network), save offline
           enqueueSubmission(template.id, payload);
           setQueueCount(peekQueue().length);
-          setLocalNotice("Network issue detected. Submission saved offline and will auto-sync.");
+          setLocalNotice(
+            "Network issue detected. Submission saved offline and will auto-sync."
+          );
           onSubmissionComplete();
         }
       } catch (e) {
@@ -818,10 +837,10 @@ export function FormSubmission({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={onBack}>
+        {/* <Button variant="outline" size="sm" onClick={onBack}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Forms
-        </Button>
+        </Button> */}
         <div>
           <h2>{formStructure.title}</h2>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -848,8 +867,17 @@ export function FormSubmission({
           </span>
         ) : (
           <>
-            <span>{isMobileOrTablet ? "Location required for submission." : "Location optional on this device."}</span>
-            <Button variant="outline" size="sm" onClick={requestGps} disabled={gpsLoading}>
+            <span>
+              {isMobileOrTablet
+                ? "Location required for submission."
+                : "Location optional on this device."}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={requestGps}
+              disabled={gpsLoading}
+            >
               {gpsLoading ? "Detecting..." : "Get GPS"}
             </Button>
           </>
@@ -861,17 +889,26 @@ export function FormSubmission({
             <span>•</span>
             <span>{queueCount} queued</span>
             {isOnline && (
-              <Button variant="outline" size="sm" disabled={syncing} onClick={async () => {
-                try {
-                  setSyncing(true);
-                  await flushQueue(async (templateId, payload) => {
-                    await (dispatch(submitFormResponse({ templateId, payload })) as any).unwrap();
-                  });
-                } finally {
-                  setQueueCount(peekQueue().length);
-                  setSyncing(false);
-                }
-              }}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={syncing}
+                onClick={async () => {
+                  try {
+                    setSyncing(true);
+                    await flushQueue(async (templateId, payload) => {
+                      await (
+                        dispatch(
+                          submitFormResponse({ templateId, payload })
+                        ) as any
+                      ).unwrap();
+                    });
+                  } finally {
+                    setQueueCount(peekQueue().length);
+                    setSyncing(false);
+                  }
+                }}
+              >
                 {syncing ? "Syncing..." : "Sync Now"}
               </Button>
             )}

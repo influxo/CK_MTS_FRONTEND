@@ -107,7 +107,7 @@ export function DataEntryTemplates() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate("/data-entry")}
+          onClick={() => (selectedTemplateId ? setSelectedTemplateId(null) : navigate("/data-entry"))}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back
@@ -144,53 +144,54 @@ export function DataEntryTemplates() {
 
           {!loading && !error && (
             <div className="space-y-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Version</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {templates.map((tpl) => (
-                    <TableRow key={tpl.id}>
-                      <TableCell className="font-medium">{tpl.name}</TableCell>
-                      <TableCell>{tpl.version}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            size="sm"
-                            variant={
-                              selectedTemplateId === tpl.id
-                                ? "default"
-                                : "outline"
-                            }
-                            onClick={() => setSelectedTemplateId(tpl.id)}
+              {!selectedTemplateId ? (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Version</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {templates.map((tpl) => (
+                        <TableRow key={tpl.id}>
+                          <TableCell className="font-medium">{tpl.name}</TableCell>
+                          <TableCell>{tpl.version}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                size="sm"
+                                variant={
+                                  selectedTemplateId === tpl.id
+                                    ? "default"
+                                    : "outline"
+                                }
+                                onClick={() => setSelectedTemplateId(tpl.id)}
+                              >
+                                {selectedTemplateId === tpl.id
+                                  ? "Selected"
+                                  : "Select"}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {templates.length === 0 && (
+                        <TableRow>
+                          <TableCell
+                            colSpan={3}
+                            className="text-center text-muted-foreground"
                           >
-                            {selectedTemplateId === tpl.id
-                              ? "Selected"
-                              : "Select"}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {templates.length === 0 && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={3}
-                        className="text-center text-muted-foreground"
-                      >
-                        No templates found for this selection.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-
-              {/* Dynamic Form Rendering Area */}
-              {selectedTemplateId && (
+                            No templates found for this selection.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </>
+              ) : (
                 <div className="space-y-4">
                   {selectedTemplateLoading && (
                     <div className="flex items-center gap-2 text-muted-foreground">
