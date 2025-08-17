@@ -13,16 +13,8 @@ import {
 import { Checkbox } from "../ui/form/checkbox";
 import { RadioGroup, RadioGroupItem } from "../ui/form/radio-group";
 import { Label } from "../ui/form/label";
-import { Badge } from "../ui/data-display/badge";
 
-import {
-  ArrowLeft,
-  Save,
-  Send,
-  Clock,
-  AlertCircle,
-  Target,
-} from "lucide-react";
+import { Save, Send, Clock, AlertCircle } from "lucide-react";
 import { Progress } from "../ui/feedback/progress";
 import { Alert, AlertDescription } from "../ui/feedback/alert";
 import { useDispatch, useSelector } from "react-redux";
@@ -46,10 +38,6 @@ interface DynamicFormSubmissionProps {
   entityType?: string; // "project" | "subproject" | "activity"
   onBack: () => void;
   onSubmissionComplete: () => void;
-  // Backward compatibility props (used only by legacy mock flow)
-  subProjectId?: string;
-  formId?: string;
-  activityId?: string | null;
 }
 
 const mapFieldType = (t: string | undefined) => {
@@ -77,295 +65,7 @@ const mapFieldType = (t: string | undefined) => {
   }
 };
 
-// Mock subproject and activity details
-const subProjectDetails = {
-  "sub-001": { name: "Community Health Screening", projectName: "Active" },
-  "sub-002": { name: "Mobile Health Services", projectName: "Cares" },
-  "sub-003": { name: "Legal Support Services", projectName: "MyRight" },
-};
-
-const activityDetails = {
-  "act-001": { title: "Weekly Health Screening - Pristina Center" },
-  "act-002": { title: "Mobile Health Unit - Rural Areas" },
-  "act-003": { title: "Elder Care Home Visits" },
-  "act-004": { title: "Legal Rights Workshop Series" },
-};
-
-// Mock form structures
-const formStructures = {
-  "form-001": {
-    id: "form-001",
-    title: "Community Health Assessment",
-    estimatedTime: "15 minutes",
-    fields: [
-      {
-        id: "beneficiary_id",
-        type: "text",
-        label: "Beneficiary ID",
-        required: true,
-        placeholder: "Enter beneficiary ID",
-      },
-      {
-        id: "assessment_date",
-        type: "date",
-        label: "Assessment Date",
-        required: true,
-      },
-      {
-        id: "health_status",
-        type: "select",
-        label: "Overall Health Status",
-        required: true,
-        options: ["Excellent", "Good", "Fair", "Poor"],
-      },
-      {
-        id: "symptoms",
-        type: "checkbox-group",
-        label: "Current Symptoms",
-        options: ["Fever", "Cough", "Headache", "Fatigue", "Other"],
-      },
-      {
-        id: "blood_pressure",
-        type: "text",
-        label: "Blood Pressure (mmHg)",
-        placeholder: "120/80",
-      },
-      {
-        id: "weight",
-        type: "number",
-        label: "Weight (kg)",
-        placeholder: "Enter weight",
-      },
-      {
-        id: "medications",
-        type: "textarea",
-        label: "Current Medications",
-        placeholder: "List any medications the beneficiary is currently taking",
-      },
-      {
-        id: "follow_up_needed",
-        type: "radio",
-        label: "Follow-up Required?",
-        required: true,
-        options: ["Yes", "No"],
-      },
-      {
-        id: "notes",
-        type: "textarea",
-        label: "Additional Notes",
-        placeholder: "Any additional observations or comments",
-      },
-    ],
-  },
-  "form-002": {
-    id: "form-002",
-    title: "Basic Vital Signs Check",
-    estimatedTime: "5 minutes",
-    fields: [
-      {
-        id: "beneficiary_id",
-        type: "text",
-        label: "Beneficiary ID",
-        required: true,
-        placeholder: "Enter beneficiary ID",
-      },
-      {
-        id: "check_date",
-        type: "date",
-        label: "Check Date",
-        required: true,
-      },
-      {
-        id: "temperature",
-        type: "number",
-        label: "Temperature (°C)",
-        placeholder: "36.5",
-      },
-      {
-        id: "heart_rate",
-        type: "number",
-        label: "Heart Rate (bpm)",
-        placeholder: "72",
-      },
-      {
-        id: "blood_pressure_systolic",
-        type: "number",
-        label: "Systolic BP",
-        placeholder: "120",
-      },
-      {
-        id: "blood_pressure_diastolic",
-        type: "number",
-        label: "Diastolic BP",
-        placeholder: "80",
-      },
-      {
-        id: "oxygen_saturation",
-        type: "number",
-        label: "Oxygen Saturation (%)",
-        placeholder: "98",
-      },
-      {
-        id: "notes",
-        type: "textarea",
-        label: "Notes",
-        placeholder: "Additional observations",
-      },
-    ],
-  },
-  "form-004": {
-    id: "form-004",
-    title: "Mobile Service Delivery Report",
-    estimatedTime: "20 minutes",
-    fields: [
-      {
-        id: "service_date",
-        type: "date",
-        label: "Service Date",
-        required: true,
-      },
-      {
-        id: "location",
-        type: "text",
-        label: "Service Location",
-        required: true,
-        placeholder: "Enter location where services were provided",
-      },
-      {
-        id: "service_type",
-        type: "select",
-        label: "Type of Service",
-        required: true,
-        options: [
-          "Health Screening",
-          "Vaccination",
-          "Medical Consultation",
-          "Health Education",
-          "Other",
-        ],
-      },
-      {
-        id: "beneficiaries_served",
-        type: "number",
-        label: "Number of Beneficiaries Served",
-        required: true,
-        placeholder: "Enter number",
-      },
-      {
-        id: "age_groups",
-        type: "checkbox-group",
-        label: "Age Groups Served",
-        options: ["0-5 years", "6-17 years", "18-64 years", "65+ years"],
-      },
-      {
-        id: "services_provided",
-        type: "textarea",
-        label: "Services Provided (Details)",
-        required: true,
-        placeholder: "Describe the specific services provided",
-      },
-      {
-        id: "challenges",
-        type: "textarea",
-        label: "Challenges Encountered",
-        placeholder: "Describe any challenges or issues",
-      },
-      {
-        id: "supplies_used",
-        type: "textarea",
-        label: "Medical Supplies Used",
-        placeholder: "List medical supplies and quantities used",
-      },
-    ],
-  },
-  "form-006": {
-    id: "form-006",
-    title: "Legal Aid Case Documentation",
-    estimatedTime: "30 minutes",
-    fields: [
-      {
-        id: "case_id",
-        type: "text",
-        label: "Case ID",
-        required: true,
-        placeholder: "Enter case ID",
-      },
-      {
-        id: "client_id",
-        type: "text",
-        label: "Client ID",
-        required: true,
-        placeholder: "Enter client ID",
-      },
-      {
-        id: "case_date",
-        type: "date",
-        label: "Case Date",
-        required: true,
-      },
-      {
-        id: "case_type",
-        type: "select",
-        label: "Case Type",
-        required: true,
-        options: [
-          "Family Law",
-          "Property Rights",
-          "Labor Rights",
-          "Criminal Defense",
-          "Civil Rights",
-          "Other",
-        ],
-      },
-      {
-        id: "case_status",
-        type: "select",
-        label: "Case Status",
-        required: true,
-        options: ["New", "In Progress", "On Hold", "Resolved", "Closed"],
-      },
-      {
-        id: "case_description",
-        type: "textarea",
-        label: "Case Description",
-        required: true,
-        placeholder: "Provide detailed description of the case",
-      },
-      {
-        id: "legal_issues",
-        type: "checkbox-group",
-        label: "Legal Issues Involved",
-        options: [
-          "Contract Dispute",
-          "Property Rights",
-          "Family Matters",
-          "Employment",
-          "Immigration",
-          "Other",
-        ],
-      },
-      {
-        id: "priority_level",
-        type: "radio",
-        label: "Priority Level",
-        required: true,
-        options: ["Low", "Medium", "High", "Urgent"],
-      },
-      {
-        id: "estimated_duration",
-        type: "select",
-        label: "Estimated Duration",
-        options: ["1-2 weeks", "1 month", "2-3 months", "6+ months", "Unknown"],
-      },
-      {
-        id: "notes",
-        type: "textarea",
-        label: "Additional Notes",
-        placeholder: "Any additional information or special considerations",
-      },
-    ],
-  },
-};
+// Legacy mocks removed; component now relies solely on API-provided template schema.
 
 export function FormSubmission({
   template,
@@ -373,15 +73,11 @@ export function FormSubmission({
   entityType,
   onBack,
   onSubmissionComplete,
-  subProjectId,
-  formId,
-  activityId,
 }: DynamicFormSubmissionProps) {
   const dispatch = useDispatch<AppDispatch>();
   const submitLoading = useSelector(selectFormSubmitLoading);
   const submitError = useSelector(selectFormSubmitError);
   const [formData, setFormData] = useState<Record<string, any>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false); // used only by legacy flow
   const [isDraft, setIsDraft] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
@@ -417,16 +113,7 @@ export function FormSubmission({
         })),
       }
     : null;
-
-  const subProject = subProjectId
-    ? subProjectDetails[subProjectId as keyof typeof subProjectDetails]
-    : null;
-  const activity = activityId
-    ? activityDetails[activityId as keyof typeof activityDetails]
-    : null;
-  const formStructure =
-    dynamicFormStructure ||
-    (formId ? formStructures[formId as keyof typeof formStructures] : null);
+  const formStructure = dynamicFormStructure;
 
   const requestGps = async (): Promise<{ lat: number; lng: number }> => {
     setGpsError(null);
@@ -670,17 +357,6 @@ export function FormSubmission({
       }
       return;
     }
-
-    // Legacy mock submission
-    setIsSubmitting(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      onSubmissionComplete();
-    } catch (error) {
-      console.error("Submission failed:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const renderField = (field: any) => {
@@ -844,14 +520,6 @@ export function FormSubmission({
         <div>
           <h2>{formStructure.title}</h2>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {subProject && (
-              <>
-                <Badge variant="outline">{subProject.projectName}</Badge>
-                <span>•</span>
-                <span>{subProject.name}</span>
-                <span>•</span>
-              </>
-            )}
             <Clock className="h-4 w-4" />
             <span>{formStructure.estimatedTime}</span>
           </div>
@@ -916,20 +584,7 @@ export function FormSubmission({
         )}
       </div>
 
-      {/* Context Information */}
-      {activity && (
-        <Card className="border-blue-200 bg-blue-50/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-blue-600" />
-              <h4 className="font-medium text-blue-800">Associated Activity</h4>
-            </div>
-            <p className="text-sm text-blue-700 mt-1">
-              This submission will be linked to: {activity.title}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Context Information removed (legacy). */}
 
       {/* Progress Indicator */}
       <Card>
@@ -1007,13 +662,12 @@ export function FormSubmission({
           onClick={handleSubmit}
           disabled={
             submitLoading ||
-            isSubmitting ||
             gpsLoading ||
             (isMobileOrTablet && !gps) ||
             progress < 100
           }
         >
-          {submitLoading || isSubmitting || gpsLoading ? (
+          {submitLoading || gpsLoading ? (
             <>Submitting...</>
           ) : (
             <>
