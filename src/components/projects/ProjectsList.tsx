@@ -71,7 +71,8 @@ const mockProjects = [
     beneficiaries: 1245,
     startDate: "2025-01-15",
     endDate: "2025-07-15",
-    leads: ["Jane Smith", "Robert Johnson"],
+    leads: ["Pal Baftijaj", "Alfred Pjetri"],
+    services: ["Sherbime Infermierore", ],
     description:
       "Comprehensive healthcare services for underserved rural communities in the northern region.",
   },

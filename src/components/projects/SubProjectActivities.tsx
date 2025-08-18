@@ -58,6 +58,7 @@ const mockActivities = [
   {
     id: "act-001",
     subProjectId: "sub-001",
+    projectId: "proj-001",
     title: "Community Health Education Session",
     type: "Education",
     status: "completed",
@@ -72,6 +73,7 @@ const mockActivities = [
       "Health education session on maternal nutrition and prenatal care",
     formsSubmitted: 3,
     mediaAttached: true,
+    staff: ["Pal Baftijaj", "Alfred Pjetri", "Valentina Mehmeti", "Vlera Berisha", "Mimoza Bajraktari"]
   },
   {
     id: "act-002",
