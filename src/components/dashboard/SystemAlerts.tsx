@@ -1,6 +1,11 @@
 import { AlertTriangle, CheckCircle, Info } from "lucide-react";
 import { Badge } from "../ui/data-display/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 
 export function SystemAlerts() {
   const alerts = [
@@ -51,7 +56,7 @@ export function SystemAlerts() {
   // };
 
   return (
-    <Card>
+    <Card className="bg-[#E5ECF6]      drop-shadow-sm shadow-gray-50 border-0">
       <CardHeader>
         <CardTitle>System Alerts</CardTitle>
       </CardHeader>
@@ -60,13 +65,13 @@ export function SystemAlerts() {
           {alerts.map((alert, index) => (
             <div
               key={index}
-              className="flex items-start space-x-3 p-3 border rounded-lg"
+              className="flex items-start space-x-3 p-3  rounded-lg"
             >
               {getAlertIcon(alert.type)}
               <div className="flex-1 space-y-1">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">{alert.title}</div>
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs border-0">
                     {alert.time}
                   </Badge>
                 </div>

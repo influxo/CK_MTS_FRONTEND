@@ -349,7 +349,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between ">
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={onBack}>
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -360,15 +360,16 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
           </h2>
           {isEditing && <Badge variant="outline">v{formData.version}</Badge>}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 ">
           <Button
+            className="bg-[#2B2B2B] text-white"
             variant="outline"
             onClick={() => setPreviewMode(!previewMode)}
           >
             <Eye className="h-4 w-4 mr-2" />
             {previewMode ? "Exit Preview" : "Preview"}
           </Button>
-          <Button onClick={handleSaveForm}>
+          <Button className="bg-[#2B2B2B] text-white" onClick={handleSaveForm}>
             <Save className="h-4 w-4 mr-2" />
             Save Form
           </Button>
@@ -546,9 +547,19 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
           <div className="col-span-12 lg:col-span-4">
             <div className="sticky top-6">
               <Tabs defaultValue="properties" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="properties">Field Properties</TabsTrigger>
-                  <TabsTrigger value="form-settings">Form Settings</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 border">
+                  <TabsTrigger
+                    value="properties"
+                    className="data-[state=active]:bg-[#FF5E3A] data-[state=active]:text-white"
+                  >
+                    Field Properties
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="form-settings"
+                    className="data-[state=active]:bg-[#FF5E3A] data-[state=active]:text-white"
+                  >
+                    Form Settings
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="properties">
                   <Card>
@@ -897,7 +908,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                           <div className="flex items-center space-x-2">
                             <Label
                               htmlFor="version-control"
-                              className="text-muted-foreground text-sm"
+                              className="text-muted-foreground text-sm  bg-orange-50 black px-2 py-1 rounded "
                             >
                               Enabled
                             </Label>
@@ -915,7 +926,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="w-full"
+                              className="w-full bg-orange-50 text-black border-gray-50"
                             >
                               <Plus className="h-4 w-4 mr-2" />
                               Create New Version
@@ -946,7 +957,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                       <div className="pt-2">
                         <Button
                           variant="outline"
-                          className="w-full"
+                          className="w-full bg-orange-50 text-black border-gray-50"
                           onClick={handleSaveForm}
                         >
                           <Save className="h-4 w-4 mr-2" />

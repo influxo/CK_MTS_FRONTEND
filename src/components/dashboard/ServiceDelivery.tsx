@@ -1,4 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import { Badge } from "../ui/data-display/badge";
 import { Progress } from "../ui/feedback/progress";
 
@@ -60,7 +65,7 @@ export function ServiceDelivery() {
   };
 
   return (
-    <Card>
+    <Card className="bg-[#F7F9FB]      drop-shadow-sm shadow-gray-50 border-0">
       <CardHeader>
         <CardTitle>Service Delivery Progress</CardTitle>
       </CardHeader>

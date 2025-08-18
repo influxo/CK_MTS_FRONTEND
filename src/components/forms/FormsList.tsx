@@ -21,7 +21,12 @@ import {
 import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -202,7 +207,7 @@ interface FormsListProps {
 }
 
 export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
-  const [viewType, setViewType] = useState("grid");
+  const [viewType, setViewType] = useState("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -287,7 +292,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
             onOpenChange={setIsNewFormDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button className="bg-black text-white">
+              <Button className="bg-[#2B2B2B] text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Form
               </Button>
@@ -444,16 +449,6 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
             <FileDown className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Tabs
-            value={viewType}
-            onValueChange={setViewType}
-            className="w-[180px]"
-          >
-            <TabsList className="grid w-full grid-cols-2 bg-gray-200 rounded-full">
-              <TabsTrigger value="grid" className="rounded-full bg-white">Grid View</TabsTrigger>
-              <TabsTrigger value="list">List View</TabsTrigger>
-            </TabsList>
-          </Tabs>
         </div>
       </div>
 
@@ -587,12 +582,13 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                 <div className="space-y-4">
                   <div className="flex flex-wrap gap-1.5">
                     <Badge
-                      variant={
+                      variant="default"
+                      className={
                         template.status === "active"
-                          ? "default"
+                          ? "bg-[#FF5E3A] text-white"
                           : template.status === "draft"
-                          ? "outline"
-                          : "secondary"
+                          ? "bg-gray-300 text-gray-700"
+                          : "bg-[#2B2B2B] text-white"
                       }
                     >
                       {template.status}
@@ -661,7 +657,11 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                   <Settings className="h-4 w-4 mr-2" />
                   Configure
                 </Button>
-                <Button size="sm" onClick={() => handleEditClick(template.id)} className="rounded-md bg-black text-white">
+                <Button
+                  size="sm"
+                  onClick={() => handleEditClick(template.id)}
+                  className="rounded-md bg-black text-white"
+                >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Form
                 </Button>
@@ -717,12 +717,13 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={
+                      variant="default"
+                      className={
                         template.status === "active"
-                          ? "default"
+                          ? "bg-[#FF5E3A] text-white"
                           : template.status === "draft"
-                          ? "outline"
-                          : "secondary"
+                          ? "bg-gray-50 text-gray-700"
+                          : "bg-[#2B2B2B] text-white"
                       }
                     >
                       {template.status}
