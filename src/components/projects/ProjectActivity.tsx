@@ -8,7 +8,12 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 
 interface ProjectActivityProps {
   projectId: string;
@@ -128,11 +133,15 @@ export function ProjectActivity({ projectId }: ProjectActivityProps) {
   );
 
   return (
-    <Card>
+    <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <CardTitle className="text-base">Recent Activity</CardTitle>
-          <Button variant="ghost" size="sm" className="h-7">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7  text-black bg-black bg-opacity-5 "
+          >
             View All
           </Button>
         </div>

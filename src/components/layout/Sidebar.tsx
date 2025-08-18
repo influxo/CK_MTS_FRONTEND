@@ -482,7 +482,7 @@ export function Sidebar({
   return (
     <aside
       style={{
-        boxShadow: "0 24px 40px rgba(0, 0, 0, 0.1)",
+        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
       }}
       className={cn(
         "flex flex-col  bg-sidebar bg-white shadow-lg text-sidebar-foreground transition-all duration-300 ease-in-out",
@@ -541,10 +541,10 @@ export function Sidebar({
                   onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
                   className={cn(
                     "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors w-full text-left",
-                    "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-red-600 before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
+                    "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-black before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
                     isProjectsExpanded
-                      ? "text-red-700 bg-red-50 before:scale-x-100"
-                      : "text-gray-600 hover:text-red-600 hover:bg-gray-50 before:scale-x-0",
+                      ? "text-black bg-black bg-opacity-5 before:scale-x-100"
+                      : "text-black hover:text-black hover:bg-black hover:bg-opacity-5 before:scale-x-0",
                     collapsed && "justify-center px-2"
                   )}
                 >
@@ -577,7 +577,7 @@ export function Sidebar({
                       <span className="text-xs text-gray-400">Loading...</span>
                     )}
                     {projectsError && (
-                      <span className="text-xs text-red-500">
+                      <span className="text-xs text-black">
                         Error loading projects
                       </span>
                     )}
@@ -598,10 +598,10 @@ export function Sidebar({
                               navigate(`/projects/${project.id}`);
                             }}
                             className={cn(
-                              "flex items-center w-full text-left rounded-md px-2 py-1 text-sm transition-colors",
+                              "flex items-center capitalize w-full text-left rounded-md px-2 py-1 text-sm transition-colors",
                               isSelected
-                                ? "bg-red-100 text-red-700"
-                                : "text-gray-600 hover:bg-gray-100 hover:text-red-600"
+                                ? "bg-black bg-opacity-5  text-black"
+                                : "text-black hover:bg-black hover:bg-opacity-5 hover:text-black"
                             )}
                           >
                             {project.name}
@@ -636,7 +636,7 @@ export function Sidebar({
                                   </span>
                                 )}
                                 {subprojectsError && isProjectExpanded && (
-                                  <span className="text-xs text-red-500">
+                                  <span className="text-xs text-black">
                                     Error loading subprojects
                                   </span>
                                 )}
@@ -646,10 +646,10 @@ export function Sidebar({
                                     to={`/projects/${project.id}/subprojects/${subproject.id}`}
                                     className={({ isActive }) =>
                                       cn(
-                                        "block text-sm px-3 py-1 rounded-md transition-colors",
+                                        "block text-sm px-8 py-1 mt-1 rounded-md transition-colors capitalize",
                                         isActive
-                                          ? "bg-red-200 text-red-800"
-                                          : "text-gray-600 hover:bg-gray-100 hover:text-red-600"
+                                          ? "bg-black bg-opacity-5 text-black"
+                                          : "text-black hover:bg-black hover:bg-opacity-5 hover:text-black"
                                       )
                                     }
                                     onClick={handleNavClick}
@@ -673,10 +673,10 @@ export function Sidebar({
                 className={({ isActive }) =>
                   cn(
                     "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-red-600 before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
+                    "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-black  before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
                     isActive
-                      ? "text-red-700 bg-red-50 before:scale-x-100"
-                      : "text-gray-600 hover:text-red-600 hover:bg-gray-50 before:scale-x-0",
+                      ? "text-black bg-black bg-opacity-5 before:scale-x-100"
+                      : "text-black hover:text-black hover:bg-black hover:bg-opacity-5 before:scale-x-0",
                     collapsed && "justify-center px-2"
                   )
                 }

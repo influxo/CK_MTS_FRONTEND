@@ -60,12 +60,12 @@ export function FormSubmissions() {
   ];
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-6 bg-[#F7F9FB]   drop-shadow-md shadow-gray-50 border-0">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Form Submissions Overview</CardTitle>
           <Tabs defaultValue="daily">
-            <TabsList className="bg-gray-200">
+            <TabsList className="bg-[#2E343E] text-white">
               <TabsTrigger value="daily">Daily</TabsTrigger>
               <TabsTrigger value="weekly">Weekly</TabsTrigger>
               <TabsTrigger value="monthly">Monthly</TabsTrigger>
@@ -117,9 +117,9 @@ export function FormSubmissions() {
       </CardHeader>
 
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2   lg:grid-cols-4 gap-4">
           {submissions.map((submission, index) => (
-            <div key={index} className="p-4 border rounded-lg">
+            <div key={index} className="p-4  bg-[#E5ECF6] rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-medium text-sm">{submission.form}</h4>
                 <Button variant="ghost" size="sm">
@@ -141,7 +141,13 @@ export function FormSubmissions() {
                     variant={
                       submission.status === "active" ? "default" : "secondary"
                     }
-                    className="text-xs"
+                    className={`text-xs ${
+                      submission.status === "active"
+                        ? "bg-[#DEF8EE] text-[#4AA785]"
+                        : submission.status === "pending"
+                        ? "bg-amber-100 text-amber-700"
+                        : ""
+                    }`}
                   >
                     {submission.status}
                   </Badge>

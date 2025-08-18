@@ -24,7 +24,12 @@ import {
 import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -58,7 +63,12 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 
 // Mock data for saved reports
 const mockSavedReports = [
@@ -330,7 +340,7 @@ export function ReportsList({
             onOpenChange={setIsNewReportDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-[#2b2b2b] text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Generate Report
               </Button>
@@ -535,9 +545,19 @@ export function ReportsList({
             onValueChange={setActiveTab}
             className="w-[220px]"
           >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="saved-reports">Saved</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 border">
+              <TabsTrigger
+                value="saved-reports"
+                className="data-[state=active]:bg-[#FF5E3A] data-[state=active]:text-white"
+              >
+                Saved
+              </TabsTrigger>
+              <TabsTrigger
+                value="templates"
+                className="data-[state=active]:bg-[#FF5E3A] data-[state=active]:text-white"
+              >
+                Templates
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -632,7 +652,10 @@ export function ReportsList({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="capitalize">
+                      <Badge
+                        variant="outline"
+                        className="capitalize bg-[#FF5E3A] text-white"
+                      >
                         {report.type}
                       </Badge>
                     </TableCell>
