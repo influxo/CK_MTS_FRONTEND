@@ -236,6 +236,9 @@ export function Dashboard() {
           <div className="lg:col-span-2 py-6">
             <BeneficiaryDemographics />
           </div>
+          <div className="lg:col-span-2">
+            <KpiHighlights />
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-1 py-6 gap-6 mb-6">
             <ServiceDelivery />
