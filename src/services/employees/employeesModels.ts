@@ -43,3 +43,9 @@ export interface GetEmployeesResponse {
   message?: string;
   data: Employee[];
 }
+
+export interface GetEmployeeByIdResponse {
+  success: boolean;
+  message?: string;
+  data: Employee;
+}

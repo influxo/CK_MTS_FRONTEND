@@ -15,6 +15,7 @@ import AppLayout from "./components/layout/AppLayout";
 import { SubProjectDetails } from "./components/projects/SubProjectDetails";
 import DataEntry from "./pages/DataEntry";
 import DataEntryTemplates from "./pages/DataEntryTemplates";
+import { EmployeeDetails } from "./components/employees/EmployeeDetails";
 
 const routes = [
   {
@@ -80,6 +81,10 @@ const routes = [
       {
         path: "employees",
         element: <Employees />,
+      },
+      {
+        path: "employees/:id",
+        element: <EmployeeDetails />,
       },
       {
         path: "*",

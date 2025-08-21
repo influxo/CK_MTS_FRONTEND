@@ -1,9 +1,7 @@
 import {
   AlertTriangle,
   ArrowLeft,
-  Calendar,
   CheckCircle,
-  Clock,
   FileDown,
   KeyRound,
   LockKeyhole,
@@ -15,9 +13,18 @@ import {
   ShieldCheck,
   Smartphone,
   Trash,
-  User,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store";
+import {
+  clearSingleEmployee,
+  fetchSingleEmployee,
+  selectSingleEmployee,
+  selectSingleEmployeeError,
+  selectSingleEmployeeLoading,
+} from "../../store/slices/employeesSlice";
 import { Avatar, AvatarFallback } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
@@ -57,40 +64,14 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 
-// Mock data for an employee
-const mockEmployee = {
-  id: "emp-001",
-  name: "Jane Smith",
-  email: "jane.smith@example.com",
-  role: "Program Manager",
-  status: "active",
-  phone: "+1 (555) 123-4567",
-  lastActive: "2025-05-22T10:15:00",
-  projects: ["Rural Healthcare Initiative", "Community Development"],
-  subProjects: ["Maternal Health Services", "Water Access Program"],
-  twoFactorEnabled: true,
-  createdAt: "2025-01-10T09:00:00",
-  createdBy: "Michael Lee",
-  lastUpdated: "2025-05-10T14:30:00",
-  lastUpdatedBy: "Thomas Brown",
-  permissions: [
-    { id: "perm-001", name: "View all projects", granted: true },
-    { id: "perm-002", name: "Edit projects", granted: true },
-    { id: "perm-003", name: "Invite employees", granted: true },
-    { id: "perm-004", name: "Delete projects", granted: false },
-    { id: "perm-005", name: "Admin access", granted: false },
-    { id: "perm-006", name: "Manage users", granted: false },
-    { id: "perm-007", name: "View reports", granted: true },
-    { id: "perm-008", name: "Edit reports", granted: true },
-    { id: "perm-009", name: "View forms", granted: true },
-    { id: "perm-010", name: "Edit forms", granted: true },
-    { id: "perm-011", name: "View beneficiaries", granted: true },
-    { id: "perm-012", name: "Edit beneficiaries", granted: true },
-    { id: "perm-013", name: "Export data", granted: true },
-  ],
-};
+// Employee page now fetches data from API; mockEmployee removed
 
 // Mock activity logs
 const mockActivityLogs = [
@@ -183,43 +164,103 @@ const mockRoles = [
   "Data Analyst",
 ];
 
-interface EmployeeDetailsProps {
-  employeeId: string;
-  onBack: () => void;
-}
+export function EmployeeDetails() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const singleEmployee = useSelector(selectSingleEmployee);
+  const isSingleLoading = useSelector(selectSingleEmployeeLoading);
+  const singleError = useSelector(selectSingleEmployeeError);
 
-export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
-  // In a real app, we would fetch the employee data based on employeeId
-  // For this demo, we're using mock data
-  const employee = mockEmployee;
-  console.log("employeeId test me i ik unused declaration", employeeId);
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchSingleEmployee(id));
+    }
+    return () => {
+      dispatch(clearSingleEmployee());
+    };
+  }, [dispatch, id]);
+
+  // Map API employee to UI-friendly shape
+  const employee = useMemo(() => {
+    return singleEmployee
+      ? {
+          id: singleEmployee.id,
+          name: `${singleEmployee.firstName} ${singleEmployee.lastName}`.trim(),
+          email: singleEmployee.email,
+          role:
+            singleEmployee.roles && singleEmployee.roles.length > 0
+              ? singleEmployee.roles[0].name
+              : "N/A",
+          status:
+            singleEmployee.status === "active"
+              ? "active"
+              : singleEmployee.status === "invited"
+              ? "pending"
+              : "inactive",
+          phone: "-",
+          // lastActive: singleEmployee.lastLogin,
+          projects: ["All Projects"],
+          subProjects: [] as string[],
+          twoFactorEnabled: singleEmployee.twoFactorEnabled,
+          createdAt: singleEmployee.createdAt,
+          createdBy: singleEmployee.invitedBy ?? "-",
+          lastUpdated: singleEmployee.updatedAt,
+          lastLogin: singleEmployee.lastLogin,
+          lastUpdatedBy: "-",
+          permissions: [] as { id: string; name: string; granted: boolean }[],
+        }
+      : null;
+  }, [singleEmployee]);
+
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordResetDialog, setShowPasswordResetDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  console.log("employee", singleEmployee);
+
   // Editable employee state
   const [formData, setFormData] = useState({
-    name: employee.name,
-    email: employee.email,
-    phone: employee.phone,
-    role: employee.role,
-    status: employee.status,
-    twoFactorEnabled: employee.twoFactorEnabled,
-    projects: employee.projects,
-    subProjects: employee.subProjects,
+    name: "",
+    email: "",
+    phone: "",
+    role: "",
+    status: "",
+    twoFactorEnabled: false,
+    projects: [] as string[],
+    subProjects: [] as string[],
   });
 
   // Project selection state
-  const [selectedProjects, setSelectedProjects] = useState<string[]>(
-    employee.projects
-  );
-  const [selectedSubProjects, setSelectedSubProjects] = useState<string[]>(
-    employee.subProjects
-  );
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [selectedSubProjects, setSelectedSubProjects] = useState<string[]>([]);
 
   // Permission state
-  const [permissions, setPermissions] = useState(employee.permissions);
+  const [permissions, setPermissions] = useState(
+    [] as { id: string; name: string; granted: boolean }[]
+  );
+
+  // Sync form state when employee loads
+  useEffect(() => {
+    if (employee) {
+      setFormData({
+        name: employee.name,
+        email: employee.email,
+        phone: employee.phone,
+        role: employee.role,
+        status: employee.status,
+        twoFactorEnabled: employee.twoFactorEnabled,
+        projects: employee.projects,
+        subProjects: employee.subProjects,
+      });
+      setSelectedProjects(employee.projects);
+      setSelectedSubProjects(employee.subProjects);
+      setPermissions(employee.permissions);
+    }
+  }, [employee]);
+
+  const handleBack = () => navigate("/employees");
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -292,6 +333,7 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
 
   // Cancel editing
   const handleCancelClick = () => {
+    if (!employee) return;
     // Reset form data to original employee data
     setFormData({
       name: employee.name,
@@ -318,6 +360,7 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
   // Handle password reset
   const handlePasswordReset = () => {
     // In a real app, we would call an API to reset the password
+    if (!employee) return;
     console.log("Resetting password for:", employee.email);
     setShowPasswordResetDialog(false);
   };
@@ -325,19 +368,21 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
   // Handle delete employee
   const handleDeleteEmployee = () => {
     // In a real app, we would call an API to delete the employee
-    console.log("Deleting employee:", employee.id);
+    if (employee) {
+      console.log("Deleting employee:", employee.id);
+    }
     setShowDeleteDialog(false);
-    onBack(); // Navigate back to the list
+    navigate("/employees");
   };
 
   // Format date for display
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
+  // const formatDate = (dateString: string) => {
+  //   return new Date(dateString).toLocaleDateString("en-US", {
+  //     year: "numeric",
+  //     month: "long",
+  //     day: "numeric",
+  //   });
+  // };
 
   // Format datetime for display
   const formatDateTime = (dateString: string) => {
@@ -350,11 +395,62 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
     });
   };
 
+  if (isSingleLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={handleBack}>
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Employees
+            </Button>
+            <h2>Employee Details</h2>
+          </div>
+          <div className="text-muted-foreground">Loading…</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (singleError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={handleBack}>
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Employees
+            </Button>
+            <h2>Employee Details</h2>
+          </div>
+          <div className="text-destructive">Error: {singleError}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!employee) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={handleBack}>
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Employees
+            </Button>
+            <h2>Employee Details</h2>
+          </div>
+          <div className="text-muted-foreground">No data</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={onBack}>
+          <Button variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Employees
           </Button>
@@ -456,24 +552,18 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Member since:</span>
-                <span>{formatDate(employee.createdAt)}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Last active:</span>
-                <span>{formatDate(employee.lastActive)}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Created by:</span>
-                <span>{employee.createdBy}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
                 <Pencil className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Last updated:</span>
-                <span>{formatDate(employee.lastUpdated)}</span>
+                <span>{formatDateTime(employee.lastUpdated)}</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Pencil className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Last Login:</span>
+                {employee.lastLogin && (
+                  <span>{formatDateTime(employee.lastLogin)}</span>
+                )}
               </div>
             </div>
 
