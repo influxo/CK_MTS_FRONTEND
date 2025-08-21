@@ -59,157 +59,12 @@ import {
   TableRow,
 } from "../ui/data-display/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import type { Employee as ApiEmployee } from "../../services/employees/employeesModels";
 
-// Mock data for employees
-const mockEmployees = [
-  {
-    id: "emp-001",
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    role: "Program Manager",
-    status: "active",
-    lastActive: "2025-05-20T14:30:00",
-    projects: ["Rural Healthcare Initiative", "Community Development"],
-    subProjects: ["Maternal Health Services", "Water Access Program"],
-    twoFactorEnabled: true,
-    createdAt: "2025-01-10T09:00:00",
-    permissions: ["view_all", "edit_projects", "invite_employees"],
-  },
-  {
-    id: "emp-002",
-    name: "Robert Johnson",
-    email: "robert.johnson@example.com",
-    role: "Field Staff",
-    status: "active",
-    lastActive: "2025-05-21T16:45:00",
-    projects: ["Rural Healthcare Initiative"],
-    subProjects: ["Maternal Health Services", "Child Vaccination Campaign"],
-    twoFactorEnabled: false,
-    createdAt: "2025-02-15T11:30:00",
-    permissions: ["view_assigned", "edit_forms"],
-  },
-  {
-    id: "emp-003",
-    name: "Michael Lee",
-    email: "michael.lee@example.com",
-    role: "Admin",
-    status: "active",
-    lastActive: "2025-05-22T10:15:00",
-    projects: ["All Projects"],
-    subProjects: ["All Sub-Projects"],
-    twoFactorEnabled: true,
-    createdAt: "2024-12-05T08:45:00",
-    permissions: ["view_all", "edit_all", "admin_access", "manage_users"],
-  },
-  {
-    id: "emp-004",
-    name: "Sarah Johnson",
-    email: "sarah.johnson@example.com",
-    role: "Data Analyst",
-    status: "active",
-    lastActive: "2025-05-20T12:30:00",
-    projects: ["All Projects"],
-    subProjects: [],
-    twoFactorEnabled: true,
-    createdAt: "2025-03-01T10:00:00",
-    permissions: ["view_all", "export_data", "generate_reports"],
-  },
-  {
-    id: "emp-005",
-    name: "David Williams",
-    email: "david.williams@example.com",
-    role: "Field Staff",
-    status: "inactive",
-    lastActive: "2025-04-10T09:45:00",
-    projects: ["Youth Empowerment Program"],
-    subProjects: ["Education Support", "Skills Training"],
-    twoFactorEnabled: false,
-    createdAt: "2025-02-20T14:15:00",
-    permissions: ["view_assigned", "edit_forms"],
-  },
-  {
-    id: "emp-006",
-    name: "Emily Martinez",
-    email: "emily.martinez@example.com",
-    role: "Field Staff",
-    status: "pending",
-    lastActive: null,
-    projects: ["Community Development"],
-    subProjects: ["Food Security Initiative"],
-    twoFactorEnabled: false,
-    createdAt: "2025-05-18T15:30:00",
-    permissions: ["view_assigned"],
-  },
-  {
-    id: "emp-007",
-    name: "Thomas Brown",
-    email: "thomas.brown@example.com",
-    role: "Super Admin",
-    status: "active",
-    lastActive: "2025-05-22T08:30:00",
-    projects: ["All Projects"],
-    subProjects: ["All Sub-Projects"],
-    twoFactorEnabled: true,
-    createdAt: "2024-11-15T08:00:00",
-    permissions: [
-      "view_all",
-      "edit_all",
-      "admin_access",
-      "manage_users",
-      "system_config",
-    ],
-  },
-  {
-    id: "emp-008",
-    name: "Lisa Anderson",
-    email: "lisa.anderson@example.com",
-    role: "Program Manager",
-    status: "active",
-    lastActive: "2025-05-21T11:15:00",
-    projects: ["Youth Empowerment Program"],
-    subProjects: ["Education Support", "Skills Training"],
-    twoFactorEnabled: true,
-    createdAt: "2025-01-25T13:45:00",
-    permissions: ["view_all", "edit_projects", "invite_employees"],
-  },
-];
+// Using API data provided via props; mock employees removed.
 
 // Pending invitation mock data
-const mockInvitations = [
-  {
-    id: "inv-001",
-    email: "alex.taylor@example.com",
-    role: "Field Staff",
-    projects: ["Rural Healthcare Initiative"],
-    subProjects: ["Child Vaccination Campaign"],
-    invitedBy: "Jane Smith",
-    invitedAt: "2025-05-20T10:30:00",
-    expiresAt: "2025-05-27T10:30:00",
-    status: "pending",
-  },
-  {
-    id: "inv-002",
-    email: "jessica.wilson@example.com",
-    role: "Data Analyst",
-    projects: ["All Projects"],
-    subProjects: [],
-    invitedBy: "Michael Lee",
-    invitedAt: "2025-05-21T09:15:00",
-    expiresAt: "2025-05-28T09:15:00",
-    status: "pending",
-  },
-  {
-    id: "inv-003",
-    email: "brian.miller@example.com",
-    role: "Field Staff",
-    projects: ["Community Development"],
-    subProjects: ["Water Access Program"],
-    invitedBy: "Jane Smith",
-    invitedAt: "2025-05-19T14:45:00",
-    expiresAt: "2025-05-26T14:45:00",
-    status: "expired",
-  },
-];
+const mockInvitations: any[] = [];
 
 // Mock data for roles
 const mockRoles = [
@@ -224,11 +79,17 @@ const mockRoles = [
 interface EmployeesListProps {
   onEmployeeSelect: (employeeId: string) => void;
   onInviteClick: () => void;
+  employees: ApiEmployee[];
+  isLoading: boolean;
+  error: string | null;
 }
 
 export function EmployeesList({
   onEmployeeSelect,
   onInviteClick,
+  employees,
+  isLoading,
+  error,
 }: EmployeesListProps) {
   const [activeTab, setActiveTab] = useState("active");
   const [searchQuery, setSearchQuery] = useState("");
@@ -238,8 +99,48 @@ export function EmployeesList({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
 
+  // Map API employees to the display shape used by the table
+  const displayEmployees = employees.map((e) => ({
+    id: e.id,
+    name: `${e.firstName} ${e.lastName}`.trim(),
+    email: e.email,
+    role: e.roles && e.roles.length > 0 ? e.roles[0].name : "N/A",
+    status: e.status === "active" ? "active" : "pending",
+    lastActive: e.lastLogin,
+    projects: ["All Projects"],
+    subProjects: [] as string[],
+    twoFactorEnabled: e.twoFactorEnabled,
+    createdAt: e.createdAt,
+  }));
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2>Employees</h2>
+            <p className="text-muted-foreground">Loading employees…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2>Employees</h2>
+            <p className="text-destructive">Error: {error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Filter employees based on active tab and filters
-  const filteredEmployees = mockEmployees.filter((employee) => {
+  const filteredEmployees = displayEmployees.filter((employee) => {
     // Filter by tab (active/inactive/pending)
     if (activeTab === "active" && employee.status !== "active") return false;
     if (activeTab === "inactive" && employee.status !== "inactive")
@@ -350,11 +251,11 @@ export function EmployeesList({
   // Get total count for the current tab
   const getTabCount = (tab: string) => {
     if (tab === "active") {
-      return mockEmployees.filter((emp) => emp.status === "active").length;
+      return displayEmployees.filter((emp) => emp.status === "active").length;
     } else if (tab === "inactive") {
-      return mockEmployees.filter((emp) => emp.status === "inactive").length;
+      return displayEmployees.filter((emp) => emp.status === "inactive").length;
     } else if (tab === "pending") {
-      return mockEmployees.filter((emp) => emp.status === "pending").length;
+      return displayEmployees.filter((emp) => emp.status === "pending").length;
     } else if (tab === "invitations") {
       return mockInvitations.length;
     }
@@ -576,7 +477,7 @@ export function EmployeesList({
                               </Badge>
                             ) : (
                               <div className="space-y-1">
-                                {employee.projects.map((project, index) => (
+                                {employee.projects.map((project: string, index: number) => (
                                   <div key={index} className="text-sm truncate">
                                     {project}
                                   </div>
@@ -602,7 +503,7 @@ export function EmployeesList({
                             ) : (
                               <div className="space-y-1">
                                 {employee.subProjects.map(
-                                  (subProject, index) => (
+                                  (subProject: string, index: number) => (
                                     <div
                                       key={index}
                                       className="text-sm truncate"
@@ -1032,7 +933,7 @@ export function EmployeesList({
                               </Badge>
                             ) : (
                               <div className="space-y-1">
-                                {invitation.projects.map((project, index) => (
+                                {invitation.projects.map((project: string, index: number) => (
                                   <div key={index} className="text-sm truncate">
                                     {project}
                                   </div>
