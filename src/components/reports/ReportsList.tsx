@@ -24,7 +24,12 @@ import {
 import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -58,7 +63,12 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 
 // Mock data for saved reports
 const mockSavedReports = [
@@ -319,6 +329,7 @@ export function ReportsList({
         <div className="flex gap-3">
           <Button
             variant="outline"
+            className="bg-black/5 text-black border-0"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
@@ -330,7 +341,7 @@ export function ReportsList({
             onOpenChange={setIsNewReportDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-[#2E343E] text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Generate Report
               </Button>
@@ -492,14 +503,14 @@ export function ReportsList({
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search reports..."
-              className="pl-9"
+              className="pl-9 bg-black/5 text-black border-0"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex gap-3">
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[150px] bg-black/5 text-black border-0">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
@@ -512,7 +523,7 @@ export function ReportsList({
               </SelectContent>
             </Select>
             <Select value={levelFilter} onValueChange={setLevelFilter}>
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[150px] bg-black/5 text-black border-0">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Level" />
               </SelectTrigger>
@@ -523,21 +534,41 @@ export function ReportsList({
                 <SelectItem value="subproject">Sub-Project</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              className="bg-[#2E343E] text-white border-0"
+            >
+              <FileDown className="h-4 w-4 mr-2" />
+              Export List
+            </Button>
           </div>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline">
+          {/* <Button
+            variant="outline"
+            className="bg-[#2E343E] text-white border-0"
+          >
             <FileDown className="h-4 w-4 mr-2" />
             Export List
-          </Button>
+          </Button> */}
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-[220px]"
           >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="saved-reports">Saved</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-black/5">
+              <TabsTrigger
+                value="saved-reports"
+                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+              >
+                Saved
+              </TabsTrigger>
+              <TabsTrigger
+                value="templates"
+                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+              >
+                Templates
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -550,7 +581,7 @@ export function ReportsList({
               <div>
                 <Label>Created By</Label>
                 <Select>
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-black/5 text-black border-0">
                     <SelectValue placeholder="All users" />
                   </SelectTrigger>
                   <SelectContent>
@@ -567,7 +598,7 @@ export function ReportsList({
               <div>
                 <Label>Date Created</Label>
                 <Select>
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-black/5 text-black border-0">
                     <SelectValue placeholder="Any time" />
                   </SelectTrigger>
                   <SelectContent>
@@ -582,7 +613,7 @@ export function ReportsList({
               <div>
                 <Label>Status</Label>
                 <Select>
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-black/5 text-black border-0">
                     <SelectValue placeholder="Any status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -595,10 +626,12 @@ export function ReportsList({
               </div>
             </div>
             <div className="flex justify-end mt-4">
-              <Button variant="outline" size="sm" className="mr-2">
+              <Button variant="outline" size="sm" className="mr-2 bg-black/10">
                 Reset Filters
               </Button>
-              <Button size="sm">Apply Filters</Button>
+              <Button size="sm" className="bg-[#2E343E] text-white">
+                Apply Filters
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -608,7 +641,7 @@ export function ReportsList({
         <TabsContent value="saved-reports">
           <div className="rounded-md border overflow-hidden">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-[#E5ECF6]">
                 <TableRow>
                   <TableHead className="w-[250px]">Report Name</TableHead>
                   <TableHead>Type</TableHead>
@@ -620,7 +653,7 @@ export function ReportsList({
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody className="bg-[#F7F9FB]">
                 {filteredReports.map((report) => (
                   <TableRow key={report.id}>
                     <TableCell>
@@ -632,7 +665,10 @@ export function ReportsList({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="capitalize">
+                      <Badge
+                        variant="outline"
+                        className="capitalize bg-[#2E343E] text-white"
+                      >
                         {report.type}
                       </Badge>
                     </TableCell>
@@ -657,6 +693,7 @@ export function ReportsList({
                         <Button
                           variant="outline"
                           size="sm"
+                          className="hover:bg-black/10 border-0"
                           onClick={() => onReportSelect(report.id)}
                         >
                           <Eye className="h-4 w-4 mr-2" />
@@ -667,7 +704,7 @@ export function ReportsList({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0"
+                              className="h-8 w-8 p-0 hover:bg-black/5 border-0"
                             >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
@@ -732,7 +769,10 @@ export function ReportsList({
         <TabsContent value="templates">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {mockReportTemplates.map((template) => (
-              <Card key={template.id} className="overflow-hidden">
+              <Card
+                key={template.id}
+                className="overflow-hidden drop-shadow-sm shadow-gray-50  bg-[#F7F9FB] border-0"
+              >
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div>
@@ -794,6 +834,7 @@ export function ReportsList({
                 </CardContent>
                 <div className="px-6 py-4 bg-muted/50 flex justify-end">
                   <Button
+                    className="bg-black/10 border-0"
                     onClick={() => {
                       setNewReportType(template.type);
                       setIsNewReportDialogOpen(true);
@@ -806,7 +847,7 @@ export function ReportsList({
             ))}
 
             {/* Create new template card */}
-            <Card className="border-dashed flex flex-col items-center justify-center p-6">
+            <Card className="border-dashed bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 flex flex-col items-center justify-center p-6">
               <div className="rounded-full border-dashed border-2 p-3 mb-3">
                 <Plus className="h-6 w-6 text-muted-foreground" />
               </div>
@@ -814,7 +855,7 @@ export function ReportsList({
               <p className="text-sm text-muted-foreground text-center mb-3">
                 Design a custom report template for future use
               </p>
-              <Button>Create Template</Button>
+              <Button className="bg-black/10 border-0">Create Template</Button>
             </Card>
           </div>
         </TabsContent>
@@ -833,11 +874,11 @@ export function ReportsList({
           )}
         </div>
         <div className="space-x-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="bg-black/10 border-0">
             <Calendar className="h-4 w-4 mr-2" />
             Scheduled Reports
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="bg-black/10  border-0">
             <UserCircle className="h-4 w-4 mr-2" />
             Manage Recipients
           </Button>

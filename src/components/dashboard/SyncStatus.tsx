@@ -70,7 +70,7 @@ export function SyncStatus() {
   };
 
   return (
-    <Card>
+    <Card className="bg-[#E3F5FF]      drop-shadow-sm shadow-gray-50 border-0">
       <CardHeader>
         <CardTitle>Sync Status</CardTitle>
       </CardHeader>

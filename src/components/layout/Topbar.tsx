@@ -19,6 +19,8 @@ import {
 } from "../ui/overlay/dropdown-menu";
 import { Input } from "../ui/form/input";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/overlay/sheet";
+import { createPortal } from "react-dom";
+import { useState } from "react";
 
 interface TopbarProps {
   title?: string;
@@ -28,10 +30,14 @@ interface TopbarProps {
 
 export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   // Light mode only - no dark mode toggle
+  const [notifOpen, setNotifOpen] = useState(false);
 
   return (
     // <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b  px-4 sm:px-6">
+    <header
+      style={{ boxShadow: "0 1px 10px rgba(0, 0, 0, 0.1)" }}
+      className="sticky top-0 z-40 flex h-16 items-center bg-white gap-4 px-4 sm:px-6"
+    >
       <div className="flex flex-1 items-center gap-4">
         {/* Mobile Menu Button */}
         <Button
@@ -72,14 +78,26 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         {/* No theme toggle - light mode only */}
 
         {/* Notifications */}
-        <DropdownMenu>
+        <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[300px] bg-white">
+          {/* Dark overlay behind the dropdown when open, rendered to body to cover the whole page */}
+          {notifOpen &&
+            createPortal(
+              <div
+                className="fixed inset-0 bg-black/20 z-[60]"
+                onClick={() => setNotifOpen(false)}
+              />,
+              document.body
+            )}
+          <DropdownMenuContent
+            align="end"
+            className="w-[300px] bg-white z-[70]"
+          >
             <div className="flex items-center justify-between p-2">
               <span className="font-medium">Notifications</span>
               <Button variant="ghost" size="sm">

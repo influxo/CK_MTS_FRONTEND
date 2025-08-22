@@ -162,17 +162,164 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Project
         </Button>
-        <h2>{enhancedSubProject.title}</h2>
+        <h1 className="text-3xl font-semibold capitalize">
+          {enhancedSubProject.title}
+        </h1>
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              className="ml-auto bg-[#2B2B2B] text-white"
+            >
+              <FileEdit className="h-4 w-4 mr-2" />
+              Edit Sub-Project
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[550px]">
+            <DialogHeader>
+              <DialogTitle>Edit Sub-Project</DialogTitle>
+              <DialogDescription>
+                Update the details for this sub-project. All fields marked with
+                * are required.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="title" className="text-right">
+                  Title *
+                </Label>
+                <Input
+                  id="title"
+                  className="col-span-3"
+                  defaultValue={enhancedSubProject.title}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="category" className="text-right">
+                  Category *
+                </Label>
+                <Select
+                  defaultValue={enhancedSubProject.category.toLowerCase()}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="healthcare">Healthcare</SelectItem>
+                    <SelectItem value="education">Education</SelectItem>
+                    <SelectItem value="infrastructure">
+                      Infrastructure
+                    </SelectItem>
+                    <SelectItem value="training">Training</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="type" className="text-right">
+                  Type *
+                </Label>
+                <Select
+                  defaultValue={enhancedSubProject.type
+                    .toLowerCase()
+                    .replace(" ", "-")}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="service-delivery">
+                      Service Delivery
+                    </SelectItem>
+                    <SelectItem value="training">Training</SelectItem>
+                    <SelectItem value="construction">Construction</SelectItem>
+                    <SelectItem value="distribution">Distribution</SelectItem>
+                    <SelectItem value="research">Research</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">
+                  Status
+                </Label>
+                <Select defaultValue={enhancedSubProject.status}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="planning">Planning</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="location" className="text-right">
+                  Location *
+                </Label>
+                <Input
+                  id="location"
+                  className="col-span-3"
+                  defaultValue={enhancedSubProject.location}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="start-date" className="text-right">
+                  Start Date *
+                </Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  className="col-span-3"
+                  defaultValue={enhancedSubProject.startDate}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="end-date" className="text-right">
+                  End Date *
+                </Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  className="col-span-3"
+                  defaultValue={enhancedSubProject.endDate}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="description" className="text-right pt-2">
+                  Description
+                </Label>
+                <Textarea
+                  id="description"
+                  className="col-span-3"
+                  defaultValue={enhancedSubProject.description}
+                  rows={3}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              {/* <Button
+                      variant="outline"
+                      onClick={() => setIsEditDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button> */}
+              <Button onClick={() => setIsEditDialogOpen(false)}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex justify-between">
-            <div className="space-y-3 max-w-3xl">
+      <Card className="flex  bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
+        <CardContent className="p-6 w-full">
+          <div className="flex flex-col md:flex-row gap-6 w-full">
+            <div className="flex-1 space-y-5">
               <div className="flex gap-2">
                 <Badge variant="outline">{enhancedSubProject.category}</Badge>
                 <Badge variant="outline">{enhancedSubProject.type}</Badge>
                 <Badge
+                  style={{ backgroundColor: "#2E343E", color: "white" }}
                   variant={
                     enhancedSubProject.status === "active"
                       ? "default"
@@ -185,12 +332,14 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                 </Badge>
               </div>
 
-              <p className="text-muted-foreground">
+              <p className="text-xl font-normal  capitalize">
                 {enhancedSubProject.description}
               </p>
+            </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                <div>
+            <div className="grid grid-cols-1 w-2/5 ">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-xl p-4 bg-[#E5ECF6]">
                   <div className="text-sm text-muted-foreground">Timeline</div>
                   <div className="flex items-center gap-1 mt-1">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -206,7 +355,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                   </div>
                 </div>
 
-                <div>
+                <div className="rounded-xl p-4 bg-[#E5ECF6]">
                   <div className="text-sm text-muted-foreground">Lead</div>
                   <div className="flex items-center gap-1 mt-1">
                     <User className="h-4 w-4 text-muted-foreground" />
@@ -219,7 +368,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                   </div>
                 </div>
 
-                <div>
+                <div className="rounded-xl p-4 bg-[#E5ECF6]">
                   <div className="text-sm text-muted-foreground">Location</div>
                   <div className="flex items-center gap-1 mt-1">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -227,7 +376,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                   </div>
                 </div>
 
-                <div>
+                <div className="rounded-xl p-4 bg-[#E5ECF6]">
                   <div className="text-sm text-muted-foreground">
                     Beneficiaries
                   </div>
@@ -239,219 +388,62 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                   </div>
                 </div>
               </div>
-
-              <div className="mt-4">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Progress</span>
-                  <span>{enhancedSubProject.progress}%</span>
-                </div>
-                <div className="progress-bar h-2 mt-1 w-full overflow-hidden rounded">
-                  <Progress value={enhancedSubProject.progress} />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <Dialog
-                open={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  {/* <Button variant="outline">
-                    <FileEdit className="h-4 w-4 mr-2" />
-                    Edit Sub-Project
-                  </Button> */}
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[550px]">
-                  <DialogHeader>
-                    <DialogTitle>Edit Sub-Project</DialogTitle>
-                    <DialogDescription>
-                      Update the details for this sub-project. All fields marked
-                      with * are required.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="title" className="text-right">
-                        Title *
-                      </Label>
-                      <Input
-                        id="title"
-                        className="col-span-3"
-                        defaultValue={enhancedSubProject.title}
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="category" className="text-right">
-                        Category *
-                      </Label>
-                      <Select
-                        defaultValue={enhancedSubProject.category.toLowerCase()}
-                      >
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="healthcare">Healthcare</SelectItem>
-                          <SelectItem value="education">Education</SelectItem>
-                          <SelectItem value="infrastructure">
-                            Infrastructure
-                          </SelectItem>
-                          <SelectItem value="training">Training</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="type" className="text-right">
-                        Type *
-                      </Label>
-                      <Select
-                        defaultValue={enhancedSubProject.type
-                          .toLowerCase()
-                          .replace(" ", "-")}
-                      >
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="service-delivery">
-                            Service Delivery
-                          </SelectItem>
-                          <SelectItem value="training">Training</SelectItem>
-                          <SelectItem value="construction">
-                            Construction
-                          </SelectItem>
-                          <SelectItem value="distribution">
-                            Distribution
-                          </SelectItem>
-                          <SelectItem value="research">Research</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="status" className="text-right">
-                        Status
-                      </Label>
-                      <Select defaultValue={enhancedSubProject.status}>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="inactive">Inactive</SelectItem>
-                          <SelectItem value="planning">Planning</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="location" className="text-right">
-                        Location *
-                      </Label>
-                      <Input
-                        id="location"
-                        className="col-span-3"
-                        defaultValue={enhancedSubProject.location}
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="start-date" className="text-right">
-                        Start Date *
-                      </Label>
-                      <Input
-                        id="start-date"
-                        type="date"
-                        className="col-span-3"
-                        defaultValue={enhancedSubProject.startDate}
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="end-date" className="text-right">
-                        End Date *
-                      </Label>
-                      <Input
-                        id="end-date"
-                        type="date"
-                        className="col-span-3"
-                        defaultValue={enhancedSubProject.endDate}
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-start gap-4">
-                      <Label htmlFor="description" className="text-right pt-2">
-                        Description
-                      </Label>
-                      <Textarea
-                        id="description"
-                        className="col-span-3"
-                        defaultValue={enhancedSubProject.description}
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    {/* <Button
-                      variant="outline"
-                      onClick={() => setIsEditDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button> */}
-                    <Button onClick={() => setIsEditDialogOpen(false)}>
-                      Save Changes
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
             </div>
           </div>
         </CardContent>
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full border-b bg-transparent p-0 h-auto">
-          <div className="flex flex-wrap gap-4">
+        <TabsList className="w-full bg-[#E3F5FF]  pt-3 drop-shadow-sm shadow-gray-50   mt-4 h-auto">
+          <div className="flex gap-4">
             <TabsTrigger
               value="overview"
-              className={`rounded-none border-b-2 border-transparent pb-3 ${
-                activeTab === "overview" ? "border-primary" : ""
+              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
+                activeTab === "overview" ? "border-black" : "border-transparent"
               }`}
             >
               Overview
             </TabsTrigger>
             <TabsTrigger
               value="forms"
-              className={`rounded-none border-b-2 border-transparent pb-3 ${
-                activeTab === "forms" ? "border-primary" : ""
+              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
+                activeTab === "forms" ? "border-black" : "border-transparent"
               }`}
             >
               Forms & Data
             </TabsTrigger>
             <TabsTrigger
               value="activities"
-              className={`rounded-none border-b-2 border-transparent pb-3 ${
-                activeTab === "activities" ? "border-primary" : ""
+              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
+                activeTab === "activities"
+                  ? "border-black"
+                  : "border-transparent"
               }`}
             >
               Activities
             </TabsTrigger>
             <TabsTrigger
               value="beneficiaries"
-              className={`rounded-none border-b-2 border-transparent pb-3 ${
-                activeTab === "beneficiaries" ? "border-primary" : ""
+              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent ${
+                activeTab === "beneficiaries"
+                  ? "border-black"
+                  : "border-transparent"
               }`}
             >
               Beneficiaries
             </TabsTrigger>
             <TabsTrigger
               value="team"
-              className={`rounded-none border-b-2 border-transparent pb-3 ${
-                activeTab === "team" ? "border-primary" : ""
+              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent ${
+                activeTab === "team" ? "border-black" : "border-transparent"
               }`}
             >
               Team
             </TabsTrigger>
             <TabsTrigger
               value="reports"
-              className={`rounded-none border-b-2 border-transparent pb-3 ${
-                activeTab === "reports" ? "border-primary" : ""
+              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent ${
+                activeTab === "reports" ? "border-black" : "border-transparent"
               }`}
             >
               Reports
@@ -460,10 +452,10 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
         </TabsList>
 
         <TabsContent value="overview" className="pt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3  gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <Card>
-                <CardContent className="p-6">
+              <Card className="flex  bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50 ">
+                <CardContent className="p-6 ">
                   <h3 className="mb-4">Key Metrics</h3>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -572,7 +564,8 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                     </div>
 
                     <div className="flex justify-end mt-4">
-                      {/* <Button variant="outline" size="sm">
+                      {/* <Button
+                      variant="outline" size="sm">
                         View All Updates
                       </Button> */}
                     </div>
@@ -582,7 +575,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
             </div>
 
             <div className="space-y-6">
-              <Card>
+              <Card className="flex  bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50 ">
                 <CardContent className="p-6">
                   <h3 className="mb-3">Sub-Project Objectives</h3>
                   <ul className="space-y-2">
@@ -613,7 +606,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="flex  bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50 ">
                 <CardContent className="p-6">
                   <h3 className="mb-3">Last Synchronization</h3>
 
@@ -647,7 +640,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
               </Card>
 
               {enhancedSubProject.recentReports.length > 0 && (
-                <Card>
+                <Card className="flex  bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50 ">
                   <CardContent className="p-6">
                     <div className="flex justify-between items-center mb-3">
                       <h3>Recent Reports</h3>

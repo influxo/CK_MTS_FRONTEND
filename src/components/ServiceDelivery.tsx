@@ -1,8 +1,13 @@
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "./ui/data-display/card";
 
 export function ServiceDelivery() {
   return (
-    <Card className="mb-6">
+    <Card className="mb-6 ">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Service Delivery Breakdown</CardTitle>
       </CardHeader>

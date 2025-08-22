@@ -266,7 +266,7 @@ const mockProjects = [
 export function BeneficiariesList({
   onBeneficiarySelect,
 }: BeneficiariesListProps) {
-  const [viewType, setViewType] = useState("grid");
+  const [viewType, setViewType] = useState("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
@@ -334,6 +334,7 @@ export function BeneficiariesList({
         </div>
         <div className="flex gap-3">
           <Button
+            className="border bg-black/10 text-black"
             // variant="outline"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           >
@@ -342,7 +343,7 @@ export function BeneficiariesList({
           </Button>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-[#2E343E] text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Beneficiary
               </Button>
@@ -517,17 +518,17 @@ export function BeneficiariesList({
       <div className="flex flex-col lg:flex-row gap-4 justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground " />
             <Input
               placeholder="Search beneficiaries..."
-              className="pl-9"
+              className="pl-9 bg-black/5 border-0"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex gap-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-[130px] bg-black/5 border-0 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -538,7 +539,7 @@ export function BeneficiariesList({
               </SelectContent>
             </Select>
             <Select value={projectFilter} onValueChange={setProjectFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] bg-black/5 border-0 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
@@ -557,28 +558,13 @@ export function BeneficiariesList({
           <div className="flex gap-2">
             {selectedBeneficiaries.length > 0 && (
               <Button
-              // variant="outline"
+                className="bg-gray-50"
+                // variant="outline"
               >
                 Bulk Actions ({selectedBeneficiaries.length})
               </Button>
             )}
-            <Button
-            // variant="outline"
-            >
-              <FileDown className="h-4 w-4 mr-2" />
-              Export
-            </Button>
           </div>
-          <Tabs
-            value={viewType}
-            onValueChange={setViewType}
-            className="w-[180px]"
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="grid">Grid View</TabsTrigger>
-              <TabsTrigger value="list">List View</TabsTrigger>
-            </TabsList>
-          </Tabs>
         </div>
       </div>
 
@@ -589,7 +575,7 @@ export function BeneficiariesList({
               <div>
                 <Label>Location</Label>
                 <Select>
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-black/5 border-0 text-black">
                     <SelectValue placeholder="All locations" />
                   </SelectTrigger>
                   <SelectContent>
@@ -604,22 +590,38 @@ export function BeneficiariesList({
               </div>
               <div>
                 <Label>Age Range</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <Input type="number" placeholder="Min age" />
-                  <Input type="number" placeholder="Max age" />
+                <div className="grid grid-cols-2 gap-2 mt-2 ">
+                  <Input
+                    type="number"
+                    placeholder="Min age"
+                    className="bg-black/5 border-0"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Max age"
+                    className="bg-black/5 border-0"
+                  />
                 </div>
               </div>
               <div>
                 <Label>Registration Date</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <Input type="date" placeholder="From" />
-                  <Input type="date" placeholder="To" />
+                <div className="grid grid-cols-2 gap-2 mt-2 ">
+                  <Input
+                    type="date"
+                    placeholder="From"
+                    className="bg-black/5 border-0"
+                  />
+                  <Input
+                    type="date"
+                    placeholder="To"
+                    className="bg-black/5 border-0"
+                  />
                 </div>
               </div>
               <div>
                 <Label>Tags</Label>
                 <Select value={tagFilter} onValueChange={setTagFilter}>
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-black/5 border-0 text-black">
                     <SelectValue placeholder="All tags" />
                   </SelectTrigger>
                   <SelectContent>
@@ -637,348 +639,177 @@ export function BeneficiariesList({
               <Button
                 //  variant="outline"
                 // size="sm"
-                className="mr-2"
+                className="mr-2 bg-black/10"
               >
                 Reset Filters
               </Button>
-              <Button
-              // size="sm"
-              >
-                Apply Filters
-              </Button>
+              <Button className="bg-[#2E343E] text-white">Apply Filters</Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {viewType === "grid" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredBeneficiaries.map((beneficiary) => (
-            <Card key={beneficiary.id} className="overflow-hidden">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
+      <div className="rounded-md border overflow-hidden">
+        <Table>
+          <TableHeader className="bg-[#E5ECF6]">
+            <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={
+                    selectedBeneficiaries.length ===
+                      filteredBeneficiaries.length &&
+                    filteredBeneficiaries.length > 0
+                  }
+                  onCheckedChange={handleSelectAll}
+                />
+              </TableHead>
+              <TableHead className="w-[250px]">Beneficiary</TableHead>
+              <TableHead>Gender/Age</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Projects</TableHead>
+              <TableHead>Services</TableHead>
+              <TableHead>Registration</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="bg-[#F7F9FB]">
+            {filteredBeneficiaries.map((beneficiary) => (
+              <TableRow key={beneficiary.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedBeneficiaries.includes(beneficiary.id)}
+                    onCheckedChange={() =>
+                      handleSelectBeneficiary(beneficiary.id)
+                    }
+                  />
+                </TableCell>
+                <TableCell>
                   <div className="flex items-center gap-3">
-                    <Checkbox
-                      checked={selectedBeneficiaries.includes(beneficiary.id)}
-                      onCheckedChange={() =>
-                        handleSelectBeneficiary(beneficiary.id)
-                      }
-                    />
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage
-                          src={beneficiary.avatar}
-                          alt={beneficiary.name}
-                        />
-                        <AvatarFallback>{beneficiary.initials}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <CardTitle className="text-base">
-                          {beneficiary.name}
-                        </CardTitle>
-                        <p className="text-sm text-muted-foreground flex items-center gap-1">
-                          <ShieldAlert className="h-3 w-3" />
-                          {beneficiary.pseudoId}
-                        </p>
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage
+                        src={beneficiary.avatar}
+                        alt={beneficiary.name}
+                      />
+                      <AvatarFallback>{beneficiary.initials}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium">{beneficiary.name}</div>
+                      <div className="text-sm text-muted-foreground flex items-center gap-1">
+                        <ShieldAlert className="h-3 w-3" />
+                        {beneficiary.pseudoId}
                       </div>
                     </div>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        // variant="ghost"
-                        //  size="sm"
-                        className="h-8 w-8 p-0"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => onBeneficiarySelect(beneficiary.id)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <FileEdit className="h-4 w-4 mr-2" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Link className="h-4 w-4 mr-2" />
-                        Associate
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <FileCheck className="h-4 w-4 mr-2" />
-                        Record Service
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </CardHeader>
-              <CardContent className="pb-3">
-                <div className="space-y-4">
-                  <div className="flex flex-wrap gap-1.5">
-                    <Badge
-                      variant={
-                        beneficiary.status === "active"
-                          ? "default"
-                          : "secondary"
-                      }
-                    >
-                      {beneficiary.status}
-                    </Badge>
+                </TableCell>
+                <TableCell>
+                  <div>{beneficiary.gender}</div>
+                  <div>{beneficiary.age} years</div>
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant={
+                      beneficiary.status === "active" ? "default" : "secondary"
+                    }
+                  >
+                    {beneficiary.status}
+                  </Badge>
+                  <div className="flex flex-wrap gap-1 mt-1">
                     {beneficiary.tags.map((tag) => (
-                      <Badge key={tag} variant="outline">
+                      <Badge key={tag} variant="outline" className="text-xs">
                         {tag.replace("-", " ")}
                       </Badge>
                     ))}
                   </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Gender/Age:</span>
-                      <div>
-                        {beneficiary.gender}, {beneficiary.age}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Household:</span>
-                      <div>{beneficiary.household}</div>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-muted-foreground">Location:</span>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                        <span className="truncate">{beneficiary.location}</span>
-                      </div>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="text-muted-foreground">Contact:</span>
-                      <div className="flex items-center gap-1">
-                        <Phone className="h-3 w-3 text-muted-foreground" />
-                        <span>{beneficiary.contactNumber}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t">
-                    <span className="text-sm text-muted-foreground">
-                      Projects:
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate max-w-[150px]">
+                      {beneficiary.location}
                     </span>
-                    <div className="mt-1 space-y-1">
-                      {beneficiary.projects.map((project) => (
-                        <div
-                          key={project}
-                          className="text-sm flex items-center gap-1"
-                        >
-                          <Users className="h-3 w-3 text-muted-foreground" />
-                          <span>{project}</span>
-                        </div>
-                      ))}
-                    </div>
                   </div>
-
-                  <div className="pt-2 border-t">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-muted-foreground">
-                        Last Service:
-                      </span>
-                      <span>
-                        {new Date(beneficiary.lastService).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Total Services:
-                      </span>
-                      <span>{beneficiary.serviceCount}</span>
-                    </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Household: {beneficiary.household}
                   </div>
-                </div>
-              </CardContent>
-              <CardFooter className="pt-1">
-                <Button
-                  // variant="outline"
-                  // size="sm"
-                  className="w-full"
-                  onClick={() => onBeneficiarySelect(beneficiary.id)}
-                >
-                  View Full Profile
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-md border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]">
-                  <Checkbox
-                    checked={
-                      selectedBeneficiaries.length ===
-                        filteredBeneficiaries.length &&
-                      filteredBeneficiaries.length > 0
-                    }
-                    onCheckedChange={handleSelectAll}
-                  />
-                </TableHead>
-                <TableHead className="w-[250px]">Beneficiary</TableHead>
-                <TableHead>Gender/Age</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Projects</TableHead>
-                <TableHead>Services</TableHead>
-                <TableHead>Registration</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBeneficiaries.map((beneficiary) => (
-                <TableRow key={beneficiary.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedBeneficiaries.includes(beneficiary.id)}
-                      onCheckedChange={() =>
-                        handleSelectBeneficiary(beneficiary.id)
-                      }
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage
-                          src={beneficiary.avatar}
-                          alt={beneficiary.name}
-                        />
-                        <AvatarFallback>{beneficiary.initials}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{beneficiary.name}</div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-1">
-                          <ShieldAlert className="h-3 w-3" />
-                          {beneficiary.pseudoId}
-                        </div>
+                </TableCell>
+                <TableCell>
+                  <div className="space-y-1 max-w-[150px]">
+                    {beneficiary.projects.map((project) => (
+                      <div key={project} className="text-sm truncate">
+                        {project}
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>{beneficiary.gender}</div>
-                    <div>{beneficiary.age} years</div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        beneficiary.status === "active"
-                          ? "default"
-                          : "secondary"
-                      }
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm">
+                    {beneficiary.serviceCount} services
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Last:{" "}
+                    {new Date(beneficiary.lastService).toLocaleDateString()}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3 text-muted-foreground" />
+                    <span>
+                      {new Date(
+                        beneficiary.registrationDate
+                      ).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Vulnerability: {beneficiary.vulnerabilityScore}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      // variant="outline"
+                      // size="sm"
+                      onClick={() => onBeneficiarySelect(beneficiary.id)}
                     >
-                      {beneficiary.status}
-                    </Badge>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {beneficiary.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tag.replace("-", " ")}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                      <span className="truncate max-w-[150px]">
-                        {beneficiary.location}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Household: {beneficiary.household}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1 max-w-[150px]">
-                      {beneficiary.projects.map((project) => (
-                        <div key={project} className="text-sm truncate">
-                          {project}
-                        </div>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {beneficiary.serviceCount} services
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Last:{" "}
-                      {new Date(beneficiary.lastService).toLocaleDateString()}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3 text-muted-foreground" />
-                      <span>
-                        {new Date(
-                          beneficiary.registrationDate
-                        ).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Vulnerability: {beneficiary.vulnerabilityScore}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        // variant="outline"
-                        // size="sm"
-                        onClick={() => onBeneficiarySelect(beneficiary.id)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            // variant="ghost"
-                            // size="sm"
-                            className="h-8 w-8 p-0"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <FileEdit className="h-4 w-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Link className="h-4 w-4 mr-2" />
-                            Associate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <FileCheck className="h-4 w-4 mr-2" />
-                            Record Service
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+                      <Eye className="h-4 w-4 mr-2" />
+                      View
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          // variant="ghost"
+                          // size="sm"
+                          className="h-8 w-8 p-0"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <FileEdit className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Link className="h-4 w-4 mr-2" />
+                          Associate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <FileCheck className="h-4 w-4 mr-2" />
+                          Record Service
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive">
+                          <Trash className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       {filteredBeneficiaries.length === 0 && (
         <div className="text-center py-10 border rounded-lg">
@@ -996,13 +827,18 @@ export function BeneficiariesList({
           beneficiaries
         </div>
         <div className="space-x-2">
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-[#2E343E] text-white"
+          >
             <FileSpreadsheet className="h-4 w-4 mr-2" />
             Export to Excel
           </Button>
           <Button
-          // variant="outline"
-          //  size="sm"
+            variant="outline"
+            size="sm"
+            className="bg-[#2E343E] text-white"
           >
             <FileText className="h-4 w-4 mr-2" />
             Export to PDF

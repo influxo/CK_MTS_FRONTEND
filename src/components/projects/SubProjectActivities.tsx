@@ -12,7 +12,12 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -46,7 +51,12 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 
 interface SubProjectActivitiesProps {
@@ -73,7 +83,13 @@ const mockActivities = [
       "Health education session on maternal nutrition and prenatal care",
     formsSubmitted: 3,
     mediaAttached: true,
-    staff: ["Pal Baftijaj", "Alfred Pjetri", "Valentina Mehmeti", "Vlera Berisha", "Mimoza Bajraktari"]
+    staff: [
+      "Pal Baftijaj",
+      "Alfred Pjetri",
+      "Valentina Mehmeti",
+      "Vlera Berisha",
+      "Mimoza Bajraktari",
+    ],
   },
   {
     id: "act-002",
@@ -244,7 +260,7 @@ export function SubProjectActivities({
           onOpenChange={setIsCreateActivityDialogOpen}
         >
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-[#2E343E] text-white">
               <Plus className="h-4 w-4 mr-2" />
               Record New Activity
             </Button>
@@ -392,9 +408,19 @@ export function SubProjectActivities({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="activities">Activities Log</TabsTrigger>
-          <TabsTrigger value="planned">Planned Activities</TabsTrigger>
+        <TabsList className="grid grid-cols-2 bg-[#2E343E] bg-opacity-10 items-center">
+          <TabsTrigger
+            value="activities"
+            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+          >
+            Activities Log
+          </TabsTrigger>
+          <TabsTrigger
+            value="planned"
+            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+          >
+            Planned Activities
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="activities" className="pt-4">
@@ -404,13 +430,13 @@ export function SubProjectActivities({
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search activities..."
-                  className="pl-9"
+                  className="pl-9 bg-black/5 border-0"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-[160px] bg-black/5 border-0">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -428,8 +454,8 @@ export function SubProjectActivities({
             </Button> */}
           </div>
 
-          <Table>
-            <TableHeader>
+          <Table className="rounded-md overflow-hidden ">
+            <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
                 <TableHead className="w-[250px]">Activity</TableHead>
                 <TableHead>Type</TableHead>
@@ -616,7 +642,7 @@ export function SubProjectActivities({
               </Card>
             ))}
 
-            <Card className="border-dashed flex flex-col items-center justify-center p-6">
+            <Card className="border-dashed bg-[#F7F9FB] flex flex-col items-center justify-center p-6">
               <div className="rounded-full border-dashed border-2 p-3 mb-3">
                 <Plus className="h-6 w-6 text-muted-foreground" />
               </div>
@@ -624,7 +650,7 @@ export function SubProjectActivities({
               <p className="text-sm text-muted-foreground text-center mb-3">
                 Define a scheduled activity to be repeated regularly
               </p>
-              <Button>Create Plan</Button>
+              <Button className="bg-black/5">Create Plan</Button>
             </Card>
           </div>
         </TabsContent>

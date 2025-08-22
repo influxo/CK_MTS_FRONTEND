@@ -21,7 +21,12 @@ import {
 import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -202,7 +207,7 @@ interface FormsListProps {
 }
 
 export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
-  const [viewType, setViewType] = useState("grid");
+  const [viewType, setViewType] = useState("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -276,9 +281,10 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
         <div className="flex gap-3">
           <Button
             variant="outline"
+            className="bg-black/10 text-black"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           >
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
+            <SlidersHorizontal className="h-4 w-4 mr-2 " />
             Advanced Filters
           </Button>
 
@@ -287,7 +293,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
             onOpenChange={setIsNewFormDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button className="bg-black text-white">
+              <Button className="bg-[#2E343E] text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Form
               </Button>
@@ -402,18 +408,18 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
       <div className="flex flex-col lg:flex-row gap-4 justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground " />
             <Input
               placeholder="Search forms..."
-              className="pl-9"
+              className="pl-9 bg-black/5 border-0"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex gap-3">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[150px]">
-                <Filter className="h-4 w-4 mr-2" />
+              <SelectTrigger className="w-[150px] bg-black/5 border-0">
+                <Filter className="h-4 w-4 mr-2 " />
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -426,7 +432,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[150px] bg-black/5 border-0">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -440,20 +446,13 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
           </div>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline">
+          <Button
+            variant="outline"
+            className="bg-[#2E343E] text-white border-0"
+          >
             <FileDown className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Tabs
-            value={viewType}
-            onValueChange={setViewType}
-            className="w-[180px]"
-          >
-            <TabsList className="grid w-full grid-cols-2 bg-gray-200 rounded-full">
-              <TabsTrigger value="grid" className="rounded-full bg-white">Grid View</TabsTrigger>
-              <TabsTrigger value="list">List View</TabsTrigger>
-            </TabsList>
-          </Tabs>
         </div>
       </div>
 
@@ -464,7 +463,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
               <div>
                 <Label>Project</Label>
                 <Select value={projectFilter} onValueChange={setProjectFilter}>
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-black/5 border-0">
                     <SelectValue placeholder="All projects" />
                   </SelectTrigger>
                   <SelectContent>
@@ -480,7 +479,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
               <div>
                 <Label>Created By</Label>
                 <Select>
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-black/5 border-0">
                     <SelectValue placeholder="All users" />
                   </SelectTrigger>
                   <SelectContent>
@@ -497,7 +496,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
               <div>
                 <Label>Last Updated</Label>
                 <Select>
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-black/5 border-0">
                     <SelectValue placeholder="Any time" />
                   </SelectTrigger>
                   <SelectContent>
@@ -511,10 +510,16 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
               </div>
             </div>
             <div className="flex justify-end mt-4">
-              <Button variant="outline" size="sm" className="mr-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mr-2 bg-black/10 border-0"
+              >
                 Reset Filters
               </Button>
-              <Button size="sm">Apply Filters</Button>
+              <Button size="sm" className="bg-[#2E343E] text-white border-0">
+                Apply Filters
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -587,12 +592,13 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                 <div className="space-y-4">
                   <div className="flex flex-wrap gap-1.5">
                     <Badge
-                      variant={
+                      variant="default"
+                      className={
                         template.status === "active"
-                          ? "default"
+                          ? "bg-[#FF5E3A] text-white"
                           : template.status === "draft"
-                          ? "outline"
-                          : "secondary"
+                          ? "bg-gray-300 text-gray-700"
+                          : "bg-[#2B2B2B] text-white"
                       }
                     >
                       {template.status}
@@ -661,7 +667,11 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                   <Settings className="h-4 w-4 mr-2" />
                   Configure
                 </Button>
-                <Button size="sm" onClick={() => handleEditClick(template.id)} className="rounded-md bg-black text-white">
+                <Button
+                  size="sm"
+                  onClick={() => handleEditClick(template.id)}
+                  className="rounded-md bg-black text-white"
+                >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Form
                 </Button>
@@ -686,7 +696,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
       ) : (
         <div className="rounded-md border overflow-hidden">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
                 <TableHead className="w-[250px]">Form Name</TableHead>
                 <TableHead>Category</TableHead>
@@ -699,7 +709,7 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="bg-[#F7F9FB]">
               {filteredTemplates.map((template) => (
                 <TableRow key={template.id}>
                   <TableCell>
@@ -717,12 +727,13 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={
+                      variant="default"
+                      className={
                         template.status === "active"
-                          ? "default"
+                          ? "bg-[#2E343E] text-white"
                           : template.status === "draft"
-                          ? "outline"
-                          : "secondary"
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-[#FFFBD4] text-[#FFC555]"
                       }
                     >
                       {template.status}
@@ -831,11 +842,11 @@ export function FormsList({ onCreateForm, onEditForm }: FormsListProps) {
           Showing {filteredTemplates.length} of {mockFormTemplates.length} forms
         </div>
         <div className="space-x-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="bg-black/10 border-0">
             <HelpCircle className="h-4 w-4 mr-2" />
             Form Templates
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="bg-black/10 border-0">
             <FileJson className="h-4 w-4 mr-2" />
             Import JSON
           </Button>

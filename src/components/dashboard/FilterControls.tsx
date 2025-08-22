@@ -10,10 +10,10 @@ import {
 
 export function FilterControls() {
   return (
-    <div className="flex flex-col  bg-[#F7F9FB] sm:flex-row gap-4 mb-6 p-4 bg-card rounded-lg border">
+    <div className="flex flex-col  bg-[#F7F9FB]   drop-shadow-sm shadow-gray-50 sm:flex-row gap-4 mb-6 p-4 bg-card rounded-lg ">
       <div className="flex flex-wrap gap-4 flex-1">
-        <Select defaultValue="all-projects">
-          <SelectTrigger className="w-[200px]">
+        <Select defaultValue="all-project ">
+          <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
             <SelectValue placeholder="Select Project" />
           </SelectTrigger>
           <SelectContent>
@@ -29,7 +29,7 @@ export function FilterControls() {
         </Select>
 
         <Select defaultValue="last-30-days">
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] bg-black/5 text-black border-0">
             <SelectValue placeholder="Time Period" />
           </SelectTrigger>
           <SelectContent>
@@ -41,7 +41,7 @@ export function FilterControls() {
         </Select>
 
         <Select defaultValue="all-regions">
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-[150px] bg-black/5 text-black border-0">
             <SelectValue placeholder="Region" />
           </SelectTrigger>
           <SelectContent>
@@ -54,12 +54,20 @@ export function FilterControls() {
         </Select>
       </div>
 
-      <div className="flex gap-2">
-        <Button variant="outline" size="sm">
+      <div className="flex gap-4">
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-black/5 text-black border-0"
+        >
           <Filter className="h-4 w-4 mr-2" />
           More Filters
         </Button>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-[#2E343E] text-white  border-0"
+        >
           <Download className="h-4 w-4 mr-2" />
           Export
         </Button>

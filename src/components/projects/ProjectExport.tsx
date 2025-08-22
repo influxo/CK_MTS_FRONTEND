@@ -1,6 +1,11 @@
 import { Download, FileSpreadsheet, FileText, Printer } from "lucide-react";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import { Checkbox } from "../ui/form/checkbox";
 import { Label } from "../ui/form/label";
 import {
@@ -10,7 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/form/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 
 interface ProjectExportProps {
   projectId: string;
@@ -19,21 +29,33 @@ interface ProjectExportProps {
 export function ProjectExport({ projectId }: ProjectExportProps) {
   console.log("projectId, veq sa me i ik unused declaration", projectId);
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">Export Data & Reports</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="reports">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="reports">Project Reports</TabsTrigger>
-            <TabsTrigger value="data">Raw Data Export</TabsTrigger>
-          </TabsList>
-          <TabsContent value="reports" className="space-y-4 pt-4">
+    <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
+      <Tabs defaultValue="reports">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Export Data & Reports</CardTitle>
+            <TabsList className="grid  grid-cols-2 bg-black/5 items-center ">
+              <TabsTrigger
+                value="reports"
+                className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+              >
+                Project Reports
+              </TabsTrigger>
+              <TabsTrigger
+                value="data"
+                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+              >
+                Raw Data Export
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <TabsContent value="reports" className="space-y-6 pt-4">
             <div className="space-y-2">
               <Label>Report Type</Label>
               <Select defaultValue="summary">
-                <SelectTrigger>
+                <SelectTrigger className="bg-black/5 border-0">
                   <SelectValue placeholder="Select report type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -54,7 +76,7 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
             <div className="space-y-2">
               <Label>Time Period</Label>
               <Select defaultValue="all">
-                <SelectTrigger>
+                <SelectTrigger className="bg-black/5 border-0">
                   <SelectValue placeholder="Select time period" />
                 </SelectTrigger>
                 <SelectContent>
@@ -92,26 +114,32 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button className="gap-2">
+              <Button className="gap-2 bg-[#2E343E] text-white">
                 <FileText className="h-4 w-4" />
                 Export as PDF
               </Button>
-              <Button variant="outline" className="gap-2">
+              <Button
+                variant="outline"
+                className="gap-2 bg-[#2E343E] text-white"
+              >
                 <FileSpreadsheet className="h-4 w-4" />
                 Export as Excel
               </Button>
-              <Button variant="outline" className="gap-2">
+              <Button
+                variant="outline"
+                className="gap-2 bg-[#2E343E] text-white"
+              >
                 <Printer className="h-4 w-4" />
                 Print
               </Button>
             </div>
           </TabsContent>
 
-          <TabsContent value="data" className="space-y-4 pt-4">
+          <TabsContent value="data" className="space-y-6 pt-4">
             <div className="space-y-2">
               <Label>Data Type</Label>
               <Select defaultValue="all">
-                <SelectTrigger>
+                <SelectTrigger className="bg-black/5 border-0">
                   <SelectValue placeholder="Select data type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -129,7 +157,7 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
             <div className="space-y-2">
               <Label>Export Format</Label>
               <Select defaultValue="excel">
-                <SelectTrigger>
+                <SelectTrigger className="bg-black/5 border-0">
                   <SelectValue placeholder="Select format" />
                 </SelectTrigger>
                 <SelectContent>
@@ -173,13 +201,13 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
               </div>
             </div>
 
-            <Button className="gap-2 w-full mt-4">
+            <Button className="gap-2 w-full mt-4 h-10 bg-[#2E343E] border-0 text-white">
               <Download className="h-4 w-4" />
               Download Data
             </Button>
           </TabsContent>
-        </Tabs>
-      </CardContent>
+        </CardContent>
+      </Tabs>
     </Card>
   );
 }

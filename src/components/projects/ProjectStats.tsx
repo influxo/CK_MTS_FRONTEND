@@ -6,7 +6,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import { Progress } from "../ui/feedback/progress";
 
 interface ProjectStatsProps {
@@ -36,8 +41,8 @@ export function ProjectStats({ projectId }: ProjectStatsProps) {
   // For a real application, we would filter stats based on projectId
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card>
+    <div className="grid  grid-cols-1 md:grid-cols-2 gap-6">
+      <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Project Progress</CardTitle>
         </CardHeader>
@@ -47,7 +52,7 @@ export function ProjectStats({ projectId }: ProjectStatsProps) {
               <span className="text-muted-foreground">Overall Progress</span>
               <span>65%</span>
             </div>
-            <Progress value={65} className="h-2" />
+            <Progress value={65} className="h-2 " />
           </div>
 
           <div className="space-y-2">
@@ -74,26 +79,26 @@ export function ProjectStats({ projectId }: ProjectStatsProps) {
             <Progress value={51} className="h-2" />
           </div>
 
-          <div className="pt-2">
+          <div className="pt-8">
             <div className="text-sm font-medium mb-2">Key Statistics</div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="border rounded-md p-3">
+            <div className="grid grid-cols-2 gap-4">
+              <div className=" bg-[#E5ECF6] rounded-md p-3">
                 <div className="text-sm text-muted-foreground">Activities</div>
                 <div className="text-xl font-medium">128</div>
               </div>
-              <div className="border rounded-md p-3">
+              <div className=" bg-[#E5ECF6] rounded-md p-3">
                 <div className="text-sm text-muted-foreground">
                   Services Delivered
                 </div>
                 <div className="text-xl font-medium">1,088</div>
               </div>
-              <div className="border rounded-md p-3">
+              <div className=" bg-[#E5ECF6] rounded-md p-3">
                 <div className="text-sm text-muted-foreground">
                   Forms Submitted
                 </div>
                 <div className="text-xl font-medium">287</div>
               </div>
-              <div className="border rounded-md p-3">
+              <div className=" bg-[#E5ECF6] rounded-md p-3">
                 <div className="text-sm text-muted-foreground">
                   Active Beneficiaries
                 </div>
@@ -104,7 +109,7 @@ export function ProjectStats({ projectId }: ProjectStatsProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Monthly Activity</CardTitle>
         </CardHeader>

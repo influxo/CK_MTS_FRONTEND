@@ -11,7 +11,12 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +41,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/form/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 
 interface SubProjectTeamProps {
   subProjectId: string;
@@ -195,7 +205,7 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
         </div>
         <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-[#2E343E] text-white">
               <Plus className="h-4 w-4 mr-2" />
               Assign Member
             </Button>
@@ -286,9 +296,17 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="team-members">Team Members</TabsTrigger>
-          <TabsTrigger value="roles-responsibilities">
+        <TabsList className="bg-[#2E343E] bg-opacity-10 items-center">
+          <TabsTrigger
+            value="team-members"
+            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+          >
+            Team Members
+          </TabsTrigger>
+          <TabsTrigger
+            value="roles-responsibilities"
+            className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+          >
             Roles & Responsibilities
           </TabsTrigger>
         </TabsList>
@@ -297,17 +315,17 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
           <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <div className="relative w-full sm:w-64">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-2.5  top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search team members..."
-                  className="pl-9"
+                  className="pl-9 bg-black/5 border-0"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <div className="flex gap-3">
                 <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[180px] bg-black/5 border-0">
                     <SelectValue placeholder="Filter by role" />
                   </SelectTrigger>
                   <SelectContent>
@@ -320,7 +338,7 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
                   </SelectContent>
                 </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[130px]">
+                  <SelectTrigger className="w-[130px] bg-black/5 border-0">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -428,7 +446,7 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
               </Card>
             ))}
 
-            <Card className="border-dashed flex flex-col items-center justify-center p-6">
+            <Card className="border-dashed bg-[#F7F9FB] flex flex-col items-center justify-center p-6">
               <div className="rounded-full border-dashed border-2 p-3 mb-3">
                 <Plus className="h-6 w-6 text-muted-foreground" />
               </div>
@@ -436,7 +454,10 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
               <p className="text-sm text-muted-foreground text-center mb-3">
                 Assign a new team member to this sub-project
               </p>
-              <Button onClick={() => setIsAssignDialogOpen(true)}>
+              <Button
+                className="bg-black/5"
+                onClick={() => setIsAssignDialogOpen(true)}
+              >
                 Assign Member
               </Button>
             </Card>
@@ -444,7 +465,7 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
         </TabsContent>
 
         <TabsContent value="roles-responsibilities" className="pt-4">
-          <Card>
+          <Card className="bg-[#F7F9FB] border-0">
             <CardHeader>
               <CardTitle className="text-base">
                 Team Roles & Responsibilities
@@ -514,7 +535,11 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
               ))}
 
               <div className="flex justify-end">
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-black/5 border-0"
+                >
                   Edit Roles & Responsibilities
                 </Button>
               </div>

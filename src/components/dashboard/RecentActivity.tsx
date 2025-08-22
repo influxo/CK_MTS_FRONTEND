@@ -1,4 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 
@@ -94,7 +99,7 @@ export function RecentActivity() {
   };
 
   return (
-    <Card>
+    <Card className="bg-[#F7F9FB]      drop-shadow-sm shadow-gray-50 border-0">
       <CardHeader>
         <CardTitle>Recent Activity</CardTitle>
       </CardHeader>

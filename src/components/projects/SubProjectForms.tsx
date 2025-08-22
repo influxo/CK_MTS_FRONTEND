@@ -13,7 +13,12 @@ import {
 import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import { Checkbox } from "../ui/form/checkbox";
 import {
   Dialog,
@@ -47,7 +52,12 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 
 interface SubProjectFormsProps {
@@ -200,7 +210,7 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
           onOpenChange={setIsCreateFormDialogOpen}
         >
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-[#2E343E] text-white">
               <Plus className="h-4 w-4 mr-2" />
               Create New Form
             </Button>
@@ -299,106 +309,127 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="all-forms">All Forms</TabsTrigger>
-          <TabsTrigger value="submissions">Recent Submissions</TabsTrigger>
-          <TabsTrigger value="offline-data">Offline Data</TabsTrigger>
+        <TabsList className=" grid  grid-cols-3 bg-[#2E343E] bg-opacity-10 items-center">
+          <TabsTrigger
+            value="all-forms"
+            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+          >
+            All Forms
+          </TabsTrigger>
+          <TabsTrigger
+            value="submissions"
+            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+          >
+            Recent Submissions
+          </TabsTrigger>
+          <TabsTrigger
+            value="offline-data"
+            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+          >
+            Offline Data
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all-forms" className="pt-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[300px]">Form</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Submissions</TableHead>
-                <TableHead>Fields</TableHead>
-                <TableHead>Created By</TableHead>
-                <TableHead>Last Modified</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredForms.map((form) => (
-                <TableRow key={form.id}>
-                  <TableCell>
-                    <div className="font-medium">{form.title}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {form.description}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{form.type}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        form.status === "active" ? "default" : "secondary"
-                      }
-                    >
-                      {form.status === "active" ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{form.submissionCount}</TableCell>
-                  <TableCell>{form.fields}</TableCell>
-                  <TableCell>{form.createdBy}</TableCell>
-                  <TableCell>
-                    {new Date(form.lastModified).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <FileEdit className="h-4 w-4 mr-2" />
-                            Edit Form
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Download className="h-4 w-4 mr-2" />
-                            Export Data
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <FileText className="h-4 w-4 mr-2" />
-                            View Submissions
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            Disable Form
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
+        <TabsContent value="all-forms" className="pt-4 rounded-md">
+          <div className="rounded-md overflow-hidden">
+            <Table>
+              <TableHeader className="bg-[#E5ECF6]">
+                <TableRow>
+                  <TableHead className="w-[300px]">Form</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Submissions</TableHead>
+                  <TableHead>Fields</TableHead>
+                  <TableHead>Created By</TableHead>
+                  <TableHead>Last Modified</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredForms.map((form) => (
+                  <TableRow key={form.id}>
+                    <TableCell>
+                      <div className="font-medium">{form.title}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {form.description}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{form.type}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          form.status === "active" ? "default" : "secondary"
+                        }
+                      >
+                        {form.status === "active" ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{form.submissionCount}</TableCell>
+                    <TableCell>{form.fields}</TableCell>
+                    <TableCell>{form.createdBy}</TableCell>
+                    <TableCell>
+                      {new Date(form.lastModified).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-2" />
+                          View
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <FileEdit className="h-4 w-4 mr-2" />
+                              Edit Form
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Download className="h-4 w-4 mr-2" />
+                              Export Data
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <FileText className="h-4 w-4 mr-2" />
+                              View Submissions
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              Disable Form
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </TabsContent>
 
         <TabsContent value="submissions" className="pt-4">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4>Recent Form Submissions</h4>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-[#2E343E] bg-opacity-10 text-black"
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Export All
               </Button>
             </div>
-            <Table>
-              <TableHeader>
+            <Table className="rounded-md overflow-hidden">
+              <TableHeader className="bg-[#E5ECF6]">
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Form</TableHead>
@@ -468,22 +499,26 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
         </TabsContent>
 
         <TabsContent value="offline-data" className="pt-4">
-          <Card>
+          <Card className="bg-[#F7F9FB] border-0 ">
             <CardHeader>
               <CardTitle>Offline Data Synchronization</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="border rounded-lg p-4 bg-muted/20">
+              <div className=" rounded-lg p-4 bg-[#E3F5FF]">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     {filteredForms.some((form) => form.hasOfflineData) ? (
-                      <CloudOff className="h-5 w-5 text-amber-500" />
+                      <CloudOff className="h-5 w-5 text-[#2E343E]" />
                     ) : (
-                      <Cloud className="h-5 w-5 text-green-500" />
+                      <Cloud className="h-5 w-5 text-[#2E343E]" />
                     )}
                     <h4>Offline Data Status</h4>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-[#2E343E] border-0 text-black bg-opacity-10"
+                  >
                     Sync Now
                   </Button>
                 </div>
@@ -502,7 +537,11 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
                             5 offline submissions waiting to sync
                           </div>
                         </div>
-                        <Button size="sm" variant="outline">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="bg-[#2E343E] border-0 text-black bg-opacity-10"
+                        >
                           Sync
                         </Button>
                       </div>
@@ -510,14 +549,14 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
 
                   {!filteredForms.some((form) => form.hasOfflineData) && (
                     <div className="text-center py-4">
-                      <Check className="h-10 w-10 text-green-500 mx-auto mb-2" />
+                      <Check className="h-10 w-10 text-[#2E343E] mx-auto mb-2" />
                       <p>All data is synchronized! No pending offline data.</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="flex flex-col border rounded-lg p-4">
+              <div className="flex flex-col bg-[#E3F5FF]     rounded-lg p-4">
                 <h4 className="mb-3">Offline Settings</h4>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-2">
@@ -539,7 +578,10 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
                     </label>
                   </div>
                 </div>
-                <Button className="self-end mt-4" size="sm">
+                <Button
+                  className=" mt-6 h-10  bg-[#2E343E] border-0  text-white w-2/1"
+                  size="sm"
+                >
                   Save Settings
                 </Button>
               </div>

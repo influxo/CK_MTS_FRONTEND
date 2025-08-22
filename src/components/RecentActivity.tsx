@@ -1,7 +1,12 @@
 import { CheckCircle, Clock, FileText, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/data-display/avatar";
 import { Button } from "./ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "./ui/data-display/card";
 
 interface ActivityItemProps {
   avatar: string;
