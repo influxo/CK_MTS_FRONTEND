@@ -355,7 +355,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
                     <div className="flex gap-2">
                       <Badge variant="outline">{subProject.category}</Badge>
                       <Badge
-                        className="bg-[#FF5E3A] text-white"
+                        className="bg-[#2E343E] text-white"
                         variant={
                           subProject.status === "active"
                             ? "default"

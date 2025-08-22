@@ -334,7 +334,7 @@ export function BeneficiariesList({
         </div>
         <div className="flex gap-3">
           <Button
-            className="border"
+            className="border bg-black/10 text-black"
             // variant="outline"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           >
@@ -343,7 +343,7 @@ export function BeneficiariesList({
           </Button>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#2B2B2B] text-white">
+              <Button className="bg-[#2E343E] text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Beneficiary
               </Button>
@@ -518,17 +518,17 @@ export function BeneficiariesList({
       <div className="flex flex-col lg:flex-row gap-4 justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground " />
             <Input
               placeholder="Search beneficiaries..."
-              className="pl-9"
+              className="pl-9 bg-black/5 border-0"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex gap-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-[130px] bg-black/5 border-0 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -539,7 +539,7 @@ export function BeneficiariesList({
               </SelectContent>
             </Select>
             <Select value={projectFilter} onValueChange={setProjectFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] bg-black/5 border-0 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
@@ -575,7 +575,7 @@ export function BeneficiariesList({
               <div>
                 <Label>Location</Label>
                 <Select>
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-black/5 border-0 text-black">
                     <SelectValue placeholder="All locations" />
                   </SelectTrigger>
                   <SelectContent>
@@ -590,22 +590,38 @@ export function BeneficiariesList({
               </div>
               <div>
                 <Label>Age Range</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <Input type="number" placeholder="Min age" />
-                  <Input type="number" placeholder="Max age" />
+                <div className="grid grid-cols-2 gap-2 mt-2 ">
+                  <Input
+                    type="number"
+                    placeholder="Min age"
+                    className="bg-black/5 border-0"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Max age"
+                    className="bg-black/5 border-0"
+                  />
                 </div>
               </div>
               <div>
                 <Label>Registration Date</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <Input type="date" placeholder="From" />
-                  <Input type="date" placeholder="To" />
+                <div className="grid grid-cols-2 gap-2 mt-2 ">
+                  <Input
+                    type="date"
+                    placeholder="From"
+                    className="bg-black/5 border-0"
+                  />
+                  <Input
+                    type="date"
+                    placeholder="To"
+                    className="bg-black/5 border-0"
+                  />
                 </div>
               </div>
               <div>
                 <Label>Tags</Label>
                 <Select value={tagFilter} onValueChange={setTagFilter}>
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-black/5 border-0 text-black">
                     <SelectValue placeholder="All tags" />
                   </SelectTrigger>
                   <SelectContent>
@@ -623,15 +639,11 @@ export function BeneficiariesList({
               <Button
                 //  variant="outline"
                 // size="sm"
-                className="mr-2"
+                className="mr-2 bg-black/10"
               >
                 Reset Filters
               </Button>
-              <Button
-              // size="sm"
-              >
-                Apply Filters
-              </Button>
+              <Button className="bg-[#2E343E] text-white">Apply Filters</Button>
             </div>
           </CardContent>
         </Card>
@@ -639,7 +651,7 @@ export function BeneficiariesList({
 
       <div className="rounded-md border overflow-hidden">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-[#E5ECF6]">
             <TableRow>
               <TableHead className="w-[50px]">
                 <Checkbox
@@ -661,7 +673,7 @@ export function BeneficiariesList({
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="bg-[#F7F9FB]">
             {filteredBeneficiaries.map((beneficiary) => (
               <TableRow key={beneficiary.id}>
                 <TableCell>
@@ -815,13 +827,18 @@ export function BeneficiariesList({
           beneficiaries
         </div>
         <div className="space-x-2">
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-[#2E343E] text-white"
+          >
             <FileSpreadsheet className="h-4 w-4 mr-2" />
             Export to Excel
           </Button>
           <Button
-          // variant="outline"
-          //  size="sm"
+            variant="outline"
+            size="sm"
+            className="bg-[#2E343E] text-white"
           >
             <FileText className="h-4 w-4 mr-2" />
             Export to PDF

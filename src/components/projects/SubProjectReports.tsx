@@ -241,8 +241,8 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
         </TabsList>
 
         <TabsContent value="saved-reports" className="pt-4">
-          <Table>
-            <TableHeader>
+          <Table className="rounded-md overflow-hidden">
+            <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
                 <TableHead className="w-[300px]">Report</TableHead>
                 <TableHead>Type</TableHead>
@@ -706,7 +706,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
             </Card>
           </div>
 
-          <div className="flex justify-end gap-4 mt-6">
+          <div className="flex  justify-end gap-4 mt-6">
             <Button
               variant="outline"
               size="sm"
@@ -758,7 +758,12 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                     <CardTitle className="text-base">
                       {template.title}
                     </CardTitle>
-                    <Badge variant="outline">{template.type}</Badge>
+                    <Badge
+                      variant="outline"
+                      className="bg-[#2E343E] text-white"
+                    >
+                      {template.type}
+                    </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -771,7 +776,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                     {new Date(template.lastUsed).toLocaleDateString()}
                   </div>
 
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-4 ">
                     <Button
                       variant="outline"
                       size="sm"

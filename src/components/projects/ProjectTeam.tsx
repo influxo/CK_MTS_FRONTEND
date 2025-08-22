@@ -3,7 +3,12 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -113,7 +118,7 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
   );
 
   return (
-    <Card>
+    <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <CardTitle className="text-base">Project Team</CardTitle>
@@ -122,7 +127,7 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
             onOpenChange={setIsAssignDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button size="sm">
+              <Button size="sm" className="bg-[#2E343E] text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Assign Member
               </Button>
@@ -179,11 +184,15 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
               <DialogFooter>
                 <Button
                   variant="outline"
+                  className="bg-black-10 text-black"
                   onClick={() => setIsAssignDialogOpen(false)}
                 >
                   Cancel
                 </Button>
-                <Button onClick={() => setIsAssignDialogOpen(false)}>
+                <Button
+                  className="bg-[#2E343E] text-white"
+                  onClick={() => setIsAssignDialogOpen(false)}
+                >
                   Assign Member
                 </Button>
               </DialogFooter>

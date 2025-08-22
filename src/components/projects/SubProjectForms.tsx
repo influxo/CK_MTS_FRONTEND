@@ -330,87 +330,89 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all-forms" className="pt-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[300px]">Form</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Submissions</TableHead>
-                <TableHead>Fields</TableHead>
-                <TableHead>Created By</TableHead>
-                <TableHead>Last Modified</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredForms.map((form) => (
-                <TableRow key={form.id}>
-                  <TableCell>
-                    <div className="font-medium">{form.title}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {form.description}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{form.type}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        form.status === "active" ? "default" : "secondary"
-                      }
-                    >
-                      {form.status === "active" ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{form.submissionCount}</TableCell>
-                  <TableCell>{form.fields}</TableCell>
-                  <TableCell>{form.createdBy}</TableCell>
-                  <TableCell>
-                    {new Date(form.lastModified).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <FileEdit className="h-4 w-4 mr-2" />
-                            Edit Form
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Download className="h-4 w-4 mr-2" />
-                            Export Data
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <FileText className="h-4 w-4 mr-2" />
-                            View Submissions
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            Disable Form
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
+        <TabsContent value="all-forms" className="pt-4 rounded-md">
+          <div className="rounded-md overflow-hidden">
+            <Table>
+              <TableHeader className="bg-[#E5ECF6]">
+                <TableRow>
+                  <TableHead className="w-[300px]">Form</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Submissions</TableHead>
+                  <TableHead>Fields</TableHead>
+                  <TableHead>Created By</TableHead>
+                  <TableHead>Last Modified</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredForms.map((form) => (
+                  <TableRow key={form.id}>
+                    <TableCell>
+                      <div className="font-medium">{form.title}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {form.description}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{form.type}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          form.status === "active" ? "default" : "secondary"
+                        }
+                      >
+                        {form.status === "active" ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{form.submissionCount}</TableCell>
+                    <TableCell>{form.fields}</TableCell>
+                    <TableCell>{form.createdBy}</TableCell>
+                    <TableCell>
+                      {new Date(form.lastModified).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-2" />
+                          View
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <FileEdit className="h-4 w-4 mr-2" />
+                              Edit Form
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Download className="h-4 w-4 mr-2" />
+                              Export Data
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <FileText className="h-4 w-4 mr-2" />
+                              View Submissions
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              Disable Form
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </TabsContent>
 
         <TabsContent value="submissions" className="pt-4">
@@ -426,8 +428,8 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
                 Export All
               </Button>
             </div>
-            <Table>
-              <TableHeader>
+            <Table className="rounded-md overflow-hidden">
+              <TableHeader className="bg-[#E5ECF6]">
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Form</TableHead>

@@ -99,7 +99,11 @@ export function DataEntryTemplates() {
 
   // Determine entity info for submission
   const entityId = projectId ?? subprojectId ?? undefined;
-  const entityType = projectId ? "project" : subprojectId ? "subproject" : undefined;
+  const entityType = projectId
+    ? "project"
+    : subprojectId
+    ? "subproject"
+    : undefined;
 
   return (
     <div className="space-y-6">
@@ -107,7 +111,11 @@ export function DataEntryTemplates() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => (selectedTemplateId ? setSelectedTemplateId(null) : navigate("/data-entry"))}
+          onClick={() =>
+            selectedTemplateId
+              ? setSelectedTemplateId(null)
+              : navigate("/data-entry")
+          }
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back
@@ -121,14 +129,20 @@ export function DataEntryTemplates() {
               </>
             ) : (
               <>
-                subprojectId: <Badge variant="outline">{subprojectId}</Badge>
+                subprojectId:{" "}
+                <Badge
+                  variant="outline"
+                  className="bg-black/5 text-black border-0"
+                >
+                  {subprojectId}
+                </Badge>
               </>
             )}
           </div>
         </div>
       </div>
 
-      <Card>
+      <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
         <div className="p-4">
           {loading && (
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -157,7 +171,9 @@ export function DataEntryTemplates() {
                     <TableBody>
                       {templates.map((tpl) => (
                         <TableRow key={tpl.id}>
-                          <TableCell className="font-medium">{tpl.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {tpl.name}
+                          </TableCell>
                           <TableCell>{tpl.version}</TableCell>
                           <TableCell>
                             <div className="flex gap-2 justify-end">
@@ -195,23 +211,29 @@ export function DataEntryTemplates() {
                 <div className="space-y-4">
                   {selectedTemplateLoading && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" /> Loading template...
+                      <Loader2 className="h-4 w-4 animate-spin" /> Loading
+                      template...
                     </div>
                   )}
                   {!selectedTemplateLoading && selectedTemplateError && (
                     <Alert variant="destructive">
-                      <AlertDescription>{selectedTemplateError}</AlertDescription>
+                      <AlertDescription>
+                        {selectedTemplateError}
+                      </AlertDescription>
                     </Alert>
                   )}
-                  {!selectedTemplateLoading && selectedTemplate && entityId && entityType && (
-                    <FormSubmission
-                      template={selectedTemplate}
-                      entityId={entityId}
-                      entityType={entityType}
-                      onBack={() => setSelectedTemplateId(null)}
-                      onSubmissionComplete={() => navigate("/data-entry")}
-                    />
-                  )}
+                  {!selectedTemplateLoading &&
+                    selectedTemplate &&
+                    entityId &&
+                    entityType && (
+                      <FormSubmission
+                        template={selectedTemplate}
+                        entityId={entityId}
+                        entityType={entityType}
+                        onBack={() => setSelectedTemplateId(null)}
+                        onSubmissionComplete={() => navigate("/data-entry")}
+                      />
+                    )}
                 </div>
               )}
             </div>
