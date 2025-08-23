@@ -1,5 +1,5 @@
 // Employee status based on current API payload
-export type EmployeeStatus = "active" | "invited";
+export type EmployeeStatus = "active" | "invited" | "inactive";
 
 // Join model inside roles[]: roles[].UserRole
 export interface EmployeeUserRole {
@@ -45,6 +45,21 @@ export interface GetEmployeesResponse {
 }
 
 export interface GetEmployeeByIdResponse {
+  success: boolean;
+  message?: string;
+  data: Employee;
+}
+
+// Update User (Employee) request/response
+export interface UpdateUserRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  status: EmployeeStatus; // if backend supports more (e.g., "inactive"), extend EmployeeStatus accordingly
+  roleIds: string[];
+}
+
+export interface UpdateUserResponse {
   success: boolean;
   message?: string;
   data: Employee;

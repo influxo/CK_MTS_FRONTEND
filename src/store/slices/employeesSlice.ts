@@ -3,6 +3,8 @@ import type {
   Employee,
   GetEmployeesResponse,
   GetEmployeeByIdResponse,
+  UpdateUserRequest,
+  UpdateUserResponse,
 } from "../../services/employees/employeesModels";
 import employeesService from "../../services/employees/employeesService";
 
@@ -11,8 +13,10 @@ interface EmployeesState {
   singleEmployee: Employee | null;
   isLoading: boolean;
   isSingleLoading: boolean;
+  isUpdating: boolean;
   error: string | null;
   singleError: string | null;
+  updateError: string | null;
 }
 
 const initialState: EmployeesState = {
@@ -20,8 +24,10 @@ const initialState: EmployeesState = {
   singleEmployee: null,
   isLoading: false,
   isSingleLoading: false,
+  isUpdating: false,
   error: null,
   singleError: null,
+  updateError: null,
 };
 
 // Fetch all employees
@@ -46,6 +52,19 @@ export const fetchSingleEmployee = createAsyncThunk<
   const response = await employeesService.getEmployeeById(employeeId);
   if (!response.success) {
     return rejectWithValue(response.message || "Failed to fetch employee");
+  }
+  return response;
+});
+
+// Update employee (user)
+export const updateEmployee = createAsyncThunk<
+  UpdateUserResponse,
+  { userId: string; data: UpdateUserRequest },
+  { rejectValue: string }
+>("employees/updateEmployee", async ({ userId, data }, { rejectWithValue }) => {
+  const response = await employeesService.updateEmployee(userId, data);
+  if (!response.success) {
+    return rejectWithValue(response.message || "Failed to update user");
   }
   return response;
 });
@@ -87,6 +106,28 @@ const employeesSlice = createSlice({
       .addCase(fetchSingleEmployee.rejected, (state, action) => {
         state.isSingleLoading = false;
         state.singleError = action.payload ?? "Failed to fetch employee";
+      })
+      // updateEmployee
+      .addCase(updateEmployee.pending, (state) => {
+        state.isUpdating = true;
+        state.updateError = null;
+      })
+      .addCase(updateEmployee.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        const updated = action.payload.data;
+        // update singleEmployee if it matches
+        if (state.singleEmployee && state.singleEmployee.id === updated.id) {
+          state.singleEmployee = updated;
+        }
+        // update in list
+        const idx = state.employees.findIndex((e) => e.id === updated.id);
+        if (idx !== -1) {
+          state.employees[idx] = updated;
+        }
+      })
+      .addCase(updateEmployee.rejected, (state, action) => {
+        state.isUpdating = false;
+        state.updateError = action.payload ?? "Failed to update user";
       });
   },
 });
@@ -107,6 +148,12 @@ export const selectSingleEmployeeLoading = (state: {
 export const selectSingleEmployeeError = (state: {
   employees: EmployeesState;
 }) => state.employees.singleError;
+
+export const selectEmployeeUpdating = (state: { employees: EmployeesState }) =>
+  state.employees.isUpdating;
+export const selectEmployeeUpdateError = (state: {
+  employees: EmployeesState;
+}) => state.employees.updateError;
 
 // Actions
 export const { clearSingleEmployee } = employeesSlice.actions;

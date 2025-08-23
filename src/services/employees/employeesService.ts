@@ -3,6 +3,8 @@ import getApiUrl from "../apiUrl";
 import type {
   GetEmployeesResponse,
   GetEmployeeByIdResponse,
+  UpdateUserRequest,
+  UpdateUserResponse,
 } from "./employeesModels";
 
 class EmployeesService {
@@ -41,6 +43,29 @@ class EmployeesService {
         success: false,
         message: error.message || "Failed to fetch employee.",
         //  provide a fallback Employee type if request fails
+        data: {} as any,
+      };
+    }
+  }
+
+  async updateEmployee(
+    userId: string,
+    payload: UpdateUserRequest
+  ): Promise<UpdateUserResponse> {
+    try {
+      const response = await axiosInstance.put<UpdateUserResponse>(
+        `${this.employeesEndpoint}/${userId}`,
+        payload
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as UpdateUserResponse;
+      }
+      return {
+        success: false,
+        message: error.message || "Failed to update user",
+        // fall back; server shape on error typically includes success/message
         data: {} as any,
       };
     }

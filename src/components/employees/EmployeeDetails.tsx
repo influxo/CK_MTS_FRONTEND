@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Smartphone,
   Trash,
+  Loader2,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -24,6 +25,9 @@ import {
   selectSingleEmployee,
   selectSingleEmployeeError,
   selectSingleEmployeeLoading,
+  updateEmployee,
+  selectEmployeeUpdating,
+  selectEmployeeUpdateError,
 } from "../../store/slices/employeesSlice";
 import {
   fetchRolePermissions,
@@ -31,6 +35,7 @@ import {
   selectRolePermissionsLoading,
   selectRolePermissionsError,
 } from "../../store/slices/roleSlice";
+import type { UpdateUserRequest, EmployeeStatus } from "../../services/employees/employeesModels";
 import { Avatar, AvatarFallback } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
@@ -177,6 +182,8 @@ export function EmployeeDetails() {
   const singleEmployee = useSelector(selectSingleEmployee);
   const isSingleLoading = useSelector(selectSingleEmployeeLoading);
   const singleError = useSelector(selectSingleEmployeeError);
+  const isUpdating = useSelector(selectEmployeeUpdating);
+  const updateError = useSelector(selectEmployeeUpdateError);
 
   // Tabs & edit state (activeTab must be declared before effects below)
   const [activeTab, setActiveTab] = useState("profile");
@@ -377,17 +384,46 @@ export function EmployeeDetails() {
   };
 
   // Save changes
-  const handleSaveClick = () => {
-    // In a real app, we would call an API to update the employee
-    // Update the form data with the selected projects and sub-projects
+  const handleSaveClick = async () => {
+    // Update the form data with the selected projects and sub-projects (local only)
     setFormData((prev) => ({
       ...prev,
       projects: selectedProjects,
       subProjects: selectedSubProjects,
     }));
 
-    // Exit edit mode
-    setIsEditing(false);
+    if (!singleEmployee) return;
+
+    const [first, ...rest] = (formData.name || "").trim().split(/\s+/);
+    const firstName = first ?? "";
+    const lastName = rest.join(" ");
+
+    const apiStatus: EmployeeStatus =
+      formData.status === "active"
+        ? "active"
+        : formData.status === "pending"
+        ? "invited"
+        : formData.status === "inactive"
+        ? "inactive"
+        : singleEmployee.status; // fallback to original if unsupported value selected
+
+    const payload: UpdateUserRequest = {
+      firstName,
+      lastName,
+      email: formData.email,
+      status: apiStatus,
+      roleIds: roleId ? [roleId] : [],
+    };
+
+    try {
+      await dispatch(
+        updateEmployee({ userId: singleEmployee.id, data: payload })
+      ).unwrap();
+      setIsEditing(false);
+    } catch (e) {
+      // keep editing; error message will show
+      console.error("Failed to update user", e);
+    }
   };
 
   // Cancel editing
@@ -539,12 +575,21 @@ export function EmployeeDetails() {
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={handleCancelClick}>
+              <Button variant="outline" onClick={handleCancelClick} disabled={isUpdating}>
                 Cancel
               </Button>
-              <Button onClick={handleSaveClick}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
+              <Button onClick={handleSaveClick} disabled={isUpdating}>
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
               </Button>
             </>
           )}
@@ -691,6 +736,13 @@ export function EmployeeDetails() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {updateError && (
+                    <div className="bg-destructive/10 border border-destructive rounded-md p-3 mb-4">
+                      <span className="text-destructive">
+                        Failed to update user: {updateError}
+                      </span>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name</Label>
@@ -699,7 +751,7 @@ export function EmployeeDetails() {
                         name="name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        disabled={!isEditing}
+                        disabled={!isEditing || isUpdating}
                       />
                     </div>
                     <div className="space-y-2">
@@ -710,7 +762,7 @@ export function EmployeeDetails() {
                         type="email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        disabled={!isEditing}
+                        disabled={!isEditing || isUpdating}
                       />
                     </div>
                     <div className="space-y-2">
@@ -720,7 +772,7 @@ export function EmployeeDetails() {
                         name="phone"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        disabled={!isEditing}
+                        disabled={!isEditing || isUpdating}
                       />
                     </div>
                     <div className="space-y-2">
@@ -729,6 +781,7 @@ export function EmployeeDetails() {
                         <Select
                           value={formData.role}
                           onValueChange={handleRoleChange}
+                          disabled={isUpdating}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select role" />
@@ -752,6 +805,7 @@ export function EmployeeDetails() {
                           <Select
                             value={formData.status}
                             onValueChange={handleStatusChange}
+                            disabled={isUpdating}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select status" />
@@ -771,6 +825,7 @@ export function EmployeeDetails() {
                             id="twoFactor"
                             checked={formData.twoFactorEnabled}
                             onCheckedChange={handle2FAToggle}
+                            disabled={isUpdating}
                           />
                         </div>
                       </>
