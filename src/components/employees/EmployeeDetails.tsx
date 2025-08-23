@@ -34,8 +34,15 @@ import {
   selectRolePermissions,
   selectRolePermissionsLoading,
   selectRolePermissionsError,
+  fetchRoles,
+  selectAllRoles,
+  selectRolesLoading,
+  selectRolesError,
 } from "../../store/slices/roleSlice";
-import type { UpdateUserRequest, EmployeeStatus } from "../../services/employees/employeesModels";
+import type {
+  UpdateUserRequest,
+  EmployeeStatus,
+} from "../../services/employees/employeesModels";
 import { Avatar, AvatarFallback } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
@@ -166,14 +173,7 @@ const mockProjects = [
   },
 ];
 
-// Mock roles
-const mockRoles = [
-  "Super Admin",
-  "Admin",
-  "Program Manager",
-  "Field Staff",
-  "Data Analyst",
-];
+// Roles now loaded from store; mockRoles removed
 
 export function EmployeeDetails() {
   const { id } = useParams();
@@ -196,6 +196,27 @@ export function EmployeeDetails() {
       | undefined;
     return idVal !== undefined && idVal !== null ? String(idVal) : undefined;
   }, [singleEmployee]);
+
+  // Roles data from store
+  const roles = useSelector(selectAllRoles);
+  const rolesLoading = useSelector(selectRolesLoading);
+  const rolesError = useSelector(selectRolesError);
+
+  // Local selected role id for editing (defaults to employee's current role)
+  const [selectedRoleId, setSelectedRoleId] = useState<string | undefined>(
+    undefined
+  );
+
+  useEffect(() => {
+    setSelectedRoleId(roleId);
+  }, [roleId]);
+
+  // Fetch roles list if not present
+  useEffect(() => {
+    if (!rolesLoading && roles.length === 0) {
+      dispatch(fetchRoles(undefined));
+    }
+  }, [dispatch, rolesLoading, roles.length]);
 
   // Role permissions from store and status flags
   const rolePermissions = useSelector((state: any) =>
@@ -334,9 +355,11 @@ export function EmployeeDetails() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle role change
+  // Handle role change (value is roleId)
   const handleRoleChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, role: value }));
+    setSelectedRoleId(value);
+    const found = roles.find((r) => r.id === value);
+    setFormData((prev) => ({ ...prev, role: found ? found.name : prev.role }));
   };
 
   // Handle status change
@@ -412,7 +435,7 @@ export function EmployeeDetails() {
       lastName,
       email: formData.email,
       status: apiStatus,
-      roleIds: roleId ? [roleId] : [],
+      roleIds: selectedRoleId ? [selectedRoleId] : roleId ? [roleId] : [],
     };
 
     try {
@@ -447,6 +470,9 @@ export function EmployeeDetails() {
 
     // Reset permissions
     setPermissions(employee.permissions);
+
+    // Reset role selection to original
+    setSelectedRoleId(roleId);
 
     // Exit edit mode
     setIsEditing(false);
@@ -575,7 +601,11 @@ export function EmployeeDetails() {
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={handleCancelClick} disabled={isUpdating}>
+              <Button
+                variant="outline"
+                onClick={handleCancelClick}
+                disabled={isUpdating}
+              >
                 Cancel
               </Button>
               <Button onClick={handleSaveClick} disabled={isUpdating}>
@@ -778,22 +808,35 @@ export function EmployeeDetails() {
                     <div className="space-y-2">
                       <Label htmlFor="role">Role</Label>
                       {isEditing ? (
-                        <Select
-                          value={formData.role}
-                          onValueChange={handleRoleChange}
-                          disabled={isUpdating}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {mockRoles.map((role) => (
-                              <SelectItem key={role} value={role}>
-                                {role}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <>
+                          <Select
+                            value={selectedRoleId}
+                            onValueChange={handleRoleChange}
+                            disabled={isUpdating || rolesLoading}
+                          >
+                            <SelectTrigger>
+                              <SelectValue
+                                placeholder={
+                                  rolesLoading
+                                    ? "Loading roles…"
+                                    : "Select role"
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {roles.map((r) => (
+                                <SelectItem key={r.id} value={r.id}>
+                                  {r.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {rolesError && (
+                            <div className="text-destructive text-sm mt-1">
+                              Failed to load roles: {rolesError}
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <Input id="role" value={formData.role} disabled />
                       )}
