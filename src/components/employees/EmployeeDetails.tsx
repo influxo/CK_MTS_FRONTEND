@@ -25,6 +25,13 @@ import {
   selectSingleEmployeeError,
   selectSingleEmployeeLoading,
 } from "../../store/slices/employeesSlice";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import {
+  fetchRolePermissions,
+  selectRolePermissions,
+  selectRolePermissionsLoading,
+  selectRolePermissionsError,
+} from "../../store/slices/roleSlice";
 import { Avatar, AvatarFallback } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
@@ -172,6 +179,61 @@ export function EmployeeDetails() {
   const isSingleLoading = useSelector(selectSingleEmployeeLoading);
   const singleError = useSelector(selectSingleEmployeeError);
 
+  // Tabs & edit state (activeTab must be declared before effects below)
+  const [activeTab, setActiveTab] = useState("profile");
+
+  // Current logged-in user from auth slice (already fetched elsewhere)
+  const currentUser = useSelector(selectCurrentUser);
+  const roleId = useMemo(() => {
+    const idVal = currentUser?.roles?.[0]?.id as unknown as
+      | string
+      | number
+      | undefined;
+    return idVal !== undefined && idVal !== null ? String(idVal) : undefined;
+  }, [currentUser]);
+
+  // Role permissions from store and status flags
+  const rolePermissions = useSelector((state: any) =>
+    roleId ? selectRolePermissions(state, roleId) : []
+  );
+  const isPermissionsLoading = useSelector(selectRolePermissionsLoading);
+  const permissionsError = useSelector(selectRolePermissionsError);
+
+  // Fetch role permissions when Permissions tab is active and not yet loaded
+  useEffect(() => {
+    if (activeTab === "permissions" && roleId) {
+      if (
+        !isPermissionsLoading &&
+        !permissionsError &&
+        (!rolePermissions || rolePermissions.length === 0)
+      ) {
+        dispatch(fetchRolePermissions(roleId));
+      }
+    }
+  }, [
+    activeTab,
+    roleId,
+    isPermissionsLoading,
+    permissionsError,
+    rolePermissions?.length,
+    dispatch,
+  ]);
+
+  // Map store permissions -> local UI state for checkboxes
+  useEffect(() => {
+    if (activeTab !== "permissions") return;
+    if (rolePermissions && rolePermissions.length > 0) {
+      const mapped = rolePermissions.map((p: any) => ({
+        id: p.id,
+        name: p.description || `${p.resource}:${p.action}`,
+        granted: true,
+      }));
+      setPermissions(mapped);
+    } else if (rolePermissions && rolePermissions.length === 0) {
+      setPermissions([]);
+    }
+  }, [rolePermissions, activeTab]);
+
   useEffect(() => {
     if (id) {
       dispatch(fetchSingleEmployee(id));
@@ -213,7 +275,6 @@ export function EmployeeDetails() {
       : null;
   }, [singleEmployee]);
 
-  const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordResetDialog, setShowPasswordResetDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -742,31 +803,56 @@ export function EmployeeDetails() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {permissions.map((permission) => (
-                      <div
-                        key={permission.id}
-                        className="flex items-center space-x-2"
+                  {isPermissionsLoading ? (
+                    <div className="text-muted-foreground">
+                      Loading permissions…
+                    </div>
+                  ) : permissionsError ? (
+                    <div className="bg-destructive/10 border border-destructive rounded-md p-3 flex items-center justify-between">
+                      <span className="text-destructive">
+                        Failed to load permissions: {permissionsError}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          roleId && dispatch(fetchRolePermissions(roleId))
+                        }
                       >
-                        <Checkbox
-                          id={permission.id}
-                          checked={permission.granted}
-                          onCheckedChange={() =>
-                            handlePermissionToggle(permission.id)
-                          }
-                          disabled={!isEditing}
-                        />
-                        <Label
-                          htmlFor={permission.id}
-                          className={`font-normal ${
-                            !permission.granted && "text-muted-foreground"
-                          }`}
+                        Retry
+                      </Button>
+                    </div>
+                  ) : permissions.length === 0 ? (
+                    <div className="text-muted-foreground">
+                      No permissions found for this role.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {permissions.map((permission) => (
+                        <div
+                          key={permission.id}
+                          className="flex items-center space-x-2"
                         >
-                          {permission.name}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
+                          <Checkbox
+                            id={permission.id}
+                            checked={permission.granted}
+                            onCheckedChange={() =>
+                              handlePermissionToggle(permission.id)
+                            }
+                            disabled={!isEditing}
+                          />
+                          <Label
+                            htmlFor={permission.id}
+                            className={`font-normal ${
+                              !permission.granted && "text-muted-foreground"
+                            }`}
+                          >
+                            {permission.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

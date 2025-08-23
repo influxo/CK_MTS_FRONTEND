@@ -40,3 +40,19 @@ export interface GetRolesResponse {
   message?: string;
   items: Role[];
 }
+
+// Request for fetching a role's permissions using a path param id
+export interface GetRolePermissionsRequest {
+  id: string; // role id (UUID)
+}
+
+// Response for GET /roles/{id}/permissions
+export interface GetRolePermissionsResponse {
+  success: boolean;
+  message?: string;
+  role: {
+    id: string;
+    name: string;
+  };
+  permissions: Permission[];
+}
