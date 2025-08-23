@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import authService from '../../services/auth/authService';
-import type { LoginRequest, LoginResponse, ResetPasswordRequest, ApiResponse } from '../../services/auth/authModels';
+import type { LoginRequest, LoginResponse, ResetPasswordRequest, ApiResponse, AcceptInvitationRequest } from '../../services/auth/authModels';
 import type { User } from '../../services/globalModels/User';
 
 // Define the auth state interface
@@ -79,6 +79,22 @@ export const logoutUser = createAsyncThunk('auth/logout', async () => {
   return null;
 });
 
+export const acceptInvitation = createAsyncThunk<
+  LoginResponse,
+  AcceptInvitationRequest,
+  { rejectValue: string }
+>('auth/acceptInvitation', async (payload, { rejectWithValue }) => {
+  try {
+    const response = await authService.verifyEmail(payload);
+    if (!response.success) {
+      return rejectWithValue(response.message);
+    }
+    return response;
+  } catch (error: any) {
+    return rejectWithValue(error.message || 'Accept invitation failed');
+  }
+});
+
 // Create the auth slice
 const authSlice = createSlice({
   name: 'auth',
@@ -138,11 +154,28 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(resetPassword.fulfilled, (state, action) => {
+      .addCase(resetPassword.fulfilled, (state) => {
         state.isLoading = false;
         // We don't update auth state here as the user will need to log in after reset
       })
       .addCase(resetPassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Accept invitation cases
+      .addCase(acceptInvitation.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(acceptInvitation.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (action.payload.data) {
+          state.user = action.payload.data.user;
+          state.token = action.payload.data.token;
+          state.isAuthenticated = true;
+        }
+      })
+      .addCase(acceptInvitation.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });

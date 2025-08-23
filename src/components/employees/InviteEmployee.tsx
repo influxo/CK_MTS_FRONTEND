@@ -211,34 +211,26 @@ export function InviteEmployee({
       if (!selectedRoleId) {
         throw new Error("Please select a valid role");
       }
-      const roleIdNum = Number(selectedRoleId);
-      if (!Number.isFinite(roleIdNum)) {
-        throw new Error("Selected role id is invalid");
-      }
 
       if (!inviteData.firstName || !inviteData.lastName || !inviteData.email) {
         throw new Error("Please fill in all required fields");
       }
 
-      // Determine project and subproject IDs to send
-      const projectIdsToSend = (
-        inviteData.allProjects
-          ? projects.map((p) => Number(p.id))
-          : selectedProjects.map((id) => Number(id))
-      ).filter((id) => Number.isFinite(id));
+      // Determine project and subproject IDs to send (as strings, supports UUIDs)
+      const projectIdsToSend = inviteData.allProjects
+        ? projects.map((p) => p.id)
+        : selectedProjects;
 
-      const subProjectIdsToSend = (
-        inviteData.allProjects
-          ? subprojects.map((sp) => Number(sp.id))
-          : selectedSubProjects.map((id) => Number(id))
-      ).filter((id) => Number.isFinite(id));
+      const subProjectIdsToSend = inviteData.allProjects
+        ? subprojects.map((sp) => sp.id)
+        : selectedSubProjects;
 
       // Create the invite request
       const inviteRequest: InviteUserRequest = {
         firstName: inviteData.firstName,
         lastName: inviteData.lastName,
         email: inviteData.email,
-        roleIds: [roleIdNum],
+        roleIds: [selectedRoleId],
         expiration: inviteData.expiration,
         message: inviteData.message,
         projectIds: projectIdsToSend,
@@ -300,6 +292,7 @@ export function InviteEmployee({
     inviteData.email.trim() !== "" &&
     inviteData.role !== "";
 
+  console.log("role id", inviteData.role);
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

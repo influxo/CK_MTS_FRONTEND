@@ -23,6 +23,13 @@ export interface InviteUserRequest {
   roleIds: number[];
 }
 
+// Accept invitation / verify email request
+export interface AcceptInvitationRequest {
+  email: string;
+  token: string;
+  password: string;
+}
+
 
 export interface LoginResponse {
   success: boolean;

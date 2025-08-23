@@ -16,6 +16,7 @@ import { SubProjectDetails } from "./components/projects/SubProjectDetails";
 import DataEntry from "./pages/DataEntry";
 import DataEntryTemplates from "./pages/DataEntryTemplates";
 import { EmployeeDetails } from "./components/employees/EmployeeDetails";
+import AcceptInvitation from "./pages/auth/AcceptInvitation";
 
 const routes = [
   {
@@ -25,6 +26,10 @@ const routes = [
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/accept-invitation",
+    element: <AcceptInvitation />,
   },
   {
     path: "/forgot-password",
