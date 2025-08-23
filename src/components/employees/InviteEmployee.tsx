@@ -1,5 +1,5 @@
 import { ArrowLeft, Check, Copy, Info, UserPlus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button/button";
 import {
   Card,
@@ -28,36 +28,12 @@ import { toast } from "react-hot-toast";
 import type { InviteUserRequest } from "../../services/users/userModels";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchRoles } from "../../store/slices/roleSlice";
+import { fetchProjects } from "../../store/slices/projectsSlice";
+import { fetchAllSubProjects } from "../../store/slices/subProjectSlice";
 import type { AppDispatch, RootState } from "../../store";
+import { Badge } from "../ui/data-display/badge";
 
-// Mock data for projects
-const mockProjects = [
-  {
-    id: "proj-001",
-    title: "Rural Healthcare Initiative",
-    subProjects: [
-      { id: "sub-001", title: "Maternal Health Services" },
-      { id: "sub-002", title: "Child Vaccination Campaign" },
-      { id: "sub-004", title: "Nutrition Support" },
-    ],
-  },
-  {
-    id: "proj-002",
-    title: "Community Development",
-    subProjects: [
-      { id: "sub-003", title: "Water Access Program" },
-      { id: "sub-005", title: "Food Security Initiative" },
-    ],
-  },
-  {
-    id: "proj-003",
-    title: "Youth Empowerment Program",
-    subProjects: [
-      { id: "sub-006", title: "Education Support" },
-      { id: "sub-007", title: "Skills Training" },
-    ],
-  },
-];
+// Projects and subprojects are now fetched from API via Redux slices
 
 // Roles now fetched from API via Redux slice
 
@@ -103,10 +79,52 @@ export function InviteEmployee({
   const rolesLoading = useSelector((state: RootState) => state.roles.isLoading);
   const rolesError = useSelector((state: RootState) => state.roles.error);
 
+  // Redux: projects and subprojects
+  const projects = useSelector((state: RootState) => state.projects.projects);
+  const projectsLoading = useSelector(
+    (state: RootState) => state.projects.isLoading
+  );
+  const projectsError = useSelector((state: RootState) => state.projects.error);
+
+  const subprojects = useSelector(
+    (state: RootState) => state.subprojects.subprojects
+  );
+  const subprojectsLoading = useSelector(
+    (state: RootState) => state.subprojects.isLoading
+  );
+  const subprojectsError = useSelector(
+    (state: RootState) => state.subprojects.error
+  );
+
   useEffect(() => {
-    // Fetch roles on mount
+    // Fetch roles, projects and subprojects on mount
     dispatch(fetchRoles(undefined));
+    dispatch(fetchProjects());
+    dispatch(fetchAllSubProjects());
   }, [dispatch]);
+
+  // Group subprojects by projectId for quick lookup
+  const subprojectsByProjectId = useMemo(() => {
+    const map: Record<
+      string,
+      { id: string; name: string; projectId: string }[]
+    > = {};
+    for (const sp of subprojects) {
+      if (!map[sp.projectId]) map[sp.projectId] = [];
+      map[sp.projectId].push({
+        id: sp.id,
+        name: sp.name,
+        projectId: sp.projectId,
+      });
+    }
+    return map;
+  }, [subprojects]);
+
+  // Resolve selected role name from roles slice
+  const selectedRoleName = useMemo(() => {
+    const role = roles?.find((r) => String(r.id) === inviteData.role);
+    return role?.name ?? "";
+  }, [roles, inviteData.role]);
 
   // Handle input changes
   const handleInputChange = (
@@ -142,41 +160,41 @@ export function InviteEmployee({
   };
 
   // Handle project selection
-  const handleProjectToggle = (projectTitle: string) => {
+  const handleProjectToggle = (projectId: string) => {
     setSelectedProjects((prev) => {
-      if (prev.includes(projectTitle)) {
+      if (prev.includes(projectId)) {
         // If removing a project, also remove its sub-projects
-        const projectObj = mockProjects.find((p) => p.title === projectTitle);
-        const subProjectTitles =
-          projectObj?.subProjects.map((sp) => sp.title) || [];
-        // Remove sub-projects of the unselected project
+        const subProjectsForProject = subprojectsByProjectId[projectId] || [];
+        const subProjectIds = subProjectsForProject.map((sp) => sp.id);
         setSelectedSubProjects((prevSubs) =>
-          prevSubs.filter((sp) => !subProjectTitles.includes(sp))
+          prevSubs.filter((spId) => !subProjectIds.includes(spId))
         );
-        return prev.filter((p) => p !== projectTitle);
+        return prev.filter((p) => p !== projectId);
       } else {
-        return [...prev, projectTitle];
+        // If adding a project, also select all of its sub-projects by default
+        const subProjectsForProject = subprojectsByProjectId[projectId] || [];
+        const subProjectIds = subProjectsForProject.map((sp) => sp.id);
+        setSelectedSubProjects((prevSubs) => {
+          const next = new Set(prevSubs);
+          for (const id of subProjectIds) next.add(id);
+          return Array.from(next);
+        });
+        return [...prev, projectId];
       }
     });
   };
 
   // Handle sub-project selection
-  const handleSubProjectToggle = (
-    subProjectTitle: string,
-    projectTitle: string
-  ) => {
+  const handleSubProjectToggle = (subProjectId: string, projectId: string) => {
     setSelectedSubProjects((prev) => {
-      if (prev.includes(subProjectTitle)) {
-        return prev.filter((sp) => sp !== subProjectTitle);
+      if (prev.includes(subProjectId)) {
+        return prev.filter((sp) => sp !== subProjectId);
       } else {
         // Make sure the parent project is selected
-        if (!selectedProjects.includes(projectTitle)) {
-          setSelectedProjects((prevProjects) => [
-            ...prevProjects,
-            projectTitle,
-          ]);
+        if (!selectedProjects.includes(projectId)) {
+          setSelectedProjects((prevProjects) => [...prevProjects, projectId]);
         }
-        return [...prev, subProjectTitle];
+        return [...prev, subProjectId];
       }
     });
   };
@@ -202,6 +220,19 @@ export function InviteEmployee({
         throw new Error("Please fill in all required fields");
       }
 
+      // Determine project and subproject IDs to send
+      const projectIdsToSend = (
+        inviteData.allProjects
+          ? projects.map((p) => Number(p.id))
+          : selectedProjects.map((id) => Number(id))
+      ).filter((id) => Number.isFinite(id));
+
+      const subProjectIdsToSend = (
+        inviteData.allProjects
+          ? subprojects.map((sp) => Number(sp.id))
+          : selectedSubProjects.map((id) => Number(id))
+      ).filter((id) => Number.isFinite(id));
+
       // Create the invite request
       const inviteRequest: InviteUserRequest = {
         firstName: inviteData.firstName,
@@ -210,24 +241,8 @@ export function InviteEmployee({
         roleIds: [roleIdNum],
         expiration: inviteData.expiration,
         message: inviteData.message,
-        projectIds: selectedProjects
-          .map((projectName) => {
-            const project = mockProjects.find((p) => p.title === projectName);
-            return project ? parseInt(project.id.split("-")[1]) : 0;
-          })
-          .filter((id) => id !== 0),
-        subProjectIds: selectedSubProjects
-          .map((subProjectName) => {
-            // Find which project contains this subproject
-            for (const project of mockProjects) {
-              const subProject = project.subProjects.find(
-                (sp) => sp.title === subProjectName
-              );
-              if (subProject) return parseInt(subProject.id.split("-")[1]);
-            }
-            return 0;
-          })
-          .filter((id) => id !== 0),
+        projectIds: projectIdsToSend,
+        subProjectIds: subProjectIdsToSend,
       };
 
       // Call the API to invite the user
@@ -284,8 +299,6 @@ export function InviteEmployee({
     inviteData.lastName.trim() !== "" &&
     inviteData.email.trim() !== "" &&
     inviteData.role !== "";
-
-  console.log("role id", inviteData.role);
 
   return (
     <div className="space-y-6">
@@ -424,53 +437,69 @@ export function InviteEmployee({
                       Select specific projects and sub-projects:
                     </p>
 
-                    {mockProjects.map((project) => (
-                      <div key={project.id} className="border rounded-md p-4">
-                        <div className="flex items-center space-x-2 mb-4">
-                          <Checkbox
-                            id={project.id}
-                            checked={selectedProjects.includes(project.title)}
-                            onCheckedChange={() =>
-                              handleProjectToggle(project.title)
-                            }
-                          />
-                          <Label htmlFor={project.id} className="font-medium">
-                            {project.title}
-                          </Label>
-                        </div>
-
-                        <div className="pl-6 border-l ml-2 space-y-2">
-                          {project.subProjects.map((subProject) => (
-                            <div
-                              key={subProject.id}
-                              className="flex items-center space-x-2"
-                            >
-                              <Checkbox
-                                id={subProject.id}
-                                checked={selectedSubProjects.includes(
-                                  subProject.title
-                                )}
-                                onCheckedChange={() =>
-                                  handleSubProjectToggle(
-                                    subProject.title,
-                                    project.title
-                                  )
-                                }
-                                disabled={
-                                  !selectedProjects.includes(project.title)
-                                }
-                              />
-                              <Label
-                                htmlFor={subProject.id}
-                                className="font-normal"
-                              >
-                                {subProject.title}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
+                    {projectsLoading || subprojectsLoading ? (
+                      <div className="text-sm text-muted-foreground px-1">
+                        Loading projects...
                       </div>
-                    ))}
+                    ) : projectsError || subprojectsError ? (
+                      <div className="text-sm text-red-500 px-1">
+                        {projectsError || subprojectsError}
+                      </div>
+                    ) : projects && projects.length > 0 ? (
+                      projects.map((project) => (
+                        <div key={project.id} className="border rounded-md p-4">
+                          <div className="flex items-center space-x-2 mb-4">
+                            <Checkbox
+                              id={project.id}
+                              checked={selectedProjects.includes(project.id)}
+                              onCheckedChange={() =>
+                                handleProjectToggle(project.id)
+                              }
+                            />
+                            <Label htmlFor={project.id} className="font-medium">
+                              {project.name}
+                            </Label>
+                          </div>
+
+                          <div className="pl-6 border-l ml-2 space-y-2">
+                            {(subprojectsByProjectId[project.id] || []).map(
+                              (subProject) => (
+                                <div
+                                  key={subProject.id}
+                                  className="flex items-center space-x-2"
+                                >
+                                  <Checkbox
+                                    id={subProject.id}
+                                    checked={selectedSubProjects.includes(
+                                      subProject.id
+                                    )}
+                                    onCheckedChange={() =>
+                                      handleSubProjectToggle(
+                                        subProject.id,
+                                        project.id
+                                      )
+                                    }
+                                    disabled={
+                                      !selectedProjects.includes(project.id)
+                                    }
+                                  />
+                                  <Label
+                                    htmlFor={subProject.id}
+                                    className="font-normal"
+                                  >
+                                    {subProject.name}
+                                  </Label>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-muted-foreground px-1">
+                        No projects available
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -538,7 +567,7 @@ export function InviteEmployee({
         </Card>
 
         <div className="space-y-6">
-          {/* <Card>
+          <Card>
             <CardHeader>
               <CardTitle>Invitation Preview</CardTitle>
             </CardHeader>
@@ -557,10 +586,10 @@ export function InviteEmployee({
 
                 <p className="text-sm mb-3">
                   You've been invited to join CaritasMotherTeresa as
-                  {inviteData.role ? (
-                    <Badge className="ml-1">{inviteData.role}</Badge>
+                  {selectedRoleName ? (
+                    <Badge className="ml-1">{selectedRoleName}</Badge>
                   ) : (
-                    <span className="text-muted-foreground"> [Role]</span>
+                    <span className="text-muted-foreground ml-1">[Role]</span>
                   )}
                 </p>
 
@@ -588,7 +617,7 @@ export function InviteEmployee({
                 </p>
               </div>
             </CardContent>
-          </Card> */}
+          </Card>
 
           <Card>
             <CardHeader>
