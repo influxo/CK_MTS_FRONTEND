@@ -5,6 +5,7 @@ import type {
   GetEmployeeByIdResponse,
   UpdateUserRequest,
   UpdateUserResponse,
+  GetUserProjectsResponse,
 } from "./employeesModels";
 
 class EmployeesService {
@@ -67,6 +68,24 @@ class EmployeesService {
         message: error.message || "Failed to update user",
         // fall back; server shape on error typically includes success/message
         data: {} as any,
+      };
+    }
+  }
+
+  async getUserProjects(userId: string): Promise<GetUserProjectsResponse> {
+    try {
+      const response = await axiosInstance.get<GetUserProjectsResponse>(
+        `${this.employeesEndpoint}/${userId}/projects`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as GetUserProjectsResponse;
+      }
+      return {
+        success: false,
+        message: error.message || "Failed to fetch user projects.",
+        items: [],
       };
     }
   }

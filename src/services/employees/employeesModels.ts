@@ -64,3 +64,45 @@ export interface UpdateUserResponse {
   message?: string;
   data: Employee;
 }
+
+// Projects tree for a User: /users/{id}/projects
+export interface EmployeeActivity {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  frequency?: string; // e.g., "monthly" (optional as not guaranteed for all activities)
+  status: string;
+  subprojectId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmployeeSubproject {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  status: string;
+  projectId: string;
+  createdAt: string;
+  updatedAt: string;
+  activities: EmployeeActivity[];
+}
+
+export interface EmployeeProject {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  subprojects: EmployeeSubproject[];
+}
+
+export interface GetUserProjectsResponse {
+  success: boolean;
+  message?: string;
+  items: EmployeeProject[];
+}

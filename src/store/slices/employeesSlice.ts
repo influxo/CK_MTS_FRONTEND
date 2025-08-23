@@ -5,6 +5,8 @@ import type {
   GetEmployeeByIdResponse,
   UpdateUserRequest,
   UpdateUserResponse,
+  EmployeeProject,
+  GetUserProjectsResponse,
 } from "../../services/employees/employeesModels";
 import employeesService from "../../services/employees/employeesService";
 
@@ -17,6 +19,10 @@ interface EmployeesState {
   error: string | null;
   singleError: string | null;
   updateError: string | null;
+  // user projects tree
+  userProjects: EmployeeProject[];
+  isUserProjectsLoading: boolean;
+  userProjectsError: string | null;
 }
 
 const initialState: EmployeesState = {
@@ -28,6 +34,9 @@ const initialState: EmployeesState = {
   error: null,
   singleError: null,
   updateError: null,
+  userProjects: [],
+  isUserProjectsLoading: false,
+  userProjectsError: null,
 };
 
 // Fetch all employees
@@ -65,6 +74,19 @@ export const updateEmployee = createAsyncThunk<
   const response = await employeesService.updateEmployee(userId, data);
   if (!response.success) {
     return rejectWithValue(response.message || "Failed to update user");
+  }
+  return response;
+});
+
+// Fetch user's projects tree
+export const fetchUserProjects = createAsyncThunk<
+  GetUserProjectsResponse,
+  string,
+  { rejectValue: string }
+>("employees/fetchUserProjects", async (userId, { rejectWithValue }) => {
+  const response = await employeesService.getUserProjects(userId);
+  if (!response.success) {
+    return rejectWithValue(response.message || "Failed to fetch user projects");
   }
   return response;
 });
@@ -128,6 +150,19 @@ const employeesSlice = createSlice({
       .addCase(updateEmployee.rejected, (state, action) => {
         state.isUpdating = false;
         state.updateError = action.payload ?? "Failed to update user";
+      })
+      // fetchUserProjects
+      .addCase(fetchUserProjects.pending, (state) => {
+        state.isUserProjectsLoading = true;
+        state.userProjectsError = null;
+      })
+      .addCase(fetchUserProjects.fulfilled, (state, action) => {
+        state.isUserProjectsLoading = false;
+        state.userProjects = action.payload.items;
+      })
+      .addCase(fetchUserProjects.rejected, (state, action) => {
+        state.isUserProjectsLoading = false;
+        state.userProjectsError = action.payload ?? "Failed to fetch user projects";
       });
   },
 });
@@ -154,6 +189,13 @@ export const selectEmployeeUpdating = (state: { employees: EmployeesState }) =>
 export const selectEmployeeUpdateError = (state: {
   employees: EmployeesState;
 }) => state.employees.updateError;
+
+export const selectUserProjects = (state: { employees: EmployeesState }) =>
+  state.employees.userProjects;
+export const selectUserProjectsLoading = (state: { employees: EmployeesState }) =>
+  state.employees.isUserProjectsLoading;
+export const selectUserProjectsError = (state: { employees: EmployeesState }) =>
+  state.employees.userProjectsError;
 
 // Actions
 export const { clearSingleEmployee } = employeesSlice.actions;

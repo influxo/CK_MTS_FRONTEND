@@ -164,6 +164,13 @@ class SubProjectService {
       return {
         success: false,
         message: error.message || "Failed to assign user to subproject",
+        data: {
+          id: "",
+          firstName: "",
+          lastName: "",
+          email: "",
+          status: "",
+        },
       } as AssignUserToSubProjectResponse;
     }
   }

@@ -10,7 +10,6 @@ import {
   Pencil,
   Save,
   Shield,
-  ShieldCheck,
   Smartphone,
   Trash,
   Loader2,
@@ -28,6 +27,11 @@ import {
   updateEmployee,
   selectEmployeeUpdating,
   selectEmployeeUpdateError,
+  // projects tree
+  fetchUserProjects,
+  selectUserProjects,
+  selectUserProjectsLoading,
+  selectUserProjectsError,
 } from "../../store/slices/employeesSlice";
 import {
   fetchRolePermissions,
@@ -144,35 +148,6 @@ const mockActivityLogs = [
   },
 ];
 
-// Mock projects data
-const mockProjects = [
-  {
-    id: "proj-001",
-    title: "Rural Healthcare Initiative",
-    subProjects: [
-      { id: "sub-001", title: "Maternal Health Services" },
-      { id: "sub-002", title: "Child Vaccination Campaign" },
-      { id: "sub-004", title: "Nutrition Support" },
-    ],
-  },
-  {
-    id: "proj-002",
-    title: "Community Development",
-    subProjects: [
-      { id: "sub-003", title: "Water Access Program" },
-      { id: "sub-005", title: "Food Security Initiative" },
-    ],
-  },
-  {
-    id: "proj-003",
-    title: "Youth Empowerment Program",
-    subProjects: [
-      { id: "sub-006", title: "Education Support" },
-      { id: "sub-007", title: "Skills Training" },
-    ],
-  },
-];
-
 // Roles now loaded from store; mockRoles removed
 
 export function EmployeeDetails() {
@@ -184,6 +159,10 @@ export function EmployeeDetails() {
   const singleError = useSelector(selectSingleEmployeeError);
   const isUpdating = useSelector(selectEmployeeUpdating);
   const updateError = useSelector(selectEmployeeUpdateError);
+  // User projects tree state
+  const userProjects = useSelector(selectUserProjects);
+  const isUserProjectsLoading = useSelector(selectUserProjectsLoading);
+  const userProjectsError = useSelector(selectUserProjectsError);
 
   // Tabs & edit state (activeTab must be declared before effects below)
   const [activeTab, setActiveTab] = useState("profile");
@@ -268,6 +247,13 @@ export function EmployeeDetails() {
       dispatch(clearSingleEmployee());
     };
   }, [dispatch, id]);
+
+  // Fetch user projects when Projects tab is active
+  useEffect(() => {
+    if (activeTab === "projects" && id) {
+      dispatch(fetchUserProjects(id));
+    }
+  }, [activeTab, id, dispatch]);
 
   // Map API employee to UI-friendly shape
   const employee = useMemo(() => {
@@ -370,28 +356,6 @@ export function EmployeeDetails() {
   // Handle 2FA toggle
   const handle2FAToggle = (checked: boolean) => {
     setFormData((prev) => ({ ...prev, twoFactorEnabled: checked }));
-  };
-
-  // Handle project selection
-  const handleProjectToggle = (projectTitle: string) => {
-    setSelectedProjects((prev) => {
-      if (prev.includes(projectTitle)) {
-        return prev.filter((p) => p !== projectTitle);
-      } else {
-        return [...prev, projectTitle];
-      }
-    });
-  };
-
-  // Handle sub-project selection
-  const handleSubProjectToggle = (subProjectTitle: string) => {
-    setSelectedSubProjects((prev) => {
-      if (prev.includes(subProjectTitle)) {
-        return prev.filter((sp) => sp !== subProjectTitle);
-      } else {
-        return [...prev, subProjectTitle];
-      }
-    });
   };
 
   // Handle permission toggle
@@ -929,14 +893,15 @@ export function EmployeeDetails() {
                           key={permission.id}
                           className="flex items-center space-x-2"
                         >
-                          <Checkbox
+                          {/* <Checkbox
                             id={permission.id}
                             checked={permission.granted}
                             onCheckedChange={() =>
                               handlePermissionToggle(permission.id)
                             }
                             disabled={!isEditing}
-                          />
+                          /> */}
+                          -
                           <Label
                             htmlFor={permission.id}
                             className={`font-normal ${
@@ -971,119 +936,110 @@ export function EmployeeDetails() {
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
-                      <CardTitle className="text-lg">
-                        Project Assignments
-                      </CardTitle>
+                      <CardTitle className="text-lg">Projects</CardTitle>
                       <CardDescription>
-                        Manage which projects and sub-projects this employee has
-                        access to.
+                        Projects, subprojects and activities assigned to this
+                        employee.
                       </CardDescription>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {isUserProjectsLoading && (
+                        <span className="inline-flex items-center">
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Loading projects…
+                        </span>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
-                    {isEditing && (
-                      <div className="flex items-center space-x-2 mb-6">
-                        <Checkbox
-                          id="all-projects"
-                          checked={selectedProjects.includes("All Projects")}
-                          onCheckedChange={(checked: any) => {
-                            if (checked) {
-                              setSelectedProjects(["All Projects"]);
-                              setSelectedSubProjects(["All Sub-Projects"]);
-                            } else {
-                              setSelectedProjects([]);
-                              setSelectedSubProjects([]);
-                            }
-                          }}
-                        />
-                        <Label htmlFor="all-projects" className="font-medium">
-                          Grant Access to All Projects
-                        </Label>
-                      </div>
-                    )}
-
-                    {!isEditing && selectedProjects.includes("All Projects") ? (
-                      <div className="bg-primary/5 p-4 rounded-md border">
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck className="h-5 w-5 text-primary" />
-                          <span className="font-medium">
-                            This employee has access to all projects and
-                            sub-projects
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {mockProjects.map((project) => (
-                          <div
-                            key={project.id}
-                            className="border rounded-md p-4"
-                          >
-                            <div className="flex items-center space-x-2 mb-4">
-                              <Checkbox
-                                id={project.id}
-                                checked={selectedProjects.includes(
-                                  project.title
-                                )}
-                                onCheckedChange={() =>
-                                  handleProjectToggle(project.title)
-                                }
-                                disabled={
-                                  !isEditing ||
-                                  selectedProjects.includes("All Projects")
-                                }
-                              />
-                              <Label
-                                htmlFor={project.id}
-                                className="font-medium"
-                              >
-                                {project.title}
-                              </Label>
-                            </div>
-
-                            <div className="pl-6 border-l ml-2 space-y-2">
-                              {project.subProjects.map((subProject) => (
-                                <div
-                                  key={subProject.id}
-                                  className="flex items-center space-x-2"
-                                >
-                                  <Checkbox
-                                    id={subProject.id}
-                                    checked={
-                                      selectedProjects.includes(
-                                        "All Projects"
-                                      ) ||
-                                      selectedSubProjects.includes(
-                                        subProject.title
-                                      )
-                                    }
-                                    onCheckedChange={() =>
-                                      handleSubProjectToggle(subProject.title)
-                                    }
-                                    disabled={
-                                      !isEditing ||
-                                      selectedProjects.includes(
-                                        "All Projects"
-                                      ) ||
-                                      !selectedProjects.includes(project.title)
-                                    }
-                                  />
-                                  <Label
-                                    htmlFor={subProject.id}
-                                    className="font-normal"
-                                  >
-                                    {subProject.title}
-                                  </Label>
+                  {userProjectsError ? (
+                    <div className="bg-destructive/10 border border-destructive rounded-md p-3 flex items-center justify-between">
+                      <span className="text-destructive">
+                        Failed to load projects: {userProjectsError}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => id && dispatch(fetchUserProjects(id))}
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  ) : userProjects.length === 0 && !isUserProjectsLoading ? (
+                    <div className="text-muted-foreground">
+                      No projects found.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {userProjects.map((project) => (
+                        <div key={project.id} className="border rounded-md p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <div className="font-medium">{project.name}</div>
+                              {project.description && (
+                                <div className="text-sm text-muted-foreground">
+                                  {project.description}
                                 </div>
-                              ))}
+                              )}
                             </div>
+                            {project.status && (
+                              <Badge variant="outline">{project.status}</Badge>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                          {project.subprojects &&
+                            project.subprojects.length > 0 && (
+                              <div className="pl-6 border-l ml-2 mt-3 space-y-3">
+                                {project.subprojects.map((sub) => (
+                                  <div key={sub.id}>
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div>
+                                        <div className="font-normal">
+                                          {sub.name}
+                                        </div>
+                                        {sub.description && (
+                                          <div className="text-sm text-muted-foreground">
+                                            {sub.description}
+                                          </div>
+                                        )}
+                                      </div>
+                                      {sub.status && (
+                                        <Badge variant="outline">
+                                          {sub.status}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    {sub.activities &&
+                                      sub.activities.length > 0 && (
+                                        <div className="mt-2 pl-5 border-l space-y-1">
+                                          {sub.activities.map((act) => (
+                                            <div
+                                              key={act.id}
+                                              className="flex items-center justify-between"
+                                            >
+                                              <div className="text-sm">
+                                                {act.name}
+                                              </div>
+                                              {act.status && (
+                                                <Badge
+                                                  variant="outline"
+                                                  className="ml-2"
+                                                >
+                                                  {act.status}
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
