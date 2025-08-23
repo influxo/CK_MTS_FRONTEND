@@ -25,7 +25,6 @@ import {
   selectSingleEmployeeError,
   selectSingleEmployeeLoading,
 } from "../../store/slices/employeesSlice";
-import { selectCurrentUser } from "../../store/slices/authSlice";
 import {
   fetchRolePermissions,
   selectRolePermissions,
@@ -182,15 +181,14 @@ export function EmployeeDetails() {
   // Tabs & edit state (activeTab must be declared before effects below)
   const [activeTab, setActiveTab] = useState("profile");
 
-  // Current logged-in user from auth slice (already fetched elsewhere)
-  const currentUser = useSelector(selectCurrentUser);
+  // Role ID derived from the selected employee (not the authenticated user)
   const roleId = useMemo(() => {
-    const idVal = currentUser?.roles?.[0]?.id as unknown as
+    const idVal = (singleEmployee as any)?.roles?.[0]?.id as
       | string
       | number
       | undefined;
     return idVal !== undefined && idVal !== null ? String(idVal) : undefined;
-  }, [currentUser]);
+  }, [singleEmployee]);
 
   // Role permissions from store and status flags
   const rolePermissions = useSelector((state: any) =>
