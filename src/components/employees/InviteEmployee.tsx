@@ -1,6 +1,5 @@
 import { ArrowLeft, Check, Copy, Info, UserPlus } from "lucide-react";
-import { useState } from "react";
-import { Badge } from "../ui/data-display/badge";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button/button";
 import {
   Card,
@@ -15,6 +14,8 @@ import { Label } from "../ui/form/label";
 import {
   Select,
   SelectContent,
+  SelectLabel,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -25,6 +26,9 @@ import { Textarea } from "../ui/form/textarea";
 import userService from "../../services/users/userService";
 import { toast } from "react-hot-toast";
 import type { InviteUserRequest } from "../../services/users/userModels";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchRoles } from "../../store/slices/roleSlice";
+import type { AppDispatch, RootState } from "../../store";
 
 // Mock data for projects
 const mockProjects = [
@@ -55,13 +59,7 @@ const mockProjects = [
   },
 ];
 
-// Mock roles
-const mockRoles = [
-  { id: 1, name: "Admin" },
-  { id: 2, name: "Program Manager" },
-  { id: 3, name: "Field Staff" },
-  { id: 4, name: "Data Analyst" },
-];
+// Roles now fetched from API via Redux slice
 
 interface InviteEmployeeProps {
   onBack: () => void;
@@ -98,6 +96,17 @@ export function InviteEmployee({
   // State for loading
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Redux: roles
+  const dispatch = useDispatch<AppDispatch>();
+  const roles = useSelector((state: RootState) => state.roles.roles);
+  const rolesLoading = useSelector((state: RootState) => state.roles.isLoading);
+  const rolesError = useSelector((state: RootState) => state.roles.error);
+
+  useEffect(() => {
+    // Fetch roles on mount
+    dispatch(fetchRoles(undefined));
+  }, [dispatch]);
 
   // Handle input changes
   const handleInputChange = (
@@ -140,9 +149,9 @@ export function InviteEmployee({
         const projectObj = mockProjects.find((p) => p.title === projectTitle);
         const subProjectTitles =
           projectObj?.subProjects.map((sp) => sp.title) || [];
-        console.log(
-          "subProjectTitles test me i ik unused declaration",
-          subProjectTitles
+        // Remove sub-projects of the unselected project
+        setSelectedSubProjects((prevSubs) =>
+          prevSubs.filter((sp) => !subProjectTitles.includes(sp))
         );
         return prev.filter((p) => p !== projectTitle);
       } else {
@@ -179,11 +188,14 @@ export function InviteEmployee({
     setError(null);
 
     try {
-      // Get the role ID from the selected role name
-      const selectedRole = mockRoles.find((role) => role.name === inviteData.role);
-
-      if (!selectedRole) {
+      // Validate selected role id (stored in inviteData.role)
+      const selectedRoleId = inviteData.role;
+      if (!selectedRoleId) {
         throw new Error("Please select a valid role");
+      }
+      const roleIdNum = Number(selectedRoleId);
+      if (!Number.isFinite(roleIdNum)) {
+        throw new Error("Selected role id is invalid");
       }
 
       if (!inviteData.firstName || !inviteData.lastName || !inviteData.email) {
@@ -195,23 +207,27 @@ export function InviteEmployee({
         firstName: inviteData.firstName,
         lastName: inviteData.lastName,
         email: inviteData.email,
-        roleIds: [selectedRole.id],
+        roleIds: [roleIdNum],
         expiration: inviteData.expiration,
         message: inviteData.message,
-        projectIds: selectedProjects.map((projectName) => {
-          const project = mockProjects.find((p) => p.title === projectName);
-          return project ? parseInt(project.id.split("-")[1]) : 0;
-        }).filter((id) => id !== 0),
-        subProjectIds: selectedSubProjects.map((subProjectName) => {
-          // Find which project contains this subproject
-          for (const project of mockProjects) {
-            const subProject = project.subProjects.find(
-              (sp) => sp.title === subProjectName
-            );
-            if (subProject) return parseInt(subProject.id.split("-")[1]);
-          }
-          return 0;
-        }).filter((id) => id !== 0),
+        projectIds: selectedProjects
+          .map((projectName) => {
+            const project = mockProjects.find((p) => p.title === projectName);
+            return project ? parseInt(project.id.split("-")[1]) : 0;
+          })
+          .filter((id) => id !== 0),
+        subProjectIds: selectedSubProjects
+          .map((subProjectName) => {
+            // Find which project contains this subproject
+            for (const project of mockProjects) {
+              const subProject = project.subProjects.find(
+                (sp) => sp.title === subProjectName
+              );
+              if (subProject) return parseInt(subProject.id.split("-")[1]);
+            }
+            return 0;
+          })
+          .filter((id) => id !== 0),
       };
 
       // Call the API to invite the user
@@ -263,12 +279,13 @@ export function InviteEmployee({
   };
 
   // Check if form is valid for submission
-  const isFormValid = (
+  const isFormValid =
     inviteData.firstName.trim() !== "" &&
     inviteData.lastName.trim() !== "" &&
     inviteData.email.trim() !== "" &&
-    inviteData.role !== ""
-  );
+    inviteData.role !== "";
+
+  console.log("role id", inviteData.role);
 
   return (
     <div className="space-y-6">
@@ -336,15 +353,40 @@ export function InviteEmployee({
                   value={inviteData.role}
                   onValueChange={handleRoleChange}
                 >
-                  <SelectTrigger id="role">
-                    <SelectValue placeholder="Select a role" />
+                  <SelectTrigger disabled={rolesLoading || !!rolesError}>
+                    <SelectValue
+                      placeholder={
+                        rolesLoading
+                          ? "Loading roles..."
+                          : rolesError
+                          ? "Failed to load roles"
+                          : "Select a role"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockRoles.map((role) => (
-                      <SelectItem key={role.id} value={role.name}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
+                    {rolesLoading && (
+                      <SelectGroup>
+                        <SelectLabel>Loading...</SelectLabel>
+                      </SelectGroup>
+                    )}
+                    {!rolesLoading && rolesError && (
+                      <SelectGroup>
+                        <SelectLabel>Error loading roles</SelectLabel>
+                      </SelectGroup>
+                    )}
+                    {!rolesLoading && !rolesError && roles && roles.length > 0
+                      ? roles.map((role) => (
+                          <SelectItem key={role.id} value={String(role.id)}>
+                            {role.name}
+                          </SelectItem>
+                        ))
+                      : !rolesLoading &&
+                        !rolesError && (
+                          <SelectGroup>
+                            <SelectLabel>No roles available</SelectLabel>
+                          </SelectGroup>
+                        )}
                   </SelectContent>
                 </Select>
               </div>
@@ -474,7 +516,11 @@ export function InviteEmployee({
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back
                 </Button>
-                <Button type="submit" className="w-full" disabled={isLoading || !isFormValid}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading || !isFormValid}
+                >
                   {isLoading ? (
                     "Sending Invitation..."
                   ) : isSubmitted ? (
@@ -492,7 +538,7 @@ export function InviteEmployee({
         </Card>
 
         <div className="space-y-6">
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Invitation Preview</CardTitle>
             </CardHeader>
@@ -542,7 +588,7 @@ export function InviteEmployee({
                 </p>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           <Card>
             <CardHeader>
