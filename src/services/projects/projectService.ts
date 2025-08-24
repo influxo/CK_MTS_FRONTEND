@@ -4,6 +4,9 @@ import type {
   CreateProjectRequest,
   CreateProjectResponse,
   GetProjectsResponse,
+  AssignUserToProjectRequest,
+  AssignUserToProjectResponse,
+  GetProjectUsersResponse,
 } from "./projectModels";
 
 class ProjectService {
@@ -47,6 +50,51 @@ class ProjectService {
         message: error.message || "Failed to fetch projects.",
         data: [],
       };
+    }
+  }
+
+  async assignUserToProject(
+    req: AssignUserToProjectRequest
+  ): Promise<AssignUserToProjectResponse> {
+    try {
+      const response = await axiosInstance.post<AssignUserToProjectResponse>(
+        `${this.projectEndpoint}/${encodeURIComponent(req.projectId)}/users`,
+        { userId: req.userId }
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as AssignUserToProjectResponse;
+      }
+      return {
+        success: false,
+        message: error.message || "Failed to assign user to project",
+        data: {
+          id: "",
+          firstName: "",
+          lastName: "",
+          email: "",
+          status: "",
+        },
+      } as AssignUserToProjectResponse;
+    }
+  }
+
+  async getProjectUsers(projectId: string): Promise<GetProjectUsersResponse> {
+    try {
+      const response = await axiosInstance.get<GetProjectUsersResponse>(
+        `${this.projectEndpoint}/${encodeURIComponent(projectId)}/users`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as GetProjectUsersResponse;
+      }
+      return {
+        success: false,
+        message: error.message || "Failed to fetch project users",
+        data: [],
+      } as GetProjectUsersResponse;
     }
   }
 }

@@ -1,5 +1,6 @@
-import { Plus, X } from "lucide-react";
-import { useState } from "react";
+import { Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
@@ -21,96 +22,62 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/form/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
+import type { AppDispatch } from "../../store";
+import {
+  fetchProjectUsers,
+  assignUserToProject,
+  selectAssignedUsers,
+  selectAssignedUsersError,
+  selectAssignedUsersLoading,
+} from "../../store/slices/projectsSlice";
+import { selectAllEmployees } from "../../store/slices/employeesSlice";
 
 interface ProjectTeamProps {
   projectId: string;
 }
 
-// Mock team members data
-const mockTeamMembers = [
-  {
-    id: "user-001",
-    projectId: "proj-001",
-    name: "Jane Smith",
-    role: "Project Lead",
-    email: "jane.smith@example.com",
-    department: "Healthcare",
-    avatar: "",
-    initials: "JS",
-  },
-  {
-    id: "user-002",
-    projectId: "proj-001",
-    name: "Robert Johnson",
-    role: "Project Coordinator",
-    email: "robert.johnson@example.com",
-    department: "Healthcare",
-    avatar: "",
-    initials: "RJ",
-  },
-  {
-    id: "user-003",
-    projectId: "proj-001",
-    name: "Sarah Adams",
-    role: "Field Officer",
-    email: "sarah.adams@example.com",
-    department: "Operations",
-    avatar: "",
-    initials: "SA",
-  },
-  {
-    id: "user-004",
-    projectId: "proj-001",
-    name: "David Miller",
-    role: "Technical Specialist",
-    email: "david.miller@example.com",
-    department: "Infrastructure",
-    avatar: "",
-    initials: "DM",
-  },
-];
-
-// Mock available users for assignment
-const availableUsers = [
-  {
-    id: "user-005",
-    name: "Emily Chen",
-    department: "Healthcare",
-    role: "Field Officer",
-  },
-  {
-    id: "user-006",
-    name: "Michael Wong",
-    department: "Education",
-    role: "Project Coordinator",
-  },
-  {
-    id: "user-007",
-    name: "Lisa Washington",
-    department: "Healthcare",
-    role: "Technical Specialist",
-  },
-];
-
-// Available roles
-const availableRoles = [
-  "Project Lead",
-  "Project Coordinator",
-  "Field Officer",
-  "Technical Specialist",
-  "Monitoring Officer",
-  "Finance Officer",
-];
+// Removed mock team data; now using API data from Redux
 
 export function ProjectTeam({ projectId }: ProjectTeamProps) {
+  const dispatch = useDispatch<AppDispatch>();
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState("");
-  const [selectedRole, setSelectedRole] = useState("");
 
-  // Filter team members for this project
-  const teamMembers = mockTeamMembers.filter(
-    (member) => member.projectId === projectId
-  );
+  const assignedUsers = useSelector(selectAssignedUsers);
+  const isLoading = useSelector(selectAssignedUsersLoading);
+  const error = useSelector(selectAssignedUsersError);
+  const employees = useSelector(selectAllEmployees);
+  // Optionally track assigning state via projects slice loading, but we'll keep UI simple
+
+  useEffect(() => {
+    if (projectId) {
+      dispatch(fetchProjectUsers(projectId));
+    }
+  }, [dispatch, projectId]);
+
+  const handleAssignMember = async () => {
+    if (!selectedMemberId) return;
+    try {
+      await dispatch(
+        assignUserToProject({ projectId, userId: selectedMemberId })
+      ).unwrap();
+      // refresh assigned users
+      dispatch(fetchProjectUsers(projectId));
+      // reset and close
+      setSelectedMemberId("");
+      setIsAssignDialogOpen(false);
+    } catch (e) {
+      // noop: error handling can be added with toasts if desired
+    }
+  };
 
   return (
     <Card>
@@ -127,11 +94,11 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
                 Assign Member
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[450px]">
+            <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>Assign Team Member</DialogTitle>
+                <DialogTitle>Assign Member to Project</DialogTitle>
                 <DialogDescription>
-                  Assign a team member to this project and define their role.
+                  Select a team member and role for this project.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -141,49 +108,65 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
                   </Label>
                   <Select
                     value={selectedMemberId}
-                    onValueChange={setSelectedMemberId}
+                    onValueChange={(v) => setSelectedMemberId(v)}
                   >
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select team member" />
+                      <SelectValue placeholder="Select a member" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableUsers.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.name} - {user.department}
-                        </SelectItem>
-                      ))}
+                      {employees.map((emp) => {
+                        const fullName = `${emp.firstName ?? ""} ${emp.lastName ?? ""}`.trim() || "N/A";
+                        const initials = fullName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .slice(0, 2)
+                          .toUpperCase();
+                        return (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src="" alt={fullName} />
+                                <AvatarFallback className="text-[10px]">
+                                  {initials}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm">{fullName}</span>
+                              <Badge variant="secondary" className="text-[10px]">
+                                {emp.email}
+                              </Badge>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
+                {/* 
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="role" className="text-right">
                     Role
                   </Label>
                   <Select value={selectedRole} onValueChange={setSelectedRole}>
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select role" />
+                      <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
                     <SelectContent>
                       {availableRoles.map((role) => (
-                        <SelectItem
-                          key={role}
-                          value={role.toLowerCase().replace(" ", "-")}
-                        >
+                        <SelectItem key={role} value={role}>
                           {role}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+                */}
               </div>
               <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsAssignDialogOpen(false)}
-                >
+                <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={() => setIsAssignDialogOpen(false)}>
+                <Button disabled={!selectedMemberId} onClick={handleAssignMember}>
                   Assign Member
                 </Button>
               </DialogFooter>
@@ -192,34 +175,62 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {teamMembers.map((member) => (
-            <div
-              key={member.id}
-              className="flex items-start justify-between border rounded-md p-3"
-            >
-              <div className="flex gap-3">
-                <Avatar>
-                  <AvatarImage src={member.avatar} alt={member.name} />
-                  <AvatarFallback>{member.initials}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="font-medium">{member.name}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {member.email}
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="outline">{member.role}</Badge>
-                    <Badge variant="secondary">{member.department}</Badge>
-                  </div>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="py-4 text-sm text-muted-foreground">Loading team…</div>
+        ) : error ? (
+          <div className="py-4 text-sm text-destructive">{error}</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[280px]">Member</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {assignedUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                    No team members assigned yet.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                assignedUsers.map((u) => {
+                  const fullName = `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
+                  const initials = (fullName || u.email || "N/A")
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase();
+                  return (
+                    <TableRow key={u.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarImage src="" alt={fullName || u.email} />
+                            <AvatarFallback>{initials}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{fullName || "N/A"}</div>
+                            <div className="text-sm text-muted-foreground">{u.email}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{u.email}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">
+                          {u.status || "unknown"}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   );

@@ -5,6 +5,10 @@ import type {
   GetProjectsResponse,
   CreateProjectRequest,
   CreateProjectResponse,
+  AssignUserToProjectRequest,
+  AssignUserToProjectResponse,
+  GetProjectUsersResponse,
+  AssignedProjectUser,
 } from "../../services/projects/projectModels";
 import projectService from "../../services/projects/projectService";
 
@@ -13,6 +17,10 @@ interface ProjectsState {
   isLoading: boolean;
   error: string | null;
   createSuccessMessage: string | null;
+  assignUserSuccessMessage: string | null;
+  assignedUsers: AssignedProjectUser[];
+  assignedUsersLoading: boolean;
+  assignedUsersError: string | null;
 }
 
 const initialState: ProjectsState = {
@@ -20,6 +28,10 @@ const initialState: ProjectsState = {
   isLoading: false,
   error: null,
   createSuccessMessage: null,
+  assignUserSuccessMessage: null,
+  assignedUsers: [],
+  assignedUsersLoading: false,
+  assignedUsersError: null,
 };
 
 export const fetchProjects = createAsyncThunk<
@@ -46,6 +58,30 @@ export const createProject = createAsyncThunk<
   return response;
 });
 
+export const assignUserToProject = createAsyncThunk<
+  AssignUserToProjectResponse,
+  AssignUserToProjectRequest,
+  { rejectValue: string }
+>("projects/assignUser", async (req, { rejectWithValue }) => {
+  const response = await projectService.assignUserToProject(req);
+  if (!response.success) {
+    return rejectWithValue(response.message || "Failed to assign user to project");
+  }
+  return response;
+});
+
+export const fetchProjectUsers = createAsyncThunk<
+  GetProjectUsersResponse,
+  string,
+  { rejectValue: string }
+>("projects/fetchProjectUsers", async (projectId, { rejectWithValue }) => {
+  const response = await projectService.getProjectUsers(projectId);
+  if (!response.success) {
+    return rejectWithValue(response.message || "Failed to fetch project users");
+  }
+  return response;
+});
+
 const projectsSlice = createSlice({
   name: "projects",
   initialState,
@@ -53,6 +89,7 @@ const projectsSlice = createSlice({
     clearProjectMessages(state) {
       state.createSuccessMessage = null;
       state.error = null;
+      state.assignUserSuccessMessage = null;
     },
   },
   extraReducers: (builder) => {
@@ -87,6 +124,33 @@ const projectsSlice = createSlice({
       .addCase(createProject.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload ?? "Failed to create project";
+      })
+      // assign user to project
+      .addCase(assignUserToProject.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+        state.assignUserSuccessMessage = null;
+      })
+      .addCase(assignUserToProject.fulfilled, (state) => {
+        state.isLoading = false;
+        state.assignUserSuccessMessage = "User assigned to project successfully";
+      })
+      .addCase(assignUserToProject.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? "Failed to assign user to project";
+      })
+      // fetch assigned users for a project
+      .addCase(fetchProjectUsers.pending, (state) => {
+        state.assignedUsersLoading = true;
+        state.assignedUsersError = null;
+      })
+      .addCase(fetchProjectUsers.fulfilled, (state, action) => {
+        state.assignedUsersLoading = false;
+        state.assignedUsers = action.payload.data;
+      })
+      .addCase(fetchProjectUsers.rejected, (state, action) => {
+        state.assignedUsersLoading = false;
+        state.assignedUsersError = action.payload ?? "Failed to fetch project users";
       });
   },
 });
@@ -102,5 +166,15 @@ export const selectProjectsError = (state: { projects: ProjectsState }) =>
 export const selectCreateSuccessMessage = (state: {
   projects: ProjectsState;
 }) => state.projects.createSuccessMessage;
+export const selectAssignUserSuccessMessage = (state: {
+  projects: ProjectsState;
+}) => state.projects.assignUserSuccessMessage;
+
+export const selectAssignedUsers = (state: { projects: ProjectsState }) =>
+  state.projects.assignedUsers;
+export const selectAssignedUsersLoading = (state: { projects: ProjectsState }) =>
+  state.projects.assignedUsersLoading;
+export const selectAssignedUsersError = (state: { projects: ProjectsState }) =>
+  state.projects.assignedUsersError;
 
 export default projectsSlice.reducer;

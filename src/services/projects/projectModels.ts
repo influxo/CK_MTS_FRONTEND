@@ -29,3 +29,34 @@ export interface GetProjectsResponse {
   message?: string;
   data: Project[];
 }
+
+// Assign user to project
+export interface AssignUserToProjectRequest {
+  projectId: string; // path parameter
+  userId: string; // body field
+}
+
+export interface AssignedProjectUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  status: string;
+}
+
+export interface AssignUserToProjectResponse {
+  success: boolean;
+  message: string;
+  data: AssignedProjectUser;
+}
+
+// Get users assigned to a specific project
+export interface GetProjectUsersRequest {
+  projectId: string;
+}
+
+export interface GetProjectUsersResponse {
+  success: boolean;
+  data: AssignedProjectUser[];
+  message?: string;
+}

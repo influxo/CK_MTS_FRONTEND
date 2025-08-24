@@ -51,6 +51,12 @@ import type { AppDispatch } from "../../store";
 import projectService from "../../services/projects/projectService";
 import type { Project } from "../../services/projects/projectModels";
 import { Progress } from "../ui/feedback/progress";
+import {
+  fetchEmployees,
+  selectAllEmployees,
+  selectEmployeesError,
+  selectEmployeesLoading,
+} from "../../store/slices/employeesSlice";
 
 // Mock project data for enhanced details
 const mockProjectDetails = {
@@ -85,6 +91,9 @@ export function ProjectDetails() {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [project, setProject] = useState<Project | null>(null);
+  const employees = useSelector(selectAllEmployees);
+  const isEmployeeLoading = useSelector(selectEmployeesLoading);
+  const employeeError = useSelector(selectEmployeesError);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedSubProjectId, setSelectedSubProjectId] = useState<
@@ -153,6 +162,11 @@ export function ProjectDetails() {
 
     fetchProjectDetails();
   }, [id, allProjects, navigate]);
+
+  useEffect(() => {
+    dispatch(fetchEmployees());
+  }, [dispatch]);
+  console.log("employees", employees);
 
   const handleSubProjectSelect = (subProjectId: string) => {
     setSelectedSubProjectId(subProjectId);
