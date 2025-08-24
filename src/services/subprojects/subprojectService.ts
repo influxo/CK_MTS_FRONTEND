@@ -17,6 +17,8 @@ import type {
   AssignUserToSubProjectResponse,
   RemoveUserFromSubProjectRequest,
   RemoveUserFromSubProjectResponse,
+  GetSubProjectUsersRequest,
+  GetSubProjectUsersResponse,
 } from "./subprojectModels";
 
 class SubProjectService {
@@ -41,6 +43,28 @@ class SubProjectService {
         message: error.message || "Failed to create subproject",
         data: {} as SubProject,
       };
+    }
+  }
+
+  async getSubProjectUsers(
+    req: GetSubProjectUsersRequest
+  ): Promise<GetSubProjectUsersResponse> {
+    try {
+      const response = await axiosInstance.get<GetSubProjectUsersResponse>(
+        `${this.subprojectEndpoint}/${encodeURIComponent(
+          req.subProjectId
+        )}/users`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as GetSubProjectUsersResponse;
+      }
+      return {
+        success: false,
+        message: error.message || "Failed to fetch subproject users",
+        data: [],
+      } as GetSubProjectUsersResponse;
     }
   }
 

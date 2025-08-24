@@ -115,3 +115,14 @@ export interface RemoveUserFromSubProjectResponse {
   success: boolean;
   message: string;
 }
+
+// Get users assigned to a specific subproject
+export interface GetSubProjectUsersRequest {
+  subProjectId: string; // path parameter
+}
+
+export interface GetSubProjectUsersResponse {
+  success: boolean;
+  data: AssignedSubProjectUser[];
+  message?: string;
+}
