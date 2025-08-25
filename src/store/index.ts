@@ -5,7 +5,7 @@ import subprojectsReducer from "./slices/subProjectSlice";
 import formsReducer from "./slices/formSlice";
 import employeesReducer from "./slices/employeesSlice";
 import rolesReducer from "./slices/roleSlice";
-
+import activitiesReducer from "./slices/activitySlice";
 // Configure the Redux store
 export const store = configureStore({
   reducer: {
@@ -15,6 +15,7 @@ export const store = configureStore({
     forms: formsReducer,
     employees: employeesReducer,
     roles: rolesReducer,
+    activities: activitiesReducer,
     // Add other reducers here as your app grows
   },
   // Add middleware or other configuration options here if needed
