@@ -9,6 +9,8 @@ import type {
   AssignUserToProjectResponse,
   GetProjectUsersResponse,
   AssignedProjectUser,
+  RemoveUserFromProjectRequest,
+  RemoveUserFromProjectResponse,
 } from "../../services/projects/projectModels";
 import projectService from "../../services/projects/projectService";
 
@@ -18,6 +20,7 @@ interface ProjectsState {
   error: string | null;
   createSuccessMessage: string | null;
   assignUserSuccessMessage: string | null;
+  removeUserSuccessMessage: string | null;
   assignedUsers: AssignedProjectUser[];
   assignedUsersLoading: boolean;
   assignedUsersError: string | null;
@@ -29,6 +32,7 @@ const initialState: ProjectsState = {
   error: null,
   createSuccessMessage: null,
   assignUserSuccessMessage: null,
+  removeUserSuccessMessage: null,
   assignedUsers: [],
   assignedUsersLoading: false,
   assignedUsersError: null,
@@ -82,6 +86,20 @@ export const fetchProjectUsers = createAsyncThunk<
   return response;
 });
 
+export const removeUserFromProject = createAsyncThunk<
+  RemoveUserFromProjectResponse,
+  RemoveUserFromProjectRequest,
+  { rejectValue: string }
+>("projects/removeUser", async (req, { rejectWithValue }) => {
+  const response = await projectService.removeUserFromProject(req);
+  if (!response.success) {
+    return rejectWithValue(
+      response.message || "Failed to remove user from project"
+    );
+  }
+  return response;
+});
+
 const projectsSlice = createSlice({
   name: "projects",
   initialState,
@@ -90,6 +108,7 @@ const projectsSlice = createSlice({
       state.createSuccessMessage = null;
       state.error = null;
       state.assignUserSuccessMessage = null;
+      state.removeUserSuccessMessage = null;
     },
   },
   extraReducers: (builder) => {
@@ -151,6 +170,22 @@ const projectsSlice = createSlice({
       .addCase(fetchProjectUsers.rejected, (state, action) => {
         state.assignedUsersLoading = false;
         state.assignedUsersError = action.payload ?? "Failed to fetch project users";
+      })
+      // remove user from project
+      .addCase(removeUserFromProject.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+        state.removeUserSuccessMessage = null;
+      })
+      .addCase(removeUserFromProject.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.removeUserSuccessMessage = action.payload
+          ? "User removed from project successfully"
+          : "Failed to remove user from project";
+      })
+      .addCase(removeUserFromProject.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? "Failed to remove user from project";
       });
   },
 });
@@ -169,6 +204,9 @@ export const selectCreateSuccessMessage = (state: {
 export const selectAssignUserSuccessMessage = (state: {
   projects: ProjectsState;
 }) => state.projects.assignUserSuccessMessage;
+export const selectRemoveUserSuccessMessage = (state: {
+  projects: ProjectsState;
+}) => state.projects.removeUserSuccessMessage;
 
 export const selectAssignedUsers = (state: { projects: ProjectsState }) =>
   state.projects.assignedUsers;

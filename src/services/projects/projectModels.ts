@@ -60,3 +60,14 @@ export interface GetProjectUsersResponse {
   data: AssignedProjectUser[];
   message?: string;
 }
+
+// Remove user from project
+export interface RemoveUserFromProjectRequest {
+  projectId: string; // path parameter
+  userId: string; // path parameter
+}
+
+export interface RemoveUserFromProjectResponse {
+  success: boolean;
+  message: string;
+}

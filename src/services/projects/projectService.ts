@@ -7,6 +7,8 @@ import type {
   AssignUserToProjectRequest,
   AssignUserToProjectResponse,
   GetProjectUsersResponse,
+  RemoveUserFromProjectRequest,
+  RemoveUserFromProjectResponse,
 } from "./projectModels";
 
 class ProjectService {
@@ -95,6 +97,27 @@ class ProjectService {
         message: error.message || "Failed to fetch project users",
         data: [],
       } as GetProjectUsersResponse;
+    }
+  }
+
+  async removeUserFromProject(
+    req: RemoveUserFromProjectRequest
+  ): Promise<RemoveUserFromProjectResponse> {
+    try {
+      const response = await axiosInstance.delete<RemoveUserFromProjectResponse>(
+        `${this.projectEndpoint}/${encodeURIComponent(req.projectId)}/users/${encodeURIComponent(
+          req.userId
+        )}`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as RemoveUserFromProjectResponse;
+      }
+      return {
+        success: false,
+        message: error.message || "Failed to remove user from project",
+      } as RemoveUserFromProjectResponse;
     }
   }
 }

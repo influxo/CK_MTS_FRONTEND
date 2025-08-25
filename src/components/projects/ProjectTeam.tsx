@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
@@ -37,6 +37,7 @@ import {
   selectAssignedUsers,
   selectAssignedUsersError,
   selectAssignedUsersLoading,
+  removeUserFromProject,
 } from "../../store/slices/projectsSlice";
 import { selectAllEmployees } from "../../store/slices/employeesSlice";
 
@@ -76,6 +77,19 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
       setIsAssignDialogOpen(false);
     } catch (e) {
       // noop: error handling can be added with toasts if desired
+    }
+  };
+
+  const handleRemoveMember = async (userId: string) => {
+    if (!userId) return;
+    try {
+      await dispatch(
+        removeUserFromProject({ projectId, userId })
+      ).unwrap();
+      // refresh assigned users
+      dispatch(fetchProjectUsers(projectId));
+    } catch (e) {
+      // noop: optionally display a toast on error
     }
   };
 
@@ -186,12 +200,13 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
                 <TableHead className="w-[280px]">Member</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="w-[80px] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {assignedUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
                     No team members assigned yet.
                   </TableCell>
                 </TableRow>
@@ -223,6 +238,17 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
                         <Badge variant="outline" className="capitalize">
                           {u.status || "unknown"}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive"
+                          onClick={() => handleRemoveMember(u.id)}
+                          title="Remove from project"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
