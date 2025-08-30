@@ -8,6 +8,14 @@ import type {
   GetServiceByIdResponse,
   UpdateServiceRequest,
   UpdateServiceResponse,
+  AssignServiceToEntityRequest,
+  AssignServiceToEntityResponse,
+  AssignServicesBatchRequest,
+  AssignServicesBatchResponse,
+  GetEntityServicesRequest,
+  GetEntityServicesResponse,
+  UnassignServiceFromEntityRequest,
+  UnassignServiceFromEntityResponse,
 } from "./serviceModels";
 
 class ServicesService {
@@ -96,6 +104,90 @@ class ServicesService {
         success: false,
         message: error?.message || "Failed to update service",
       } as UpdateServiceResponse;
+    }
+  }
+
+  async assignServiceToEntity(
+    id: string,
+    req: AssignServiceToEntityRequest
+  ): Promise<AssignServiceToEntityResponse> {
+    try {
+      const response = await axiosInstance.post<AssignServiceToEntityResponse>(
+        `${this.servicesEndpoint}/${encodeURIComponent(id)}/assign`,
+        req
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as AssignServiceToEntityResponse;
+      }
+      return {
+        success: false,
+        message: error?.message || "Failed to assign service to entity",
+      } as AssignServiceToEntityResponse;
+    }
+  }
+
+  async assignServicesBatch(
+    req: AssignServicesBatchRequest
+  ): Promise<AssignServicesBatchResponse> {
+    try {
+      const response = await axiosInstance.post<AssignServicesBatchResponse>(
+        `${this.servicesEndpoint}/assignments/batch`,
+        req
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as AssignServicesBatchResponse;
+      }
+      return {
+        success: false,
+        message: error?.message || "Failed to assign services batch",
+      } as AssignServicesBatchResponse;
+    }
+  }
+
+  async getEntityServices(
+    req: GetEntityServicesRequest
+  ): Promise<GetEntityServicesResponse> {
+    try {
+      const response = await axiosInstance.get<GetEntityServicesResponse>(
+        `${this.servicesEndpoint}/assigned`,
+        { params: req }
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as GetEntityServicesResponse;
+      }
+      return {
+        success: false,
+        items: [],
+        message: error?.message || "Failed to fetch entity services",
+      } as GetEntityServicesResponse;
+    }
+  }
+
+  async unassignServiceFromEntity(
+    id: string,
+    req: UnassignServiceFromEntityRequest
+  ): Promise<UnassignServiceFromEntityResponse> {
+    try {
+      const response = await axiosInstance.post<UnassignServiceFromEntityResponse>(
+        `${this.servicesEndpoint}/${encodeURIComponent(id)}/unassign`,
+        req
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as UnassignServiceFromEntityResponse;
+      }
+      return {
+        success: false,
+        data: { deleted: 0 },
+        message: error?.message || "Failed to unassign service from entity",
+      } as UnassignServiceFromEntityResponse;
     }
   }
 }
