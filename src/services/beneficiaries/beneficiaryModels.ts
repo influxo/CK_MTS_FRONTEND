@@ -8,6 +8,9 @@ export interface CreateBeneficiaryRequest {
   phone: string;
   email: string;
   address: string;
+  gender: string;
+  municipality: string;
+  nationality: string;
   status: string; // e.g., "active"
 }
 
@@ -47,6 +50,9 @@ export interface BeneficiaryPIIEnc {
   phoneEnc: BeneficiaryPIIEncField;
   emailEnc: BeneficiaryPIIEncField;
   addressEnc: BeneficiaryPIIEncField;
+  genderEnc: BeneficiaryPIIEncField;
+  municipalityEnc: BeneficiaryPIIEncField;
+  nationalityEnc: BeneficiaryPIIEncField;
 }
 
 export interface BeneficiaryPII {
@@ -57,6 +63,9 @@ export interface BeneficiaryPII {
   phone: string;
   email: string;
   address: string;
+  gender: string;
+  municipality: string;
+  nationality: string;
 }
 
 export interface BeneficiaryListItem extends Beneficiary {

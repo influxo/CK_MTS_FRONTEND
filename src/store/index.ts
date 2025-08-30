@@ -7,6 +7,7 @@ import employeesReducer from "./slices/employeesSlice";
 import rolesReducer from "./slices/roleSlice";
 import activitiesReducer from "./slices/activitySlice";
 import beneficiariesReducer from "./slices/beneficiarySlice";
+import servicesReducer from "./slices/serviceSlice";
 // Configure the Redux store
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     roles: rolesReducer,
     activities: activitiesReducer,
     beneficiaries: beneficiariesReducer,
+    services: servicesReducer,
     // Add other reducers here as your app grows
   },
   // Add middleware or other configuration options here if needed

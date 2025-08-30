@@ -2,7 +2,6 @@ import {
   Calendar,
   Eye,
   FileCheck,
-  FileDown,
   FileEdit,
   FileSpreadsheet,
   FileText,
@@ -10,26 +9,32 @@ import {
   Link,
   MapPin,
   MoreHorizontal,
-  Phone,
   Plus,
   Search,
   ShieldAlert,
   SlidersHorizontal,
   Trash,
   User,
-  Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store";
+import {
+  createBeneficiary,
+  fetchBeneficiaries,
+  selectBeneficiaries,
+  selectBeneficiariesError,
+  selectBeneficiariesLoading,
+  selectBeneficiaryIsLoading,
+  selectBeneficiaryError,
+  selectBeneficiaryCreateSuccessMessage,
+  clearBeneficiaryMessages,
+} from "../../store/slices/beneficiarySlice";
+import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../ui/data-display/card";
+import { Card, CardContent } from "../ui/data-display/card";
 import { Checkbox } from "../ui/form/checkbox";
 import {
   Dialog,
@@ -64,7 +69,6 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 
 interface BeneficiariesListProps {
   onBeneficiarySelect: (beneficiaryId: string) => void;
@@ -266,7 +270,15 @@ const mockProjects = [
 export function BeneficiariesList({
   onBeneficiarySelect,
 }: BeneficiariesListProps) {
-  const [viewType, setViewType] = useState("list");
+  const dispatch = useDispatch<AppDispatch>();
+  const beneficiaries = useSelector(selectBeneficiaries);
+  const listLoading = useSelector(selectBeneficiariesLoading);
+  const listError = useSelector(selectBeneficiariesError);
+  // create state
+  const createLoading = useSelector(selectBeneficiaryIsLoading);
+  const createError = useSelector(selectBeneficiaryError);
+  const createSuccess = useSelector(selectBeneficiaryCreateSuccessMessage);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
@@ -277,26 +289,116 @@ export function BeneficiariesList({
   );
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Filter beneficiaries based on selected filters
-  const filteredBeneficiaries = mockBeneficiaries.filter((beneficiary) => {
-    const matchesSearch =
-      beneficiary.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      beneficiary.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      beneficiary.pseudoId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      beneficiary.location.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" || beneficiary.status === statusFilter;
-
-    const matchesProject =
-      projectFilter === "all" ||
-      beneficiary.projects.some((project) => project === projectFilter);
-
-    const matchesTag =
-      tagFilter === "all" || beneficiary.tags.includes(tagFilter);
-
-    return matchesSearch && matchesStatus && matchesProject && matchesTag;
+  // Add Beneficiary form state aligned with CreateBeneficiaryRequest
+  const [form, setForm] = useState<CreateBeneficiaryRequest>({
+    firstName: "",
+    lastName: "",
+    dob: "",
+    nationalId: "",
+    phone: "",
+    email: "",
+    address: "",
+    gender: "female",
+    municipality: "",
+    nationality: "",
+    status: "active",
   });
+
+  const resetForm = () =>
+    setForm({
+      firstName: "",
+      lastName: "",
+      dob: "",
+      nationalId: "",
+      phone: "",
+      email: "",
+      address: "",
+      gender: "female",
+      municipality: "",
+      nationality: "",
+      status: "active",
+    });
+
+  // Kick off loading of real beneficiaries
+  useEffect(() => {
+    // if (!listLoading && beneficiaries.length === 0) {
+    dispatch(fetchBeneficiaries(undefined));
+    // }
+  }, [dispatch]);
+
+  // Close dialog and refresh list on successful create
+  useEffect(() => {
+    if (createSuccess) {
+      setIsAddDialogOpen(false);
+      resetForm();
+      // refresh list and clear create messages
+      dispatch(fetchBeneficiaries(undefined));
+      dispatch(clearBeneficiaryMessages());
+    }
+  }, [createSuccess, dispatch]);
+
+  const handleCreateSubmit = async () => {
+    // basic required checks (could be enhanced)
+    if (!form.firstName || !form.lastName || !form.gender || !form.status) {
+      return;
+    }
+    try {
+      await dispatch(createBeneficiary(form)).unwrap();
+      // success handled by effect
+    } catch (_) {
+      // errors are surfaced via createError
+    }
+  };
+
+  // Build a simple view model from API data for table rendering
+  const list = useMemo(() => {
+    return beneficiaries.map((b) => {
+      const pii = b.pii || ({} as any);
+      const firstName: string = pii.firstName || "";
+      const lastName: string = pii.lastName || "";
+      const fullName = `${firstName} ${lastName}`.trim() || b.pseudonym || b.id;
+      const initials =
+        `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase() ||
+        b.pseudonym?.slice(0, 2) ||
+        "BN";
+      return {
+        id: b.id,
+        name: fullName,
+        initials,
+        pseudonym: b.pseudonym,
+        status: b.status,
+        createdAt: b.createdAt,
+        gender: pii.gender || "",
+        dob: pii.dob || "",
+        municipality: pii.municipality || "",
+        nationality: pii.nationality || "",
+        phone: pii.phone || "",
+        email: pii.email || "",
+        address: pii.address || "",
+      };
+    });
+  }, [beneficiaries]);
+
+  // Filter beneficiaries based on selected filters (only on available fields)
+  const filteredBeneficiaries = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return list.filter((b) => {
+      const matchesSearch =
+        b.name.toLowerCase().includes(q) ||
+        b.id.toLowerCase().includes(q) ||
+        (b.pseudonym || "").toLowerCase().includes(q) ||
+        b.municipality.toLowerCase().includes(q) ||
+        b.nationality.toLowerCase().includes(q) ||
+        b.phone.toLowerCase().includes(q) ||
+        b.email.toLowerCase().includes(q);
+
+      const matchesStatus = statusFilter === "all" || b.status === statusFilter;
+      // project and tag filters are not applicable with current API; keep them as no-op when not "all"
+      const matchesProject = projectFilter === "all";
+      const matchesTag = tagFilter === "all";
+      return matchesSearch && matchesStatus && matchesProject && matchesTag;
+    });
+  }, [list, searchQuery, statusFilter, projectFilter, tagFilter]);
 
   // Get unique tags from all beneficiaries
   const uniqueTags = Array.from(
@@ -358,20 +460,39 @@ export function BeneficiariesList({
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Full Name *
+                  <Label htmlFor="firstName" className="text-right">
+                    First Name *
                   </Label>
                   <Input
-                    id="name"
+                    id="firstName"
                     className="col-span-3"
-                    placeholder="Enter full name"
+                    placeholder="Enter first name"
+                    value={form.firstName}
+                    onChange={(e) =>
+                      setForm({ ...form, firstName: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="lastName" className="text-right">
+                    Last Name *
+                  </Label>
+                  <Input
+                    id="lastName"
+                    className="col-span-3"
+                    placeholder="Enter last name"
+                    value={form.lastName}
+                    onChange={(e) =>
+                      setForm({ ...form, lastName: e.target.value })
+                    }
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Gender *</Label>
                   <RadioGroup
                     className="col-span-3 flex gap-4"
-                    defaultValue="female"
+                    value={form.gender}
+                    onValueChange={(val) => setForm({ ...form, gender: val })}
                   >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="female" id="female" />
@@ -388,110 +509,124 @@ export function BeneficiariesList({
                   </RadioGroup>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="age" className="text-right">
-                    Age *
+                  <Label htmlFor="dob" className="text-right">
+                    Date of Birth *
                   </Label>
                   <Input
-                    id="age"
-                    type="number"
+                    id="dob"
+                    type="date"
                     className="col-span-3"
-                    placeholder="Enter age"
+                    value={form.dob}
+                    onChange={(e) => setForm({ ...form, dob: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="location" className="text-right">
-                    Location *
+                  <Label htmlFor="nationalId" className="text-right">
+                    National ID *
                   </Label>
                   <Input
-                    id="location"
+                    id="nationalId"
                     className="col-span-3"
-                    placeholder="Region, District, Village/Town"
+                    placeholder="Enter national ID"
+                    value={form.nationalId}
+                    onChange={(e) =>
+                      setForm({ ...form, nationalId: e.target.value })
+                    }
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="contact" className="text-right">
-                    Contact Number
+                  <Label htmlFor="phone" className="text-right">
+                    Phone
                   </Label>
                   <Input
-                    id="contact"
+                    id="phone"
                     className="col-span-3"
                     placeholder="Enter phone number"
+                    value={form.phone}
+                    onChange={(e) =>
+                      setForm({ ...form, phone: e.target.value })
+                    }
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="household" className="text-right">
-                    Household ID
+                  <Label htmlFor="email" className="text-right">
+                    Email
                   </Label>
                   <Input
-                    id="household"
+                    id="email"
+                    type="email"
                     className="col-span-3"
-                    placeholder="Enter household identifier"
+                    placeholder="Enter email"
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm({ ...form, email: e.target.value })
+                    }
                   />
                 </div>
-                <div className="grid grid-cols-4 items-start gap-4">
-                  <Label className="text-right pt-2">Tags</Label>
-                  <div className="col-span-3 space-y-2">
-                    {uniqueTags.map((tag) => (
-                      <div key={tag} className="flex items-center space-x-2">
-                        <Checkbox id={`tag-${tag}`} />
-                        <Label htmlFor={`tag-${tag}`}>
-                          {tag.replace("-", " ")}
-                        </Label>
-                      </div>
-                    ))}
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="address" className="text-right">
+                    Address
+                  </Label>
+                  <Input
+                    id="address"
+                    className="col-span-3"
+                    placeholder="Enter address"
+                    value={form.address}
+                    onChange={(e) =>
+                      setForm({ ...form, address: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="municipality" className="text-right">
+                    Municipality
+                  </Label>
+                  <Input
+                    id="municipality"
+                    className="col-span-3"
+                    placeholder="Enter municipality"
+                    value={form.municipality}
+                    onChange={(e) =>
+                      setForm({ ...form, municipality: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="nationality" className="text-right">
+                    Nationality
+                  </Label>
+                  <Input
+                    id="nationality"
+                    className="col-span-3"
+                    placeholder="Enter nationality"
+                    value={form.nationality}
+                    onChange={(e) =>
+                      setForm({ ...form, nationality: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">
+                    Status *
+                  </Label>
+                  <Select
+                    value={form.status}
+                    onValueChange={(val) => setForm({ ...form, status: val })}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {createError && (
+                  <div className="col-span-4 text-red-600 text-sm">
+                    {createError}
                   </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="project" className="text-right">
-                    Project *
-                  </Label>
-                  <Select>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select project" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockProjects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="subproject" className="text-right">
-                    Sub-Project
-                  </Label>
-                  <Select>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select sub-project" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockProjects.flatMap((project) =>
-                        project.subProjects.map((subProject) => (
-                          <SelectItem key={subProject.id} value={subProject.id}>
-                            {subProject.title}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="vulnerability" className="text-right">
-                    Vulnerability
-                  </Label>
-                  <Select>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select vulnerability level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                )}
               </div>
               <DialogFooter>
                 <div className="flex items-center mr-auto">
@@ -502,12 +637,16 @@ export function BeneficiariesList({
                 </div>
                 <Button
                   // variant="outline"
-                  onClick={() => setIsAddDialogOpen(false)}
+                  onClick={() => {
+                    setIsAddDialogOpen(false);
+                    resetForm();
+                    dispatch(clearBeneficiaryMessages());
+                  }}
                 >
                   Cancel
                 </Button>
-                <Button onClick={() => setIsAddDialogOpen(false)}>
-                  Add Beneficiary
+                <Button onClick={handleCreateSubmit} disabled={createLoading}>
+                  {createLoading ? "Creating..." : "Add Beneficiary"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -638,6 +777,14 @@ export function BeneficiariesList({
       )}
 
       <div className="rounded-md border overflow-hidden">
+        {listLoading && (
+          <div className="p-4 text-sm text-muted-foreground">
+            Loading beneficiaries...
+          </div>
+        )}
+        {listError && !listLoading && (
+          <div className="p-4 text-sm text-red-600">{listError}</div>
+        )}
         <Table>
           <TableHeader>
             <TableRow>
@@ -652,11 +799,10 @@ export function BeneficiariesList({
                 />
               </TableHead>
               <TableHead className="w-[250px]">Beneficiary</TableHead>
-              <TableHead>Gender/Age</TableHead>
+              <TableHead>Gender/DOB</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Projects</TableHead>
-              <TableHead>Services</TableHead>
+              <TableHead>Municipality/Nationality</TableHead>
+              <TableHead>Contact</TableHead>
               <TableHead>Registration</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -675,24 +821,25 @@ export function BeneficiariesList({
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={beneficiary.avatar}
-                        alt={beneficiary.name}
-                      />
+                      <AvatarImage src={""} alt={beneficiary.name} />
                       <AvatarFallback>{beneficiary.initials}</AvatarFallback>
                     </Avatar>
                     <div>
                       <div className="font-medium">{beneficiary.name}</div>
                       <div className="text-sm text-muted-foreground flex items-center gap-1">
                         <ShieldAlert className="h-3 w-3" />
-                        {beneficiary.pseudoId}
+                        {beneficiary.pseudonym}
                       </div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div>{beneficiary.gender}</div>
-                  <div>{beneficiary.age} years</div>
+                  <div>{beneficiary.gender || "—"}</div>
+                  <div>
+                    {beneficiary.dob
+                      ? new Date(beneficiary.dob).toLocaleDateString()
+                      : "—"}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <Badge
@@ -702,54 +849,34 @@ export function BeneficiariesList({
                   >
                     {beneficiary.status}
                   </Badge>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {beneficiary.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        {tag.replace("-", " ")}
-                      </Badge>
-                    ))}
-                  </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                    <span className="truncate max-w-[150px]">
-                      {beneficiary.location}
+                    <span className="truncate max-w-[200px]">
+                      {beneficiary.municipality || "—"}
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    Household: {beneficiary.household}
+                    Nationality: {beneficiary.nationality || "—"}
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="space-y-1 max-w-[150px]">
-                    {beneficiary.projects.map((project) => (
-                      <div key={project} className="text-sm truncate">
-                        {project}
-                      </div>
-                    ))}
+                  <div className="text-sm truncate max-w-[220px]">
+                    <span className="mr-2">{beneficiary.phone || "—"}</span>
                   </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm">
-                    {beneficiary.serviceCount} services
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Last:{" "}
-                    {new Date(beneficiary.lastService).toLocaleDateString()}
+                  <div className="text-xs text-muted-foreground truncate max-w-[220px]">
+                    {beneficiary.email || "—"}
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3 w-3 text-muted-foreground" />
                     <span>
-                      {new Date(
-                        beneficiary.registrationDate
-                      ).toLocaleDateString()}
+                      {beneficiary.createdAt
+                        ? new Date(beneficiary.createdAt).toLocaleDateString()
+                        : "—"}
                     </span>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Vulnerability: {beneficiary.vulnerabilityScore}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
@@ -799,7 +926,7 @@ export function BeneficiariesList({
         </Table>
       </div>
 
-      {filteredBeneficiaries.length === 0 && (
+      {filteredBeneficiaries.length === 0 && !listLoading && (
         <div className="text-center py-10 border rounded-lg">
           <User className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
           <h3 className="text-lg mb-2">No beneficiaries found</h3>
@@ -811,7 +938,7 @@ export function BeneficiariesList({
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          Showing {filteredBeneficiaries.length} of {mockBeneficiaries.length}{" "}
+          Showing {filteredBeneficiaries.length} of {beneficiaries.length}{" "}
           beneficiaries
         </div>
         <div className="space-x-2">

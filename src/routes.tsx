@@ -9,6 +9,7 @@ import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import { ProjectDetails } from "./components/projects/ProjectDetails";
+import { BeneficiaryDetails } from "./components/beneficiaries/BeneficiaryDetails";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
@@ -66,6 +67,10 @@ const routes = [
       {
         path: "beneficiaries",
         element: <Beneficiaries />,
+      },
+      {
+        path: "beneficiaries/:id",
+        element: <BeneficiaryDetails />,
       },
       {
         path: "forms",

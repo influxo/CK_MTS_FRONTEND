@@ -19,7 +19,22 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
+import type { AppDispatch } from "../../store";
+import {
+  fetchBeneficiaryById,
+  selectBeneficiaryDetail,
+  selectBeneficiaryDetailError,
+  selectBeneficiaryDetailLoading,
+  updateBeneficiaryById,
+  selectBeneficiaryUpdateLoading,
+  selectBeneficiaryUpdateError,
+  selectBeneficiaryUpdateSuccessMessage,
+  clearBeneficiaryUpdate,
+} from "../../store/slices/beneficiarySlice";
+import type { UpdateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
@@ -71,43 +86,39 @@ import {
 import { Textarea } from "../ui/form/textarea";
 
 interface BeneficiaryDetailsProps {
-  beneficiaryId: string;
-  onBack: () => void;
+  onBack?: () => void;
 }
 
-// Mock data for a single beneficiary
-const mockBeneficiary = {
-  id: "BEN-2025-001",
-  name: "Maria Johnson",
-  pseudoId: "BEN78945",
-  gender: "Female",
-  age: 27,
-  dateOfBirth: "1998-03-15",
-  location: "Northern District, Village A",
-  contactNumber: "+123-456-7890",
-  status: "active",
-  registrationDate: "2025-01-15",
-  tags: ["maternal-health", "nutrition"],
-  projects: ["Rural Healthcare Initiative"],
-  subProjects: ["Maternal Health Services"],
-  lastService: "2025-05-10",
-  serviceCount: 4,
-  vulnerabilityScore: "Medium",
-  household: "HH-125",
-  avatar: "",
-  initials: "MJ",
-  notes:
-    "Pregnant with second child. Works as a community health volunteer in her village. Has regular access to mobile phone.",
-  registeredBy: "Jane Smith",
-  associatedFamily: [
-    {
-      name: "Thomas Johnson",
-      relationship: "Spouse",
-      age: 32,
-      id: "BEN-2025-010",
-    },
-    { name: "Lily Johnson", relationship: "Child", age: 5, id: "BEN-2025-011" },
-  ],
+type FamilyMember = {
+  name: string;
+  relationship: string;
+  age: number;
+  id?: string;
+};
+
+type BeneficiaryVM = {
+  id: string;
+  name: string;
+  pseudoId: string;
+  gender: string;
+  age?: number;
+  dateOfBirth: string;
+  location: string;
+  contactNumber: string;
+  status: string;
+  registrationDate: string;
+  tags: string[];
+  projects: string[];
+  subProjects: string[];
+  lastService: string;
+  serviceCount: number;
+  vulnerabilityScore: string;
+  household?: string;
+  avatar?: string;
+  initials: string;
+  notes?: string;
+  registeredBy?: string;
+  associatedFamily: FamilyMember[];
 };
 
 // Mock service history
@@ -184,19 +195,139 @@ const mockProjects = [
   },
 ];
 
-export function BeneficiaryDetails({
-  // beneficiaryId,
-  onBack,
-}: BeneficiaryDetailsProps) {
+export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddServiceDialogOpen, setIsAddServiceDialogOpen] = useState(false);
   const [isAssociateDialogOpen, setIsAssociateDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState<UpdateBeneficiaryRequest>({
+    firstName: "",
+    lastName: "",
+    dob: "",
+    nationalId: "",
+    phone: "",
+    email: "",
+    address: "",
+    gender: "female",
+    municipality: "",
+    nationality: "",
+    status: "active",
+  });
+  const [localValidationError, setLocalValidationError] = useState<string | null>(null);
 
-  // In a real application, this would fetch the beneficiary data based on the ID
-  // For this demo, we're using the mock data directly
-  const beneficiary = mockBeneficiary;
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const detail = useSelector(selectBeneficiaryDetail);
+  const detailLoading = useSelector(selectBeneficiaryDetailLoading);
+  const detailError = useSelector(selectBeneficiaryDetailError);
+  const updateLoading = useSelector(selectBeneficiaryUpdateLoading);
+  const updateError = useSelector(selectBeneficiaryUpdateError);
+  const updateSuccess = useSelector(selectBeneficiaryUpdateSuccessMessage);
 
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchBeneficiaryById(id));
+    }
+  }, [dispatch, id]);
+
+  // Initialize edit form from detail when dialog opens or detail changes
+  useEffect(() => {
+    if (!detail) return;
+    const pii: any = (detail as any).pii || {};
+    setEditForm({
+      firstName: pii.firstName || "",
+      lastName: pii.lastName || "",
+      dob: (pii.dob || "").slice(0, 10),
+      nationalId: pii.nationalId || "",
+      phone: pii.phone || "",
+      email: pii.email || "",
+      address: pii.address || "",
+      gender: pii.gender || "female",
+      municipality: pii.municipality || "",
+      nationality: pii.nationality || "",
+      status: detail.status || "active",
+    });
+  }, [detail, isEditDialogOpen]);
+
+  // Close and refresh on successful update
+  useEffect(() => {
+    if (updateSuccess && id) {
+      setIsEditDialogOpen(false);
+      dispatch(fetchBeneficiaryById(id));
+      // Clear update state after a short tick
+      const t = setTimeout(() => dispatch(clearBeneficiaryUpdate()), 0);
+      return () => clearTimeout(t);
+    }
+  }, [updateSuccess, id, dispatch]);
+
+  const handleEditInput = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { id: fieldId, value } = e.target as HTMLInputElement;
+    setEditForm((prev) => ({ ...prev, [fieldId]: value } as UpdateBeneficiaryRequest));
+  };
+
+  const handleEditSubmit = () => {
+    setLocalValidationError(null);
+    if (!editForm.firstName || !editForm.lastName || !editForm.gender || !editForm.status) {
+      setLocalValidationError("Please fill in all required fields: first name, last name, gender, status.");
+      return;
+    }
+    if (!id) return;
+    dispatch(updateBeneficiaryById({ id, data: editForm }));
+  };
+
+  const beneficiary = useMemo<BeneficiaryVM | null>(() => {
+    if (!detail) return null;
+    const pii: any = (detail as any).pii || {};
+    const firstName: string = pii.firstName || "";
+    const lastName: string = pii.lastName || "";
+    const fullName =
+      `${firstName} ${lastName}`.trim() || detail.pseudonym || detail.id;
+    const initials =
+      ("" + (firstName?.[0] || "") + (lastName?.[0] || "")).toUpperCase() ||
+      detail.pseudonym?.slice(0, 2) ||
+      "BN";
+    const location = pii.address || pii.municipality || "";
+    const contactNumber = pii.phone || "";
+    const vm: BeneficiaryVM = {
+      id: detail.id,
+      name: fullName,
+      pseudoId: detail.pseudonym,
+      gender: pii.gender || "",
+      age: undefined as number | undefined,
+      dateOfBirth: pii.dob || "",
+      location,
+      contactNumber,
+      status: detail.status,
+      registrationDate: detail.createdAt,
+      tags: [],
+      projects: [],
+      subProjects: [],
+      lastService: "",
+      serviceCount: 0,
+      vulnerabilityScore: "",
+      household: "",
+      avatar: "",
+      initials,
+      notes: "",
+      registeredBy: "",
+      associatedFamily: [],
+    };
+    return vm;
+  }, [detail]);
+
+  if (detailLoading) {
+    return (
+      <div className="p-4 text-sm text-muted-foreground">
+        Loading beneficiary...
+      </div>
+    );
+  }
+  if (detailError) {
+    return <div className="p-4 text-sm text-red-600">{detailError}</div>;
+  }
   if (!beneficiary) {
     return <div>Beneficiary not found</div>;
   }
@@ -204,13 +335,23 @@ export function BeneficiaryDetails({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={onBack}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBack ?? (() => navigate("/beneficiaries"))}
+        >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Beneficiaries
         </Button>
 
         <h2>{beneficiary.name}</h2>
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) {
+            setLocalValidationError(null);
+            dispatch(clearBeneficiaryUpdate());
+          }
+        }}>
           <DialogTrigger asChild>
             <Button className="bg-[#2B2B2B] text-white ml-auto">
               <Edit className="h-4 w-4 mr-2" />
@@ -226,22 +367,43 @@ export function BeneficiaryDetails({
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              {localValidationError && (
+                <div className="col-span-4 text-sm text-red-600">{localValidationError}</div>
+              )}
+              {updateError && (
+                <div className="col-span-4 text-sm text-red-600">{updateError}</div>
+              )}
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Full Name *
-                </Label>
-                <Input
-                  id="name"
-                  className="col-span-3"
-                  defaultValue={beneficiary.name}
-                />
+                <Label htmlFor="firstName" className="text-right">First Name *</Label>
+                <Input id="firstName" className="col-span-3" value={editForm.firstName} onChange={handleEditInput} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="lastName" className="text-right">Last Name *</Label>
+                <Input id="lastName" className="col-span-3" value={editForm.lastName} onChange={handleEditInput} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="dob" className="text-right">Date of Birth *</Label>
+                <Input id="dob" type="date" className="col-span-3" value={editForm.dob} onChange={handleEditInput} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="nationalId" className="text-right">National ID</Label>
+                <Input id="nationalId" className="col-span-3" value={editForm.nationalId} onChange={handleEditInput} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="phone" className="text-right">Phone</Label>
+                <Input id="phone" className="col-span-3" value={editForm.phone} onChange={handleEditInput} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">Email</Label>
+                <Input id="email" className="col-span-3" type="email" value={editForm.email} onChange={handleEditInput} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="address" className="text-right">Address</Label>
+                <Input id="address" className="col-span-3" value={editForm.address} onChange={handleEditInput} />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right">Gender *</Label>
-                <RadioGroup
-                  className="col-span-3 flex gap-4"
-                  defaultValue={beneficiary.gender.toLowerCase()}
-                >
+                <RadioGroup className="col-span-3 flex gap-4" value={editForm.gender} onValueChange={(v) => setEditForm((p) => ({ ...p, gender: v }))}>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="female" id="female" />
                     <Label htmlFor="female">Female</Label>
@@ -257,68 +419,16 @@ export function BeneficiaryDetails({
                 </RadioGroup>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="dob" className="text-right">
-                  Date of Birth *
-                </Label>
-                <Input
-                  id="dob"
-                  type="date"
-                  className="col-span-3"
-                  defaultValue={beneficiary.dateOfBirth}
-                />
+                <Label htmlFor="municipality" className="text-right">Municipality</Label>
+                <Input id="municipality" className="col-span-3" value={editForm.municipality} onChange={handleEditInput} />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="location" className="text-right">
-                  Location *
-                </Label>
-                <Input
-                  id="location"
-                  className="col-span-3"
-                  defaultValue={beneficiary.location}
-                />
+                <Label htmlFor="nationality" className="text-right">Nationality</Label>
+                <Input id="nationality" className="col-span-3" value={editForm.nationality} onChange={handleEditInput} />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="contact" className="text-right">
-                  Contact Number
-                </Label>
-                <Input
-                  id="contact"
-                  className="col-span-3"
-                  defaultValue={beneficiary.contactNumber}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="household" className="text-right">
-                  Household ID
-                </Label>
-                <Input
-                  id="household"
-                  className="col-span-3"
-                  defaultValue={beneficiary.household}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="vulnerability" className="text-right">
-                  Vulnerability
-                </Label>
-                <Select
-                  defaultValue={beneficiary.vulnerabilityScore.toLowerCase()}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select vulnerability level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">
-                  Status
-                </Label>
-                <Select defaultValue={beneficiary.status}>
+                <Label htmlFor="status" className="text-right">Status *</Label>
+                <Select value={editForm.status} onValueChange={(v) => setEditForm((p) => ({ ...p, status: v }))}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -327,17 +437,6 @@ export function BeneficiaryDetails({
                     <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="notes" className="text-right pt-2">
-                  Notes
-                </Label>
-                <Textarea
-                  id="notes"
-                  className="col-span-3"
-                  rows={3}
-                  defaultValue={beneficiary.notes}
-                />
               </div>
             </div>
             <DialogFooter>
@@ -349,12 +448,16 @@ export function BeneficiaryDetails({
               </div>
               <Button
                 variant="outline"
-                onClick={() => setIsEditDialogOpen(false)}
+                onClick={() => {
+                  setIsEditDialogOpen(false);
+                  setLocalValidationError(null);
+                  dispatch(clearBeneficiaryUpdate());
+                }}
               >
                 Cancel
               </Button>
-              <Button onClick={() => setIsEditDialogOpen(false)}>
-                Save Changes
+              <Button onClick={handleEditSubmit} disabled={updateLoading}>
+                {updateLoading ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -838,7 +941,11 @@ export function BeneficiaryDetails({
                         Last Service:
                       </span>
                       <span>
-                        {new Date(beneficiary.lastService).toLocaleDateString()}
+                        {beneficiary.lastService
+                          ? new Date(
+                              beneficiary.lastService
+                            ).toLocaleDateString()
+                          : "—"}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
