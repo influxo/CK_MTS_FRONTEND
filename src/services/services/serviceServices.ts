@@ -6,6 +6,8 @@ import type {
   GetAllServicesRequest,
   GetAllServicesResponse,
   GetServiceByIdResponse,
+  UpdateServiceRequest,
+  UpdateServiceResponse,
 } from "./serviceModels";
 
 class ServicesService {
@@ -73,6 +75,27 @@ class ServicesService {
         success: false,
         message: error?.message || "Failed to fetch service",
       } as GetServiceByIdResponse;
+    }
+  }
+
+  async updateServiceById(
+    id: string,
+    req: UpdateServiceRequest
+  ): Promise<UpdateServiceResponse> {
+    try {
+      const response = await axiosInstance.put<UpdateServiceResponse>(
+        `${this.servicesEndpoint}/${encodeURIComponent(id)}`,
+        req
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as UpdateServiceResponse;
+      }
+      return {
+        success: false,
+        message: error?.message || "Failed to update service",
+      } as UpdateServiceResponse;
     }
   }
 }

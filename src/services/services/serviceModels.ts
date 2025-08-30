@@ -45,3 +45,12 @@ export interface GetServiceByIdResponse {
   data?: Service;
   message?: string;
 }
+
+// Update service by ID (PUT /services/{id})
+export type UpdateServiceRequest = CreateServiceRequest;
+
+export interface UpdateServiceResponse {
+  success: boolean;
+  data?: Service;
+  message?: string;
+}

@@ -7,6 +7,8 @@ import type {
   GetAllServicesResponse,
   Service,
   GetServiceByIdResponse,
+  UpdateServiceRequest,
+  UpdateServiceResponse,
 } from "../../services/services/serviceModels";
 
 interface ServiceState {
@@ -22,6 +24,11 @@ interface ServiceState {
   detail: Service | null;
   detailIsLoading: boolean;
   detailError: string | null;
+  // update state
+  updateIsLoading: boolean;
+  updateError: string | null;
+  updateSuccessMessage: string | null;
+  updated: Service | null;
 }
 
 const initialState: ServiceState = {
@@ -37,6 +44,11 @@ const initialState: ServiceState = {
   detail: null,
   detailIsLoading: false,
   detailError: null,
+  // update state
+  updateIsLoading: false,
+  updateError: null,
+  updateSuccessMessage: null,
+  updated: null,
 };
 
 export const createService = createAsyncThunk<
@@ -71,6 +83,18 @@ export const getServiceById = createAsyncThunk<
   const res = await servicesService.getServiceById(id);
   if (!res.success) {
     return rejectWithValue(res.message || "Failed to fetch service");
+  }
+  return res;
+});
+
+export const updateServiceById = createAsyncThunk<
+  UpdateServiceResponse,
+  { id: string; data: UpdateServiceRequest },
+  { rejectValue: string }
+>("services/updateById", async ({ id, data }, { rejectWithValue }) => {
+  const res = await servicesService.updateServiceById(id, data);
+  if (!res.success) {
+    return rejectWithValue(res.message || "Failed to update service");
   }
   return res;
 });
@@ -133,6 +157,34 @@ const serviceSlice = createSlice({
         state.detailIsLoading = false;
         state.detailError = action.payload ?? "Failed to fetch service";
         state.detail = null;
+      })
+      // update
+      .addCase(updateServiceById.pending, (state) => {
+        state.updateIsLoading = true;
+        state.updateError = null;
+        state.updateSuccessMessage = null;
+        state.updated = null;
+      })
+      .addCase(updateServiceById.fulfilled, (state, action) => {
+        state.updateIsLoading = false;
+        state.updateSuccessMessage =
+          action.payload.message || "Service updated successfully";
+        state.updated = action.payload.data ?? null;
+        // Sync detail if same record is open
+        if (state.detail && action.payload.data && state.detail.id === action.payload.data.id) {
+          state.detail = { ...state.detail, ...action.payload.data };
+        }
+        // Optionally update list item if present
+        if (action.payload.data) {
+          state.servicesList = state.servicesList.map((s) =>
+            s.id === action.payload.data!.id ? { ...s, ...action.payload.data } : s
+          );
+        }
+      })
+      .addCase(updateServiceById.rejected, (state, action) => {
+        state.updateIsLoading = false;
+        state.updateError = action.payload ?? "Failed to update service";
+        state.updated = null;
       });
   },
 });
@@ -165,5 +217,14 @@ export const selectServiceDetailLoading = (state: { services: ServiceState }) =>
   state.services.detailIsLoading;
 export const selectServiceDetailError = (state: { services: ServiceState }) =>
   state.services.detailError;
+
+export const selectServiceUpdateLoading = (state: { services: ServiceState }) =>
+  state.services.updateIsLoading;
+export const selectServiceUpdateError = (state: { services: ServiceState }) =>
+  state.services.updateError;
+export const selectServiceUpdateSuccessMessage = (state: { services: ServiceState }) =>
+  state.services.updateSuccessMessage;
+export const selectUpdatedService = (state: { services: ServiceState }) =>
+  state.services.updated;
 
 export default serviceSlice.reducer;
