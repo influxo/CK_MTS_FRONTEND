@@ -1,12 +1,13 @@
 import getApiUrl from "../apiUrl";
 import axiosInstance from "../axiosInstance";
-import type { 
-  LoginRequest, 
-  LoginResponse, 
-  ProfileResponse, 
-  ChangePasswordRequest, 
+import type {
+  LoginRequest,
+  LoginResponse,
+  ProfileResponse,
+  ChangePasswordRequest,
   ResetPasswordRequest,
   ApiResponse,
+  AcceptInvitationRequest,
 } from "./authModels";
 
 /**
@@ -14,7 +15,7 @@ import type {
  */
 class AuthService {
   private baseUrl: string;
-  private authEndpoint: string = '/auth';
+  private authEndpoint: string = "/auth";
 
   constructor() {
     this.baseUrl = getApiUrl();
@@ -29,29 +30,29 @@ class AuthService {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
       const response = await axiosInstance.post<LoginResponse>(
-        `${this.authEndpoint}/login`, 
+        `${this.authEndpoint}/login`,
         credentials
       );
-      
+
       // Store token in localStorage if login successful
       if (response.data.success && response.data.data?.token) {
-        localStorage.setItem('token', response.data.data.token);
-        
+        localStorage.setItem("token", response.data.data.token);
+
         // Set the token in axios headers for subsequent requests
         this.setAuthHeader(response.data.data.token);
       }
-      
+
       return response.data;
     } catch (error: any) {
       // Handle error response from server
       if (error.response) {
         return error.response.data as LoginResponse;
       }
-      
+
       // Handle network or other errors
       return {
         success: false,
-        message: error.message || 'Login failed. Please try again.'
+        message: error.message || "Login failed. Please try again.",
       };
     }
   }
@@ -65,18 +66,18 @@ class AuthService {
       const response = await axiosInstance.get<ProfileResponse>(
         `${this.authEndpoint}/profile`
       );
-      
+
       return response.data;
     } catch (error: any) {
       // Handle error response from server
       if (error.response) {
         return error.response.data as ProfileResponse;
       }
-      
+
       // Handle network or other errors
       return {
         success: false,
-        message: error.message || 'Failed to fetch profile. Please try again.'
+        message: error.message || "Failed to fetch profile. Please try again.",
       };
     }
   }
@@ -86,50 +87,60 @@ class AuthService {
    * @param passwordData Current and new password
    * @returns Promise with API response
    */
-  async changePassword(passwordData: ChangePasswordRequest): Promise<ApiResponse> {
+  async changePassword(
+    passwordData: ChangePasswordRequest
+  ): Promise<ApiResponse> {
     try {
       const response = await axiosInstance.put<ApiResponse>(
         `${this.authEndpoint}/change-password`,
         passwordData
       );
-      
+
       return response.data;
     } catch (error: any) {
       // Handle error response from server
       if (error.response) {
         return error.response.data as ApiResponse;
       }
-      
+
       // Handle network or other errors
       return {
         success: false,
-        message: error.message || 'Failed to change password. Please try again.'
+        message:
+          error.message || "Failed to change password. Please try again.",
       };
     }
   }
 
   /**
    * Verify email with token (for invited users)
-   * @param token Email verification token
-   * @returns Promise with API response
+   * @param data { email, token, password }
+   * @returns Promise with login-like response containing user data and token
    */
-  async verifyEmail(token: string): Promise<ApiResponse> {
+  async verifyEmail(data: AcceptInvitationRequest): Promise<LoginResponse> {
     try {
-      const response = await axiosInstance.get<ApiResponse>(
-        `${this.authEndpoint}/verify-email?token=${token}`
+      const response = await axiosInstance.post<LoginResponse>(
+        `${this.authEndpoint}/accept-invitation`,
+        data
       );
-      
+
+      // Store token on success, similar to login
+      if (response.data.success && response.data.data?.token) {
+        localStorage.setItem("token", response.data.data.token);
+        this.setAuthHeader(response.data.data.token);
+      }
+
       return response.data;
     } catch (error: any) {
       // Handle error response from server
       if (error.response) {
-        return error.response.data as ApiResponse;
+        return error.response.data as LoginResponse;
       }
-      
+
       // Handle network or other errors
       return {
         success: false,
-        message: error.message || 'Failed to verify email. Please try again.'
+        message: error.message || "Failed to verify email. Please try again.",
       };
     }
   }
@@ -145,18 +156,18 @@ class AuthService {
         `${this.authEndpoint}/reset-password`,
         resetData
       );
-      
+
       return response.data;
     } catch (error: any) {
       // Handle error response from server
       if (error.response) {
         return error.response.data as ApiResponse;
       }
-      
+
       // Handle network or other errors
       return {
         success: false,
-        message: error.message || 'Failed to reset password. Please try again.'
+        message: error.message || "Failed to reset password. Please try again.",
       };
     }
   }
@@ -166,14 +177,14 @@ class AuthService {
    * @returns Boolean indicating if user is authenticated
    */
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('token');
+    return !!localStorage.getItem("token");
   }
 
   /**
    * Logout user
    */
   logout(): void {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     // Remove auth header
     this.removeAuthHeader();
   }
@@ -183,14 +194,14 @@ class AuthService {
    * @param token JWT token
    */
   setAuthHeader(token: string): void {
-    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   }
 
   /**
    * Remove authentication header
    */
   removeAuthHeader(): void {
-    delete axiosInstance.defaults.headers.common['Authorization'];
+    delete axiosInstance.defaults.headers.common["Authorization"];
   }
 
   /**
@@ -198,7 +209,7 @@ class AuthService {
    * This should be called when the app starts
    */
   initializeAuth(): void {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       this.setAuthHeader(token);
     }

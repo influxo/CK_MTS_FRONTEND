@@ -1,22 +1,10 @@
-import {
-  Calendar,
-  Mail,
-  MoreHorizontal,
-  Phone,
-  Plus,
-  Search,
-  X,
-} from "lucide-react";
-import { useState } from "react";
+import { MoreHorizontal, Plus, Search, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../ui/data-display/card";
+
+import { Card, CardContent } from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -47,152 +35,96 @@ import {
   TabsList,
   TabsTrigger,
 } from "../ui/navigation/tabs";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../store";
+import {
+  fetchSubProjectUsers,
+  selectAssignedSubProjectUsers,
+  selectAssignedSubProjectUsersLoading,
+  selectAssignedSubProjectUsersError,
+  removeUserFromSubProject,
+  assignUserToSubProject,
+} from "../../store/slices/subProjectSlice";
+import { selectAllEmployees } from "../../store/slices/employeesSlice";
 
 interface SubProjectTeamProps {
   subProjectId: string;
 }
 
-// Mock team members data
-const mockTeamMembers = [
-  {
-    id: "user-001",
-    subProjectId: "sub-001",
-    name: "Jane Smith",
-    role: "Sub-Project Lead",
-    email: "jane.smith@example.com",
-    phone: "+123456789",
-    department: "Healthcare",
-    startDate: "2025-01-15",
-    avatar: "",
-    initials: "JS",
-    status: "active",
-  },
-  {
-    id: "user-002",
-    subProjectId: "sub-001",
-    name: "Robert Johnson",
-    role: "Field Coordinator",
-    email: "robert.johnson@example.com",
-    phone: "+123456790",
-    department: "Healthcare",
-    startDate: "2025-01-20",
-    avatar: "",
-    initials: "RJ",
-    status: "active",
-  },
-  {
-    id: "user-003",
-    subProjectId: "sub-001",
-    name: "Sarah Adams",
-    role: "Community Health Worker",
-    email: "sarah.adams@example.com",
-    phone: "+123456791",
-    department: "Healthcare",
-    startDate: "2025-02-01",
-    avatar: "",
-    initials: "SA",
-    status: "active",
-  },
-  {
-    id: "user-004",
-    subProjectId: "sub-001",
-    name: "David Miller",
-    role: "Data Officer",
-    email: "david.miller@example.com",
-    phone: "+123456792",
-    department: "M&E",
-    startDate: "2025-02-10",
-    avatar: "",
-    initials: "DM",
-    status: "active",
-  },
-  {
-    id: "user-005",
-    subProjectId: "sub-001",
-    name: "Lisa Washington",
-    role: "Community Health Worker",
-    email: "lisa.washington@example.com",
-    phone: "+123456793",
-    department: "Healthcare",
-    startDate: "2025-02-15",
-    avatar: "",
-    initials: "LW",
-    status: "inactive",
-  },
-  {
-    id: "user-006",
-    subProjectId: "sub-002",
-    name: "Michael Wong",
-    role: "Field Coordinator",
-    email: "michael.wong@example.com",
-    phone: "+123456794",
-    department: "Healthcare",
-    startDate: "2025-01-25",
-    avatar: "",
-    initials: "MW",
-    status: "active",
-  },
-];
+// Team members are fetched from Redux via fetchSubProjectUsers
 
-// Mock available users for assignment
-const availableUsers = [
-  {
-    id: "user-007",
-    name: "Emily Chen",
-    department: "Healthcare",
-    role: "Community Health Worker",
-  },
-  {
-    id: "user-008",
-    name: "James Wilson",
-    department: "M&E",
-    role: "Data Officer",
-  },
-  {
-    id: "user-009",
-    name: "Maria Rodriguez",
-    department: "Healthcare",
-    role: "Nurse",
-  },
-];
-
-// Available roles
-const availableRoles = [
-  "Sub-Project Lead",
-  "Field Coordinator",
-  "Data Officer",
-  "Community Health Worker",
-  "Nurse",
-  "M&E Officer",
-  "Administrative Support",
-];
-
+// Assignment uses employees list from Redux (see selectAllEmployees)
 export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
   const [activeTab, setActiveTab] = useState("team-members");
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedMemberId, setSelectedMemberId] = useState("");
-  const [selectedRole, setSelectedRole] = useState("");
 
-  // Filter team members for this sub-project
-  const filteredTeamMembers = mockTeamMembers.filter((member) => {
-    const matchesSubProject = member.subProjectId === subProjectId;
+  const dispatch = useDispatch<AppDispatch>();
+  const users = useSelector((state: RootState) =>
+    selectAssignedSubProjectUsers(state)
+  );
+  const loading = useSelector((state: RootState) =>
+    selectAssignedSubProjectUsersLoading(state)
+  );
+  const error = useSelector((state: RootState) =>
+    selectAssignedSubProjectUsersError(state)
+  );
+  const employees = useSelector(selectAllEmployees);
+
+  const onRemove = (userId: string) => {
+    if (!subProjectId || !userId) return;
+    dispatch(removeUserFromSubProject({ subProjectId, userId })).then(() =>
+      dispatch(fetchSubProjectUsers({ subProjectId }))
+    );
+  };
+
+  useEffect(() => {
+    if (subProjectId) {
+      dispatch(fetchSubProjectUsers({ subProjectId }));
+    }
+  }, [subProjectId, dispatch]);
+
+  const handleAssignMember = async () => {
+    if (!selectedMemberId) return;
+    try {
+      await dispatch(
+        assignUserToSubProject({ subProjectId, userId: selectedMemberId })
+      ).unwrap();
+      // refresh assigned users, reset and close
+      dispatch(fetchSubProjectUsers({ subProjectId }));
+      setSelectedMemberId("");
+      setIsAssignDialogOpen(false);
+    } catch (e) {
+      // optional: show toast
+    }
+  };
+
+  const teamMembers = users.map((u) => {
+    const initials = `${u.firstName?.[0] ?? ""}${u.lastName?.[0] ?? ""}`
+      .toUpperCase()
+      .trim();
+    return {
+      id: u.id,
+      name: `${u.firstName} ${u.lastName}`.trim(),
+      email: u.email,
+      status: u.status,
+      initials: initials || "U",
+      avatar: "",
+    };
+  });
+
+  const filteredTeamMembers = teamMembers.filter((member) => {
     const matchesSearch =
       member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       member.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === "all" || member.role === roleFilter;
     const matchesStatus =
       statusFilter === "all" || member.status === statusFilter;
-
-    return matchesSubProject && matchesSearch && matchesRole && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
-  // Get unique roles from the filtered team members
-  const uniqueRoles = [
-    ...new Set(filteredTeamMembers.map((member) => member.role)),
-  ];
+  console.log("employees", employees);
 
   return (
     <div className="space-y-6">
@@ -224,61 +156,49 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
                 </Label>
                 <Select
                   value={selectedMemberId}
-                  onValueChange={setSelectedMemberId}
+                  onValueChange={(v) => setSelectedMemberId(v)}
                 >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select team member" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableUsers.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.name} - {user.department}
-                      </SelectItem>
-                    ))}
+                    {employees.map((emp) => {
+                      const fullName =
+                        `${emp.firstName ?? ""} ${emp.lastName ?? ""}`.trim() ||
+                        "N/A";
+                      const initials = fullName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase();
+                      return (
+                        <SelectItem key={emp.id} value={emp.id}>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src="" alt={fullName} />
+                              <AvatarFallback className="text-[10px]">
+                                {initials}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm">{fullName}</span>
+                            <Badge variant="secondary" className="text-[10px]">
+                              {emp.email}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="role" className="text-right">
-                  Role
-                </Label>
-                <Select value={selectedRole} onValueChange={setSelectedRole}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableRoles.map((role) => (
-                      <SelectItem
-                        key={role}
-                        value={role.toLowerCase().replace(" ", "-")}
-                      >
-                        {role}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="start-date" className="text-right">
-                  Start Date
-                </Label>
-                <Input
-                  id="start-date"
-                  type="date"
-                  className="col-span-3"
-                  defaultValue={new Date().toISOString().slice(0, 10)}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="notes" className="text-right pt-2">
-                  Notes
-                </Label>
-                <Input
-                  id="notes"
-                  className="col-span-3"
-                  placeholder="Any additional notes"
-                />
-              </div>
+              {/**
+               * Additional fields are intentionally hidden for now per requirements.
+               *
+               * <div className="grid grid-cols-4 items-center gap-4"> ... Role ... </div>
+               * <div className="grid grid-cols-4 items-center gap-4"> ... Start Date ... </div>
+               * <div className="grid grid-cols-4 items-start gap-4"> ... Notes ... </div>
+               */}
             </div>
             <DialogFooter>
               <Button
@@ -287,7 +207,7 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
               >
                 Cancel
               </Button>
-              <Button onClick={() => setIsAssignDialogOpen(false)}>
+              <Button disabled={!selectedMemberId} onClick={handleAssignMember}>
                 Assign Member
               </Button>
             </DialogFooter>
@@ -302,12 +222,6 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
             className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
           >
             Team Members
-          </TabsTrigger>
-          <TabsTrigger
-            value="roles-responsibilities"
-            className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
-          >
-            Roles & Responsibilities
           </TabsTrigger>
         </TabsList>
 
@@ -324,19 +238,6 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
                 />
               </div>
               <div className="flex gap-3">
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="w-[180px] bg-black/5 border-0">
-                    <SelectValue placeholder="Filter by role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Roles</SelectItem>
-                    {uniqueRoles.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[130px] bg-black/5 border-0">
                     <SelectValue placeholder="Status" />
@@ -350,6 +251,13 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
               </div>
             </div>
           </div>
+
+          {loading && (
+            <div className="p-4 text-sm">Loading team members...</div>
+          )}
+          {error && (
+            <div className="p-4 text-sm text-red-500">Error: {error}</div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTeamMembers.map((member) => (
@@ -367,7 +275,6 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
                           {member.email}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline">{member.role}</Badge>
                           <Badge
                             variant={
                               member.status === "active"
@@ -393,43 +300,15 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Change Role</DropdownMenuItem>
                         <DropdownMenuItem>Send Message</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => onRemove(member.id)}
+                        >
                           Remove from Sub-Project
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </div>
-
-                  <div className="mt-3 pt-3 border-t grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <div className="text-muted-foreground">Department</div>
-                      <div>{member.department}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Start Date</div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
-                        <span>
-                          {new Date(member.startDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Phone</div>
-                      <div className="flex items-center gap-1">
-                        <Phone className="h-3 w-3 text-muted-foreground" />
-                        <span>{member.phone}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Email</div>
-                      <div className="flex items-center gap-1">
-                        <Mail className="h-3 w-3 text-muted-foreground" />
-                        <span className="truncate">{member.email}</span>
-                      </div>
-                    </div>
                   </div>
 
                   <div className="mt-3 flex justify-end">
@@ -437,6 +316,7 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
                       variant="ghost"
                       size="sm"
                       className="text-destructive"
+                      onClick={() => onRemove(member.id)}
                     >
                       <X className="h-4 w-4 mr-2" />
                       Remove
@@ -464,88 +344,7 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
           </div>
         </TabsContent>
 
-        <TabsContent value="roles-responsibilities" className="pt-4">
-          <Card className="bg-[#F7F9FB] border-0">
-            <CardHeader>
-              <CardTitle className="text-base">
-                Team Roles & Responsibilities
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {uniqueRoles.map((role, index) => (
-                <div
-                  key={index}
-                  className="border-b pb-4 last:border-b-0 last:pb-0"
-                >
-                  <h4 className="font-medium mb-2">{role}</h4>
-
-                  <div className="space-y-2 mb-3">
-                    {role === "Sub-Project Lead" && (
-                      <ul className="list-disc pl-5 text-sm space-y-1">
-                        <li>
-                          Overall management and coordination of the sub-project
-                        </li>
-                        <li>Supervise all team members and activities</li>
-                        <li>Report to project management and stakeholders</li>
-                        <li>Ensure sub-project objectives are achieved</li>
-                        <li>Manage budget and resources allocation</li>
-                      </ul>
-                    )}
-
-                    {role === "Field Coordinator" && (
-                      <ul className="list-disc pl-5 text-sm space-y-1">
-                        <li>
-                          Coordinate field activities and service delivery
-                        </li>
-                        <li>
-                          Supervise field staff and community health workers
-                        </li>
-                        <li>Ensure quality of service delivery</li>
-                        <li>Manage logistics for field operations</li>
-                        <li>Report field activities to sub-project lead</li>
-                      </ul>
-                    )}
-
-                    {role === "Data Officer" && (
-                      <ul className="list-disc pl-5 text-sm space-y-1">
-                        <li>Manage data collection and entry</li>
-                        <li>Ensure data quality and integrity</li>
-                        <li>Generate reports and analyze data</li>
-                        <li>Manage the sub-project database</li>
-                        <li>Provide data support to team members</li>
-                      </ul>
-                    )}
-
-                    {role === "Community Health Worker" && (
-                      <ul className="list-disc pl-5 text-sm space-y-1">
-                        <li>Deliver direct services to beneficiaries</li>
-                        <li>Conduct community education and outreach</li>
-                        <li>Collect data using project forms</li>
-                        <li>Follow up with beneficiaries</li>
-                        <li>Report activities to field coordinator</li>
-                      </ul>
-                    )}
-                  </div>
-
-                  <div className="text-sm text-muted-foreground">
-                    Team members with this role:{" "}
-                    {filteredTeamMembers.filter((m) => m.role === role).length}
-                  </div>
-                </div>
-              ))}
-
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="bg-black/5 border-0"
-                >
-                  Edit Roles & Responsibilities
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Roles & Responsibilities tab removed as roles are not part of the API response */}
       </Tabs>
     </div>
   );

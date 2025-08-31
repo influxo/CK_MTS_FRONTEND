@@ -12,6 +12,9 @@ import type {
   GetSubProjectByIdResponse,
   GetSubProjectsByProjectIdRequest,
   GetSubProjectsByProjectIdResponse,
+  GetSubProjectUsersRequest,
+  GetSubProjectUsersResponse,
+  AssignedSubProjectUser,
   RemoveUserFromSubProjectRequest,
   RemoveUserFromSubProjectResponse,
   SubProject,
@@ -30,6 +33,10 @@ interface SubProjectsState {
   deleteSuccessMessage: string | null;
   assignUserSuccessMessage: string | null;
   removeUserSuccessMessage: string | null;
+  // users assigned to a subproject
+  assignedUsers: AssignedSubProjectUser[];
+  assignedUsersLoading: boolean;
+  assignedUsersError: string | null;
 }
 
 const initialState: SubProjectsState = {
@@ -42,6 +49,9 @@ const initialState: SubProjectsState = {
   deleteSuccessMessage: null,
   assignUserSuccessMessage: null,
   removeUserSuccessMessage: null,
+  assignedUsers: [],
+  assignedUsersLoading: false,
+  assignedUsersError: null,
 };
 
 // Thunks
@@ -78,6 +88,21 @@ export const getSubProjectById = createAsyncThunk<
   const response = await subProjectService.getSubProjectById(req);
   if (!response.success) {
     return rejectWithValue(response.message || "Failed to fetch subproject");
+  }
+  return response;
+});
+
+// Fetch users assigned to a subproject
+export const fetchSubProjectUsers = createAsyncThunk<
+  GetSubProjectUsersResponse,
+  GetSubProjectUsersRequest,
+  { rejectValue: string }
+>("subprojects/fetchUsers", async (req, { rejectWithValue }) => {
+  const response = await subProjectService.getSubProjectUsers(req);
+  if (!response.success) {
+    return rejectWithValue(
+      response.message || "Failed to fetch subproject users"
+    );
   }
   return response;
 });
@@ -203,6 +228,20 @@ const subprojectsSlice = createSlice({
       .addCase(getSubProjectById.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload ?? "Failed to fetch subproject";
+      })
+
+      // fetch users assigned to subproject
+      .addCase(fetchSubProjectUsers.pending, (state) => {
+        state.assignedUsersLoading = true;
+        state.assignedUsersError = null;
+      })
+      .addCase(fetchSubProjectUsers.fulfilled, (state, action) => {
+        state.assignedUsersLoading = false;
+        state.assignedUsers = action.payload.data;
+      })
+      .addCase(fetchSubProjectUsers.rejected, (state, action) => {
+        state.assignedUsersLoading = false;
+        state.assignedUsersError = action.payload ?? "Failed to fetch users";
       })
 
       // create
@@ -338,5 +377,16 @@ export const selectAssignUserSuccessMessage = (state: {
 export const selectRemoveUserSuccessMessage = (state: {
   subprojects: SubProjectsState;
 }) => state.subprojects.removeUserSuccessMessage;
+
+// Assigned users selectors
+export const selectAssignedSubProjectUsers = (state: {
+  subprojects: SubProjectsState;
+}) => state.subprojects.assignedUsers;
+export const selectAssignedSubProjectUsersLoading = (state: {
+  subprojects: SubProjectsState;
+}) => state.subprojects.assignedUsersLoading;
+export const selectAssignedSubProjectUsersError = (state: {
+  subprojects: SubProjectsState;
+}) => state.subprojects.assignedUsersError;
 
 export default subprojectsSlice.reducer;

@@ -1,15 +1,7 @@
-import {
-  Calendar,
-  Clock,
-  Download,
-  FileEdit,
-  MapPin,
-  Plus,
-  Search,
-  Users,
-} from "lucide-react";
-import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
+import { Download, FileEdit, Plus, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
 import {
@@ -58,129 +50,22 @@ import {
   TabsTrigger,
 } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
+import type { AppDispatch } from "../../store";
+import {
+  createActivity,
+  selectActivityIsLoading,
+  selectActivityError,
+  fetchSubprojectActivities,
+  selectSubprojectActivities,
+  selectSubprojectActivitiesLoading,
+  selectSubprojectActivitiesError,
+} from "../../store/slices/activitySlice";
 
 interface SubProjectActivitiesProps {
   subProjectId: string;
 }
 
-// Mock activities data
-const mockActivities = [
-  {
-    id: "act-001",
-    subProjectId: "sub-001",
-    projectId: "proj-001",
-    title: "Community Health Education Session",
-    type: "Education",
-    status: "completed",
-    date: "2025-05-15",
-    time: "09:00-11:30",
-    location: "Village Community Center",
-    conductedBy: "Jane Smith",
-    avatar: "",
-    initials: "JS",
-    participants: 28,
-    description:
-      "Health education session on maternal nutrition and prenatal care",
-    formsSubmitted: 3,
-    mediaAttached: true,
-    staff: [
-      "Pal Baftijaj",
-      "Alfred Pjetri",
-      "Valentina Mehmeti",
-      "Vlera Berisha",
-      "Mimoza Bajraktari",
-    ],
-  },
-  {
-    id: "act-002",
-    subProjectId: "sub-001",
-    title: "Mobile Clinic - Antenatal Care",
-    type: "Service Delivery",
-    status: "completed",
-    date: "2025-05-18",
-    time: "08:00-16:00",
-    location: "Northern Village",
-    conductedBy: "Medical Team A",
-    avatar: "",
-    initials: "MT",
-    participants: 42,
-    description:
-      "Mobile clinic providing antenatal care services to pregnant women",
-    formsSubmitted: 42,
-    mediaAttached: true,
-  },
-  {
-    id: "act-003",
-    subProjectId: "sub-001",
-    title: "Staff Training - New Protocols",
-    type: "Training",
-    status: "completed",
-    date: "2025-05-22",
-    time: "13:00-17:00",
-    location: "District Health Office",
-    conductedBy: "Robert Johnson",
-    avatar: "",
-    initials: "RJ",
-    participants: 12,
-    description:
-      "Training staff on new maternal health protocols and procedures",
-    formsSubmitted: 1,
-    mediaAttached: false,
-  },
-  {
-    id: "act-004",
-    subProjectId: "sub-001",
-    title: "Stakeholder Coordination Meeting",
-    type: "Coordination",
-    status: "completed",
-    date: "2025-05-23",
-    time: "14:00-16:00",
-    location: "District Administration Building",
-    conductedBy: "Project Team",
-    avatar: "",
-    initials: "PT",
-    participants: 8,
-    description:
-      "Coordination meeting with local health officials and community leaders",
-    formsSubmitted: 1,
-    mediaAttached: false,
-  },
-  {
-    id: "act-005",
-    subProjectId: "sub-001",
-    title: "Mobile Clinic - Antenatal Care",
-    type: "Service Delivery",
-    status: "upcoming",
-    date: "2025-05-28",
-    time: "08:00-16:00",
-    location: "Eastern Village",
-    conductedBy: "Medical Team B",
-    avatar: "",
-    initials: "MT",
-    participants: 0,
-    description:
-      "Mobile clinic providing antenatal care services to pregnant women",
-    formsSubmitted: 0,
-    mediaAttached: false,
-  },
-  {
-    id: "act-006",
-    subProjectId: "sub-002",
-    title: "Vaccination Campaign - Day 1",
-    type: "Service Delivery",
-    status: "completed",
-    date: "2025-05-20",
-    time: "08:00-17:00",
-    location: "Central School",
-    conductedBy: "Vaccination Team",
-    avatar: "",
-    initials: "VT",
-    participants: 124,
-    description: "First day of vaccination campaign for children under 5",
-    formsSubmitted: 124,
-    mediaAttached: true,
-  },
-];
+// Activities are loaded from API via Redux
 
 // Mock planned activities
 const mockPlannedActivities = [
@@ -228,13 +113,45 @@ export function SubProjectActivities({
     useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const dispatch = useDispatch<AppDispatch>();
+  const isCreating = useSelector(selectActivityIsLoading);
+  const createError = useSelector(selectActivityError);
+  const activities = useSelector(selectSubprojectActivities);
+  const listLoading = useSelector(selectSubprojectActivitiesLoading);
+  const listError = useSelector(selectSubprojectActivitiesError);
 
-  // Filter activities for this sub-project
-  const filteredActivities = mockActivities.filter((activity) => {
-    const matchesSubProject = activity.subProjectId === subProjectId;
+  // Prefer URL param if present (route: :subprojectId)
+  const { subprojectId: subprojectIdParam } = useParams<{
+    subprojectId: string;
+  }>();
+  const effectiveSubProjectId = subprojectIdParam ?? subProjectId;
+
+  // Fetch activities when subproject changes
+  useEffect(() => {
+    if (effectiveSubProjectId) {
+      dispatch(fetchSubprojectActivities(effectiveSubProjectId));
+    }
+  }, [dispatch, effectiveSubProjectId]);
+
+  // Model-based form state
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
+  const [frequency, setFrequency] = useState("monthly");
+  const [status, setStatus] = useState("active");
+  const [description, setDescription] = useState("");
+  const [reportingFieldsRows, setReportingFieldsRows] = useState<
+    { key: string; type: string }[]
+  >([{ key: "", type: "text" }]);
+
+  // Filter activities from API for this sub-project
+  const filteredActivities = activities.filter((activity) => {
+    const matchesSubProject =
+      activity.subprojectId === effectiveSubProjectId;
     const matchesSearch =
-      activity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      activity.description.toLowerCase().includes(searchQuery.toLowerCase());
+      activity.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (activity.description || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || activity.status === statusFilter;
 
@@ -273,90 +190,64 @@ export function SubProjectActivities({
                 sub-project.
               </DialogDescription>
             </DialogHeader>
+            {createError && (
+              <div className="text-sm text-destructive">{createError}</div>
+            )}
             <div className="grid gap-4 py-4">
+              {/* Model-based fields */}
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="activity-title" className="text-right">
-                  Title *
+                <Label htmlFor="activity-name" className="text-right">
+                  Name *
                 </Label>
                 <Input
-                  id="activity-title"
+                  id="activity-name"
                   className="col-span-3"
-                  placeholder="Activity title"
+                  placeholder="Activity name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="activity-type" className="text-right">
-                  Type *
+                <Label htmlFor="activity-category" className="text-right">
+                  Category *
                 </Label>
-                <Select>
+                <Input
+                  id="activity-category"
+                  className="col-span-3"
+                  placeholder="Category (e.g., Shendetesi)"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="activity-frequency" className="text-right">
+                  Frequency *
+                </Label>
+                <Select value={frequency} onValueChange={setFrequency}>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select activity type" />
+                    <SelectValue placeholder="Select frequency" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="education">Education</SelectItem>
-                    <SelectItem value="service-delivery">
-                      Service Delivery
-                    </SelectItem>
-                    <SelectItem value="training">Training</SelectItem>
-                    <SelectItem value="coordination">Coordination</SelectItem>
-                    <SelectItem value="monitoring">Monitoring</SelectItem>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="activity-date" className="text-right">
-                  Date *
+                <Label htmlFor="activity-status" className="text-right">
+                  Status *
                 </Label>
-                <Input id="activity-date" type="date" className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="activity-time" className="text-right">
-                  Time
-                </Label>
-                <div className="col-span-3 flex gap-2">
-                  <Input
-                    id="activity-time-start"
-                    type="time"
-                    placeholder="Start time"
-                  />
-                  <span className="flex items-center">to</span>
-                  <Input
-                    id="activity-time-end"
-                    type="time"
-                    placeholder="End time"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="activity-location" className="text-right">
-                  Location *
-                </Label>
-                <Input
-                  id="activity-location"
-                  className="col-span-3"
-                  placeholder="Activity location"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="activity-conductor" className="text-right">
-                  Conducted By *
-                </Label>
-                <Input
-                  id="activity-conductor"
-                  className="col-span-3"
-                  placeholder="Person or team who conducted the activity"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="activity-participants" className="text-right">
-                  Participants
-                </Label>
-                <Input
-                  id="activity-participants"
-                  type="number"
-                  className="col-span-3"
-                  placeholder="Number of participants"
-                />
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label
@@ -370,37 +261,123 @@ export function SubProjectActivities({
                   className="col-span-3"
                   placeholder="Brief description of the activity"
                   rows={3}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="activity-form" className="text-right">
-                  Related Form
-                </Label>
-                <Select>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select a form to attach" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="form-001">
-                      Maternal Health Assessment
-                    </SelectItem>
-                    <SelectItem value="form-002">Prenatal Checkup</SelectItem>
-                    <SelectItem value="form-003">
-                      Health Education Session
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label className="text-right pt-2">Reporting Fields</Label>
+                <div className="col-span-3 space-y-2">
+                  {reportingFieldsRows.map((row, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                      <Input
+                        placeholder="Field key (e.g., beneficiaries)"
+                        value={row.key}
+                        onChange={(e) => {
+                          const next = [...reportingFieldsRows];
+                          next[idx] = { ...next[idx], key: e.target.value };
+                          setReportingFieldsRows(next);
+                        }}
+                      />
+                      <Select
+                        value={row.type}
+                        onValueChange={(v: string) => {
+                          const next = [...reportingFieldsRows];
+                          next[idx] = { ...next[idx], type: v };
+                          setReportingFieldsRows(next);
+                        }}
+                      >
+                        <SelectTrigger className="w-[160px]">
+                          <SelectValue placeholder="Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="number">number</SelectItem>
+                          <SelectItem value="text">text</SelectItem>
+                          <SelectItem value="boolean">boolean</SelectItem>
+                          <SelectItem value="date">date</SelectItem>
+                          <SelectItem value="time">time</SelectItem>
+                          <SelectItem value="datetime">datetime</SelectItem>
+                          <SelectItem value="select">select</SelectItem>
+                          <SelectItem value="multiselect">
+                            multiselect
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="ghost"
+                        className="text-destructive"
+                        onClick={() => {
+                          const next = reportingFieldsRows.filter(
+                            (_, i) => i !== idx
+                          );
+                          setReportingFieldsRows(next);
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      setReportingFieldsRows([
+                        ...reportingFieldsRows,
+                        { key: "", type: "text" },
+                      ])
+                    }
+                  >
+                    Add Field
+                  </Button>
+                </div>
               </div>
             </div>
             <DialogFooter>
-              {/* <Button
+              <Button
                 variant="outline"
                 onClick={() => setIsCreateActivityDialogOpen(false)}
+                disabled={isCreating}
               >
                 Cancel
-              </Button> */}
-              <Button onClick={() => setIsCreateActivityDialogOpen(false)}>
-                Save Activity
+              </Button>
+              <Button
+                onClick={async () => {
+                  const reportingFields: Record<string, string> = {};
+                  reportingFieldsRows
+                    .filter((r) => r.key.trim().length > 0)
+                    .forEach((r) => {
+                      reportingFields[r.key.trim()] = r.type;
+                    });
+                  try {
+                    await dispatch(
+                      createActivity({
+                        name,
+                        description,
+                        category,
+                        frequency,
+                        reportingFields,
+                        status,
+                        subprojectId: effectiveSubProjectId,
+                      })
+                    ).unwrap();
+                    // Reset form
+                    setName("");
+                    setCategory("");
+                    setFrequency("monthly");
+                    setStatus("active");
+                    setDescription("");
+                    setReportingFieldsRows([{ key: "", type: "text" }]);
+                    setIsCreateActivityDialogOpen(false);
+                    // Refresh activities list
+                    if (effectiveSubProjectId) {
+                      dispatch(fetchSubprojectActivities(effectiveSubProjectId));
+                    }
+                  } catch (e) {
+                    // error shown via createError
+                  }
+                }}
+                disabled={isCreating}
+              >
+                {isCreating ? "Saving..." : "Save Activity"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -441,10 +418,8 @@ export function SubProjectActivities({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="ongoing">Ongoing</SelectItem>
-                  <SelectItem value="upcoming">Upcoming</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -457,129 +432,91 @@ export function SubProjectActivities({
           <Table className="rounded-md overflow-hidden ">
             <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
-                <TableHead className="w-[250px]">Activity</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Date & Time</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Conducted By</TableHead>
-                <TableHead>Participants</TableHead>
-                <TableHead>Forms</TableHead>
+                <TableHead className="w-[300px]">Activity</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Frequency</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Updated</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredActivities.map((activity) => (
-                <TableRow key={activity.id}>
-                  <TableCell>
-                    <div className="font-medium">{activity.title}</div>
-                    <div className="text-sm text-muted-foreground line-clamp-1">
-                      {activity.description}
-                    </div>
-                    <Badge
-                      variant={
-                        activity.status === "completed"
-                          ? "default"
-                          : activity.status === "upcoming"
-                          ? "secondary"
-                          : "outline"
-                      }
-                      className="mt-1"
-                    >
-                      {activity.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{activity.type}</Badge>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3 text-muted-foreground" />
-                      <span>
-                        {new Date(activity.date).toLocaleDateString()}
-                      </span>
-                    </div>
-                    {activity.time && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <Clock className="h-3 w-3 text-muted-foreground" />
-                        <span>{activity.time}</span>
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3 text-muted-foreground" />
-                      <span>{activity.location}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage
-                          src={activity.avatar}
-                          alt={activity.conductedBy}
-                        />
-                        <AvatarFallback>{activity.initials}</AvatarFallback>
-                      </Avatar>
-                      <span>{activity.conductedBy}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-3 w-3 text-muted-foreground" />
-                      <span>{activity.participants}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {activity.formsSubmitted > 0 ? (
-                      <Badge
-                        variant="outline"
-                        className="flex items-center gap-1"
-                      >
-                        <span>{activity.formsSubmitted}</span>
-                        <span>submitted</span>
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">
-                        None
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      {/* <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button> */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          {/* <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button> */}
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <FileEdit className="h-4 w-4 mr-2" />
-                            Edit Activity
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Download className="h-4 w-4 mr-2" />
-                            Export Details
-                          </DropdownMenuItem>
-                          {activity.status === "upcoming" && (
-                            <DropdownMenuItem className="text-destructive">
-                              Cancel Activity
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+              {listLoading && (
+                <TableRow>
+                  <TableCell colSpan={7}>
+                    <span className="text-sm text-muted-foreground">
+                      Loading activities...
+                    </span>
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
+              {!listLoading && listError && (
+                <TableRow>
+                  <TableCell colSpan={7}>
+                    <span className="text-sm text-destructive">
+                      {listError}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              )}
+              {!listLoading && !listError && filteredActivities.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7}>
+                    <span className="text-sm text-muted-foreground">
+                      No activities found.
+                    </span>
+                  </TableCell>
+                </TableRow>
+              )}
+              {!listLoading && !listError &&
+                filteredActivities.map((activity) => (
+                  <TableRow key={activity.id}>
+                    <TableCell>
+                      <div className="font-medium">{activity.name}</div>
+                      <div className="text-sm text-muted-foreground line-clamp-1">
+                        {activity.description}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{activity.category}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{activity.frequency}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={activity.status === "active" ? "default" : "outline"}
+                        className="mt-1"
+                      >
+                        {activity.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">
+                      {new Date(activity.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">
+                      {new Date(activity.updatedAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild></DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <FileEdit className="h-4 w-4 mr-2" />
+                              Edit Activity
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Download className="h-4 w-4 mr-2" />
+                              Export Details
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </TabsContent>

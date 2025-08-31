@@ -9,12 +9,15 @@ import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import { ProjectDetails } from "./components/projects/ProjectDetails";
+import { BeneficiaryDetails } from "./components/beneficiaries/BeneficiaryDetails";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 import { SubProjectDetails } from "./components/projects/SubProjectDetails";
 import DataEntry from "./pages/DataEntry";
 import DataEntryTemplates from "./pages/DataEntryTemplates";
+import { EmployeeDetails } from "./components/employees/EmployeeDetails";
+import AcceptInvitation from "./pages/auth/AcceptInvitation";
 
 const routes = [
   {
@@ -24,6 +27,10 @@ const routes = [
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/accept-invitation",
+    element: <AcceptInvitation />,
   },
   {
     path: "/forgot-password",
@@ -62,6 +69,10 @@ const routes = [
         element: <Beneficiaries />,
       },
       {
+        path: "beneficiaries/:id",
+        element: <BeneficiaryDetails />,
+      },
+      {
         path: "forms",
         element: <Forms />,
       },
@@ -80,6 +91,10 @@ const routes = [
       {
         path: "employees",
         element: <Employees />,
+      },
+      {
+        path: "employees/:id",
+        element: <EmployeeDetails />,
       },
       {
         path: "*",

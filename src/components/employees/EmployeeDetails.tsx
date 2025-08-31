@@ -1,9 +1,7 @@
 import {
   AlertTriangle,
   ArrowLeft,
-  Calendar,
   CheckCircle,
-  Clock,
   FileDown,
   KeyRound,
   LockKeyhole,
@@ -12,12 +10,43 @@ import {
   Pencil,
   Save,
   Shield,
-  ShieldCheck,
   Smartphone,
   Trash,
-  User,
+  Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store";
+import {
+  clearSingleEmployee,
+  fetchSingleEmployee,
+  selectSingleEmployee,
+  selectSingleEmployeeError,
+  selectSingleEmployeeLoading,
+  updateEmployee,
+  selectEmployeeUpdating,
+  selectEmployeeUpdateError,
+  // projects tree
+  fetchUserProjects,
+  selectUserProjects,
+  selectUserProjectsLoading,
+  selectUserProjectsError,
+} from "../../store/slices/employeesSlice";
+import {
+  fetchRolePermissions,
+  selectRolePermissions,
+  selectRolePermissionsLoading,
+  selectRolePermissionsError,
+  fetchRoles,
+  selectAllRoles,
+  selectRolesLoading,
+  selectRolesError,
+} from "../../store/slices/roleSlice";
+import type {
+  UpdateUserRequest,
+  EmployeeStatus,
+} from "../../services/employees/employeesModels";
 import { Avatar, AvatarFallback } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
@@ -64,38 +93,7 @@ import {
   TabsTrigger,
 } from "../ui/navigation/tabs";
 
-// Mock data for an employee
-const mockEmployee = {
-  id: "emp-001",
-  name: "Jane Smith",
-  email: "jane.smith@example.com",
-  role: "Program Manager",
-  status: "active",
-  phone: "+1 (555) 123-4567",
-  lastActive: "2025-05-22T10:15:00",
-  projects: ["Rural Healthcare Initiative", "Community Development"],
-  subProjects: ["Maternal Health Services", "Water Access Program"],
-  twoFactorEnabled: true,
-  createdAt: "2025-01-10T09:00:00",
-  createdBy: "Michael Lee",
-  lastUpdated: "2025-05-10T14:30:00",
-  lastUpdatedBy: "Thomas Brown",
-  permissions: [
-    { id: "perm-001", name: "View all projects", granted: true },
-    { id: "perm-002", name: "Edit projects", granted: true },
-    { id: "perm-003", name: "Invite employees", granted: true },
-    { id: "perm-004", name: "Delete projects", granted: false },
-    { id: "perm-005", name: "Admin access", granted: false },
-    { id: "perm-006", name: "Manage users", granted: false },
-    { id: "perm-007", name: "View reports", granted: true },
-    { id: "perm-008", name: "Edit reports", granted: true },
-    { id: "perm-009", name: "View forms", granted: true },
-    { id: "perm-010", name: "Edit forms", granted: true },
-    { id: "perm-011", name: "View beneficiaries", granted: true },
-    { id: "perm-012", name: "Edit beneficiaries", granted: true },
-    { id: "perm-013", name: "Export data", granted: true },
-  ],
-};
+// Employee page now fetches data from API; mockEmployee removed
 
 // Mock activity logs
 const mockActivityLogs = [
@@ -150,81 +148,192 @@ const mockActivityLogs = [
   },
 ];
 
-// Mock projects data
-const mockProjects = [
-  {
-    id: "proj-001",
-    title: "Rural Healthcare Initiative",
-    subProjects: [
-      { id: "sub-001", title: "Maternal Health Services" },
-      { id: "sub-002", title: "Child Vaccination Campaign" },
-      { id: "sub-004", title: "Nutrition Support" },
-    ],
-  },
-  {
-    id: "proj-002",
-    title: "Community Development",
-    subProjects: [
-      { id: "sub-003", title: "Water Access Program" },
-      { id: "sub-005", title: "Food Security Initiative" },
-    ],
-  },
-  {
-    id: "proj-003",
-    title: "Youth Empowerment Program",
-    subProjects: [
-      { id: "sub-006", title: "Education Support" },
-      { id: "sub-007", title: "Skills Training" },
-    ],
-  },
-];
+// Roles now loaded from store; mockRoles removed
 
-// Mock roles
-const mockRoles = [
-  "Super Admin",
-  "Admin",
-  "Program Manager",
-  "Field Staff",
-  "Data Analyst",
-];
+export function EmployeeDetails() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const singleEmployee = useSelector(selectSingleEmployee);
+  const isSingleLoading = useSelector(selectSingleEmployeeLoading);
+  const singleError = useSelector(selectSingleEmployeeError);
+  const isUpdating = useSelector(selectEmployeeUpdating);
+  const updateError = useSelector(selectEmployeeUpdateError);
+  // User projects tree state
+  const userProjects = useSelector(selectUserProjects);
+  const isUserProjectsLoading = useSelector(selectUserProjectsLoading);
+  const userProjectsError = useSelector(selectUserProjectsError);
 
-interface EmployeeDetailsProps {
-  employeeId: string;
-  onBack: () => void;
-}
-
-export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
-  // In a real app, we would fetch the employee data based on employeeId
-  // For this demo, we're using mock data
-  const employee = mockEmployee;
-  console.log("employeeId test me i ik unused declaration", employeeId);
+  // Tabs & edit state (activeTab must be declared before effects below)
   const [activeTab, setActiveTab] = useState("profile");
+
+  // Role ID derived from the selected employee (not the authenticated user)
+  const roleId = useMemo(() => {
+    const idVal = (singleEmployee as any)?.roles?.[0]?.id as
+      | string
+      | number
+      | undefined;
+    return idVal !== undefined && idVal !== null ? String(idVal) : undefined;
+  }, [singleEmployee]);
+
+  // Roles data from store
+  const roles = useSelector(selectAllRoles);
+  const rolesLoading = useSelector(selectRolesLoading);
+  const rolesError = useSelector(selectRolesError);
+
+  // Local selected role id for editing (defaults to employee's current role)
+  const [selectedRoleId, setSelectedRoleId] = useState<string | undefined>(
+    undefined
+  );
+
+  useEffect(() => {
+    setSelectedRoleId(roleId);
+  }, [roleId]);
+
+  // Fetch roles list if not present
+  useEffect(() => {
+    if (!rolesLoading && roles.length === 0) {
+      dispatch(fetchRoles(undefined));
+    }
+  }, [dispatch, rolesLoading, roles.length]);
+
+  // Role permissions from store and status flags
+  const rolePermissions = useSelector((state: any) =>
+    roleId ? selectRolePermissions(state, roleId) : []
+  );
+  const isPermissionsLoading = useSelector(selectRolePermissionsLoading);
+  const permissionsError = useSelector(selectRolePermissionsError);
+
+  // Fetch role permissions when Permissions tab is active and not yet loaded
+  useEffect(() => {
+    if (activeTab === "permissions" && roleId) {
+      if (
+        !isPermissionsLoading &&
+        !permissionsError &&
+        (!rolePermissions || rolePermissions.length === 0)
+      ) {
+        dispatch(fetchRolePermissions(roleId));
+      }
+    }
+  }, [
+    activeTab,
+    roleId,
+    isPermissionsLoading,
+    permissionsError,
+    rolePermissions?.length,
+    dispatch,
+  ]);
+
+  // Map store permissions -> local UI state for checkboxes
+  useEffect(() => {
+    if (activeTab !== "permissions") return;
+    if (rolePermissions && rolePermissions.length > 0) {
+      const mapped = rolePermissions.map((p: any) => ({
+        id: p.id,
+        name: p.description || `${p.resource}:${p.action}`,
+        granted: true,
+      }));
+      setPermissions(mapped);
+    } else if (rolePermissions && rolePermissions.length === 0) {
+      setPermissions([]);
+    }
+  }, [rolePermissions, activeTab]);
+
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchSingleEmployee(id));
+    }
+    return () => {
+      dispatch(clearSingleEmployee());
+    };
+  }, [dispatch, id]);
+
+  // Fetch user projects when Projects tab is active
+  useEffect(() => {
+    if (activeTab === "projects" && id) {
+      dispatch(fetchUserProjects(id));
+    }
+  }, [activeTab, id, dispatch]);
+
+  // Map API employee to UI-friendly shape
+  const employee = useMemo(() => {
+    return singleEmployee
+      ? {
+          id: singleEmployee.id,
+          name: `${singleEmployee.firstName} ${singleEmployee.lastName}`.trim(),
+          email: singleEmployee.email,
+          role:
+            singleEmployee.roles && singleEmployee.roles.length > 0
+              ? singleEmployee.roles[0].name
+              : "N/A",
+          status:
+            singleEmployee.status === "active"
+              ? "active"
+              : singleEmployee.status === "invited"
+              ? "pending"
+              : "inactive",
+          phone: "-",
+          // lastActive: singleEmployee.lastLogin,
+          projects: ["All Projects"],
+          subProjects: [] as string[],
+          twoFactorEnabled: singleEmployee.twoFactorEnabled,
+          createdAt: singleEmployee.createdAt,
+          createdBy: singleEmployee.invitedBy ?? "-",
+          lastUpdated: singleEmployee.updatedAt,
+          lastLogin: singleEmployee.lastLogin,
+          lastUpdatedBy: "-",
+          permissions: [] as { id: string; name: string; granted: boolean }[],
+        }
+      : null;
+  }, [singleEmployee]);
+
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordResetDialog, setShowPasswordResetDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  console.log("employee", singleEmployee);
+
   // Editable employee state
   const [formData, setFormData] = useState({
-    name: employee.name,
-    email: employee.email,
-    phone: employee.phone,
-    role: employee.role,
-    status: employee.status,
-    twoFactorEnabled: employee.twoFactorEnabled,
-    projects: employee.projects,
-    subProjects: employee.subProjects,
+    name: "",
+    email: "",
+    phone: "",
+    role: "",
+    status: "",
+    twoFactorEnabled: false,
+    projects: [] as string[],
+    subProjects: [] as string[],
   });
 
   // Project selection state
-  const [selectedProjects, setSelectedProjects] = useState<string[]>(
-    employee.projects
-  );
-  const [selectedSubProjects, setSelectedSubProjects] = useState<string[]>(
-    employee.subProjects
-  );
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [selectedSubProjects, setSelectedSubProjects] = useState<string[]>([]);
 
   // Permission state
-  const [permissions, setPermissions] = useState(employee.permissions);
+  const [permissions, setPermissions] = useState(
+    [] as { id: string; name: string; granted: boolean }[]
+  );
+
+  // Sync form state when employee loads
+  useEffect(() => {
+    if (employee) {
+      setFormData({
+        name: employee.name,
+        email: employee.email,
+        phone: employee.phone,
+        role: employee.role,
+        status: employee.status,
+        twoFactorEnabled: employee.twoFactorEnabled,
+        projects: employee.projects,
+        subProjects: employee.subProjects,
+      });
+      setSelectedProjects(employee.projects);
+      setSelectedSubProjects(employee.subProjects);
+      setPermissions(employee.permissions);
+    }
+  }, [employee]);
+
+  const handleBack = () => navigate("/employees");
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -232,9 +341,11 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle role change
+  // Handle role change (value is roleId)
   const handleRoleChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, role: value }));
+    setSelectedRoleId(value);
+    const found = roles.find((r) => r.id === value);
+    setFormData((prev) => ({ ...prev, role: found ? found.name : prev.role }));
   };
 
   // Handle status change
@@ -245,28 +356,6 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
   // Handle 2FA toggle
   const handle2FAToggle = (checked: boolean) => {
     setFormData((prev) => ({ ...prev, twoFactorEnabled: checked }));
-  };
-
-  // Handle project selection
-  const handleProjectToggle = (projectTitle: string) => {
-    setSelectedProjects((prev) => {
-      if (prev.includes(projectTitle)) {
-        return prev.filter((p) => p !== projectTitle);
-      } else {
-        return [...prev, projectTitle];
-      }
-    });
-  };
-
-  // Handle sub-project selection
-  const handleSubProjectToggle = (subProjectTitle: string) => {
-    setSelectedSubProjects((prev) => {
-      if (prev.includes(subProjectTitle)) {
-        return prev.filter((sp) => sp !== subProjectTitle);
-      } else {
-        return [...prev, subProjectTitle];
-      }
-    });
   };
 
   // Handle permission toggle
@@ -282,21 +371,51 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
   };
 
   // Save changes
-  const handleSaveClick = () => {
-    // In a real app, we would call an API to update the employee
-    // Update the form data with the selected projects and sub-projects
+  const handleSaveClick = async () => {
+    // Update the form data with the selected projects and sub-projects (local only)
     setFormData((prev) => ({
       ...prev,
       projects: selectedProjects,
       subProjects: selectedSubProjects,
     }));
 
-    // Exit edit mode
-    setIsEditing(false);
+    if (!singleEmployee) return;
+
+    const [first, ...rest] = (formData.name || "").trim().split(/\s+/);
+    const firstName = first ?? "";
+    const lastName = rest.join(" ");
+
+    const apiStatus: EmployeeStatus =
+      formData.status === "active"
+        ? "active"
+        : formData.status === "pending"
+        ? "invited"
+        : formData.status === "inactive"
+        ? "inactive"
+        : singleEmployee.status; // fallback to original if unsupported value selected
+
+    const payload: UpdateUserRequest = {
+      firstName,
+      lastName,
+      email: formData.email,
+      status: apiStatus,
+      roleIds: selectedRoleId ? [selectedRoleId] : roleId ? [roleId] : [],
+    };
+
+    try {
+      await dispatch(
+        updateEmployee({ userId: singleEmployee.id, data: payload })
+      ).unwrap();
+      setIsEditing(false);
+    } catch (e) {
+      // keep editing; error message will show
+      console.error("Failed to update user", e);
+    }
   };
 
   // Cancel editing
   const handleCancelClick = () => {
+    if (!employee) return;
     // Reset form data to original employee data
     setFormData({
       name: employee.name,
@@ -316,6 +435,9 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
     // Reset permissions
     setPermissions(employee.permissions);
 
+    // Reset role selection to original
+    setSelectedRoleId(roleId);
+
     // Exit edit mode
     setIsEditing(false);
   };
@@ -323,6 +445,7 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
   // Handle password reset
   const handlePasswordReset = () => {
     // In a real app, we would call an API to reset the password
+    if (!employee) return;
     console.log("Resetting password for:", employee.email);
     setShowPasswordResetDialog(false);
   };
@@ -330,19 +453,21 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
   // Handle delete employee
   const handleDeleteEmployee = () => {
     // In a real app, we would call an API to delete the employee
-    console.log("Deleting employee:", employee.id);
+    if (employee) {
+      console.log("Deleting employee:", employee.id);
+    }
     setShowDeleteDialog(false);
-    onBack(); // Navigate back to the list
+    navigate("/employees");
   };
 
   // Format date for display
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
+  // const formatDate = (dateString: string) => {
+  //   return new Date(dateString).toLocaleDateString("en-US", {
+  //     year: "numeric",
+  //     month: "long",
+  //     day: "numeric",
+  //   });
+  // };
 
   // Format datetime for display
   const formatDateTime = (dateString: string) => {
@@ -355,11 +480,62 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
     });
   };
 
+  if (isSingleLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={handleBack}>
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Employees
+            </Button>
+            <h2>Employee Details</h2>
+          </div>
+          <div className="text-muted-foreground">Loading…</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (singleError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={handleBack}>
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Employees
+            </Button>
+            <h2>Employee Details</h2>
+          </div>
+          <div className="text-destructive">Error: {singleError}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!employee) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={handleBack}>
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Employees
+            </Button>
+            <h2>Employee Details</h2>
+          </div>
+          <div className="text-muted-foreground">No data</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={onBack}>
+          <Button variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Employees
           </Button>
@@ -397,18 +573,24 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
           ) : (
             <>
               <Button
-                className="bg-black/10 text-black border-0"
                 variant="outline"
                 onClick={handleCancelClick}
+                disabled={isUpdating}
               >
                 Cancel
               </Button>
-              <Button
-                className="bg-black/10 text-black hover:bg-[#2E343E] hover:text-white border-0"
-                onClick={handleSaveClick}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
+              <Button onClick={handleSaveClick} disabled={isUpdating}>
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
               </Button>
             </>
           )}
@@ -475,24 +657,18 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Member since:</span>
-                <span>{formatDate(employee.createdAt)}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Last active:</span>
-                <span>{formatDate(employee.lastActive)}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Created by:</span>
-                <span>{employee.createdBy}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
                 <Pencil className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Last updated:</span>
-                <span>{formatDate(employee.lastUpdated)}</span>
+                <span>{formatDateTime(employee.lastUpdated)}</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Pencil className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Last Login:</span>
+                {employee.lastLogin && (
+                  <span>{formatDateTime(employee.lastLogin)}</span>
+                )}
               </div>
             </div>
 
@@ -573,6 +749,13 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {updateError && (
+                    <div className="bg-destructive/10 border border-destructive rounded-md p-3 mb-4">
+                      <span className="text-destructive">
+                        Failed to update user: {updateError}
+                      </span>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name</Label>
@@ -582,7 +765,7 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
                         name="name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        disabled={!isEditing}
+                        disabled={!isEditing || isUpdating}
                       />
                     </div>
                     <div className="space-y-2">
@@ -594,7 +777,7 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
                         type="email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        disabled={!isEditing}
+                        disabled={!isEditing || isUpdating}
                       />
                     </div>
                     <div className="space-y-2">
@@ -605,27 +788,41 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
                         name="phone"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        disabled={!isEditing}
+                        disabled={!isEditing || isUpdating}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="role">Role</Label>
                       {isEditing ? (
-                        <Select
-                          value={formData.role}
-                          onValueChange={handleRoleChange}
-                        >
-                          <SelectTrigger className="bg-black/5 border-0">
-                            <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {mockRoles.map((role) => (
-                              <SelectItem key={role} value={role}>
-                                {role}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <>
+                          <Select
+                            value={selectedRoleId}
+                            onValueChange={handleRoleChange}
+                            disabled={isUpdating || rolesLoading}
+                          >
+                            <SelectTrigger>
+                              <SelectValue
+                                placeholder={
+                                  rolesLoading
+                                    ? "Loading roles…"
+                                    : "Select role"
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {roles.map((r) => (
+                                <SelectItem key={r.id} value={r.id}>
+                                  {r.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {rolesError && (
+                            <div className="text-destructive text-sm mt-1">
+                              Failed to load roles: {rolesError}
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <Input id="role" value={formData.role} disabled />
                       )}
@@ -637,6 +834,7 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
                           <Select
                             value={formData.status}
                             onValueChange={handleStatusChange}
+                            disabled={isUpdating}
                           >
                             <SelectTrigger className="bg-black/5 border-0">
                               <SelectValue placeholder="Select status" />
@@ -657,6 +855,7 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
                             id="twoFactor"
                             checked={formData.twoFactorEnabled}
                             onCheckedChange={handle2FAToggle}
+                            disabled={isUpdating}
                           />
                         </div>
                       </>
@@ -691,31 +890,57 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {permissions.map((permission) => (
-                      <div
-                        key={permission.id}
-                        className="flex items-center space-x-2"
+                  {isPermissionsLoading ? (
+                    <div className="text-muted-foreground">
+                      Loading permissions…
+                    </div>
+                  ) : permissionsError ? (
+                    <div className="bg-destructive/10 border border-destructive rounded-md p-3 flex items-center justify-between">
+                      <span className="text-destructive">
+                        Failed to load permissions: {permissionsError}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          roleId && dispatch(fetchRolePermissions(roleId))
+                        }
                       >
-                        <Checkbox
-                          id={permission.id}
-                          checked={permission.granted}
-                          onCheckedChange={() =>
-                            handlePermissionToggle(permission.id)
-                          }
-                          disabled={!isEditing}
-                        />
-                        <Label
-                          htmlFor={permission.id}
-                          className={`font-normal ${
-                            !permission.granted && "text-muted-foreground"
-                          }`}
+                        Retry
+                      </Button>
+                    </div>
+                  ) : permissions.length === 0 ? (
+                    <div className="text-muted-foreground">
+                      No permissions found for this role.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {permissions.map((permission) => (
+                        <div
+                          key={permission.id}
+                          className="flex items-center space-x-2"
                         >
-                          {permission.name}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
+                          {/* <Checkbox
+                            id={permission.id}
+                            checked={permission.granted}
+                            onCheckedChange={() =>
+                              handlePermissionToggle(permission.id)
+                            }
+                            disabled={!isEditing}
+                          /> */}
+                          -
+                          <Label
+                            htmlFor={permission.id}
+                            className={`font-normal ${
+                              !permission.granted && "text-muted-foreground"
+                            }`}
+                          >
+                            {permission.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -738,122 +963,110 @@ export function EmployeeDetails({ employeeId, onBack }: EmployeeDetailsProps) {
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
-                      <CardTitle className="text-lg">
-                        Project Assignments
-                      </CardTitle>
+                      <CardTitle className="text-lg">Projects</CardTitle>
                       <CardDescription>
-                        Manage which projects and sub-projects this employee has
-                        access to.
+                        Projects, subprojects and activities assigned to this
+                        employee.
                       </CardDescription>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {isUserProjectsLoading && (
+                        <span className="inline-flex items-center">
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Loading projects…
+                        </span>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
-                    {isEditing && (
-                      <div className="flex items-center space-x-2 mb-6">
-                        <Checkbox
-                          className="bg-[#95A4FC] border-0 text-white"
-                          id="all-projects"
-                          checked={selectedProjects.includes("All Projects")}
-                          onCheckedChange={(checked: any) => {
-                            if (checked) {
-                              setSelectedProjects(["All Projects"]);
-                              setSelectedSubProjects(["All Sub-Projects"]);
-                            } else {
-                              setSelectedProjects([]);
-                              setSelectedSubProjects([]);
-                            }
-                          }}
-                        />
-                        <Label htmlFor="all-projects" className="font-medium">
-                          Grant Access to All Projects
-                        </Label>
-                      </div>
-                    )}
-
-                    {!isEditing && selectedProjects.includes("All Projects") ? (
-                      <div className="bg-primary/5 p-4 rounded-md border">
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck className="h-5 w-5 text-primary " />
-                          <span className="font-medium">
-                            This employee has access to all projects and
-                            sub-projects
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {mockProjects.map((project) => (
-                          <div
-                            key={project.id}
-                            className="border rounded-md p-4"
-                          >
-                            <div className="flex items-center space-x-2 mb-4">
-                              <Checkbox
-                                className="bg-[#95A4FC] border-0 text-white"
-                                id={project.id}
-                                checked={selectedProjects.includes(
-                                  project.title
-                                )}
-                                onCheckedChange={() =>
-                                  handleProjectToggle(project.title)
-                                }
-                                disabled={
-                                  !isEditing ||
-                                  selectedProjects.includes("All Projects")
-                                }
-                              />
-                              <Label
-                                htmlFor={project.id}
-                                className="font-medium"
-                              >
-                                {project.title}
-                              </Label>
-                            </div>
-
-                            <div className="pl-6 border-l ml-2 space-y-2">
-                              {project.subProjects.map((subProject) => (
-                                <div
-                                  key={subProject.id}
-                                  className="flex items-center space-x-2"
-                                >
-                                  <Checkbox
-                                    className="bg-[#95A4FC] border-0 text-white"
-                                    id={subProject.id}
-                                    checked={
-                                      selectedProjects.includes(
-                                        "All Projects"
-                                      ) ||
-                                      selectedSubProjects.includes(
-                                        subProject.title
-                                      )
-                                    }
-                                    onCheckedChange={() =>
-                                      handleSubProjectToggle(subProject.title)
-                                    }
-                                    disabled={
-                                      !isEditing ||
-                                      selectedProjects.includes(
-                                        "All Projects"
-                                      ) ||
-                                      !selectedProjects.includes(project.title)
-                                    }
-                                  />
-                                  <Label
-                                    htmlFor={subProject.id}
-                                    className="font-normal"
-                                  >
-                                    {subProject.title}
-                                  </Label>
+                  {userProjectsError ? (
+                    <div className="bg-destructive/10 border border-destructive rounded-md p-3 flex items-center justify-between">
+                      <span className="text-destructive">
+                        Failed to load projects: {userProjectsError}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => id && dispatch(fetchUserProjects(id))}
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  ) : userProjects.length === 0 && !isUserProjectsLoading ? (
+                    <div className="text-muted-foreground">
+                      No projects found.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {userProjects.map((project) => (
+                        <div key={project.id} className="border rounded-md p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <div className="font-medium">{project.name}</div>
+                              {project.description && (
+                                <div className="text-sm text-muted-foreground">
+                                  {project.description}
                                 </div>
-                              ))}
+                              )}
                             </div>
+                            {project.status && (
+                              <Badge variant="outline">{project.status}</Badge>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                          {project.subprojects &&
+                            project.subprojects.length > 0 && (
+                              <div className="pl-6 border-l ml-2 mt-3 space-y-3">
+                                {project.subprojects.map((sub) => (
+                                  <div key={sub.id}>
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div>
+                                        <div className="font-normal">
+                                          {sub.name}
+                                        </div>
+                                        {sub.description && (
+                                          <div className="text-sm text-muted-foreground">
+                                            {sub.description}
+                                          </div>
+                                        )}
+                                      </div>
+                                      {sub.status && (
+                                        <Badge variant="outline">
+                                          {sub.status}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    {sub.activities &&
+                                      sub.activities.length > 0 && (
+                                        <div className="mt-2 pl-5 border-l space-y-1">
+                                          {sub.activities.map((act) => (
+                                            <div
+                                              key={act.id}
+                                              className="flex items-center justify-between"
+                                            >
+                                              <div className="text-sm">
+                                                {act.name}
+                                              </div>
+                                              {act.status && (
+                                                <Badge
+                                                  variant="outline"
+                                                  className="ml-2"
+                                                >
+                                                  {act.status}
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

@@ -3,6 +3,11 @@ import authReducer from "./slices/authSlice";
 import projectsReducer from "./slices/projectsSlice";
 import subprojectsReducer from "./slices/subProjectSlice";
 import formsReducer from "./slices/formSlice";
+import employeesReducer from "./slices/employeesSlice";
+import rolesReducer from "./slices/roleSlice";
+import activitiesReducer from "./slices/activitySlice";
+import beneficiariesReducer from "./slices/beneficiarySlice";
+import servicesReducer from "./slices/serviceSlice";
 import userProjectsReducer from "./slices/userProjectsSlice";
 import serviceMetricsReducer from "./slices/serviceMetricsSlice";
 import kpiReducer from "./slices/kpiSlice";
@@ -14,6 +19,11 @@ export const store = configureStore({
     projects: projectsReducer,
     subprojects: subprojectsReducer,
     forms: formsReducer,
+    employees: employeesReducer,
+    roles: rolesReducer,
+    activities: activitiesReducer,
+    beneficiaries: beneficiariesReducer,
+    services: servicesReducer,
     userProjects: userProjectsReducer,
     serviceMetrics: serviceMetricsReducer,
     kpis: kpiReducer,

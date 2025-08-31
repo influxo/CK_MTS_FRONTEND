@@ -1,23 +1,37 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { AccountSetup } from "./AccountSetup";
-import { EmployeeDetails } from "./EmployeeDetails";
 import { EmployeesList } from "./EmployeesList";
 import { InviteEmployee } from "./InviteEmployee";
+import type { AppDispatch } from "../../store";
+import {
+  fetchEmployees,
+  selectAllEmployees,
+  selectEmployeesError,
+  selectEmployeesLoading,
+} from "../../store/slices/employeesSlice";
 
-type EmployeeView = "list" | "details" | "invite" | "setup";
+type EmployeeView = "list" | "invite" | "setup";
 
 export function EmployeesModule() {
   const [view, setView] = useState<EmployeeView>("list");
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(
-    null
-  );
   const [inviteData, setInviteData] = useState<any>(null);
   const [setupToken, setSetupToken] = useState<string | null>(null);
   console.log("inviteData test me i ik unused declaration", inviteData);
-  // Handle when an employee is selected from the list
+
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const employees = useSelector(selectAllEmployees);
+  const isLoading = useSelector(selectEmployeesLoading);
+  const error = useSelector(selectEmployeesError);
+
+  useEffect(() => {
+    dispatch(fetchEmployees());
+  }, [dispatch]);
+  // Handle when an employee is selected from the list -> navigate to details route
   const handleEmployeeSelect = (employeeId: string) => {
-    setSelectedEmployeeId(employeeId);
-    setView("details");
+    navigate(`/employees/${employeeId}`);
   };
 
   // Handle when navigating to invite page
@@ -38,10 +52,9 @@ export function EmployeesModule() {
   //   setView("setup");
   // };
 
-  // Handle back button
+  // Handle back button (used by invite/setup flows)
   const handleBack = () => {
     setView("list");
-    setSelectedEmployeeId(null);
   };
 
   // Handle account setup completion
@@ -49,13 +62,6 @@ export function EmployeesModule() {
     setView("list");
     setSetupToken(null);
   };
-
-  // Render appropriate view based on state
-  if (view === "details" && selectedEmployeeId) {
-    return (
-      <EmployeeDetails employeeId={selectedEmployeeId} onBack={handleBack} />
-    );
-  }
 
   if (view === "invite") {
     return (
@@ -77,6 +83,9 @@ export function EmployeesModule() {
     <EmployeesList
       onEmployeeSelect={handleEmployeeSelect}
       onInviteClick={handleInviteClick}
+      employees={employees}
+      isLoading={isLoading}
+      error={error}
     />
   );
 }

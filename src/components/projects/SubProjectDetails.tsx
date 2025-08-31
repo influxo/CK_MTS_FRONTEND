@@ -52,6 +52,7 @@ import {
   selectSubprojectsError,
   selectSubprojectsLoading,
 } from "../../store/slices/subProjectSlice";
+import { fetchEmployees } from "../../store/slices/employeesSlice";
 import { Progress } from "../ui/feedback/progress";
 import { toast } from "sonner";
 // We don't need to import the SubProject type directly as it's already used in Redux selectors
@@ -122,6 +123,10 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
       }
     }
   }, [subprojectId, projectId, dispatch, navigate]);
+ 
+  useEffect(() => {
+    dispatch(fetchEmployees());
+  }, [dispatch]);
 
   const handleBackToProject = () => {
     if (onBack) {

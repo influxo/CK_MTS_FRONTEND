@@ -4,10 +4,10 @@ export interface InviteUserRequest {
     firstName: string;
     lastName: string;
     email: string;
-    roleIds: number[];
+    roleIds: string[];
     expiration: string,
-    projectIds: number[],
-    subProjectIds: number[] ,
+    projectIds: string[],
+    subProjectIds: string[] ,
     message: string
   }
 
