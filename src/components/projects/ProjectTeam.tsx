@@ -4,7 +4,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -83,9 +88,7 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
   const handleRemoveMember = async (userId: string) => {
     if (!userId) return;
     try {
-      await dispatch(
-        removeUserFromProject({ projectId, userId })
-      ).unwrap();
+      await dispatch(removeUserFromProject({ projectId, userId })).unwrap();
       // refresh assigned users
       dispatch(fetchProjectUsers(projectId));
     } catch (e) {
@@ -94,7 +97,7 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
   };
 
   return (
-    <Card>
+    <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <CardTitle className="text-base">Project Team</CardTitle>
@@ -103,7 +106,7 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
             onOpenChange={setIsAssignDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button size="sm">
+              <Button size="sm" className="bg-[#2E343E] text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Assign Member
               </Button>
@@ -129,7 +132,10 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
                     </SelectTrigger>
                     <SelectContent>
                       {employees.map((emp) => {
-                        const fullName = `${emp.firstName ?? ""} ${emp.lastName ?? ""}`.trim() || "N/A";
+                        const fullName =
+                          `${emp.firstName ?? ""} ${
+                            emp.lastName ?? ""
+                          }`.trim() || "N/A";
                         const initials = fullName
                           .split(" ")
                           .map((n) => n[0])
@@ -146,7 +152,10 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
                                 </AvatarFallback>
                               </Avatar>
                               <span className="text-sm">{fullName}</span>
-                              <Badge variant="secondary" className="text-[10px]">
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px]"
+                              >
                                 {emp.email}
                               </Badge>
                             </div>
@@ -177,10 +186,16 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
                 */}
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsAssignDialogOpen(false)}
+                >
                   Cancel
                 </Button>
-                <Button disabled={!selectedMemberId} onClick={handleAssignMember}>
+                <Button
+                  disabled={!selectedMemberId}
+                  onClick={handleAssignMember}
+                >
                   Assign Member
                 </Button>
               </DialogFooter>
@@ -190,7 +205,9 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="py-4 text-sm text-muted-foreground">Loading team…</div>
+          <div className="py-4 text-sm text-muted-foreground">
+            Loading team…
+          </div>
         ) : error ? (
           <div className="py-4 text-sm text-destructive">{error}</div>
         ) : (
@@ -206,13 +223,18 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
             <TableBody>
               {assignedUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center text-muted-foreground"
+                  >
                     No team members assigned yet.
                   </TableCell>
                 </TableRow>
               ) : (
                 assignedUsers.map((u) => {
-                  const fullName = `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
+                  const fullName = `${u.firstName ?? ""} ${
+                    u.lastName ?? ""
+                  }`.trim();
                   const initials = (fullName || u.email || "N/A")
                     .split(" ")
                     .map((n) => n[0])
@@ -228,8 +250,12 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
                             <AvatarFallback>{initials}</AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium">{fullName || "N/A"}</div>
-                            <div className="text-sm text-muted-foreground">{u.email}</div>
+                            <div className="font-medium">
+                              {fullName || "N/A"}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {u.email}
+                            </div>
                           </div>
                         </div>
                       </TableCell>

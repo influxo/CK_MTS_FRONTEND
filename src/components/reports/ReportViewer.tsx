@@ -14,7 +14,12 @@ import {
 import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +48,24 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
+import {
+  PieChart as RePieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
 
 // Mock data for a saved report
 const mockReportData = {
@@ -204,6 +226,21 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
   const [emailRecipients, setEmailRecipients] = useState("");
   const [includeAttachments, setIncludeAttachments] = useState(true);
 
+  // Pie chart data for Female/Male/Other using configured colors
+  const pieData = report.chartData.pie.labels.map((name, index) => ({
+    name,
+    value: report.chartData.pie.data[index],
+    color: report.chartData.pie.colors[index],
+  }));
+
+  // Bar chart data for Locations/Regions
+  const barData = report.chartData.bar.labels.map((name, index) => ({
+    name,
+    value: report.chartData.bar.data[index],
+    color:
+      report.chartData.bar.colors[index % report.chartData.bar.colors.length],
+  }));
+
   // Format date for display
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -239,7 +276,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
         <div className="flex gap-2">
           <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" className="bg-black/10 border-0">
                 <Share className="h-4 w-4 mr-2" />
                 Share
               </Button>
@@ -295,7 +332,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
             onOpenChange={setIsScheduleDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" className="bg-black/10 border-0">
                 <Repeat className="h-4 w-4 mr-2" />
                 Schedule
               </Button>
@@ -363,20 +400,23 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
             </DialogContent>
           </Dialog>
 
-          <Button>
+          <Button className="bg-[#2E343E] text-white border-0">
             <FileDown className="h-4 w-4 mr-2" />
             Export
           </Button>
         </div>
       </div>
 
-      <Card className="mb-6">
+      <Card className="mb-6 bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row justify-between gap-6">
             <div className="space-y-2">
               <div className="flex gap-2 items-center">
                 <h3>{report.name}</h3>
-                <Badge variant="outline" className="capitalize">
+                <Badge
+                  variant="outline"
+                  className="capitalize bg-[#2E343E] text-white border-0"
+                >
                   {report.type}
                 </Badge>
               </div>
@@ -421,28 +461,30 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full border-b bg-transparent p-0 h-auto">
+        <TabsList className="w-full bg-[#E3F5FF]  pt-3 drop-shadow-sm shadow-gray-50   mt-4 h-auto">
           <div className="flex flex-wrap gap-4">
             <TabsTrigger
               value="dashboard"
-              className={`rounded-none border-b-2 border-transparent pb-3 ${
-                activeTab === "dashboard" ? "border-primary" : ""
+              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
+                activeTab === "dashboard"
+                  ? "border-black"
+                  : "border-transparent"
               }`}
             >
               Dashboard
             </TabsTrigger>
             <TabsTrigger
               value="data"
-              className={`rounded-none border-b-2 border-transparent pb-3 ${
-                activeTab === "data" ? "border-primary" : ""
+              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
+                activeTab === "data" ? "border-black" : "border-transparent"
               }`}
             >
               Data
             </TabsTrigger>
             <TabsTrigger
               value="exports"
-              className={`rounded-none border-b-2 border-transparent pb-3 ${
-                activeTab === "exports" ? "border-primary" : ""
+              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
+                activeTab === "exports" ? "border-black" : "border-transparent"
               }`}
             >
               Export Options
@@ -453,7 +495,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
         <TabsContent value="dashboard">
           <div className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-              <Card>
+              <Card className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0">
                 <CardContent className="p-6">
                   <div className="text-sm text-muted-foreground">
                     Total Beneficiaries
@@ -463,7 +505,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </div>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0">
                 <CardContent className="p-6">
                   <div className="text-sm text-muted-foreground">
                     Active Beneficiaries
@@ -473,7 +515,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </div>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0">
                 <CardContent className="p-6">
                   <div className="text-sm text-muted-foreground">
                     Average Age
@@ -483,7 +525,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </div>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0">
                 <CardContent className="p-6">
                   <div className="text-sm text-muted-foreground">
                     Total Services
@@ -497,7 +539,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               {report.charts.includes("pie") && (
-                <Card>
+                <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
                   <CardHeader>
                     <CardTitle className="text-base">
                       {report.chartData.pie.title}
@@ -505,7 +547,25 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </CardHeader>
                   <CardContent className="p-6 h-[300px] flex items-center justify-center">
                     <div className="relative h-full w-full flex items-center justify-center">
-                      <PieChart className="h-32 w-32 text-primary" />
+                      <ResponsiveContainer width="100%" height={250}>
+                        <RePieChart>
+                          <Pie
+                            data={pieData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={100}
+                            label={({ name, value }) => `${name} ${value}%`}
+                          >
+                            {pieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value: number) => `${value}%`} />
+                        </RePieChart>
+                      </ResponsiveContainer>
                       <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-4">
                         {report.chartData.pie.labels.map((label, index) => (
                           <div
@@ -531,53 +591,39 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
               )}
 
               {report.charts.includes("bar") && (
-                <Card>
+                <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
                   <CardHeader>
                     <CardTitle className="text-base">
                       {report.chartData.bar.title}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="p-6 h-[300px] flex flex-col justify-between">
-                    <div className="flex-1 flex items-end gap-2">
-                      {report.chartData.bar.labels.map((_label, index) => {
-                        const percentage =
-                          (report.chartData.bar.data[index] /
-                            Math.max(...report.chartData.bar.data)) *
-                          100;
-                        return (
-                          <div
-                            key={index}
-                            className="flex-1 flex flex-col items-center gap-1"
-                          >
-                            <div className="w-full bg-muted rounded-sm overflow-hidden">
-                              <div
-                                className="bg-primary h-[150px] rounded-sm"
-                                style={{ height: `${percentage}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="flex justify-between mt-4 overflow-x-auto">
-                      {report.chartData.bar.labels.map((label, index) => (
-                        <div
-                          key={index}
-                          className="text-xs text-center whitespace-nowrap px-1"
-                        >
-                          {label}
-                          <div className="font-medium">
-                            {report.chartData.bar.data[index]}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                  <CardContent className="p-6 h-[300px]">
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={barData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="name"
+                          tick={{ fontSize: 12 }}
+                          interval={0}
+                        />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="value">
+                          {barData.map((entry, index) => (
+                            <Cell
+                              key={`bar-cell-${index}`}
+                              fill={entry.color}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </CardContent>
                 </Card>
               )}
             </div>
 
-            <Card>
+            <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
               <CardHeader>
                 <CardTitle className="text-base">Data Summary</CardTitle>
               </CardHeader>
@@ -591,9 +637,9 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                           <span className="text-muted-foreground">Female</span>
                           <span>{report.summary.femalePercentage}%</span>
                         </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-2 bg-[#E5ECF6] rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-primary"
+                            className="h-full bg-[#E3F5FF]"
                             style={{
                               width: `${report.summary.femalePercentage}%`,
                             }}
@@ -605,9 +651,9 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                           <span className="text-muted-foreground">Male</span>
                           <span>{report.summary.malePercentage}%</span>
                         </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-2 bg-[#E5ECF6] rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-primary"
+                            className="h-full bg-[#E3F5FF]"
                             style={{
                               width: `${report.summary.malePercentage}%`,
                             }}
@@ -619,9 +665,9 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                           <span className="text-muted-foreground">Other</span>
                           <span>{report.summary.otherPercentage}%</span>
                         </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-2 bg-[#E5ECF6] rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-primary"
+                            className="h-full bg-[#E3F5FF]"
                             style={{
                               width: `${report.summary.otherPercentage}%`,
                             }}
@@ -646,9 +692,9 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                             %
                           </span>
                         </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-2 bg-[#E5ECF6] rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-green-500"
+                            className="h-full bg-[#E3F5FF]"
                             style={{
                               width: `${
                                 (report.summary.activeBeneficiaries /
@@ -673,9 +719,9 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                             %
                           </span>
                         </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-2 bg-[#E5ECF6] rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gray-400"
+                            className="h-full bg-[#E3F5FF]"
                             style={{
                               width: `${
                                 (report.summary.inactiveBeneficiaries /
@@ -696,12 +742,16 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
 
         <TabsContent value="data">
           <div className="pt-6">
-            <Card>
+            <Card className="drop-shadow-sm shadow-gray-50 bg-[#F7F9FB] border-0">
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-base">Report Data</CardTitle>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-[#2E343E] text-white border-0"
+                    >
                       <FileSpreadsheet className="h-4 w-4 mr-2" />
                       Export Excel
                     </Button>
@@ -727,8 +777,10 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                                 <span className="font-medium">{cell}</span>
                               ) : cellIndex === 6 ? (
                                 <Badge
-                                  variant={
-                                    cell === "Active" ? "default" : "secondary"
+                                  className={
+                                    cell === "Active"
+                                      ? "text-[#4AA785] bg-[#DEF8EE] border-0"
+                                      : "text-[#59A8D4] bg-[#E2F5FF] border-0"
                                   }
                                 >
                                   {cell}
@@ -755,7 +807,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
         <TabsContent value="exports">
           <div className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden drop-shadow-sm shadow-gray-50 bg-[#F7F9FB] border-0">
                 <CardHeader>
                   <CardTitle className="text-base">PDF Export</CardTitle>
                 </CardHeader>
@@ -765,7 +817,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                       Export the report as a formatted PDF document with charts
                       and data tables.
                     </p>
-                    <div className="border rounded-md bg-muted/30 p-4">
+                    <div className="bg-[#E5ECF6] rounded-md bg-muted/30 p-4">
                       <div className="text-sm">
                         <div className="font-medium">Export Options:</div>
                         <ul className="list-disc pl-5 mt-2 space-y-1 text-muted-foreground">
@@ -780,14 +832,14 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </div>
                 </CardContent>
                 <div className="px-6 py-4 bg-muted/50 mt-4 flex justify-center">
-                  <Button>
+                  <Button className="bg-[#2E343E] text-white border-0">
                     <FileText className="h-4 w-4 mr-2" />
                     Export PDF
                   </Button>
                 </div>
               </Card>
 
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden drop-shadow-sm shadow-gray-50 bg-[#F7F9FB] border-0">
                 <CardHeader>
                   <CardTitle className="text-base">Excel Export</CardTitle>
                 </CardHeader>
@@ -797,7 +849,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                       Export the report data as an Excel spreadsheet for further
                       analysis and manipulation.
                     </p>
-                    <div className="border rounded-md bg-muted/30 p-4">
+                    <div className="bg-[#E5ECF6] rounded-md bg-muted/30 p-4">
                       <div className="text-sm">
                         <div className="font-medium">Export Options:</div>
                         <ul className="list-disc pl-5 mt-2 space-y-1 text-muted-foreground">
@@ -812,14 +864,14 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </div>
                 </CardContent>
                 <div className="px-6 py-4 bg-muted/50 mt-4 flex justify-center">
-                  <Button>
+                  <Button className="bg-[#2E343E] text-white border-0">
                     <FileSpreadsheet className="h-4 w-4 mr-2" />
                     Export Excel
                   </Button>
                 </div>
               </Card>
 
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden drop-shadow-sm shadow-gray-50 bg-[#F7F9FB] border-0">
                 <CardHeader>
                   <CardTitle className="text-base">Email Report</CardTitle>
                 </CardHeader>
@@ -829,7 +881,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                       Email the report to team members, stakeholders, or
                       yourself with attachments.
                     </p>
-                    <div className="border rounded-md bg-muted/30 p-4">
+                    <div className="bg-[#E5ECF6] rounded-md bg-muted/30 p-4">
                       <div className="text-sm">
                         <div className="font-medium">Email Options:</div>
                         <ul className="list-disc pl-5 mt-2 space-y-1 text-muted-foreground">
@@ -844,14 +896,17 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </div>
                 </CardContent>
                 <div className="px-6 py-4 bg-muted/50 mt-4 flex justify-center">
-                  <Button onClick={() => setIsShareDialogOpen(true)}>
+                  <Button
+                    onClick={() => setIsShareDialogOpen(true)}
+                    className="bg-[#2E343E] text-white border-0"
+                  >
                     <Mail className="h-4 w-4 mr-2" />
                     Email Report
                   </Button>
                 </div>
               </Card>
 
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden drop-shadow-sm shadow-gray-50 bg-[#F7F9FB] border-0">
                 <CardHeader>
                   <CardTitle className="text-base">Print Report</CardTitle>
                 </CardHeader>
@@ -861,7 +916,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                       Print the report directly to your printer with custom
                       formatting.
                     </p>
-                    <div className="border rounded-md bg-muted/30 p-4">
+                    <div className="bg-[#E5ECF6] rounded-md bg-muted/30 p-4">
                       <div className="text-sm">
                         <div className="font-medium">Print Options:</div>
                         <ul className="list-disc pl-5 mt-2 space-y-1 text-muted-foreground">
@@ -876,14 +931,14 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </div>
                 </CardContent>
                 <div className="px-6 py-4 bg-muted/50 mt-4 flex justify-center">
-                  <Button>
+                  <Button className="bg-[#2E343E] text-white border-0">
                     <Printer className="h-4 w-4 mr-2" />
                     Print Report
                   </Button>
                 </div>
               </Card>
 
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden drop-shadow-sm shadow-gray-50 bg-[#F7F9FB] border-0">
                 <CardHeader>
                   <CardTitle className="text-base">
                     Schedule Regular Exports
@@ -895,7 +950,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                       Set up automated delivery of this report on a regular
                       schedule.
                     </p>
-                    <div className="border rounded-md bg-muted/30 p-4">
+                    <div className="bg-[#E5ECF6] rounded-md bg-muted/30 p-4">
                       <div className="text-sm">
                         <div className="font-medium">Schedule Options:</div>
                         <ul className="list-disc pl-5 mt-2 space-y-1 text-muted-foreground">
@@ -910,14 +965,17 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </div>
                 </CardContent>
                 <div className="px-6 py-4 bg-muted/50 mt-4 flex justify-center">
-                  <Button onClick={() => setIsScheduleDialogOpen(true)}>
+                  <Button
+                    onClick={() => setIsScheduleDialogOpen(true)}
+                    className="bg-[#2E343E] text-white border-0"
+                  >
                     <Repeat className="h-4 w-4 mr-2" />
                     Set Schedule
                   </Button>
                 </div>
               </Card>
 
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden drop-shadow-sm shadow-gray-50 bg-[#F7F9FB] border-0">
                 <CardHeader>
                   <CardTitle className="text-base">Raw Data Export</CardTitle>
                 </CardHeader>
@@ -927,7 +985,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                       Export the raw data in various formats for integration
                       with other systems.
                     </p>
-                    <div className="border rounded-md bg-muted/30 p-4">
+                    <div className="bg-[#E5ECF6] rounded-md bg-muted/30 p-4">
                       <div className="text-sm">
                         <div className="font-medium">Format Options:</div>
                         <ul className="list-disc pl-5 mt-2 space-y-1 text-muted-foreground">
@@ -942,7 +1000,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </div>
                 </CardContent>
                 <div className="px-6 py-4 bg-muted/50 mt-4 flex justify-center">
-                  <Button>
+                  <Button className="bg-[#2E343E] text-white border-0">
                     <Download className="h-4 w-4 mr-2" />
                     Export Raw Data
                   </Button>

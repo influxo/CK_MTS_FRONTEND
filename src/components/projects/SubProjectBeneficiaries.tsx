@@ -478,9 +478,9 @@ export function SubProjectBeneficiaries({
             </div> */}
           </div>
 
-          <div className="rounded-md border overflow-hidden">
+          <div className="rounded-md  overflow-hidden">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-[#E5ECF6]">
                 <TableRow>
                   <TableHead className="w-[50px]">
                     <Checkbox
@@ -636,13 +636,6 @@ export function SubProjectBeneficiaries({
         </TabsContent>
 
         <TabsContent value="groups" className="pt-4">
-          <div className="flex justify-end mb-4">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Group
-            </Button>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredGroups.map((group) => (
               <Card key={group.id}>

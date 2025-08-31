@@ -286,11 +286,13 @@ export function InviteEmployee({
   };
 
   // Check if form is valid for submission
+
   const isFormValid =
     inviteData.firstName.trim() !== "" &&
     inviteData.lastName.trim() !== "" &&
     inviteData.email.trim() !== "" &&
     inviteData.role !== "";
+  inviteData.role !== "";
 
   console.log("role id", inviteData.role);
   return (
@@ -306,7 +308,7 @@ export function InviteEmployee({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
           <CardHeader>
             <CardTitle>Invite Details</CardTitle>
             <CardDescription>
@@ -319,6 +321,7 @@ export function InviteEmployee({
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name</Label>
                   <Input
+                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                     id="firstName"
                     name="firstName"
                     placeholder="Enter first name"
@@ -330,6 +333,7 @@ export function InviteEmployee({
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name</Label>
                   <Input
+                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                     id="lastName"
                     name="lastName"
                     placeholder="Enter last name"
@@ -343,6 +347,7 @@ export function InviteEmployee({
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
+                  className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                   id="email"
                   name="email"
                   type="email"
@@ -400,6 +405,7 @@ export function InviteEmployee({
               <div className="space-y-2">
                 <Label htmlFor="message">Personal Message</Label>
                 <Textarea
+                  className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                   id="message"
                   name="message"
                   placeholder="Add a personal message to the invitation email"
@@ -415,6 +421,7 @@ export function InviteEmployee({
                 <Label>Project Access</Label>
                 <div className="flex items-center space-x-2 mt-2">
                   <Checkbox
+                    className="bg-[#95A4FC] text-white"
                     id="allProjects"
                     checked={inviteData.allProjects}
                     onCheckedChange={handleAllProjectsToggle}
@@ -505,7 +512,7 @@ export function InviteEmployee({
                   value={inviteData.expiration}
                   onValueChange={handleExpirationChange}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  ">
                     <SelectValue placeholder="Select expiration period" />
                   </SelectTrigger>
                   <SelectContent>
@@ -523,13 +530,17 @@ export function InviteEmployee({
                   checked={inviteData.sendCopy}
                   onCheckedChange={handleSendCopyToggle}
                 />
-                <Label htmlFor="sendCopy" className="font-normal">
+                {/* <Label
+                  htmlFor="sendCopy"
+                  className="font-normal bg-black/5 p-2 rounded-md"
+                >
                   Send me a copy of the invitation
-                </Label>
+                </Label> */}
               </div>
 
               <div className="flex justify-between">
                 <Button
+                  className="bg-black/10 hover:bg-black/20 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
                   type="button"
                   variant="outline"
                   onClick={onBack}
@@ -560,12 +571,12 @@ export function InviteEmployee({
         </Card>
 
         <div className="space-y-6">
-          <Card>
+          <Card className="bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
             <CardHeader>
               <CardTitle>Invitation Preview</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="border rounded-md p-4 bg-muted/20">
+              <div className="bg-[#E3F5FF] rounded-md p-4 ">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="bg-primary/10 p-2 rounded-full">
                     <UserPlus className="h-5 w-5 text-primary" />
@@ -587,7 +598,7 @@ export function InviteEmployee({
                 </p>
 
                 {inviteData.message && (
-                  <div className="border-l-2 pl-3 py-1 italic text-sm mb-3">
+                  <div className="border-l-2 border-black/20 pl-3 py-1 italic text-sm mb-3">
                     {inviteData.message}
                   </div>
                 )}
@@ -600,7 +611,11 @@ export function InviteEmployee({
                 </div>
 
                 <div className="text-center mb-3">
-                  <Button type="button" size="sm" className="w-full">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="w-full bg-[#2E343E] text-white"
+                  >
                     Accept Invitation
                   </Button>
                 </div>
@@ -612,7 +627,7 @@ export function InviteEmployee({
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
             <CardHeader>
               <CardTitle>Information</CardTitle>
             </CardHeader>

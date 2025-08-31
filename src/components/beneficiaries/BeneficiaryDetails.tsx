@@ -353,7 +353,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           }
         }}>
           <DialogTrigger asChild>
-            <Button className="bg-[#2B2B2B] text-white ml-auto">
+            <Button className="bg-[#2E343E] text-white ml-auto">
               <Edit className="h-4 w-4 mr-2" />
               Edit Profile
             </Button>
@@ -468,7 +468,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           onOpenChange={setIsAssociateDialogOpen}
         >
           <DialogTrigger asChild>
-            <Button variant="outline" className="bg-[#2B2B2B] text-white">
+            <Button variant="outline" className="bg-[#2E343E] text-white">
               <Link className="h-4 w-4 mr-2" />
               Associate
             </Button>
@@ -564,7 +564,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           onOpenChange={setIsAddServiceDialogOpen}
         >
           <DialogTrigger asChild>
-            <Button variant="outline" className="bg-[#2B2B2B] text-white">
+            <Button variant="outline" className="bg-[#2E343E] text-white">
               <Plus className="h-4 w-4 mr-2 " />
               Record Service
             </Button>
@@ -681,7 +681,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
         </Dialog>
       </div>
 
-      <Card>
+      <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row justify-between gap-6">
             <div className="flex items-start gap-6 ">
@@ -694,7 +694,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   <div className="flex items-center gap-2 ">
                     <h1 className="font-medium text-3xl">{beneficiary.name}</h1>
                     <Badge
-                      style={{ backgroundColor: "#FF5E3A" }}
+                      style={{ backgroundColor: "#2E343E" }}
                       variant={
                         beneficiary.status === "active"
                           ? "default"
@@ -767,12 +767,12 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full bg-gray-50 pt-3 drop-shadow-sm shadow-gray-50   mt-4 h-auto">
+        <TabsList className="w-full bg-[#E3F5FF] pt-3 drop-shadow-sm shadow-gray-50   mt-4 h-auto">
           <div className="flex gap-4">
             <TabsTrigger
               value="overview"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent ${
-                activeTab === "overview" ? "border-[#FF5E3A]" : ""
+                activeTab === "overview" ? "border-[#2E343E]" : ""
               }`}
             >
               Overview
@@ -780,7 +780,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
             <TabsTrigger
               value="services"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent ${
-                activeTab === "services" ? "border-[#FF5E3A]" : ""
+                activeTab === "services" ? "border-[#2E343E]" : ""
               }`}
             >
               Service History
@@ -788,7 +788,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
             <TabsTrigger
               value="family"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent ${
-                activeTab === "family" ? "border-[#FF5E3A]" : ""
+                activeTab === "family" ? "border-[#2E343E]" : ""
               }`}
             >
               Family
@@ -796,7 +796,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
             <TabsTrigger
               value="documents"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent ${
-                activeTab === "documents" ? "border-[#FF5E3A]" : ""
+                activeTab === "documents" ? "border-[#2E343E]" : ""
               }`}
             >
               Documents
@@ -807,7 +807,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
         <TabsContent value="overview" className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-6">
-              <Card>
+              <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
                 <CardHeader>
                   <CardTitle className="text-base">
                     Beneficiary Summary
@@ -825,7 +825,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                       {beneficiary.projects.map((project, index) => (
                         <div
                           key={index}
-                          className=" text-white rounded-md p-3 bg-orange-400"
+                          className=" text-black rounded-md p-3 bg-[#E5ECF6]"
                         >
                           <div className="flex items-center gap-2">
                             <Users className="h-4 w-4 text-muted-foreground" />
@@ -877,12 +877,12 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-base">Recent Services</CardTitle>
                   <Button
                     variant="ghost"
-                    className="bg-orange-50 text-black border border-orange-100"
+                    className="bg-black/10 text-black  border-0"
                     size="sm"
                     onClick={() => setActiveTab("services")}
                   >
@@ -921,7 +921,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
             </div>
 
             <div className="space-y-6">
-              <Card>
+              <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
                 <CardHeader>
                   <CardTitle className="text-base">Service Summary</CardTitle>
                 </CardHeader>
@@ -964,7 +964,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
 
                   <Button
                     variant="outline"
-                    className="w-full bg-[#2b2b2b] text-white"
+                    className="w-full bg-[#2E343E] text-white"
                     onClick={() => setIsAddServiceDialogOpen(true)}
                   >
                     <Plus className="h-4 w-4 mr-2 " />
@@ -973,7 +973,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
                 <CardHeader>
                   <CardTitle className="text-base">Family Members</CardTitle>
                 </CardHeader>
@@ -997,7 +997,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
 
                   <Button
                     variant="outline"
-                    className="w-full bg-[#2b2b2b] text-white"
+                    className="w-full bg-[#2E343E] text-white"
                     onClick={() => setActiveTab("family")}
                   >
                     Manage Family
@@ -1005,7 +1005,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
                 <CardHeader>
                   <CardTitle className="text-base">Data Protection</CardTitle>
                 </CardHeader>
@@ -1036,16 +1036,20 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
         </TabsContent>
 
         <TabsContent value="services" className="pt-6">
-          <Card>
+          <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Service History</CardTitle>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-[#2E343E] text-white"
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Export
                 </Button>
                 <Button
-                  className="bg-[#2B2B2B] text-white"
+                  className="bg-[#2E343E] text-white"
                   size="sm"
                   onClick={() => setIsAddServiceDialogOpen(true)}
                 >
@@ -1121,10 +1125,10 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
         </TabsContent>
 
         <TabsContent value="family" className="pt-6">
-          <Card>
+          <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Family Members</CardTitle>
-              <Button size="sm" className="bg-[#2B2B2B] text-white">
+              <Button size="sm" className="bg-[#2E343E] text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Family Member
               </Button>
@@ -1158,7 +1162,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                       <TableCell>
                         <Badge
                           variant="default"
-                          className="bg-[#FF5E3A] text-white"
+                          className="bg-[#2E343E] text-white"
                         >
                           Active
                         </Badge>
@@ -1168,7 +1172,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="bg-[#2B2B2B] text-white"
+                            className="bg-[#2E343E] text-white"
                           >
                             <Link2 className="h-4 w-4 mr-2" />
                             View Profile
@@ -1205,10 +1209,10 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
         </TabsContent>
 
         <TabsContent value="documents" className="pt-6">
-          <Card>
+          <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Documents</CardTitle>
-              <Button size="sm" className="bg-[#2B2B2B] text-white">
+              <Button size="sm" className="bg-[#2E343E] text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Upload Document
               </Button>

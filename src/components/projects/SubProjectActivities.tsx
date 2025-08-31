@@ -429,8 +429,8 @@ export function SubProjectActivities({
             </Button> */}
           </div>
 
-          <Table>
-            <TableHeader>
+          <Table className="rounded-md overflow-hidden ">
+            <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
                 <TableHead className="w-[300px]">Activity</TableHead>
                 <TableHead>Category</TableHead>

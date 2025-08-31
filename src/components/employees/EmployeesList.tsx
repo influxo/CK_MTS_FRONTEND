@@ -58,7 +58,12 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 import type { Employee as ApiEmployee } from "../../services/employees/employeesModels";
 
 // Using API data provided via props; mock employees removed.
@@ -222,16 +227,8 @@ export function EmployeesList({
 
   // Render role badge
   const renderRoleBadge = (role: string) => {
-    let variant = "outline";
-
-    if (role === "Super Admin" || role === "Admin") {
-      variant = "destructive";
-    } else if (role === "Program Manager") {
-      variant = "default";
-    }
-
     return (
-      <Badge variant={variant as any} className="capitalize">
+      <Badge className="capitalize bg-[#2E343E] text-white border-0 hover:bg-[#2E343E]">
         {role}
       </Badge>
     );
@@ -274,12 +271,16 @@ export function EmployeesList({
         <div className="flex gap-3">
           <Button
             variant="outline"
+            className="bg-black/10 border-0"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
             Filters
           </Button>
-          <Button onClick={onInviteClick}>
+          <Button
+            onClick={onInviteClick}
+            className="bg-[#2E343E] border-0 text-white"
+          >
             <UserPlus className="h-4 w-4 mr-2" />
             Invite Employee
           </Button>
@@ -292,14 +293,14 @@ export function EmployeesList({
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search employees..."
-              className="pl-9"
+              className="pl-9 bg-black/5 border-0"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex gap-3">
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[150px] bg-black/5 border-0">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
@@ -313,7 +314,7 @@ export function EmployeesList({
               </SelectContent>
             </Select>
             <Select value={projectFilter} onValueChange={setProjectFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] bg-black/5 border-0">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
@@ -330,14 +331,26 @@ export function EmployeesList({
                 </SelectItem>
               </SelectContent>
             </Select>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="bg-[#2E343E] text-white border-0"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </div>
           </div>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline">
+        {/* <div className="flex gap-3">
+          <Button
+            variant="outline"
+            className="bg-[#2E343E] text-white border-0"
+          >
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {showAdvancedFilters && (
@@ -347,7 +360,7 @@ export function EmployeesList({
               <div>
                 <Label>Two-Factor Status</Label>
                 <Select defaultValue="all">
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-black/5 border-0">
                     <SelectValue placeholder="2FA Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -360,7 +373,7 @@ export function EmployeesList({
               <div>
                 <Label>Date Added</Label>
                 <Select defaultValue="any">
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-black/5 border-0">
                     <SelectValue placeholder="Date Added" />
                   </SelectTrigger>
                   <SelectContent>
@@ -375,7 +388,7 @@ export function EmployeesList({
               <div>
                 <Label>Last Active</Label>
                 <Select defaultValue="any">
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger className="mt-2 bg-black/5 border-0">
                     <SelectValue placeholder="Last Active" />
                   </SelectTrigger>
                   <SelectContent>
@@ -391,10 +404,12 @@ export function EmployeesList({
               </div>
             </div>
             <div className="flex justify-end mt-4">
-              <Button variant="outline" size="sm" className="mr-2">
+              <Button variant="outline" size="sm" className="mr-2 bg-black/10">
                 Reset Filters
               </Button>
-              <Button size="sm">Apply Filters</Button>
+              <Button size="sm" className="bg-[#2E343E] text-white border-0">
+                Apply Filters
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -402,28 +417,28 @@ export function EmployeesList({
 
       <div className="flex space-x-4 border-b">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-transparent p-0 h-10">
+          <TabsList className=" bg-[#2E343E] bg-opacity-10 items-center">
             <TabsTrigger
               value="active"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none border-b-2 border-transparent px-4 h-10"
+              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
             >
               Active ({getTabCount("active")})
             </TabsTrigger>
             <TabsTrigger
               value="pending"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none border-b-2 border-transparent px-4 h-10"
+              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
             >
               Pending ({getTabCount("pending")})
             </TabsTrigger>
             <TabsTrigger
               value="inactive"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none border-b-2 border-transparent px-4 h-10"
+              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
             >
               Inactive ({getTabCount("inactive")})
             </TabsTrigger>
             <TabsTrigger
               value="invitations"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none border-b-2 border-transparent px-4 h-10"
+              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
             >
               Invitations ({getTabCount("invitations")})
             </TabsTrigger>
@@ -432,8 +447,8 @@ export function EmployeesList({
           <TabsContent value="active" className="pt-6">
             <Card>
               <ScrollArea className="h-[600px]">
-                <Table>
-                  <TableHeader>
+                <Table className="border-0">
+                  <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
                       <TableHead className="w-[250px]">Employee</TableHead>
                       <TableHead>Role</TableHead>
@@ -444,7 +459,7 @@ export function EmployeesList({
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className="bg-[#F7F9FB]">
                     {filteredEmployees.map((employee) => (
                       <TableRow key={employee.id}>
                         <TableCell>
@@ -471,17 +486,22 @@ export function EmployeesList({
                             {employee.projects[0] === "All Projects" ? (
                               <Badge
                                 variant="outline"
-                                className="bg-primary/10"
+                                className="bg-[#2E343E] text-white border-0 "
                               >
                                 All Projects
                               </Badge>
                             ) : (
                               <div className="space-y-1">
-                                {employee.projects.map((project: string, index: number) => (
-                                  <div key={index} className="text-sm truncate">
-                                    {project}
-                                  </div>
-                                ))}
+                                {employee.projects.map(
+                                  (project: string, index: number) => (
+                                    <div
+                                      key={index}
+                                      className="text-sm truncate"
+                                    >
+                                      {project}
+                                    </div>
+                                  )
+                                )}
                               </div>
                             )}
                           </div>
@@ -496,7 +516,7 @@ export function EmployeesList({
                               "All Sub-Projects" ? (
                               <Badge
                                 variant="outline"
-                                className="bg-primary/10"
+                                className="bg-[#2E343E] text-white border-0 "
                               >
                                 All Sub-Projects
                               </Badge>
@@ -525,7 +545,7 @@ export function EmployeesList({
                           {employee.twoFactorEnabled ? (
                             <Badge
                               variant="outline"
-                              className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                              className=" text-[#4AA785] bg-[#DEF8EE] border-0"
                             >
                               <CheckCircle className="h-3 w-3 mr-1" />
                               Enabled
@@ -533,7 +553,7 @@ export function EmployeesList({
                           ) : (
                             <Badge
                               variant="outline"
-                              className="bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
+                              className="text-black/40 border-0 bg-black/5"
                             >
                               Disabled
                             </Badge>
@@ -542,6 +562,7 @@ export function EmployeesList({
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
+                              className="hover:bg-black/10 border-0"
                               variant="outline"
                               size="sm"
                               onClick={() => onEmployeeSelect(employee.id)}
@@ -598,10 +619,10 @@ export function EmployeesList({
           </TabsContent>
 
           <TabsContent value="pending" className="pt-6">
-            <Card>
+            <Card className="bg-[#F7F9FB]">
               <ScrollArea className="h-[600px]">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
                       <TableHead className="w-[250px]">Employee</TableHead>
                       <TableHead>Role</TableHead>
@@ -688,14 +709,15 @@ export function EmployeesList({
                         <TableCell>
                           <Badge
                             variant="outline"
-                            className="bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
+                            className="bg-[#E2F5FF] text-[#59A8D4] border-0"
                           >
-                            Pending Setup
+                            Pending
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
+                              className="hover:bg-black/10 border-0"
                               variant="outline"
                               size="sm"
                               onClick={() => onEmployeeSelect(employee.id)}
@@ -744,10 +766,10 @@ export function EmployeesList({
           </TabsContent>
 
           <TabsContent value="inactive" className="pt-6">
-            <Card>
+            <Card className="bg-[#F7F9FB]">
               <ScrollArea className="h-[600px]">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
                       <TableHead className="w-[250px]">Employee</TableHead>
                       <TableHead>Role</TableHead>
@@ -838,7 +860,7 @@ export function EmployeesList({
                         <TableCell>
                           <Badge
                             variant="outline"
-                            className="bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
+                            className="bg-[#EDEDFF] text-[#8A8CD9] border-0"
                           >
                             Inactive
                           </Badge>
@@ -848,6 +870,7 @@ export function EmployeesList({
                             <Button
                               variant="outline"
                               size="sm"
+                              className="hover:bg-black/10 border-0"
                               onClick={() => onEmployeeSelect(employee.id)}
                             >
                               <Eye className="h-4 w-4 mr-2" />
@@ -898,10 +921,10 @@ export function EmployeesList({
           </TabsContent>
 
           <TabsContent value="invitations" className="pt-6">
-            <Card>
+            <Card className="bg-[#F7F9FB]">
               <ScrollArea className="h-[600px]">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
                       <TableHead>Email</TableHead>
                       <TableHead>Role</TableHead>
@@ -927,17 +950,22 @@ export function EmployeesList({
                             {invitation.projects[0] === "All Projects" ? (
                               <Badge
                                 variant="outline"
-                                className="bg-primary/10"
+                                className="bg-[#2E343E] text-white border-0"
                               >
                                 All Projects
                               </Badge>
                             ) : (
                               <div className="space-y-1">
-                                {invitation.projects.map((project: string, index: number) => (
-                                  <div key={index} className="text-sm truncate">
-                                    {project}
-                                  </div>
-                                ))}
+                                {invitation.projects.map(
+                                  (project: string, index: number) => (
+                                    <div
+                                      key={index}
+                                      className="text-sm truncate"
+                                    >
+                                      {project}
+                                    </div>
+                                  )
+                                )}
                               </div>
                             )}
                           </div>
@@ -953,14 +981,14 @@ export function EmployeesList({
                           {invitation.status === "pending" ? (
                             <Badge
                               variant="outline"
-                              className="bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
+                              className="bg-[#E2F5FF] text-[#59A8D4] border-0"
                             >
                               Pending
                             </Badge>
                           ) : (
                             <Badge
                               variant="outline"
-                              className="bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
+                              className="bg-[#FFFBD4] text-[#FFC555] border-0"
                             >
                               Expired
                             </Badge>
@@ -971,6 +999,7 @@ export function EmployeesList({
                             {invitation.status === "pending" ? (
                               <>
                                 <Button
+                                  className="bg-[#2E343E] text-white border-0"
                                   variant="outline"
                                   size="sm"
                                   onClick={() =>
@@ -981,6 +1010,7 @@ export function EmployeesList({
                                   Resend
                                 </Button>
                                 <Button
+                                  className="hover:bg-black/10 text-black border-0"
                                   variant="outline"
                                   size="sm"
                                   onClick={() =>
@@ -993,6 +1023,7 @@ export function EmployeesList({
                               </>
                             ) : (
                               <Button
+                                className="bg-[#2E343E] text-white border-0"
                                 variant="outline"
                                 size="sm"
                                 onClick={() =>
@@ -1016,7 +1047,7 @@ export function EmployeesList({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
+        <Card className="bg-[#E5ECF6] border-0   drop-shadow-sm shadow-gray-50">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Role Distribution</CardTitle>
           </CardHeader>
@@ -1046,13 +1077,13 @@ export function EmployeesList({
           </CardContent>
         </Card>
 
-        <Card className="col-span-3">
+        <Card className="col-span-3 bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Recent Activities</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="border rounded-md p-4">
+              <div className="bg-[#E3F5FF] rounded-md p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
@@ -1072,7 +1103,7 @@ export function EmployeesList({
                 </div>
               </div>
 
-              <div className="border rounded-md p-4">
+              <div className="bg-[#E3F5FF] rounded-md p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
@@ -1091,7 +1122,7 @@ export function EmployeesList({
                 </div>
               </div>
 
-              <div className="border rounded-md p-4">
+              <div className="bg-[#E3F5FF] rounded-md p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">

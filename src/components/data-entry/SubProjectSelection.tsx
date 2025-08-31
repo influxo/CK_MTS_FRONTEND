@@ -103,7 +103,7 @@ export function SubProjectSelection() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-[#E3F5FF] drop-shadow-sm shadow-gray-50 border-0">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <FolderKanban className="h-5 w-5 text-blue-500" />
@@ -117,7 +117,7 @@ export function SubProjectSelection() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-green-500" />
@@ -129,7 +129,7 @@ export function SubProjectSelection() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-[#E3F5FF] drop-shadow-sm shadow-gray-50 border-0">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-purple-500" />
@@ -143,7 +143,7 @@ export function SubProjectSelection() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-orange-500" />
@@ -164,14 +164,14 @@ export function SubProjectSelection() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search projects or subprojects..."
-            className="pl-9"
+            className="pl-9 bg-black/5 border-0"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         {/* <Select value={projectFilter} onValueChange={setProjectFilter}> */}
         <Select>
-          <SelectTrigger className="w-full sm:w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px] bg-black/5 border-0">
             <SelectValue placeholder="Filter by project" />
           </SelectTrigger>
           <SelectContent>
@@ -185,7 +185,7 @@ export function SubProjectSelection() {
         </Select>
         {/* <Select value={locationFilter} onValueChange={setLocationFilter}> */}
         <Select>
-          <SelectTrigger className="w-full sm:w-[150px]">
+          <SelectTrigger className="w-full sm:w-[150px] bg-black/5 border-0">
             <SelectValue placeholder="Location" />
           </SelectTrigger>
           <SelectContent>
@@ -200,10 +200,10 @@ export function SubProjectSelection() {
       </div>
 
       {/* Aggregated Table */}
-      <Card>
+      <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
         <ScrollArea className="h-[600px]">
-          <Table>
-            <TableHeader>
+          <Table className="rounded-md overflow-hidden">
+            <TableHeader className="bg-[#E5ECF6] ">
               <TableRow>
                 <TableHead className="w-[300px]">Name</TableHead>
                 <TableHead>Type</TableHead>
@@ -237,9 +237,28 @@ export function SubProjectSelection() {
                       "—"
                     )}
                   </TableCell>
-                  <TableCell>{item.status ?? "—"}</TableCell>
+                  <TableCell>
+                    {item.status ? (
+                      <Badge
+                        variant="outline"
+                        className={`text-xs border-0 ${
+                          item.status?.toLowerCase() === "active"
+                            ? "text-[#4AA785] bg-[#DEF8EE]"
+                            : "text-[#59A8D4] bg-[#E2F5FF]"
+                        }`}
+                      >
+                        {item.status}
+                      </Badge>
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
-                    <Button onClick={() => handleSelect(item)} size="sm">
+                    <Button
+                      onClick={() => handleSelect(item)}
+                      size="sm"
+                      className=" hover:bg-black/10"
+                    >
                       Select
                       <ArrowRight className="h-4 w-4 ml-1" />
                     </Button>

@@ -1,6 +1,6 @@
 import getApiUrl from "../apiUrl";
 import axiosInstance from "../axiosInstance";
-import type { InviteUserRequest, InviteUserResponse } from "./userModels";
+import type { InviteUserRequest, InviteUserResponse, GetUserProjectsResponse } from "./userModels";
 
 
 /**
@@ -39,6 +39,27 @@ class UserService {
       return {
         success: false,
         message: error.message || 'Failed to invite user. Please try again.'
+      };
+    }
+  }
+
+  /**
+   * Get nested user projects with subprojects and activities
+   */
+  async getUserProjects(userId: string): Promise<GetUserProjectsResponse> {
+    try {
+      const response = await axiosInstance.get<GetUserProjectsResponse>(
+        `${this.authEndpoint}/${userId}/projects`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as GetUserProjectsResponse;
+      }
+      return {
+        success: false,
+        message: error.message || 'Failed to fetch user projects',
+        data: [],
       };
     }
   }

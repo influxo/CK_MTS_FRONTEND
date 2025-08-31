@@ -9,9 +9,10 @@ import { ServiceDelivery } from "../components/dashboard/ServiceDelivery";
 import { RecentActivity } from "../components/dashboard/RecentActivity";
 import { createProject } from "../store/slices/projectsSlice";
 import type { AppDispatch } from "../store";
-import { useDispatch } from "react-redux";
-import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from "react";
 import type { CreateProjectRequest } from "../services/projects/projectModels";
+import { fetchDeliveriesSeries, fetchDeliveriesSummary, selectMetricsFilters } from "../store/slices/serviceMetricsSlice";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,8 @@ import {
 } from "../components/ui/form/select";
 import { Textarea } from "../components/ui/form/textarea";
 import { toast } from "sonner";
+import { selectCurrentUser } from "../store/slices/authSlice";
+import { fetchUserProjectsByUserId, selectUserProjectsError, selectUserProjectsLoading, selectUserProjectsTree } from "../store/slices/userProjectsSlice";
 
 export function Dashboard() {
   const [formData, setFormData] = useState<CreateProjectRequest>({
@@ -49,6 +52,24 @@ export function Dashboard() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const dispatch = useDispatch<AppDispatch>();
+  const user = useSelector(selectCurrentUser);
+  const userProjects = useSelector(selectUserProjectsTree);
+  const userProjectsLoading = useSelector(selectUserProjectsLoading);
+  const userProjectsError = useSelector(selectUserProjectsError);
+  const metricsFilters = useSelector(selectMetricsFilters);
+
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(fetchUserProjectsByUserId(String(user.id)));
+    }
+  }, [dispatch, user?.id]);
+
+  // Load service delivery metrics (summary + series)
+  useEffect(() => {
+    dispatch(fetchDeliveriesSummary(metricsFilters));
+    dispatch(fetchDeliveriesSeries(metricsFilters));
+  }, [dispatch, metricsFilters]);
+
   // const submitCreateProject = () => {
   //   dispatch(createProject(formData));
   // };
@@ -250,8 +271,6 @@ export function Dashboard() {
           <RecentActivity />
         </div>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6"></div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div>{/* Empty space for future components or expansion */}</div>

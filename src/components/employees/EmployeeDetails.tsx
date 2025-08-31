@@ -545,22 +545,29 @@ export function EmployeeDetails() {
           {!isEditing ? (
             <>
               <Button
+                className="bg-black/10 text-black border-0"
                 variant="outline"
                 onClick={() => setShowPasswordResetDialog(true)}
               >
                 <KeyRound className="h-4 w-4 mr-2" />
                 Reset Password
               </Button>
-              <Button variant="outline" onClick={handleEditClick}>
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
+
               <Button
+                className="bg-black/10 text-black border-0"
                 variant="destructive"
                 onClick={() => setShowDeleteDialog(true)}
               >
                 <Trash className="h-4 w-4 mr-2" />
                 Delete
+              </Button>
+              <Button
+                className="bg-[#2E343E] text-white border-0"
+                variant="outline"
+                onClick={handleEditClick}
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit
               </Button>
             </>
           ) : (
@@ -591,7 +598,7 @@ export function EmployeeDetails() {
       </div>
 
       <div className="grid grid-cols-12 gap-6">
-        <Card className="col-span-12 lg:col-span-3">
+        <Card className="col-span-12 lg:col-span-3 bg-[#F7F9FB]  border-0 drop-shadow-sm shadow-gray-50    ">
           <CardHeader className="text-center">
             <Avatar className="h-24 w-24 mx-auto">
               <AvatarFallback className="text-2xl">
@@ -670,15 +677,27 @@ export function EmployeeDetails() {
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Quick Actions</h4>
               <div className="grid grid-cols-1 gap-2">
-                <Button variant="outline" size="sm" className="justify-start">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="justify-start bg-[#2E343E] text-white"
+                >
                   <Mail className="h-4 w-4 mr-2" />
                   Send Email
                 </Button>
-                <Button variant="outline" size="sm" className="justify-start">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="justify-start bg-[#2E343E] text-white"
+                >
                   <Shield className="h-4 w-4 mr-2" />
                   View Permissions
                 </Button>
-                <Button variant="outline" size="sm" className="justify-start">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="justify-start bg-[#2E343E] text-white"
+                >
                   <FileDown className="h-4 w-4 mr-2" />
                   Export Data
                 </Button>
@@ -689,41 +708,41 @@ export function EmployeeDetails() {
 
         <div className="col-span-12 lg:col-span-9 space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-transparent w-full justify-start border-b rounded-none p-0 h-10">
+            <TabsList className="bg-[#E3F5FF] w-full justify-start border-b rounded-md drop-shadow-sm shadow-gray-50   items-center h-auto p-2 ">
               <TabsTrigger
                 value="profile"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none border-b-2 border-transparent px-4 h-10"
+                className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
               >
                 Profile
               </TabsTrigger>
               <TabsTrigger
                 value="permissions"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none border-b-2 border-transparent px-4 h-10"
+                className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
               >
                 Permissions
               </TabsTrigger>
               <TabsTrigger
                 value="projects"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none border-b-2 border-transparent px-4 h-10"
+                className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
               >
                 Projects
               </TabsTrigger>
               <TabsTrigger
                 value="security"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none border-b-2 border-transparent px-4 h-10"
+                className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
               >
                 Security
               </TabsTrigger>
               <TabsTrigger
                 value="activity"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none border-b-2 border-transparent px-4 h-10"
+                className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
               >
                 Activity Log
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile" className="space-y-6 pt-6">
-              <Card>
+              <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
                 <CardHeader>
                   <CardTitle className="text-lg">
                     Personal Information
@@ -741,6 +760,7 @@ export function EmployeeDetails() {
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name</Label>
                       <Input
+                        className="bg-black/5 border-0"
                         id="name"
                         name="name"
                         value={formData.name}
@@ -751,6 +771,7 @@ export function EmployeeDetails() {
                     <div className="space-y-2">
                       <Label htmlFor="email">Email Address</Label>
                       <Input
+                        className="bg-black/5 border-0"
                         id="email"
                         name="email"
                         type="email"
@@ -762,6 +783,7 @@ export function EmployeeDetails() {
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
                       <Input
+                        className="bg-black/5 border-0"
                         id="phone"
                         name="phone"
                         value={formData.phone}
@@ -814,7 +836,7 @@ export function EmployeeDetails() {
                             onValueChange={handleStatusChange}
                             disabled={isUpdating}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-black/5 border-0">
                               <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                             <SelectContent>
@@ -829,6 +851,7 @@ export function EmployeeDetails() {
                             Two-Factor Authentication
                           </Label>
                           <Switch
+                            className="bg-black/5"
                             id="twoFactor"
                             checked={formData.twoFactorEnabled}
                             onCheckedChange={handle2FAToggle}
@@ -843,7 +866,7 @@ export function EmployeeDetails() {
             </TabsContent>
 
             <TabsContent value="permissions" className="space-y-6 pt-6">
-              <Card>
+              <Card className="bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
@@ -856,7 +879,11 @@ export function EmployeeDetails() {
                       </CardDescription>
                     </div>
                     {isEditing && (
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-black/10"
+                      >
                         Select All
                       </Button>
                     )}
@@ -917,13 +944,13 @@ export function EmployeeDetails() {
                 </CardContent>
               </Card>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-md p-4 flex items-start gap-3 dark:bg-amber-950/20 dark:border-amber-900">
-                <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
+              <div className="bg-[#EDEDFF] border  rounded-md p-4 flex items-start gap-3 ">
+                <AlertTriangle className="h-5 w-5 text-[#8A8CD9] mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-amber-800 dark:text-amber-400">
+                  <h4 className="font-medium text-[#8A8CD9] ">
                     Permission Changes
                   </h4>
-                  <p className="text-amber-800/80 text-sm mt-1 dark:text-amber-400/80">
+                  <p className="text-[#8A8CD9]/80 text-sm mt-1 ">
                     Changes to permissions will take effect immediately. Make
                     sure you understand the implications of each permission.
                   </p>
@@ -932,7 +959,7 @@ export function EmployeeDetails() {
             </TabsContent>
 
             <TabsContent value="projects" className="space-y-6 pt-6">
-              <Card>
+              <Card className="bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
@@ -1045,7 +1072,7 @@ export function EmployeeDetails() {
             </TabsContent>
 
             <TabsContent value="security" className="space-y-6 pt-6">
-              <Card>
+              <Card className="bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
                 <CardHeader>
                   <CardTitle className="text-lg">Account Security</CardTitle>
                 </CardHeader>
@@ -1065,6 +1092,7 @@ export function EmployeeDetails() {
                       </div>
                       <Button
                         variant="outline"
+                        className="bg-[#2E343E] border-0 text-white"
                         onClick={() => setShowPasswordResetDialog(true)}
                       >
                         Reset Password
@@ -1095,7 +1123,11 @@ export function EmployeeDetails() {
                           onCheckedChange={handle2FAToggle}
                         />
                       ) : (
-                        <Button variant="outline" disabled={!isEditing}>
+                        <Button
+                          variant="outline"
+                          className="bg-black/10 border-0 text-text-black/40"
+                          disabled={!isEditing}
+                        >
                           {formData.twoFactorEnabled ? "Disable" : "Enable"}
                         </Button>
                       )}
@@ -1105,7 +1137,7 @@ export function EmployeeDetails() {
                   <div className="border rounded-md p-4">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">
-                        <div className="bg-primary/10 p-2 rounded-full">
+                        <div className="bg-[primary/10] p-2 rounded-full">
                           <MailCheck className="h-5 w-5 text-primary" />
                         </div>
                         <div>
@@ -1117,7 +1149,7 @@ export function EmployeeDetails() {
                       </div>
                       <Badge
                         variant="outline"
-                        className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                        className="bg-green-100 text-[#4AA785] border-0"
                       >
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Verified
@@ -1125,13 +1157,13 @@ export function EmployeeDetails() {
                     </div>
                   </div>
 
-                  <div className="bg-amber-50 border border-amber-200 rounded-md p-4 flex items-start gap-3 dark:bg-amber-950/20 dark:border-amber-900">
-                    <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
+                  <div className="bg-[#EDEDFF]  rounded-md p-4 flex items-start gap-3 ">
+                    <AlertTriangle className="h-5 w-5 text-[#8A8CD9] mt-0.5" />
                     <div>
-                      <h4 className="font-medium text-amber-800 dark:text-amber-400">
+                      <h4 className="font-medium text-[#8A8CD9] ">
                         Security Recommendation
                       </h4>
-                      <p className="text-amber-800/80 text-sm mt-1 dark:text-amber-400/80">
+                      <p className="text-[#8A8CD9]/80 text-sm mt-1 ">
                         Two-factor authentication is highly recommended for all
                         users, especially those with administrative access.
                       </p>
@@ -1142,7 +1174,7 @@ export function EmployeeDetails() {
             </TabsContent>
 
             <TabsContent value="activity" className="space-y-6 pt-6">
-              <Card>
+              <Card className="bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
@@ -1151,7 +1183,11 @@ export function EmployeeDetails() {
                         Recent actions performed by or affecting this employee.
                       </CardDescription>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-[#2E343E] border-0 text-white"
+                    >
                       <FileDown className="h-4 w-4 mr-2" />
                       Export Log
                     </Button>

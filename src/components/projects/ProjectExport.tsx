@@ -29,12 +29,12 @@ interface ProjectExportProps {
 export function ProjectExport({ projectId }: ProjectExportProps) {
   console.log("projectId, veq sa me i ik unused declaration", projectId);
   return (
-    <Card>
+    <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
       <Tabs defaultValue="reports">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">Export Data & Reports</CardTitle>
-            <TabsList className="grid  grid-cols-2 bg-[#2E343E] bg-opacity-10 items-center ">
+            <TabsList className="grid  grid-cols-2 bg-black/5 items-center ">
               <TabsTrigger
                 value="reports"
                 className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
@@ -55,7 +55,7 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
             <div className="space-y-2">
               <Label>Report Type</Label>
               <Select defaultValue="summary">
-                <SelectTrigger className="bg-[#2E343E] bg-opacity-10">
+                <SelectTrigger className="bg-black/5 border-0">
                   <SelectValue placeholder="Select report type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -76,7 +76,7 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
             <div className="space-y-2">
               <Label>Time Period</Label>
               <Select defaultValue="all">
-                <SelectTrigger className="bg-[#2E343E] bg-opacity-10">
+                <SelectTrigger className="bg-black/5 border-0">
                   <SelectValue placeholder="Select time period" />
                 </SelectTrigger>
                 <SelectContent>
@@ -139,7 +139,7 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
             <div className="space-y-2">
               <Label>Data Type</Label>
               <Select defaultValue="all">
-                <SelectTrigger className="bg-[#2E343E] bg-opacity-10">
+                <SelectTrigger className="bg-black/5 border-0">
                   <SelectValue placeholder="Select data type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -157,7 +157,7 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
             <div className="space-y-2">
               <Label>Export Format</Label>
               <Select defaultValue="excel">
-                <SelectTrigger className="bg-[#2E343E] bg-opacity-10">
+                <SelectTrigger className="bg-black/5 border-0">
                   <SelectValue placeholder="Select format" />
                 </SelectTrigger>
                 <SelectContent>
