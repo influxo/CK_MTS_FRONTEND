@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Provider } from 'react-redux';
-import { store } from '../store';
+import store from '../store';
 import authService from '../services/auth/authService';
 import { fetchUserProfile } from '../store/slices/authSlice';
 

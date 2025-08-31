@@ -13,7 +13,12 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import { Checkbox } from "../ui/form/checkbox";
 import {
   Dialog,
@@ -47,7 +52,12 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 
 interface SubProjectBeneficiariesProps {
@@ -266,7 +276,7 @@ export function SubProjectBeneficiaries({
           onOpenChange={setIsCreateBeneficiaryDialogOpen}
         >
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-[#2E343E] text-white">
               <Plus className="h-4 w-4 mr-2" />
               Add Beneficiary
             </Button>
@@ -402,11 +412,19 @@ export function SubProjectBeneficiaries({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="individuals">
+        <TabsList className=" bg-[#2E343E] bg-opacity-10 items-center">
+          <TabsTrigger
+            value="individuals"
+            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+          >
             Individual Beneficiaries
           </TabsTrigger>
-          <TabsTrigger value="groups">Beneficiary Groups</TabsTrigger>
+          <TabsTrigger
+            value="groups"
+            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+          >
+            Beneficiary Groups
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="individuals" className="pt-4">
@@ -416,14 +434,14 @@ export function SubProjectBeneficiaries({
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search beneficiaries..."
-                  className="pl-9"
+                  className="pl-9 bg-black/5 border-0"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <div className="flex gap-3">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[130px]">
+                  <SelectTrigger className="w-[130px] bg-black/5 border-0">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -436,7 +454,7 @@ export function SubProjectBeneficiaries({
                   value={categoryFilter}
                   onValueChange={setCategoryFilter}
                 >
-                  <SelectTrigger className="w-[130px]">
+                  <SelectTrigger className="w-[130px] bg-black/5 border-0">
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -460,9 +478,9 @@ export function SubProjectBeneficiaries({
             </div> */}
           </div>
 
-          <div className="rounded-md border overflow-hidden">
+          <div className="rounded-md  overflow-hidden">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-[#E5ECF6]">
                 <TableRow>
                   <TableHead className="w-[50px]">
                     <Checkbox
@@ -618,13 +636,6 @@ export function SubProjectBeneficiaries({
         </TabsContent>
 
         <TabsContent value="groups" className="pt-4">
-          <div className="flex justify-end mb-4">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Group
-            </Button>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredGroups.map((group) => (
               <Card key={group.id}>
@@ -664,7 +675,7 @@ export function SubProjectBeneficiaries({
               </Card>
             ))}
 
-            <Card className="border-dashed flex flex-col items-center justify-center p-6">
+            <Card className="border-dashed bg-[#F7F9FB] flex flex-col items-center justify-center p-6">
               <div className="rounded-full border-dashed border-2 p-3 mb-3">
                 <Plus className="h-6 w-6 text-muted-foreground" />
               </div>
@@ -672,7 +683,7 @@ export function SubProjectBeneficiaries({
               <p className="text-sm text-muted-foreground text-center mb-3">
                 Group beneficiaries by category, location, or other criteria
               </p>
-              <Button>Create Group</Button>
+              <Button className="bg-black/5">Create Group</Button>
             </Card>
           </div>
         </TabsContent>

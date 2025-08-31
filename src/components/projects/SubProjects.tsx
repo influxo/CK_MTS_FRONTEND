@@ -175,7 +175,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
         <h3>Sub-Projects</h3>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-[#2B2B2B] text-white">
               <Plus className="h-4 w-4 mr-2" />
               Create Sub-Project
             </Button>
@@ -327,9 +327,19 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
           onValueChange={setViewType}
           className="w-full sm:w-auto"
         >
-          <TabsList className="grid w-full sm:w-[180px] grid-cols-2">
-            <TabsTrigger value="grid">Grid View</TabsTrigger>
-            <TabsTrigger value="list">List View</TabsTrigger>
+          <TabsList className="grid w-full sm:w-[180px] grid-cols-2 border items-center">
+            <TabsTrigger
+              value="grid"
+              className="data-[state=active]:bg-[#FF5E3A] data-[state=active]:text-white "
+            >
+              Grid View
+            </TabsTrigger>
+            <TabsTrigger
+              value="list"
+              className="data-[state=active]:bg-[#FF5E3A] data-[state=active]:text-white"
+            >
+              List View
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -338,13 +348,14 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSubProjects.map((subProject: SubProject) => (
             <Card key={subProject.id}>
-              <CardHeader className="pb-3">
+              <CardHeader className="">
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
                     <h4 className="font-medium">{subProject.name}</h4>
                     <div className="flex gap-2">
                       <Badge variant="outline">{subProject.category}</Badge>
                       <Badge
+                        className="bg-[#2E343E] text-white"
                         variant={
                           subProject.status === "active"
                             ? "default"
@@ -379,7 +390,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
                   </DropdownMenu>
                 </div>
               </CardHeader>
-              <CardContent className="pb-3">
+              <CardContent className="pb-3  ">
                 <p className="text-muted-foreground text-sm line-clamp-2 mb-4">
                   {subProject.description}
                 </p>
@@ -427,7 +438,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-primary"
+                  className="text-primary bg-orange-50"
                   onClick={() => handleViewSubProject(subProject.id)}
                 >
                   View Details

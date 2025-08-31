@@ -2,12 +2,22 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
 import projectsReducer from "./slices/projectsSlice";
 import subprojectsReducer from "./slices/subProjectSlice";
+import formsReducer from "./slices/formSlice";
+import userProjectsReducer from "./slices/userProjectsSlice";
+import serviceMetricsReducer from "./slices/serviceMetricsSlice";
+import kpiReducer from "./slices/kpiSlice";
+import demographicsReducer from "./slices/demographicsSlice";
 // Configure the Redux store
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     projects: projectsReducer,
     subprojects: subprojectsReducer,
+    forms: formsReducer,
+    userProjects: userProjectsReducer,
+    serviceMetrics: serviceMetricsReducer,
+    kpis: kpiReducer,
+    demographics: demographicsReducer,
     // Add other reducers here as your app grows
   },
   // Add middleware or other configuration options here if needed
@@ -16,3 +26,5 @@ export const store = configureStore({
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
+export default store;

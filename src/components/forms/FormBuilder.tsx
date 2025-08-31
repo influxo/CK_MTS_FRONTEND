@@ -349,7 +349,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between ">
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={onBack}>
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -360,15 +360,16 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
           </h2>
           {isEditing && <Badge variant="outline">v{formData.version}</Badge>}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 ">
           <Button
+            className="bg-[#2E343E] text-white"
             variant="outline"
             onClick={() => setPreviewMode(!previewMode)}
           >
             <Eye className="h-4 w-4 mr-2" />
             {previewMode ? "Exit Preview" : "Preview"}
           </Button>
-          <Button onClick={handleSaveForm}>
+          <Button className="bg-[#2E343E] text-white" onClick={handleSaveForm}>
             <Save className="h-4 w-4 mr-2" />
             Save Form
           </Button>
@@ -378,7 +379,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
       {!previewMode ? (
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 lg:col-span-8">
-            <Card className="mb-6">
+            <Card className="mb-6 bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Form Builder</CardTitle>
               </CardHeader>
@@ -389,6 +390,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                       <Label htmlFor="form-name">Form Name *</Label>
                       <Input
                         id="form-name"
+                        className="bg-black/5 border-0"
                         value={formData.name}
                         onChange={(e) =>
                           setFormData({ ...formData, name: e.target.value })
@@ -403,7 +405,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                           setFormData({ ...formData, category: value })
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-black/5 border-0">
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -424,6 +426,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                   <div className="space-y-2">
                     <Label htmlFor="form-description">Description</Label>
                     <Textarea
+                      className="bg-black/5 border-0"
                       id="form-description"
                       value={formData.description}
                       onChange={(e) =>
@@ -439,7 +442,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="mb-6 bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <CardTitle className="text-base">Form Fields</CardTitle>
                 <Dialog
@@ -447,7 +450,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                   onOpenChange={setIsAddFieldDialogOpen}
                 >
                   <DialogTrigger asChild>
-                    <Button size="sm">
+                    <Button size="sm" className="bg-[#2E343E] text-white">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Field
                     </Button>
@@ -493,7 +496,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                     {formData.fields.map((field) => (
                       <div
                         key={field.id}
-                        className={`border rounded-md p-3 flex items-center gap-3 cursor-pointer ${
+                        className={` rounded-md p-3 flex items-center gap-3 bg-[#E3F5FF] cursor-pointer ${
                           selectedField === field.id
                             ? "border-primary bg-muted/30"
                             : ""
@@ -519,7 +522,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-8 w-8 p-0 "
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteField(field.id);
@@ -531,7 +534,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                     ))}
                     <Button
                       variant="outline"
-                      className="w-full border-dashed"
+                      className="w-full border-dashed bg-[#E5ECF6] "
                       onClick={() => setIsAddFieldDialogOpen(true)}
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -546,12 +549,22 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
           <div className="col-span-12 lg:col-span-4">
             <div className="sticky top-6">
               <Tabs defaultValue="properties" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="properties">Field Properties</TabsTrigger>
-                  <TabsTrigger value="form-settings">Form Settings</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 bg-black/5">
+                  <TabsTrigger
+                    value="properties"
+                    className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+                  >
+                    Field Properties
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="form-settings"
+                    className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+                  >
+                    Form Settings
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="properties">
-                  <Card>
+                  <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50 ">
                     <CardContent className="p-6">
                       {selectedFieldData ? (
                         <div className="space-y-4">
@@ -559,6 +572,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                             <Label htmlFor="field-label">Field Label</Label>
                             <Input
                               id="field-label"
+                              className="bg-black/5 border-0"
                               value={selectedFieldData.label}
                               onChange={(e) =>
                                 handleFieldUpdate(selectedField!, {
@@ -576,6 +590,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                 Placeholder
                               </Label>
                               <Input
+                                className="bg-black/5 border-0"
                                 id="field-placeholder"
                                 value={selectedFieldData.placeholder || ""}
                                 onChange={(e) =>
@@ -591,6 +606,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                             <div className="flex items-center space-x-2">
                               <Checkbox
                                 id="field-required"
+                                className="bg-white"
                                 checked={selectedFieldData.required}
                                 onCheckedChange={(checked: any) =>
                                   handleFieldUpdate(selectedField!, {
@@ -608,6 +624,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                             <Label htmlFor="field-help-text">Help Text</Label>
                             <Textarea
                               id="field-help-text"
+                              className="bg-black/5 border-0"
                               value={selectedFieldData.helpText || ""}
                               onChange={(e) =>
                                 handleFieldUpdate(selectedField!, {
@@ -655,7 +672,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                   (option, index) => (
                                     <div
                                       key={index}
-                                      className="flex items-center gap-2"
+                                      className="flex items-center gap-2 bg-black/5 border-0"
                                     >
                                       <Input
                                         value={option.label}
@@ -706,6 +723,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                 <Input
                                   id="field-min"
                                   type="number"
+                                  className="bg-black/5 border-0"
                                   value={
                                     selectedFieldData.validations?.min || ""
                                   }
@@ -728,6 +746,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                 <Input
                                   id="field-max"
                                   type="number"
+                                  className="bg-black/5 border-0"
                                   value={
                                     selectedFieldData.validations?.max || ""
                                   }
@@ -758,6 +777,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                 <Input
                                   id="field-min-length"
                                   type="number"
+                                  className="bg-black/5 border-0"
                                   value={
                                     selectedFieldData.validations?.minLength ||
                                     ""
@@ -783,6 +803,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                 <Input
                                   id="field-max-length"
                                   type="number"
+                                  className="bg-black/5 border-0"
                                   value={
                                     selectedFieldData.validations?.maxLength ||
                                     ""
@@ -809,11 +830,11 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                           <div className="pt-2">
                             <Button
                               variant="outline"
-                              className="w-full"
+                              className="w-full bg-[#2E343E] text-white border-0"
                               size="sm"
                               onClick={() => handleDeleteField(selectedField!)}
                             >
-                              <Trash className="h-4 w-4 mr-2" />
+                              <Trash className="h-4 w-4 mr-2 " />
                               Delete Field
                             </Button>
                           </div>
@@ -831,7 +852,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                   </Card>
                 </TabsContent>
                 <TabsContent value="form-settings">
-                  <Card>
+                  <Card className="bg-[#F7F9FB] border-0">
                     <CardContent className="p-6 space-y-6">
                       <div className="space-y-2">
                         <Label htmlFor="form-status">Form Status</Label>
@@ -841,7 +862,10 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                             setFormData({ ...formData, status: value })
                           }
                         >
-                          <SelectTrigger id="form-status">
+                          <SelectTrigger
+                            id="form-status"
+                            className="bg-black/5 border-0"
+                          >
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                           <SelectContent>
@@ -855,7 +879,10 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                       <div className="space-y-2">
                         <Label>Associated Projects</Label>
                         <Select>
-                          <SelectTrigger>
+                          <SelectTrigger
+                            className="bg-black/5 border-0"
+                            id="form-project"
+                          >
                             <SelectValue placeholder="Select a project" />
                           </SelectTrigger>
                           <SelectContent>
@@ -871,7 +898,10 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                       <div className="space-y-2">
                         <Label>Associated Sub-Projects</Label>
                         <Select>
-                          <SelectTrigger>
+                          <SelectTrigger
+                            className="bg-black/5 border-0"
+                            id="form-sub-project"
+                          >
                             <SelectValue placeholder="Select a sub-project" />
                           </SelectTrigger>
                           <SelectContent>
@@ -897,7 +927,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                           <div className="flex items-center space-x-2">
                             <Label
                               htmlFor="version-control"
-                              className="text-muted-foreground text-sm"
+                              className="text-muted-foreground text-sm text-black  bg-black/10 black px-2 py-1 rounded "
                             >
                               Enabled
                             </Label>
@@ -905,17 +935,20 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                           </div>
                         </div>
                         {isEditing && (
-                          <div className="border rounded-md p-3 space-y-2">
+                          <div className="border rounded-md p-3 space-y-2 bg-[#E5ECF6]">
                             <div className="flex items-center justify-between">
                               <span className="text-sm">Current Version</span>
-                              <Badge variant="outline">
+                              <Badge
+                                variant="outline"
+                                className="bg-[#2E343E] text-white"
+                              >
                                 v{formData.version}
                               </Badge>
                             </div>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="w-full"
+                              className="w-full bg-black/10 text-black border-0"
                             >
                               <Plus className="h-4 w-4 mr-2" />
                               Create New Version
@@ -946,7 +979,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                       <div className="pt-2">
                         <Button
                           variant="outline"
-                          className="w-full"
+                          className="w-full bg-[#2E343E] text-white border-gray-50"
                           onClick={handleSaveForm}
                         >
                           <Save className="h-4 w-4 mr-2" />
