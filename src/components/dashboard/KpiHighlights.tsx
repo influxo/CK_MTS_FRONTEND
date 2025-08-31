@@ -4,62 +4,68 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/data-display/card";
-import { Progress } from "../ui/feedback/progress";
+import { useDispatch, useSelector } from "react-redux";
+import React from "react";
+import { fetchKpis, fetchKpiValueWithFilters, selectKpis } from "../../store/slices/kpiSlice";
+import { selectMetricsFilters } from "../../store/slices/serviceMetricsSlice";
 
 export function KpiHighlights() {
-  const kpis = [
-    {
-      title: "Project Completion Rate",
-      value: 78,
-      target: 85,
-      unit: "%",
-    },
-    {
-      title: "Beneficiary Satisfaction",
-      value: 4.6,
-      target: 4.5,
-      unit: "/5",
-    },
-    {
-      title: "Data Collection Coverage",
-      value: 92,
-      target: 95,
-      unit: "%",
-    },
-    {
-      title: "Response Time",
-      value: 2.3,
-      target: 2.0,
-      unit: " days",
-    },
-  ];
+  const dispatch: any = useDispatch();
+  const { items, values, loading, error } = useSelector(selectKpis);
+  const filters = useSelector(selectMetricsFilters);
+
+  React.useEffect(() => {
+    dispatch(fetchKpis());
+  }, [dispatch]);
+
+  React.useEffect(() => {
+    if (!items || items.length === 0) return;
+    // Map dashboard metrics filters -> KPI calculate params
+    const params: any = {};
+    if (filters?.startDate) params.fromDate = filters.startDate;
+    if (filters?.endDate) params.toDate = filters.endDate;
+    if (filters?.entityId) params.entityId = filters.entityId;
+    if (filters?.entityType) params.entityType = filters.entityType;
+    if ((filters as any)?.projectId) params.projectId = (filters as any).projectId;
+    if ((filters as any)?.subprojectId) params.subprojectId = (filters as any).subprojectId;
+    if ((filters as any)?.activityId) params.activityId = (filters as any).activityId;
+
+    items.slice(0, 4).forEach((k) => dispatch(fetchKpiValueWithFilters({ id: k.id, params })));
+  }, [items, filters, dispatch]);
 
   return (
-    <Card className="bg-[#F7F9FB]      drop-shadow-sm shadow-gray-50 border-0">
+    <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
       <CardHeader>
         <CardTitle>Key Performance Indicators</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {kpis.map((kpi, index) => (
-          <div key={index} className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">{kpi.title}</span>
-              <span className="text-sm text-muted-foreground">
-                {kpi.value}
-                {kpi.unit} / {kpi.target}
-                {kpi.unit}
-              </span>
-            </div>
-            <Progress value={(kpi.value / kpi.target) * 100} className="h-2" />
-            <div className="text-xs text-muted-foreground">
-              {kpi.value >= kpi.target
-                ? "Target achieved"
-                : `${(kpi.target - kpi.value).toFixed(1)}${
-                    kpi.unit
-                  } below target`}
-            </div>
-          </div>
-        ))}
+        {loading && (
+          <div className="text-sm text-muted-foreground">Loading KPIs...</div>
+        )}
+        {error && (
+          <div className="text-sm text-destructive">{error}</div>
+        )}
+        {!loading && !error && items.length === 0 && (
+          <div className="text-sm text-muted-foreground">No KPIs configured.</div>
+        )}
+        {!loading && !error &&
+          items.slice(0, 4).map((kpi) => {
+            const calc = values[kpi.id];
+            const valueText = calc ? `${calc.result}` : "—";
+            return (
+              <div key={kpi.id} className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">{kpi.name}</span>
+                  <span className="text-sm text-muted-foreground">{valueText}</span>
+                </div>
+                {kpi.description && (
+                  <div className="text-xs text-muted-foreground line-clamp-2">
+                    {kpi.description}
+                  </div>
+                )}
+              </div>
+            );
+          })}
       </CardContent>
     </Card>
   );
