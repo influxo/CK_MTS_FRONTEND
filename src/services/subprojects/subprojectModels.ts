@@ -87,24 +87,42 @@ export interface GetSubProjectsByProjectIdResponse {
 // ktu vjen get all users assignet to a subproject
 
 export interface AssignUserToSubProjectRequest {
-  subProjectId: string; // this is a query parameter
-  userId: string; // this is a body request
+  subProjectId: string; // path parameter
+  userId: string; // body field
 }
 
-// ?????
+// Response user shape returned by assigning a user to a subproject
+export interface AssignedSubProjectUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  status: string;
+}
+
 export interface AssignUserToSubProjectResponse {
-  success?: boolean;
-  message?: string;
-  data?: SubProject;
+  success: boolean;
+  message: string;
+  data: AssignedSubProjectUser;
 }
 
 export interface RemoveUserFromSubProjectRequest {
-  subProjectId: string; // this is a query parameter
-  userId: string; // this is a query parameter
+  subProjectId: string; // path parameter
+  userId: string; // path parameter
 }
 
-// ?????
 export interface RemoveUserFromSubProjectResponse {
-  success?: boolean;
+  success: boolean;
+  message: string;
+}
+
+// Get users assigned to a specific subproject
+export interface GetSubProjectUsersRequest {
+  subProjectId: string; // path parameter
+}
+
+export interface GetSubProjectUsersResponse {
+  success: boolean;
+  data: AssignedSubProjectUser[];
   message?: string;
 }

@@ -4,6 +4,7 @@ import {
   logoutUser,
   fetchUserProfile,
   resetPassword,
+  acceptInvitation,
   selectCurrentUser,
   selectIsAuthenticated,
   selectAuthLoading,
@@ -12,6 +13,7 @@ import {
 import type {
   LoginRequest,
   ResetPasswordRequest,
+  AcceptInvitationRequest,
 } from "../services/auth/authModels";
 import type { AppDispatch } from "../store";
 
@@ -65,6 +67,19 @@ export const useAuth = () => {
   };
 
   /**
+   * Accept invitation (verify email) with email, token and password
+   */
+  const acceptInvitationUser = async (payload: AcceptInvitationRequest) => {
+    const result = await dispatch(acceptInvitation(payload));
+    if (acceptInvitation.fulfilled.match(result)) {
+      if (result.payload.success) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  /**
    * Get current user profile
    */
   const getProfile = async () => {
@@ -79,6 +94,7 @@ export const useAuth = () => {
     login,
     logout,
     resetPasswordUser,
+    acceptInvitationUser,
     getProfile,
   };
 };

@@ -4,10 +4,10 @@ export interface InviteUserRequest {
     firstName: string;
     lastName: string;
     email: string;
-    roleIds: number[];
+    roleIds: string[];
     expiration: string,
-    projectIds: number[],
-    subProjectIds: number[] ,
+    projectIds: string[],
+    subProjectIds: string[] ,
     message: string
   }
 
@@ -21,4 +21,45 @@ export interface InviteUserResponse {
       verificationLink?: string;
     };
   }
-  
+
+// Nested user-assignment models for /users/:id/projects
+export interface UserActivity {
+  id: string;
+  name: string;
+  description?: string | null;
+  category?: string | null;
+  frequency?: string | null;
+  status: string;
+  subprojectId: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface UserSubproject {
+  id: string;
+  name: string;
+  description?: string | null;
+  category?: string | null;
+  status: string;
+  projectId: string;
+  createdAt?: string;
+  updatedAt?: string;
+  activities: UserActivity[];
+}
+
+export interface UserProject {
+  id: string;
+  name: string;
+  description?: string | null;
+  category?: string | null;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
+  subprojects: UserSubproject[];
+}
+
+export interface GetUserProjectsResponse {
+  success: boolean;
+  message?: string;
+  data: UserProject[];
+}
