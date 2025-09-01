@@ -13,6 +13,14 @@ import { Alert, AlertDescription } from "../../components/ui/feedback/alert";
 import { Label } from "../../components/ui/form/label";
 import { Input } from "../../components/ui/form/input";
 import { Button } from "../../components/ui/button/button";
+import caritas from "../../../public/images/caritas.jpg";
+import logo from "../../../public/images/logo.jpg";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "../../components/ui/data-display/carousel";
+import reactLogo from "../../assets/react.svg";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -65,47 +73,89 @@ const ForgotPassword = () => {
   const isLoading = authLoading || isSubmitting;
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
-            Forgot Password
-          </CardTitle>
-          <CardDescription className="text-center">
-            Enter your email to reset your password
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {authError && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{authError}</AlertDescription>
-            </Alert>
-          )}
-          <Form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="name@example.com"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                disabled={isLoading}
+    <div className="grid grid-cols-1 md:grid-cols-5 h-screen bg-white overflow-hidden">
+      {/* Left: Image slider (60%) */}
+      <div className="relative hidden md:block md:col-span-3 bg-black h-full">
+        <Carousel opts={{ loop: true }} className="h-full">
+          <CarouselContent className="h-full">
+            <CarouselItem className="h-full">
+              <img
+                src={caritas}
+                alt="Slide 1"
+                className="w-full h-full object-cover"
               />
-            </div>
-            <Button type="submit" className="w-full" onClick={() => navigate("/reset-password")} disabled={isLoading}>
-              {isLoading ? "Sending..." : "Send"}
-            </Button>
-          </Form>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <p className="text-sm text-gray-500">
-            Don't have an account? Contact your administrator.
-          </p>
-        </CardFooter>
-      </Card>
+            </CarouselItem>
+            <CarouselItem className="h-full">
+              <img
+                src={reactLogo}
+                alt="Slide 2"
+                className="w-full h-full object-cover"
+              />
+            </CarouselItem>
+            <CarouselItem className="h-full">
+              <img
+                src="/vite.svg"
+                alt="Slide 3"
+                className="w-full h-full object-cover"
+              />
+            </CarouselItem>
+          </CarouselContent>
+        </Carousel>
+      </div>
+      {/* Right: Forgot form (40%) */}
+      <div className="md:col-span-2 h-full px-6 py-6 flex flex-col min-h-0">
+        <div className="h-[250px] shrink-0 flex items-center justify-center">
+          <img src={logo} alt="Logo" className="h-full w-auto object-contain" />
+        </div>
+        <div className="flex-1 overflow-y-auto flex justify-center items-start pt-4">
+          <Card className="w-full max-w-md border-0">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl font-bold text-center">
+                Forgot Password
+              </CardTitle>
+              <CardDescription className="text-center">
+                Enter your email to reset your password
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {authError && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertDescription>{authError}</AlertDescription>
+                </Alert>
+              )}
+              <Form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full bg-[#2E343E] text-white"
+                  onClick={() => navigate("/reset-password")}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Sending..." : "Send"}
+                </Button>
+              </Form>
+            </CardContent>
+            <CardFooter className="flex justify-center">
+              <p className="text-sm text-gray-500">
+                Don't have an account? Contact your administrator.
+              </p>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
