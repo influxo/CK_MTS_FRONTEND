@@ -18,6 +18,7 @@ import DataEntry from "./pages/DataEntry";
 import DataEntryTemplates from "./pages/DataEntryTemplates";
 import { EmployeeDetails } from "./components/employees/EmployeeDetails";
 import AcceptInvitation from "./pages/auth/AcceptInvitation";
+import { Profile } from "./pages/Profile";
 
 const routes = [
   {
@@ -51,6 +52,10 @@ const routes = [
       {
         path: "dashboard",
         element: <Dashboard />,
+      },
+      {
+        path: "dashboard/profile",
+        element: <Profile />,
       },
       {
         path: "projects",
