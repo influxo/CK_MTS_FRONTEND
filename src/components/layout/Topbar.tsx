@@ -21,6 +21,13 @@ import { Input } from "../ui/form/input";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/overlay/sheet";
 import { createPortal } from "react-dom";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  fetchUserProfile,
+  selectCurrentUser,
+} from "../../store/slices/authSlice";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store";
 
 interface TopbarProps {
   title?: string;
@@ -31,6 +38,13 @@ interface TopbarProps {
 export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   // Light mode only - no dark mode toggle
   const [notifOpen, setNotifOpen] = useState(false);
+  const navigate = useNavigate();
+
+  // const dispatch = useDispatch<AppDispatch>();
+  // dispatch(fetchUserProfile());
+
+  const user = useSelector(selectCurrentUser);
+  console.log("user from topbar", user);
 
   return (
     // <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
@@ -181,13 +195,13 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                 <AvatarFallback>JD</AvatarFallback>
               </Avatar>
               <span className="text-sm font-normal hidden sm:inline-block">
-                John Doe
+                {user?.firstName} {user?.lastName}
               </span>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-white">
-            <DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate("/dashboard/profile")}>
               <User className="h-4 w-4 mr-2" />
               Profile
             </DropdownMenuItem>
