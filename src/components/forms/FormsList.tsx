@@ -19,12 +19,21 @@ import {
   Users,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from 'react-redux';
-import type { AppDispatch } from '../../store';
-import { fetchProjects, selectAllProjects, selectProjectsLoading } from '../../store/slices/projectsSlice';
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store";
+import {
+  fetchProjects,
+  selectAllProjects,
+  selectProjectsLoading,
+} from "../../store/slices/projectsSlice";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -62,7 +71,17 @@ import { Textarea } from "../ui/form/textarea";
 import type { FormTemplate } from "../../services/forms/formModels";
 import { deleteForm } from "../../store/slices/formsSlice";
 import { toast } from "sonner";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/overlay/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/overlay/alert-dialog";
+import { useNavigate } from "react-router-dom";
 
 // Interface for component props
 interface FormsListProps {
@@ -71,10 +90,15 @@ interface FormsListProps {
   onEditForm: (formId: string) => void;
 }
 
-export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsListProps) {
+export function FormsList({
+  formTemplates,
+  onCreateForm,
+  onEditForm,
+}: FormsListProps) {
   const dispatch = useDispatch<AppDispatch>();
   const projects = useSelector(selectAllProjects);
   const isLoadingProjects = useSelector(selectProjectsLoading);
+  const navigate = useNavigate();
 
   // Fetch projects when component mounts
   useEffect(() => {
@@ -116,7 +140,12 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
 
   // Handle click on a form template to edit
   const handleEditClick = (formId: string) => {
-    onEditForm(formId);
+    // onEditForm(formId);
+    navigate(`/forms/edit/${formId}`);
+  };
+
+  const handleCreateClick = () => {
+    navigate(`/forms/create`);
   };
 
   const handleDeleteClick = (formId: string) => {
@@ -125,13 +154,15 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
 
   const handleConfirmDelete = async () => {
     if (!formToDelete) return;
-    
+
     setIsDeleting(true);
     try {
       await dispatch(deleteForm(formToDelete)).unwrap();
-      toast.success('Form deleted successfully');
+      toast.success("Form deleted successfully");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete form');
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete form"
+      );
     } finally {
       setIsDeleting(false);
       setFormToDelete(null);
@@ -154,24 +185,20 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
           </p>
         </div>
         <div className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={() => setProjectFilter("all")}
-          >
+          <Button variant="outline" onClick={() => setProjectFilter("all")}>
             <SlidersHorizontal className="h-4 w-4 mr-2" />
             Advanced Filters
           </Button>
 
-          <Dialog
-            open={isCreateFormOpen}
-            onOpenChange={setIsCreateFormOpen}
-          >
-            <DialogTrigger asChild>
-              <Button className="bg-black text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Form
-              </Button>
-            </DialogTrigger>
+          <Dialog open={isCreateFormOpen} onOpenChange={setIsCreateFormOpen}>
+            <Button
+              onClick={() => handleCreateClick()}
+              className="bg-black text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Form
+            </Button>
+
             <DialogContent className="sm:max-w-[550px]">
               <DialogHeader>
                 <DialogTitle>Create New Form</DialogTitle>
@@ -227,9 +254,13 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
                     disabled={isLoadingProjects}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={
-                        isLoadingProjects ? "Loading projects..." : "Select a project"
-                      } />
+                      <SelectValue
+                        placeholder={
+                          isLoadingProjects
+                            ? "Loading projects..."
+                            : "Select a project"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {projects.map((project) => (
@@ -333,7 +364,9 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
             className="w-[180px]"
           >
             <TabsList className="grid w-full grid-cols-2 bg-gray-200 rounded-full">
-              <TabsTrigger value="grid" className="rounded-full bg-white">Grid View</TabsTrigger>
+              <TabsTrigger value="grid" className="rounded-full bg-white">
+                Grid View
+              </TabsTrigger>
               <TabsTrigger value="list">List View</TabsTrigger>
             </TabsList>
           </Tabs>
@@ -405,10 +438,9 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
 
       {viewType === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {
-            formTemplates.map((formTes) => (
-              // <div>{formTes.name}</div>
-              <Card key={formTes.id} className="overflow-hidden">
+          {formTemplates.map((formTes) => (
+            // <div>{formTes.name}</div>
+            <Card key={formTes.id} className="overflow-hidden">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <div>
@@ -437,19 +469,19 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
                         <Eye className="h-4 w-4 mr-2" />
                         Preview
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      {/* <DropdownMenuItem>
                         <Copy className="h-4 w-4 mr-2" />
                         Duplicate
                       </DropdownMenuItem>
                       <DropdownMenuItem>
                         <FileJson className="h-4 w-4 mr-2" />
                         Export JSON
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      </DropdownMenuItem> */}
+                      {/* <DropdownMenuItem>
                         <Link className="h-4 w-4 mr-2" />
                         Assign to Project
-                      </DropdownMenuItem>
-                      {formTes.status !== "archived" ? (
+                      </DropdownMenuItem> */}
+                      {/* {formTes.status !== "archived" ? (
                         <DropdownMenuItem>
                           <AlertCircle className="h-4 w-4 mr-2" />
                           Archive
@@ -459,8 +491,8 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
                           <Check className="h-4 w-4 mr-2" />
                           Restore
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem 
+                      )} */}
+                      <DropdownMenuItem
                         className="text-destructive"
                         onClick={() => handleDeleteClick(formTes.id)}
                       >
@@ -507,12 +539,16 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
                         Last updated:
                       </span>
                       <div>
-                        {formTes.updatedAt && new Date(formTes.updatedAt).toLocaleDateString()}
+                        {formTes.updatedAt &&
+                          new Date(formTes.updatedAt).toLocaleDateString()}
                       </div>
                     </div>
                     <div className="col-span-2">
                       <span className="text-muted-foreground">Created by:</span>
-                      <div>{formTes.createdAt && new Date(formTes.createdAt).toLocaleDateString()}</div>
+                      <div>
+                        {formTes.createdAt &&
+                          new Date(formTes.createdAt).toLocaleDateString()}
+                      </div>
                     </div>
                   </div>
 
@@ -527,14 +563,19 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
                           className="text-sm flex items-center gap-1"
                         >
                           <Users className="h-3 w-3 text-muted-foreground" />
-                          <span className="capitalize">{association.entityType}</span>
+                          <span className="capitalize">
+                            {association.entityType}
+                          </span>
                           <span className="text-xs text-muted-foreground">
                             {association.entityId}
                           </span>
                         </div>
                       ))}
-                      {(!formTes.entityAssociations || formTes.entityAssociations.length === 0) && (
-                        <span className="text-xs text-muted-foreground">No associated projects</span>
+                      {(!formTes.entityAssociations ||
+                        formTes.entityAssociations.length === 0) && (
+                        <span className="text-xs text-muted-foreground">
+                          No associated projects
+                        </span>
                       )}
                     </div>
                   </div>
@@ -550,14 +591,17 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
                   <Settings className="h-4 w-4 mr-2" />
                   Configure
                 </Button>
-                <Button size="sm" onClick={() => handleEditClick(formTes.id)} className="rounded-md bg-black text-white">
+                <Button
+                  size="sm"
+                  onClick={() => handleEditClick(formTes.id)}
+                  className="rounded-md bg-black text-white"
+                >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Form
                 </Button>
               </div>
             </Card>
-            ))
-          }
+          ))}
 
           {/* Create new form card */}
           <Card className="border-dashed flex flex-col items-center justify-center p-6">
@@ -623,25 +667,26 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
                   {/* <TableCell>{template.submissions}</TableCell> */}
                   <TableCell>
                     <div className="space-y-1 max-w-[150px]">
-                      {template.entityAssociations.map((entityAssociation, index) => (
-                        <div key={index} className="text-sm truncate">
-                          {entityAssociation.entityId}
-                          {entityAssociation.entityType && (
-                            <span className="text-xs text-muted-foreground block">
-                              {entityAssociation.entityType}
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                      {template.entityAssociations.map(
+                        (entityAssociation, index) => (
+                          <div key={index} className="text-sm truncate">
+                            {entityAssociation.entityId}
+                            {entityAssociation.entityType && (
+                              <span className="text-xs text-muted-foreground block">
+                                {entityAssociation.entityType}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div>
-                      {template.updatedAt && new Date(template.updatedAt).toLocaleDateString()}
+                      {template.updatedAt &&
+                        new Date(template.updatedAt).toLocaleDateString()}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      by WHO
-                    </div>
+                    <div className="text-xs text-muted-foreground">by WHO</div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -691,7 +736,7 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
                               Restore
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => handleDeleteClick(template.id)}
                           >
@@ -736,22 +781,26 @@ export function FormsList({ formTemplates, onCreateForm, onEditForm }: FormsList
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!formToDelete} onOpenChange={(open) => !open && handleCancelDelete()}>
+      <AlertDialog
+        open={!!formToDelete}
+        onOpenChange={(open) => !open && handleCancelDelete()}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the form and all its data.
+              This action cannot be undone. This will permanently delete the
+              form and all its data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleConfirmDelete}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

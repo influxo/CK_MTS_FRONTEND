@@ -149,12 +149,12 @@ export function FormBuilder({
   const [formData, setFormData] = useState<FormData>(
     isEditing
       ? {
-          id: "",
+          id: "123",
           name: "",
           description: "",
           category: "",
           status: "draft",
-          version: "0.1",
+          version: "0.2222",
           fields: [],
         }
       : {
@@ -167,6 +167,8 @@ export function FormBuilder({
           fields: [],
         }
   );
+
+  console.log(formData)
 
   // const [activeTab, setActiveTab] = useState("builder");
   const [selectedField, setSelectedField] = useState<string | null>(null);
@@ -270,7 +272,6 @@ export function FormBuilder({
       }
     };
 
-    console.log('Saving form data:', formattedData);
     onSave(formattedData);
   };
 
