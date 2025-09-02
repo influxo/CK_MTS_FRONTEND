@@ -133,7 +133,7 @@ export interface FormField {
   required?: boolean;
   placeholder?: string;
   helpText?: string;
-  options?: FormFieldOption[];
+  options?: string[];
   validations?: {
     minLength?: number;
     maxLength?: number;

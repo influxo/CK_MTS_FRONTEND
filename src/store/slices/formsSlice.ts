@@ -7,7 +7,6 @@ import type {
   UpdateFormRequest,
   UpdateFormResponse,
   DeleteFormResponse,
-  FormTemplatePagination,
   FormTemplateAndPagination,
 } from "../../services/forms/formModels";
 import formService from "../../services/forms/formService";

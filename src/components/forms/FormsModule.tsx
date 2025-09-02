@@ -3,12 +3,12 @@ import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../store";
 import { FormsList } from "./FormsList";
 import { FormBuilder } from "./FormBuilder";
-import type { FormTemplateAndPagination } from "../../services/forms/formModels";
+import type { FormTemplate, Pagination } from "../../services/forms/formModels";
 import { createForm } from "../../store/slices/formsSlice";
 import { toast } from "sonner";
 
 interface FormsModuleProps {
-  forms: FormTemplateAndPagination;
+  forms: { templates: FormTemplate[], pagination: Pagination };
   onFormCreated?: () => void;
 }
 
@@ -17,6 +17,7 @@ export function FormsModule({ forms, onFormCreated }: FormsModuleProps) {
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [isCreatingForm, setIsCreatingForm] = useState(false);
 
+  console.log("Forms:", forms);
   const handleCreateForm = () => {
     setIsCreatingForm(true);
     setSelectedFormId(null);
@@ -73,7 +74,7 @@ export function FormsModule({ forms, onFormCreated }: FormsModuleProps) {
     <FormsList 
       onCreateForm={handleCreateForm} 
       onEditForm={handleEditForm} 
-      formTemplates={forms.templates} 
+      formTemplates={forms?.templates ?? []} 
     />
   );
 }

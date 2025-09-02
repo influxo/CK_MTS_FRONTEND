@@ -23,5 +23,7 @@ export function Forms() {
     setRefreshKey(prev => prev + 1);
   }, []);
 
+  console.log("Forms state:", forms);
+
   return <FormsModule forms={forms} onFormCreated={handleFormCreated} />;
 }
