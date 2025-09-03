@@ -183,7 +183,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         {/* Create Project */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-black text-white flex ">
+            <Button className="bg-[#2E343E] text-white flex ">
               <Plus className="h-4 w-4 mr-2 " />
               Create Project
             </Button>

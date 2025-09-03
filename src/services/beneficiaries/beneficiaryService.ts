@@ -10,6 +10,8 @@ import type {
   UpdateBeneficiaryResponse,
   DeleteBeneficiaryResponse,
   GetBeneficiaryPIIByIdResponse,
+  GetBeneficiaryServicesRequest,
+  GetBeneficiaryServicesResponse,
 } from "./beneficiaryModels";
 
 class BeneficiaryService {
@@ -132,6 +134,41 @@ class BeneficiaryService {
         success: false,
         message: error?.message || "Failed to fetch beneficiary PII",
       } as GetBeneficiaryPIIByIdResponse;
+    }
+  }
+
+  async getBeneficiaryServices(
+    params: GetBeneficiaryServicesRequest
+  ): Promise<GetBeneficiaryServicesResponse> {
+    const { id, page, limit, fromDate, toDate } = params;
+    try {
+      const response = await axiosInstance.get<GetBeneficiaryServicesResponse>(
+        `${this.beneficiaryEndpoint}/${id}/services`,
+        {
+          params: {
+            page,
+            limit,
+            fromDate,
+            toDate,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as GetBeneficiaryServicesResponse;
+      }
+      return {
+        success: false,
+        data: [],
+        meta: {
+          page: page ?? 1,
+          limit: limit ?? 20,
+          totalItems: 0,
+          totalPages: 0,
+        },
+        message: error?.message || "Failed to fetch beneficiary services",
+      } as GetBeneficiaryServicesResponse;
     }
   }
 }

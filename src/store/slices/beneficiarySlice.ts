@@ -11,6 +11,9 @@ import type {
   UpdateBeneficiaryRequest,
   UpdateBeneficiaryResponse,
   DeleteBeneficiaryResponse,
+  GetBeneficiaryServicesRequest,
+  GetBeneficiaryServicesResponse,
+  BeneficiaryServiceItem,
 } from "../../services/beneficiaries/beneficiaryModels";
 
 interface BeneficiaryState {
@@ -35,6 +38,14 @@ interface BeneficiaryState {
   updateError: string | null;
   updateSuccessMessage: string | null;
   updated: Beneficiary | null;
+  // services state
+  services: BeneficiaryServiceItem[];
+  servicesIsLoading: boolean;
+  servicesError: string | null;
+  servicesPage: number;
+  servicesLimit: number;
+  servicesTotalItems: number;
+  servicesTotalPages: number;
   // delete state
   deleteIsLoading: boolean;
   deleteError: string | null;
@@ -64,6 +75,14 @@ const initialState: BeneficiaryState = {
   updateError: null,
   updateSuccessMessage: null,
   updated: null,
+  // services state
+  services: [],
+  servicesIsLoading: false,
+  servicesError: null,
+  servicesPage: 1,
+  servicesLimit: 20,
+  servicesTotalItems: 0,
+  servicesTotalPages: 0,
   // delete state
   deleteIsLoading: false,
   deleteError: null,
@@ -118,6 +137,21 @@ export const updateBeneficiaryById = createAsyncThunk<
   }
   return res;
 });
+
+export const fetchBeneficiaryServices = createAsyncThunk<
+  GetBeneficiaryServicesResponse,
+  GetBeneficiaryServicesRequest,
+  { rejectValue: string }
+>(
+  "beneficiaries/fetchServices",
+  async (params, { rejectWithValue }) => {
+    const res = await beneficiaryService.getBeneficiaryServices(params);
+    if (!res.success) {
+      return rejectWithValue(res.message || "Failed to fetch beneficiary services");
+    }
+    return res;
+  }
+);
 
 export const deleteBeneficiaryById = createAsyncThunk<
   DeleteBeneficiaryResponse,
@@ -242,6 +276,24 @@ const beneficiarySlice = createSlice({
         state.updateError = action.payload ?? "Failed to update beneficiary";
         state.updated = null;
       })
+      // services
+      .addCase(fetchBeneficiaryServices.pending, (state) => {
+        state.servicesIsLoading = true;
+        state.servicesError = null;
+      })
+      .addCase(fetchBeneficiaryServices.fulfilled, (state, action) => {
+        state.servicesIsLoading = false;
+        state.services = action.payload.data;
+        state.servicesPage = action.payload.meta.page;
+        state.servicesLimit = action.payload.meta.limit;
+        state.servicesTotalItems = action.payload.meta.totalItems;
+        state.servicesTotalPages = action.payload.meta.totalPages;
+      })
+      .addCase(fetchBeneficiaryServices.rejected, (state, action) => {
+        state.servicesIsLoading = false;
+        state.servicesError = action.payload ?? "Failed to fetch beneficiary services";
+        state.services = [];
+      })
       // delete
       .addCase(deleteBeneficiaryById.pending, (state) => {
         state.deleteIsLoading = true;
@@ -333,6 +385,22 @@ export const selectBeneficiaryUpdateSuccessMessage = (state: { beneficiaries: Be
 
 export const selectUpdatedBeneficiary = (state: { beneficiaries: BeneficiaryState }) =>
   state.beneficiaries.updated;
+
+export const selectBeneficiaryServices = (state: { beneficiaries: BeneficiaryState }) =>
+  state.beneficiaries.services;
+
+export const selectBeneficiaryServicesLoading = (state: { beneficiaries: BeneficiaryState }) =>
+  state.beneficiaries.servicesIsLoading;
+
+export const selectBeneficiaryServicesError = (state: { beneficiaries: BeneficiaryState }) =>
+  state.beneficiaries.servicesError;
+
+export const selectBeneficiaryServicesMeta = (state: { beneficiaries: BeneficiaryState }) => ({
+  page: state.beneficiaries.servicesPage,
+  limit: state.beneficiaries.servicesLimit,
+  totalItems: state.beneficiaries.servicesTotalItems,
+  totalPages: state.beneficiaries.servicesTotalPages,
+});
 
 export const selectBeneficiaryDeleteLoading = (state: { beneficiaries: BeneficiaryState }) =>
   state.beneficiaries.deleteIsLoading;
