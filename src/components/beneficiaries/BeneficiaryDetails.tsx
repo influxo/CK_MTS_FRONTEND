@@ -1213,7 +1213,20 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                         <TableCell>{s.entity?.type ?? "—"}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={!s.formResponseId}
+                              onClick={() =>
+                                s.formResponseId &&
+                                navigate(`/beneficiaries/${id}/form/${s.formResponseId}`)
+                              }
+                              title={
+                                s.formResponseId
+                                  ? "View linked form submission"
+                                  : "No linked form submission"
+                              }
+                            >
                               <Eye className="h-4 w-4" />
                             </Button>
                             <DropdownMenu>

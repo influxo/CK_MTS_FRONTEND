@@ -7,6 +7,8 @@ import type {
   GetFormTemplateByIdResponse,
   FormSubmissionRequest,
   FormSubmissionResponse,
+  GetFormResponseByIdResponse,
+  FormResponseData,
 } from "../../services/forms/formModels";
 import formService from "../../services/forms/formServices";
 
@@ -23,6 +25,10 @@ interface FormTemplatesState {
   selectedTemplate: FormTemplate | null;
   selectedTemplateLoading: boolean;
   selectedTemplateError: string | null;
+  // selected response state
+  selectedResponse: FormResponseData | null;
+  selectedResponseLoading: boolean;
+  selectedResponseError: string | null;
 }
 
 const initialState: FormTemplatesState = {
@@ -36,6 +42,9 @@ const initialState: FormTemplatesState = {
   selectedTemplate: null,
   selectedTemplateLoading: false,
   selectedTemplateError: null,
+  selectedResponse: null,
+  selectedResponseLoading: false,
+  selectedResponseError: null,
 };
 
 export const fetchFormTemplates = createAsyncThunk<
@@ -72,6 +81,18 @@ export const fetchFormTemplateById = createAsyncThunk<
   const response = await formService.getFormTemplateById(id);
   if (!response.success) {
     return rejectWithValue(response.message || "Failed to fetch form template");
+  }
+  return response;
+});
+
+export const fetchFormResponseById = createAsyncThunk<
+  GetFormResponseByIdResponse,
+  { id: string },
+  { rejectValue: string }
+>("forms/fetchFormResponseById", async ({ id }, { rejectWithValue }) => {
+  const response = await formService.getFormResponseById(id);
+  if (!response.success) {
+    return rejectWithValue(response.message || "Failed to fetch form response");
   }
   return response;
 });
@@ -127,6 +148,20 @@ const formSlice = createSlice({
       .addCase(fetchFormTemplateById.rejected, (state, action) => {
         state.selectedTemplateLoading = false;
         state.selectedTemplateError = action.payload ?? "Failed to fetch form template";
+      })
+      // fetch single response by id
+      .addCase(fetchFormResponseById.pending, (state) => {
+        state.selectedResponseLoading = true;
+        state.selectedResponseError = null;
+        state.selectedResponse = null;
+      })
+      .addCase(fetchFormResponseById.fulfilled, (state, action) => {
+        state.selectedResponseLoading = false;
+        state.selectedResponse = action.payload.data;
+      })
+      .addCase(fetchFormResponseById.rejected, (state, action) => {
+        state.selectedResponseLoading = false;
+        state.selectedResponseError = action.payload ?? "Failed to fetch form response";
       });
   },
 });
@@ -157,5 +192,13 @@ export const selectSelectedTemplateLoading = (state: {
 }) => state.forms.selectedTemplateLoading;
 export const selectSelectedTemplateError = (state: { forms: FormTemplatesState }) =>
   state.forms.selectedTemplateError;
+
+export const selectSelectedResponse = (state: { forms: FormTemplatesState }) =>
+  state.forms.selectedResponse;
+export const selectSelectedResponseLoading = (state: {
+  forms: FormTemplatesState;
+}) => state.forms.selectedResponseLoading;
+export const selectSelectedResponseError = (state: { forms: FormTemplatesState }) =>
+  state.forms.selectedResponseError;
 
 export default formSlice.reducer;
