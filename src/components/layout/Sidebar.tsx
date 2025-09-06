@@ -18,14 +18,6 @@ import { useAuth } from "../../hooks/useAuth";
 import type { Project } from "../../services/projects/projectModels";
 import { useState } from "react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  fetchSubProjectsByProjectId,
-  selectAllSubprojects,
-  selectSubprojectsError,
-  selectSubprojectsLoading,
-} from "../../store/slices/subProjectSlice";
-import type { AppDispatch } from "../../store";
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -48,36 +40,12 @@ export function Sidebar({
   projectsError,
 }: SidebarProps) {
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(false);
-  const [expandedProjectIds, setExpandedProjectIds] = useState<string[]>([]);
-
-  const dispatch = useDispatch<AppDispatch>();
-  const subprojects = useSelector(selectAllSubprojects);
-  const subprojectsLoading = useSelector(selectSubprojectsLoading);
-  const subprojectsError = useSelector(selectSubprojectsError);
   const navigate = useNavigate();
   const { logout } = useAuth();
 
   const location = useLocation();
   const matchProject = matchPath("/projects/:projectId", location.pathname);
-  const matchSubproject = matchPath(
-    "/projects/:projectId/subprojects/:subprojectId",
-    location.pathname
-  );
-  const selectedProjectId =
-    matchSubproject?.params.projectId || matchProject?.params.projectId;
-
-  const toggleProjectSubprojects = (projectId: string) => {
-    const alreadyExpanded = expandedProjectIds.includes(projectId);
-
-    if (alreadyExpanded) {
-      setExpandedProjectIds(
-        expandedProjectIds.filter((id) => id !== projectId)
-      );
-    } else {
-      setExpandedProjectIds([...expandedProjectIds, projectId]);
-      dispatch(fetchSubProjectsByProjectId({ projectId }));
-    }
-  };
+  const selectedProjectId = matchProject?.params.projectId;
 
   const handleNavClick = () => {
     if (onCloseMobile) onCloseMobile();
@@ -224,20 +192,14 @@ export function Sidebar({
                       </span>
                     )}
                     {projects?.map((project) => {
-                      const relatedSubprojects = subprojects.filter(
-                        (sp) => sp.projectId === project.id
-                      );
-                      const isProjectExpanded =
-                        expandedProjectIds.includes(project.id) ||
-                        selectedProjectId === project.id;
                       const isSelected = selectedProjectId === project.id;
 
                       return (
                         <div key={project.id} className="mb-1">
                           <button
                             onClick={() => {
-                              toggleProjectSubprojects(project.id);
                               navigate(`/projects/${project.id}`);
+                              handleNavClick();
                             }}
                             className={cn(
                               "flex items-center capitalize w-full text-left rounded-md px-2 py-1 text-sm transition-colors",
@@ -247,61 +209,7 @@ export function Sidebar({
                             )}
                           >
                             {project.name}
-                            {relatedSubprojects.length > 0 && (
-                              <ChevronRight
-                                className={cn(
-                                  "ml-auto transition-transform duration-300",
-                                  isProjectExpanded && "rotate-90"
-                                )}
-                                size={16}
-                              />
-                            )}
                           </button>
-
-                          {/* Subprojects */}
-                          {relatedSubprojects.length > 0 && (
-                            <Collapsible.Root
-                              open={isProjectExpanded}
-                              onOpenChange={(open) =>
-                                toggleProjectSubprojects(project.id)
-                              }
-                            >
-                              <Collapsible.Content
-                                className={cn(
-                                  "data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden ml-4",
-                                  collapsed && "ml-0"
-                                )}
-                              >
-                                {subprojectsLoading && isProjectExpanded && (
-                                  <span className="text-xs text-gray-400">
-                                    Loading subprojects...
-                                  </span>
-                                )}
-                                {subprojectsError && isProjectExpanded && (
-                                  <span className="text-xs text-black">
-                                    Error loading subprojects
-                                  </span>
-                                )}
-                                {relatedSubprojects.map((subproject) => (
-                                  <NavLink
-                                    key={subproject.id}
-                                    to={`/projects/${project.id}/subprojects/${subproject.id}`}
-                                    className={({ isActive }) =>
-                                      cn(
-                                        "block text-sm px-8 py-1 mt-1 rounded-md transition-colors capitalize",
-                                        isActive
-                                          ? "bg-black bg-opacity-5 text-black"
-                                          : "text-black hover:bg-black hover:bg-opacity-5 hover:text-black"
-                                      )
-                                    }
-                                    onClick={handleNavClick}
-                                  >
-                                    {subproject.name}
-                                  </NavLink>
-                                ))}
-                              </Collapsible.Content>
-                            </Collapsible.Root>
-                          )}
                         </div>
                       );
                     })}

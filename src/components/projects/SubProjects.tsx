@@ -136,8 +136,8 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
   }, [createSuccessMessage, dispatch]);
 
   const handleViewSubProject = (subProjectId: string) => {
-    console.log(`Navigate to subproject: ${subProjectId}`);
-    // e.g., navigate(`/projects/${projectId}/subprojects/${subProjectId}`);
+    if (!projectId) return;
+    navigate(`/projects/${projectId}/subprojects/${subProjectId}`);
   };
 
   const handleCreateSubmit = async () => {
