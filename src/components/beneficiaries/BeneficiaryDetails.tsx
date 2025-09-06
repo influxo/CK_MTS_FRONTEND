@@ -33,6 +33,11 @@ import {
   selectBeneficiaryUpdateError,
   selectBeneficiaryUpdateSuccessMessage,
   clearBeneficiaryUpdate,
+  fetchBeneficiaryServices,
+  selectBeneficiaryServices,
+  selectBeneficiaryServicesLoading,
+  selectBeneficiaryServicesError,
+  selectBeneficiaryServicesMeta,
 } from "../../store/slices/beneficiarySlice";
 import type { UpdateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
@@ -121,50 +126,7 @@ type BeneficiaryVM = {
   associatedFamily: FamilyMember[];
 };
 
-// Mock service history
-const mockServiceHistory = [
-  {
-    id: "serv-001",
-    date: "2025-05-10",
-    type: "Health Check-up",
-    description: "Prenatal check-up - 2nd trimester",
-    provider: "Dr. Sarah Adams",
-    subProject: "Maternal Health Services",
-    location: "Mobile Clinic, Northern District",
-    notes: "Blood pressure normal, provided vitamin supplements.",
-  },
-  {
-    id: "serv-002",
-    date: "2025-04-12",
-    type: "Training",
-    description: "Nutrition education session",
-    provider: "Robert Johnson",
-    subProject: "Maternal Health Services",
-    location: "Community Center, Village A",
-    notes: "Participated actively in the session. Received nutrition guide.",
-  },
-  {
-    id: "serv-003",
-    date: "2025-03-15",
-    type: "Health Check-up",
-    description: "Prenatal check-up - 1st trimester",
-    provider: "Dr. Sarah Adams",
-    subProject: "Maternal Health Services",
-    location: "Mobile Clinic, Northern District",
-    notes: "First prenatal visit. All vitals normal.",
-  },
-  {
-    id: "serv-004",
-    date: "2025-02-20",
-    type: "Distribution",
-    description: "Prenatal care kit distribution",
-    provider: "Field Staff",
-    subProject: "Maternal Health Services",
-    location: "Village A Distribution Center",
-    notes:
-      "Received prenatal care kit including vitamins and educational materials.",
-  },
-];
+// Services are fetched from API; remove mocks
 
 // Mock projects for association
 const mockProjects = [
@@ -213,7 +175,9 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
     nationality: "",
     status: "active",
   });
-  const [localValidationError, setLocalValidationError] = useState<string | null>(null);
+  const [localValidationError, setLocalValidationError] = useState<
+    string | null
+  >(null);
 
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -224,10 +188,16 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
   const updateLoading = useSelector(selectBeneficiaryUpdateLoading);
   const updateError = useSelector(selectBeneficiaryUpdateError);
   const updateSuccess = useSelector(selectBeneficiaryUpdateSuccessMessage);
+  const services = useSelector(selectBeneficiaryServices);
+  const servicesLoading = useSelector(selectBeneficiaryServicesLoading);
+  const servicesError = useSelector(selectBeneficiaryServicesError);
+  const servicesMeta = useSelector(selectBeneficiaryServicesMeta);
 
   useEffect(() => {
     if (id) {
       dispatch(fetchBeneficiaryById(id));
+      // Preload first page of services for overview widgets
+      dispatch(fetchBeneficiaryServices({ id, page: 1, limit: 20 }));
     }
   }, [dispatch, id]);
 
@@ -261,17 +231,39 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
     }
   }, [updateSuccess, id, dispatch]);
 
+  // Ensure services are refreshed when Services tab becomes active
+  // useEffect(() => {
+  //   if (activeTab === "services" && id) {
+  //     dispatch(
+  //       fetchBeneficiaryServices({
+  //         id,
+  //         page: servicesMeta.page || 1,
+  //         limit: servicesMeta.limit || 20,
+  //       })
+  //     );
+  //   }
+  // }, [activeTab, id, dispatch]);
+
   const handleEditInput = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { id: fieldId, value } = e.target as HTMLInputElement;
-    setEditForm((prev) => ({ ...prev, [fieldId]: value } as UpdateBeneficiaryRequest));
+    setEditForm(
+      (prev) => ({ ...prev, [fieldId]: value } as UpdateBeneficiaryRequest)
+    );
   };
 
   const handleEditSubmit = () => {
     setLocalValidationError(null);
-    if (!editForm.firstName || !editForm.lastName || !editForm.gender || !editForm.status) {
-      setLocalValidationError("Please fill in all required fields: first name, last name, gender, status.");
+    if (
+      !editForm.firstName ||
+      !editForm.lastName ||
+      !editForm.gender ||
+      !editForm.status
+    ) {
+      setLocalValidationError(
+        "Please fill in all required fields: first name, last name, gender, status."
+      );
       return;
     }
     if (!id) return;
@@ -345,13 +337,16 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
         </Button>
 
         <h2>{beneficiary.name}</h2>
-        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
-          setIsEditDialogOpen(open);
-          if (!open) {
-            setLocalValidationError(null);
-            dispatch(clearBeneficiaryUpdate());
-          }
-        }}>
+        <Dialog
+          open={isEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) {
+              setLocalValidationError(null);
+              dispatch(clearBeneficiaryUpdate());
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="bg-[#2E343E] text-white ml-auto">
               <Edit className="h-4 w-4 mr-2" />
@@ -368,42 +363,103 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               {localValidationError && (
-                <div className="col-span-4 text-sm text-red-600">{localValidationError}</div>
+                <div className="col-span-4 text-sm text-red-600">
+                  {localValidationError}
+                </div>
               )}
               {updateError && (
-                <div className="col-span-4 text-sm text-red-600">{updateError}</div>
+                <div className="col-span-4 text-sm text-red-600">
+                  {updateError}
+                </div>
               )}
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="firstName" className="text-right">First Name *</Label>
-                <Input id="firstName" className="col-span-3" value={editForm.firstName} onChange={handleEditInput} />
+                <Label htmlFor="firstName" className="text-right">
+                  First Name *
+                </Label>
+                <Input
+                  id="firstName"
+                  className="col-span-3"
+                  value={editForm.firstName}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="lastName" className="text-right">Last Name *</Label>
-                <Input id="lastName" className="col-span-3" value={editForm.lastName} onChange={handleEditInput} />
+                <Label htmlFor="lastName" className="text-right">
+                  Last Name *
+                </Label>
+                <Input
+                  id="lastName"
+                  className="col-span-3"
+                  value={editForm.lastName}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="dob" className="text-right">Date of Birth *</Label>
-                <Input id="dob" type="date" className="col-span-3" value={editForm.dob} onChange={handleEditInput} />
+                <Label htmlFor="dob" className="text-right">
+                  Date of Birth *
+                </Label>
+                <Input
+                  id="dob"
+                  type="date"
+                  className="col-span-3"
+                  value={editForm.dob}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="nationalId" className="text-right">National ID</Label>
-                <Input id="nationalId" className="col-span-3" value={editForm.nationalId} onChange={handleEditInput} />
+                <Label htmlFor="nationalId" className="text-right">
+                  National ID
+                </Label>
+                <Input
+                  id="nationalId"
+                  className="col-span-3"
+                  value={editForm.nationalId}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">Phone</Label>
-                <Input id="phone" className="col-span-3" value={editForm.phone} onChange={handleEditInput} />
+                <Label htmlFor="phone" className="text-right">
+                  Phone
+                </Label>
+                <Input
+                  id="phone"
+                  className="col-span-3"
+                  value={editForm.phone}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">Email</Label>
-                <Input id="email" className="col-span-3" type="email" value={editForm.email} onChange={handleEditInput} />
+                <Label htmlFor="email" className="text-right">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  className="col-span-3"
+                  type="email"
+                  value={editForm.email}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="address" className="text-right">Address</Label>
-                <Input id="address" className="col-span-3" value={editForm.address} onChange={handleEditInput} />
+                <Label htmlFor="address" className="text-right">
+                  Address
+                </Label>
+                <Input
+                  id="address"
+                  className="col-span-3"
+                  value={editForm.address}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right">Gender *</Label>
-                <RadioGroup className="col-span-3 flex gap-4" value={editForm.gender} onValueChange={(v) => setEditForm((p) => ({ ...p, gender: v }))}>
+                <RadioGroup
+                  className="col-span-3 flex gap-4"
+                  value={editForm.gender}
+                  onValueChange={(v) =>
+                    setEditForm((p) => ({ ...p, gender: v }))
+                  }
+                >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="female" id="female" />
                     <Label htmlFor="female">Female</Label>
@@ -419,16 +475,37 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 </RadioGroup>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="municipality" className="text-right">Municipality</Label>
-                <Input id="municipality" className="col-span-3" value={editForm.municipality} onChange={handleEditInput} />
+                <Label htmlFor="municipality" className="text-right">
+                  Municipality
+                </Label>
+                <Input
+                  id="municipality"
+                  className="col-span-3"
+                  value={editForm.municipality}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="nationality" className="text-right">Nationality</Label>
-                <Input id="nationality" className="col-span-3" value={editForm.nationality} onChange={handleEditInput} />
+                <Label htmlFor="nationality" className="text-right">
+                  Nationality
+                </Label>
+                <Input
+                  id="nationality"
+                  className="col-span-3"
+                  value={editForm.nationality}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">Status *</Label>
-                <Select value={editForm.status} onValueChange={(v) => setEditForm((p) => ({ ...p, status: v }))}>
+                <Label htmlFor="status" className="text-right">
+                  Status *
+                </Label>
+                <Select
+                  value={editForm.status}
+                  onValueChange={(v) =>
+                    setEditForm((p) => ({ ...p, status: v }))
+                  }
+                >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -891,30 +968,51 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {mockServiceHistory.slice(0, 3).map((service) => (
-                      <div
-                        key={service.id}
-                        className="flex items-start gap-3 pb-3 border-b last:border-b-0 last:pb-0"
-                      >
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                          <CheckCircle className="h-4 w-4 text-muted-foreground " />
-                        </div>
-                        <div>
-                          <div className="font-medium">
-                            {service.type}: {service.description}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {service.subProject} | {service.location}
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                            <Clock className="h-3 w-3" />
-                            <span>
-                              {new Date(service.date).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
+                    {servicesLoading && (
+                      <div className="text-sm text-muted-foreground">
+                        Loading services...
                       </div>
-                    ))}
+                    )}
+                    {servicesError && (
+                      <div className="text-sm text-red-600">
+                        {servicesError}
+                      </div>
+                    )}
+                    {!servicesLoading &&
+                      !servicesError &&
+                      services.slice(0, 3).map((s) => (
+                        <div
+                          key={s.id}
+                          className="flex items-start gap-3 pb-3 border-b last:border-b-0 last:pb-0"
+                        >
+                          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                            <CheckCircle className="h-4 w-4 text-muted-foreground " />
+                          </div>
+                          <div>
+                            <div className="font-medium">
+                              {s.service.category}: {s.service.name}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {s.entity?.name ?? "—"} | {"—"}
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                              <Clock className="h-3 w-3" />
+                              <span>
+                                {s.deliveredAt
+                                  ? new Date(s.deliveredAt).toLocaleDateString()
+                                  : "—"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    {!servicesLoading &&
+                      !servicesError &&
+                      services.length === 0 && (
+                        <div className="text-sm text-muted-foreground">
+                          No services recorded yet.
+                        </div>
+                      )}
                   </div>
                 </CardContent>
               </Card>
@@ -1063,63 +1161,162 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
-                    <TableHead>Service Type</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Provider</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Sub-Project</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Staff's Name</TableHead>
+                    <TableHead>Staff's Email</TableHead>
+                    {/* <TableHead>Location</TableHead> */}
+                    <TableHead>Entity</TableHead>
+                    <TableHead>Entity Type</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockServiceHistory.map((service) => (
-                    <TableRow key={service.id}>
-                      <TableCell>
-                        {new Date(service.date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{service.type}</Badge>
-                      </TableCell>
-                      <TableCell>{service.description}</TableCell>
-                      <TableCell>{service.provider}</TableCell>
-                      <TableCell>{service.location}</TableCell>
-                      <TableCell>{service.subProject}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <FileEdit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Download className="h-4 w-4 mr-2" />
-                                Export
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
-                                <Trash className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                  {servicesLoading && (
+                    <TableRow>
+                      <TableCell colSpan={7}>
+                        <div className="text-sm text-muted-foreground">
+                          Loading services...
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
+                  {servicesError && !servicesLoading && (
+                    <TableRow>
+                      <TableCell colSpan={7}>
+                        <div className="text-sm text-red-600">
+                          {servicesError}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!servicesLoading &&
+                    !servicesError &&
+                    services.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell>
+                          {s.deliveredAt
+                            ? new Date(s.deliveredAt).toLocaleDateString()
+                            : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{s.service.category}</Badge>
+                        </TableCell>
+                        <TableCell>{s.service.name}</TableCell>
+                        <TableCell>
+                          {`${s.staff?.firstName ?? ""} ${
+                            s.staff?.lastName ?? ""
+                          }`.trim() || "—"}
+                        </TableCell>
+                        <TableCell>{s.staff?.email ?? "—"}</TableCell>
+                        <TableCell>{s.entity?.name ?? "—"}</TableCell>
+                        <TableCell>{s.entity?.type ?? "—"}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={!s.formResponseId}
+                              onClick={() =>
+                                s.formResponseId &&
+                                navigate(`/beneficiaries/${id}/form/${s.formResponseId}`)
+                              }
+                              title={
+                                s.formResponseId
+                                  ? "View linked form submission"
+                                  : "No linked form submission"
+                              }
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <FileEdit className="h-4 w-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Download className="h-4 w-4 mr-2" />
+                                  Export
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">
+                                  <Trash className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  {!servicesLoading &&
+                    !servicesError &&
+                    services.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7}>
+                          <div className="text-sm text-muted-foreground">
+                            No services recorded yet.
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
                 </TableBody>
               </Table>
+              {/* Simple pagination (prev/next) using meta */}
+              <div className="flex items-center justify-between mt-4 text-sm">
+                <div className="text-muted-foreground">
+                  Page {servicesMeta.page} of {servicesMeta.totalPages} •{" "}
+                  {servicesMeta.totalItems} total
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={servicesLoading || servicesMeta.page <= 1}
+                    onClick={() =>
+                      id &&
+                      dispatch(
+                        fetchBeneficiaryServices({
+                          id,
+                          page: servicesMeta.page - 1,
+                          limit: servicesMeta.limit,
+                        })
+                      )
+                    }
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={
+                      servicesLoading ||
+                      servicesMeta.page >= servicesMeta.totalPages
+                    }
+                    onClick={() =>
+                      id &&
+                      dispatch(
+                        fetchBeneficiaryServices({
+                          id,
+                          page: servicesMeta.page + 1,
+                          limit: servicesMeta.limit,
+                        })
+                      )
+                    }
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

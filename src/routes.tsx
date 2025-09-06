@@ -10,6 +10,7 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import { ProjectDetails } from "./components/projects/ProjectDetails";
 import { BeneficiaryDetails } from "./components/beneficiaries/BeneficiaryDetails";
+import BeneficiarySingleSubmission from "./components/beneficiaries/BeneficiarySingleSubmission";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
@@ -76,6 +77,10 @@ const routes = [
       {
         path: "beneficiaries/:id",
         element: <BeneficiaryDetails />,
+      },
+      {
+        path: "beneficiaries/:id/form/:formResponseId",
+        element: <BeneficiarySingleSubmission />,
       },
       {
         path: "forms",

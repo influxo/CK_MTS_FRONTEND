@@ -117,3 +117,48 @@ export interface GetBeneficiaryPIIByIdResponse {
   };
   message?: string;
 }
+
+// Get beneficiary services (GET /beneficiaries/{id}/services)
+export interface GetBeneficiaryServicesRequest {
+  id: string;
+  page?: number;
+  limit?: number;
+  fromDate?: string; // ISO date string
+  toDate?: string; // ISO date string
+}
+
+export interface BeneficiaryServiceItem {
+  id: string;
+  service: {
+    id: string;
+    name: string;
+    category: string;
+  };
+  deliveredAt: string; // ISO datetime
+  staff: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  notes?: string;
+  entity: {
+    id: string;
+    name: string;
+    type: string;
+    subprojectId?: string;
+  };
+  formResponseId?: string;
+}
+
+export interface GetBeneficiaryServicesResponse {
+  success: boolean;
+  data: BeneficiaryServiceItem[];
+  meta: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalItems: number;
+  };
+  message?: string;
+}

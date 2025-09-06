@@ -121,3 +121,72 @@ export interface FormSubmissionResponse {
   message: string;
   data: FormSubmissionData;
 }
+
+// Minimal user info (submitter or staff)
+export interface MinimalUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+// Template summary inside a response
+export interface TemplateSummary {
+  id: string;
+  name: string;
+  version: number;
+}
+
+// Beneficiary summary inside a response
+export interface BeneficiarySummary {
+  id: string;
+  pseudonym: string;
+  status: string;
+}
+
+// Service summary for deliveries
+export interface ServiceSummary {
+  id: string;
+  name: string;
+  category: string;
+}
+
+// Service delivery record linked to a form response
+export interface ServiceDelivery {
+  id: string;
+  serviceId: string;
+  deliveredAt: string;
+  staffUserId: string;
+  notes: string | null;
+  entityId: string;
+  entityType: string; // e.g., "project" | "subproject" | "activity"
+  service: ServiceSummary;
+  staff: MinimalUser;
+}
+
+// Single form response payload
+export interface FormResponseData {
+  id: string;
+  formTemplateId: string;
+  entityId: string;
+  entityType: string;
+  submittedBy: string;
+  beneficiaryId: string | null;
+  data: Record<string, any>; // dynamic fields per template
+  latitude: string | null;
+  longitude: string | null;
+  submittedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  template: TemplateSummary;
+  submitter: MinimalUser;
+  beneficiary: BeneficiarySummary | null;
+  serviceDeliveries: ServiceDelivery[];
+}
+
+// API response for fetching a form response by id
+export interface GetFormResponseByIdResponse {
+  success: boolean;
+  message?: string;
+  data: FormResponseData;
+}
