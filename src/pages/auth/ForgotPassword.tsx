@@ -119,7 +119,10 @@ const ForgotPassword = () => {
             </CardHeader>
             <CardContent>
               {authError && (
-                <Alert variant="destructive" className="mb-4">
+                <Alert
+                  variant="destructive"
+                  className="mb-4 border-0 bg-[#E5ECF6]"
+                >
                   <AlertDescription>{authError}</AlertDescription>
                 </Alert>
               )}

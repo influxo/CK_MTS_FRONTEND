@@ -12,7 +12,11 @@ import type { AppDispatch } from "../store";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import type { CreateProjectRequest } from "../services/projects/projectModels";
-import { fetchDeliveriesSeries, fetchDeliveriesSummary, selectMetricsFilters } from "../store/slices/serviceMetricsSlice";
+import {
+  fetchDeliveriesSeries,
+  fetchDeliveriesSummary,
+  selectMetricsFilters,
+} from "../store/slices/serviceMetricsSlice";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +40,12 @@ import {
 import { Textarea } from "../components/ui/form/textarea";
 import { toast } from "sonner";
 import { selectCurrentUser } from "../store/slices/authSlice";
-import { fetchUserProjectsByUserId, selectUserProjectsError, selectUserProjectsLoading, selectUserProjectsTree } from "../store/slices/userProjectsSlice";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsError,
+  selectUserProjectsLoading,
+  selectUserProjectsTree,
+} from "../store/slices/userProjectsSlice";
 
 export function Dashboard() {
   const [formData, setFormData] = useState<CreateProjectRequest>({
@@ -266,8 +275,8 @@ export function Dashboard() {
           </div>
         </div>
         <div className=" space-y-6">
-          <SyncStatus />
-          <SystemAlerts />
+          {/* <SyncStatus />
+          <SystemAlerts /> */}
           <RecentActivity />
         </div>
       </div>

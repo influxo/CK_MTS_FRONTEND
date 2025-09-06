@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "../../components/ui/feedback/alert";
 import { Label } from "../../components/ui/form/label";
 import { Input } from "../../components/ui/form/input";
 import { Button } from "../../components/ui/button/button";
+import { Eye, EyeOff } from "lucide-react";
 import caritas from "../../../public/images/caritas.jpg";
 import logo from "../../../public/images/logo.jpg";
 import {
@@ -37,6 +38,8 @@ const ResetPassword = () => {
     confirmPassword: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Get the intended destination from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/dashboard";
@@ -119,38 +122,65 @@ const ResetPassword = () => {
             </CardHeader>
             <CardContent>
               {authError && (
-                <Alert variant="destructive" className="mb-4">
+                <Alert
+                  variant="destructive"
+                  className="mb-4 border-0 bg-[#E5ECF6]"
+                >
                   <AlertDescription>{authError}</AlertDescription>
                 </Alert>
               )}
               <Form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label>New Password</Label>
-                  <Input
-                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                  />
+                  <div className="relative">
+                    <Input
+                      className="pr-10 bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      required
+                      value={formData.password}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      title={showPassword ? "Hide password" : "Show password"}
+                      disabled={isLoading}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Confirm New Password</Label>
-                  <Input
-                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                  />
+                  <div className="relative">
+                    <Input
+                      className="pr-10 bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirm ? "text" : "password"}
+                      placeholder="••••••••"
+                      required
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm((prev) => !prev)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                      aria-label={showConfirm ? "Hide password" : "Show password"}
+                      title={showConfirm ? "Hide password" : "Show password"}
+                      disabled={isLoading}
+                    >
+                      {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
                 <Button
                   type="submit"

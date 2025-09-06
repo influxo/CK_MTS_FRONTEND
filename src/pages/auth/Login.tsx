@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Form, useNavigate, useLocation } from "react-router-dom";
 import caritas from "../../../public/images/caritas.jpg";
 import logo from "../../../public/images/logo.jpg";
+// import donation from "../../../public/images/donation.jpg";
+// import volunteer from "../../../public/images/volunteer.jpg";
 import { useAuth } from "../../hooks/useAuth";
 import {
   Card,
@@ -23,6 +25,8 @@ import {
   type CarouselApi,
 } from "../../components/ui/data-display/carousel";
 import reactLogo from "../../assets/react.svg";
+import donation from "../../../public/images/donation.jpg";
+import volunteer from "../../../public/images/volunteer.jpg";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -42,7 +46,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
 
-  const sliderImages = [caritas, reactLogo, "/vite.svg"];
+  const sliderImages = [caritas, donation, volunteer];
 
   // Get the intended destination from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/dashboard";
@@ -89,9 +93,9 @@ const Login = () => {
   const isLoading = authLoading || isSubmitting;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-5 h-screen bg-white overflow-hidden">
+    <div className="grid grid-cols-1 md:grid-cols-5 min-h-[100dvh] md:h-screen bg-white overflow-hidden">
       {/* Left: Image slider (60%) */}
-      <div className="relative hidden md:block md:col-span-3 bg-black h-full">
+      <div className="relative hidden md:block md:col-span-3 bg-black h-full min-h-0">
         <Carousel
           setApi={setCarouselApi}
           opts={{ loop: true }}
@@ -112,11 +116,11 @@ const Login = () => {
       </div>
       {/* Right: Login form (40%) */}
 
-      <div className="md:col-span-2 h-full px-6 py-6 flex flex-col">
-        <div className="h-[250px] shrink-0 flex items-center justify-center">
+      <div className="md:col-span-2 h-full min-h-0 px-4 sm:px-6 py-4 sm:py-6 flex flex-col">
+        <div className="h-24 sm:h-32 md:h-[250px] shrink-0 flex items-center justify-center">
           <img src={logo} alt="Logo" className="h-full w-auto object-contain" />
         </div>
-        <div className="flex-1 overflow-y-auto flex justify-center items-start pt-4">
+        <div className="flex-1 min-h-0 overflow-y-auto flex justify-center items-center md:items-start pt-4">
           <Card className="w-full border-0 max-w-md">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold text-center">
@@ -128,7 +132,10 @@ const Login = () => {
             </CardHeader>
             <CardContent>
               {authError && (
-                <Alert variant="destructive" className="mb-4">
+                <Alert
+                  variant="destructive"
+                  className="mb-4 bg-[#E5ECF6] border-0"
+                >
                   <AlertDescription>{authError}</AlertDescription>
                 </Alert>
               )}

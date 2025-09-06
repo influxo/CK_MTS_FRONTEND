@@ -20,7 +20,10 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useDispatch, useSelector } from "react-redux";
-import { selectSeries, fetchDeliveriesSeries } from "../../store/slices/serviceMetricsSlice";
+import {
+  selectSeries,
+  fetchDeliveriesSeries,
+} from "../../store/slices/serviceMetricsSlice";
 import type { TimeUnit } from "../../services/services/serviceMetricsModels";
 
 type Granularity = TimeUnit; // 'day' | 'week' | 'month' | 'quarter' | 'year'
@@ -79,8 +82,14 @@ export function FormSubmissions() {
   const series = useSelector(selectSeries);
   const { loading, items, granularity } = series;
 
-  const dayFmt = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
-  const monthFmt = new Intl.DateTimeFormat(undefined, { month: "short", year: "2-digit" });
+  const dayFmt = new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+  const monthFmt = new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    year: "2-digit",
+  });
 
   const formatLabel = (iso: string) => {
     const d = new Date(iso);
@@ -90,7 +99,9 @@ export function FormSubmissions() {
       case "week": {
         const monday = startOfWeek(d);
         const startYear = new Date(d.getFullYear(), 0, 1);
-        const diffDays = Math.floor((monday.getTime() - startYear.getTime()) / 86400000);
+        const diffDays = Math.floor(
+          (monday.getTime() - startYear.getTime()) / 86400000
+        );
         const week = Math.floor(diffDays / 7) + 1;
         return `W${week} ${d.getFullYear()}`;
       }
@@ -148,7 +159,7 @@ export function FormSubmissions() {
 
   React.useEffect(() => {
     if (!items?.length && !loading) {
-      applyQuery(((granularity as Granularity) || "week"));
+      applyQuery((granularity as Granularity) || "week");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -191,13 +202,34 @@ export function FormSubmissions() {
           <Tabs
             defaultValue="weekly"
             onValueChange={(val) =>
-              applyQuery((val === "daily" ? "day" : val === "weekly" ? "week" : "month") as Granularity)
+              applyQuery(
+                (val === "daily"
+                  ? "day"
+                  : val === "weekly"
+                  ? "week"
+                  : "month") as Granularity
+              )
             }
           >
-            <TabsList className="bg-[#2E343E] text-white">
-              <TabsTrigger value="daily">Daily</TabsTrigger>
-              <TabsTrigger value="weekly">Weekly</TabsTrigger>
-              <TabsTrigger value="monthly">Monthly</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 bg-black/5">
+              <TabsTrigger
+                value="daily"
+                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+              >
+                Daily
+              </TabsTrigger>
+              <TabsTrigger
+                value="weekly"
+                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+              >
+                Weekly
+              </TabsTrigger>
+              <TabsTrigger
+                value="monthly"
+                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+              >
+                Monthly
+              </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
