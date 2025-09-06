@@ -43,6 +43,7 @@ import { SubProjectBeneficiaries } from "./SubProjectBeneficiaries";
 import { SubProjectForms } from "./SubProjectForms";
 import { SubProjectReports } from "./SubProjectReports";
 import { SubProjectTeam } from "./SubProjectTeam";
+import { SubProjectServices } from "./SubProjectServices";
 import { useParams, useNavigate } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store";
 import { useDispatch, useSelector } from "react-redux";
@@ -123,7 +124,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
       }
     }
   }, [subprojectId, projectId, dispatch, navigate]);
- 
+
   useEffect(() => {
     dispatch(fetchEmployees());
   }, [dispatch]);
@@ -428,6 +429,14 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
               Activities
             </TabsTrigger>
             <TabsTrigger
+              value="services"
+              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
+                activeTab === "services" ? "border-black" : "border-transparent"
+              }`}
+            >
+              Services
+            </TabsTrigger>
+            <TabsTrigger
               value="beneficiaries"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent ${
                 activeTab === "beneficiaries"
@@ -702,6 +711,10 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
 
         <TabsContent value="activities" className="pt-6">
           <SubProjectActivities subProjectId={subprojectId || ""} />
+        </TabsContent>
+
+        <TabsContent value="services" className="pt-6">
+          <SubProjectServices subProjectId={subprojectId || ""} />
         </TabsContent>
 
         <TabsContent value="beneficiaries" className="pt-6">
