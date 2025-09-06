@@ -43,6 +43,7 @@ import { ProjectExport } from "./ProjectExport";
 import { ProjectStats } from "./ProjectStats";
 import { ProjectTeam } from "./ProjectTeam";
 import { SubProjects } from "./SubProjects";
+import { ProjectServices } from "./ProjectServices";
 import {
   selectAllProjects,
   selectProjectsLoading,
@@ -618,6 +619,14 @@ export function ProjectDetails() {
               Sub-Projects
             </TabsTrigger>
             <TabsTrigger
+              value="services"
+              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
+                activeTab === "services" ? "border-black" : "border-transparent"
+              }`}
+            >
+              Services
+            </TabsTrigger>
+            <TabsTrigger
               value="team"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
                 activeTab === "team" ? "border-black" : "border-transparent"
@@ -691,6 +700,10 @@ export function ProjectDetails() {
         <TabsContent value="subprojects" className="mt-6">
           {/* <SubProjects projectId={enhancedProject.id}" /> */}
           <SubProjects projectId={enhancedProject.id} />
+        </TabsContent>
+
+        <TabsContent value="services" className="pt-6">
+          <ProjectServices projectId={enhancedProject.id} />
         </TabsContent>
 
         <TabsContent value="team" className="pt-6">

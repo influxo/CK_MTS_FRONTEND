@@ -96,7 +96,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
   );
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [viewType, setViewType] = useState("grid");
+  const [viewType, setViewType] = useState("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -322,7 +322,12 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
             </Select>
           </div>
         </div>
-        <Tabs
+
+        {/* 
+                  KJo o per me ndryshu list ose grid view
+                */}
+
+        {/* <Tabs
           value={viewType}
           onValueChange={setViewType}
           className="w-full sm:w-auto"
@@ -341,7 +346,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
               List View
             </TabsTrigger>
           </TabsList>
-        </Tabs>
+        </Tabs> */}
       </div>
 
       {viewType === "grid" ? (
