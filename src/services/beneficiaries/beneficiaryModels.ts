@@ -12,6 +12,18 @@ export interface CreateBeneficiaryRequest {
   municipality: string;
   nationality: string;
   status: string; // e.g., "active"
+  // Optional medical and additional details
+  details?: BeneficiaryDetails;
+}
+
+// Extended medical and additional details for a beneficiary
+export interface BeneficiaryDetails {
+  allergies: string[];
+  disabilities: string[];
+  chronicConditions: string[];
+  medications: string[];
+  bloodType: string;
+  notes?: string;
 }
 
 export interface Beneficiary {
@@ -20,6 +32,8 @@ export interface Beneficiary {
   status: string;
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
+  // Present on create/get when available
+  details?: BeneficiaryDetails;
 }
 
 export interface CreateBeneficiaryResponse {

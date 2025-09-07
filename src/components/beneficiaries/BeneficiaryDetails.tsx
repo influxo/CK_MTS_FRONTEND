@@ -8,7 +8,6 @@ import {
   Eye,
   FileEdit,
   Link,
-  Link2,
   MapPin,
   MoreHorizontal,
   Phone,
@@ -16,7 +15,6 @@ import {
   Shield,
   ShieldAlert,
   Trash,
-  User,
   Users,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -863,20 +861,12 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               Service History
             </TabsTrigger>
             <TabsTrigger
-              value="family"
+              value="info"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent ${
-                activeTab === "family" ? "border-[#2E343E]" : ""
+                activeTab === "info" ? "border-[#2E343E]" : ""
               }`}
             >
-              Family
-            </TabsTrigger>
-            <TabsTrigger
-              value="documents"
-              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent ${
-                activeTab === "documents" ? "border-[#2E343E]" : ""
-              }`}
-            >
-              Documents
+              Info
             </TabsTrigger>
           </div>
         </TabsList>
@@ -1067,38 +1057,6 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   >
                     <Plus className="h-4 w-4 mr-2 " />
                     Record New Service
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
-                <CardHeader>
-                  <CardTitle className="text-base">Family Members</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {beneficiary.associatedFamily.map((member, index) => (
-                    <div
-                      key={index}
-                      className="flex justify-between items-center pb-2 border-b last:border-b-0 last:pb-0"
-                    >
-                      <div>
-                        <div className="font-medium">{member.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {member.relationship}, {member.age} years
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm">
-                        <Link2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-
-                  <Button
-                    variant="outline"
-                    className="w-full bg-[#2E343E] text-white"
-                    onClick={() => setActiveTab("family")}
-                  >
-                    Manage Family
                   </Button>
                 </CardContent>
               </Card>
@@ -1321,112 +1279,79 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="family" className="pt-6">
+        <TabsContent value="info" className="pt-6">
           <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Family Members</CardTitle>
-              <Button size="sm" className="bg-[#2E343E] text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Family Member
-              </Button>
+            <CardHeader>
+              <CardTitle className="text-base">Info</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Relationship</TableHead>
-                    <TableHead>Age</TableHead>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {beneficiary.associatedFamily.map((member, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">
-                        {member.name}
-                      </TableCell>
-                      <TableCell>{member.relationship}</TableCell>
-                      <TableCell>{member.age} years</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <ShieldAlert className="h-3 w-3" />
-                          <span>{member.id}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="default"
-                          className="bg-[#2E343E] text-white"
-                        >
-                          Active
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-[#2E343E] text-white"
-                          >
-                            <Link2 className="h-4 w-4 mr-2" />
-                            View Profile
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <FileEdit className="h-4 w-4 mr-2" />
-                                Edit Relationship
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
-                                <Trash className="h-4 w-4 mr-2" />
-                                Remove
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="documents" className="pt-6">
-          <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Documents</CardTitle>
-              <Button size="sm" className="bg-[#2E343E] text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Upload Document
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-center h-48 border border-dashed rounded-md">
-                <div className="text-center">
-                  <User className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                  <h3 className="text-lg mb-2">No documents found</h3>
-                  <p className="text-muted-foreground">
-                    Upload a document to associate with this beneficiary.
-                  </p>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Blood Type:</span>
+                  <div>{((detail as any)?.details?.bloodType) ?? "—"}</div>
                 </div>
+                <div>
+                  <span className="text-muted-foreground">Notes:</span>
+                  <div className="whitespace-pre-wrap">{((detail as any)?.details?.notes) ?? "—"}</div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Allergies</h4>
+                {(((detail as any)?.details?.allergies) ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {((detail as any)?.details?.allergies ?? []).map((a: string, idx: number) => (
+                      <Badge key={idx} variant="outline">{a}</Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">—</div>
+                )}
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Chronic Conditions</h4>
+                {(((detail as any)?.details?.chronicConditions) ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {((detail as any)?.details?.chronicConditions ?? []).map((c: string, idx: number) => (
+                      <Badge key={idx} variant="outline">{c}</Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">—</div>
+                )}
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Disabilities</h4>
+                {(((detail as any)?.details?.disabilities) ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {((detail as any)?.details?.disabilities ?? []).map((d: string, idx: number) => (
+                      <Badge key={idx} variant="outline">{d}</Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">—</div>
+                )}
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Medications</h4>
+                {(((detail as any)?.details?.medications) ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {((detail as any)?.details?.medications ?? []).map((m: string, idx: number) => (
+                      <Badge key={idx} variant="outline">{m}</Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">—</div>
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
+
+        
       </Tabs>
     </div>
   );

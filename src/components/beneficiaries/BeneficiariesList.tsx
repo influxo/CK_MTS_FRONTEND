@@ -289,6 +289,14 @@ export function BeneficiariesList({
   );
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
+  // Additional local state for extended details (comma-separated inputs)
+  const [allergiesInput, setAllergiesInput] = useState("");
+  const [disabilitiesInput, setDisabilitiesInput] = useState("");
+  const [chronicConditionsInput, setChronicConditionsInput] = useState("");
+  const [medicationsInput, setMedicationsInput] = useState("");
+  const [bloodTypeInput, setBloodTypeInput] = useState("");
+  const [notesInput, setNotesInput] = useState("");
+
   // Add Beneficiary form state aligned with CreateBeneficiaryRequest
   const [form, setForm] = useState<CreateBeneficiaryRequest>({
     firstName: "",
@@ -304,7 +312,7 @@ export function BeneficiariesList({
     status: "active",
   });
 
-  const resetForm = () =>
+  const resetForm = () => {
     setForm({
       firstName: "",
       lastName: "",
@@ -318,6 +326,13 @@ export function BeneficiariesList({
       nationality: "",
       status: "active",
     });
+    setAllergiesInput("");
+    setDisabilitiesInput("");
+    setChronicConditionsInput("");
+    setMedicationsInput("");
+    setBloodTypeInput("");
+    setNotesInput("");
+  };
 
   // Kick off loading of real beneficiaries
   useEffect(() => {
@@ -343,7 +358,36 @@ export function BeneficiariesList({
       return;
     }
     try {
-      await dispatch(createBeneficiary(form)).unwrap();
+      // Build details from local inputs if any value is provided
+      const splitCsv = (s: string) =>
+        s
+          .split(",")
+          .map((v) => v.trim())
+          .filter((v) => v.length > 0);
+
+      const hasAnyDetails =
+        allergiesInput.trim() ||
+        disabilitiesInput.trim() ||
+        chronicConditionsInput.trim() ||
+        medicationsInput.trim() ||
+        bloodTypeInput.trim() ||
+        notesInput.trim();
+
+      const payload: CreateBeneficiaryRequest = hasAnyDetails
+        ? {
+            ...form,
+            details: {
+              allergies: splitCsv(allergiesInput),
+              disabilities: splitCsv(disabilitiesInput),
+              chronicConditions: splitCsv(chronicConditionsInput),
+              medications: splitCsv(medicationsInput),
+              bloodType: bloodTypeInput.trim(),
+              notes: notesInput.trim() || undefined,
+            },
+          }
+        : form;
+
+      await dispatch(createBeneficiary(payload)).unwrap();
       // success handled by effect
     } catch (_) {
       // errors are surfaced via createError
@@ -450,7 +494,7 @@ export function BeneficiariesList({
                 Add Beneficiary
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[550px]">
+            <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add New Beneficiary</DialogTitle>
                 <DialogDescription>
@@ -621,6 +665,85 @@ export function BeneficiariesList({
                       <SelectItem value="inactive">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                {/* Extended medical/details section */}
+                <div className="border-t pt-2 mt-2">
+                  <div className="text-sm font-medium mb-2">Additional Details</div>
+                  <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                    <Label htmlFor="allergies" className="text-right">
+                      Allergies
+                    </Label>
+                    <Input
+                      id="allergies"
+                      className="col-span-3"
+                      placeholder="e.g. peanuts, penicillin"
+                      value={allergiesInput}
+                      onChange={(e) => setAllergiesInput(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                    <Label htmlFor="disabilities" className="text-right">
+                      Disabilities
+                    </Label>
+                    <Input
+                      id="disabilities"
+                      className="col-span-3"
+                      placeholder="e.g. visual impairment"
+                      value={disabilitiesInput}
+                      onChange={(e) => setDisabilitiesInput(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                    <Label htmlFor="chronicConditions" className="text-right">
+                      Chronic Conditions
+                    </Label>
+                    <Input
+                      id="chronicConditions"
+                      className="col-span-3"
+                      placeholder="e.g. asthma"
+                      value={chronicConditionsInput}
+                      onChange={(e) => setChronicConditionsInput(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                    <Label htmlFor="medications" className="text-right">
+                      Medications
+                    </Label>
+                    <Input
+                      id="medications"
+                      className="col-span-3"
+                      placeholder="e.g. inhaler"
+                      value={medicationsInput}
+                      onChange={(e) => setMedicationsInput(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                    <Label htmlFor="bloodType" className="text-right">
+                      Blood Type
+                    </Label>
+                    <Input
+                      id="bloodType"
+                      className="col-span-3"
+                      placeholder="e.g. O+"
+                      value={bloodTypeInput}
+                      onChange={(e) => setBloodTypeInput(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-start gap-4">
+                    <Label htmlFor="notes" className="text-right mt-2">
+                      Notes
+                    </Label>
+                    <textarea
+                      id="notes"
+                      className="col-span-3 bg-white border border-input rounded-md p-2 min-h-[70px]"
+                      placeholder="Any special notes..."
+                      value={notesInput}
+                      onChange={(e) => setNotesInput(e.target.value)}
+                    />
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-2">
+                    Use commas to separate multiple values.
+                  </div>
                 </div>
                 {createError && (
                   <div className="col-span-4 text-red-600 text-sm">
