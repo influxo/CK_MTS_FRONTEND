@@ -12,6 +12,8 @@ import type {
   GetBeneficiaryPIIByIdResponse,
   GetBeneficiaryServicesRequest,
   GetBeneficiaryServicesResponse,
+  GetBeneficiaryEntitiesRequest,
+  GetBeneficiaryEntitiesResponse,
 } from "./beneficiaryModels";
 
 class BeneficiaryService {
@@ -169,6 +171,27 @@ class BeneficiaryService {
         },
         message: error?.message || "Failed to fetch beneficiary services",
       } as GetBeneficiaryServicesResponse;
+    }
+  }
+
+  async getBeneficiaryEntities(
+    params: GetBeneficiaryEntitiesRequest
+  ): Promise<GetBeneficiaryEntitiesResponse> {
+    const { id } = params;
+    try {
+      const response = await axiosInstance.get<GetBeneficiaryEntitiesResponse>(
+        `${this.beneficiaryEndpoint}/${id}/entities`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as GetBeneficiaryEntitiesResponse;
+      }
+      return {
+        success: false,
+        data: [],
+        message: error?.message || "Failed to fetch beneficiary entities",
+      } as GetBeneficiaryEntitiesResponse;
     }
   }
 }

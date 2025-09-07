@@ -36,6 +36,10 @@ import {
   selectBeneficiaryServicesLoading,
   selectBeneficiaryServicesError,
   selectBeneficiaryServicesMeta,
+  fetchBeneficiaryEntities,
+  selectBeneficiaryEntities,
+  selectBeneficiaryEntitiesLoading,
+  selectBeneficiaryEntitiesError,
 } from "../../store/slices/beneficiarySlice";
 import type { UpdateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
@@ -190,12 +194,17 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
   const servicesLoading = useSelector(selectBeneficiaryServicesLoading);
   const servicesError = useSelector(selectBeneficiaryServicesError);
   const servicesMeta = useSelector(selectBeneficiaryServicesMeta);
+  const entities = useSelector(selectBeneficiaryEntities);
+  const entitiesLoading = useSelector(selectBeneficiaryEntitiesLoading);
+  const entitiesError = useSelector(selectBeneficiaryEntitiesError);
 
   useEffect(() => {
     if (id) {
       dispatch(fetchBeneficiaryById(id));
       // Preload first page of services for overview widgets
       dispatch(fetchBeneficiaryServices({ id, page: 1, limit: 20 }));
+      // Load associated entities for overview
+      dispatch(fetchBeneficiaryEntities({ id }));
     }
   }, [dispatch, id]);
 
@@ -888,24 +897,33 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
 
                   <div>
                     <h4 className="font-medium mb-2">Current Projects</h4>
-                    <div className="space-y-3">
-                      {beneficiary.projects.map((project, index) => (
-                        <div
-                          key={index}
-                          className=" text-black rounded-md p-3 bg-[#E5ECF6]"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{project}</span>
-                          </div>
-                          {beneficiary.subProjects[index] && (
-                            <div className="text-sm text-muted-foreground mt-1 ml-6">
-                              Sub-project: {beneficiary.subProjects[index]}
+                    {entitiesLoading && (
+                      <div className="text-sm text-muted-foreground">Loading associated entities...</div>
+                    )}
+                    {entitiesError && !entitiesLoading && (
+                      <div className="text-sm text-red-600">{entitiesError}</div>
+                    )}
+                    {!entitiesLoading && !entitiesError && (
+                      <div className="space-y-3">
+                        {entities.length > 0 ? (
+                          entities.map((link, index) => (
+                            <div
+                              key={`${link.entity.id}-${index}`}
+                              className=" text-black rounded-md p-3 bg-[#E5ECF6]"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">
+                                  {link.entity.type}: {link.entity.name}
+                                </span>
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                          ))
+                        ) : (
+                          <div className="text-sm text-muted-foreground">No associated entities.</div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div>

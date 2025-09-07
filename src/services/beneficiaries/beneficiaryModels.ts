@@ -176,3 +176,32 @@ export interface GetBeneficiaryServicesResponse {
   };
   message?: string;
 }
+
+// Get beneficiary linked entities (GET /beneficiaries/{id}/entities)
+export interface GetBeneficiaryEntitiesRequest {
+  id: string;
+}
+
+export interface BeneficiaryEntityRef {
+  id: string;
+  type: string; // e.g., "project" | "subproject" | "activity"
+  name: string;
+}
+
+export interface BeneficiaryFormResponseLite {
+  id: string;
+  formTemplateId: string;
+  submittedAt: string; // ISO datetime
+}
+
+export interface BeneficiaryEntityLinkItem {
+  entity: BeneficiaryEntityRef;
+  formResponses: BeneficiaryFormResponseLite[];
+  services: BeneficiaryServiceItem[];
+}
+
+export interface GetBeneficiaryEntitiesResponse {
+  success: boolean;
+  data: BeneficiaryEntityLinkItem[];
+  message?: string;
+}
