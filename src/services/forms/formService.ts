@@ -88,6 +88,25 @@ class FormService {
     }
   }
 
+  async updateFormToInactive(formId: string): Promise<UpdateFormResponse> {
+    try {
+      const response = await axiosInstance.patch<UpdateFormResponse>(
+        `${this.formsEndpoint}/${formId}/inactivate`,
+        { status: 'inactive' }
+      );
+      
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as UpdateFormResponse;
+      }
+      return {
+        success: false,
+        message: error.message || `Failed to update form with ID: ${formId}`,
+      };
+    }
+  }
+
   async deleteForm(formId: string): Promise<DeleteFormResponse> {
     try {
       const response = await axiosInstance.delete<DeleteFormResponse>(

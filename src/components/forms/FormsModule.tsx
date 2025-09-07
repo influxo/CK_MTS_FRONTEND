@@ -10,9 +10,10 @@ import { toast } from "sonner";
 interface FormsModuleProps {
   forms: FormTemplateAndPagination;
   onFormCreated?: () => void;
+  onFormDeleted?: () => void;
 }
 
-export function FormsModule({ forms, onFormCreated }: FormsModuleProps) {
+export function FormsModule({ forms, onFormCreated, onFormDeleted }: FormsModuleProps) {
   const dispatch = useDispatch<AppDispatch>();
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [isCreatingForm, setIsCreatingForm] = useState(false);
@@ -71,9 +72,10 @@ export function FormsModule({ forms, onFormCreated }: FormsModuleProps) {
 
   return (
     <FormsList 
-      onCreateForm={handleCreateForm} 
+      onCreateForm={handleCreateForm}
+      onFormDeleted={onFormDeleted ? onFormDeleted : () => {}} 
       onEditForm={handleEditForm} 
-      formTemplates={forms.templates} 
+      formTemplates={forms.templates}
     />
   );
 }

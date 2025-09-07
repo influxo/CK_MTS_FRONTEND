@@ -23,5 +23,10 @@ export function Forms() {
     setRefreshKey(prev => prev + 1);
   }, []);
 
-  return <FormsModule forms={forms} onFormCreated={handleFormCreated} />;
+  const handleFormDeleted = useCallback(() => {
+    // Increment the refresh key to trigger a refetch
+    setRefreshKey(prev => prev + 1);
+  }, []);
+
+  return <FormsModule forms={forms} onFormCreated={handleFormCreated} onFormDeleted={handleFormDeleted} />;
 }

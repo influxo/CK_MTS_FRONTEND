@@ -9,6 +9,7 @@ import type {
   DeleteFormResponse,
   FormTemplatePagination,
   FormTemplateAndPagination,
+  UpdateFormToInactiveResponse,
 } from "../../services/forms/formModels";
 import formService from "../../services/forms/formService";
 
@@ -65,6 +66,17 @@ export const updateForm = createAsyncThunk<UpdateFormResponse, { formId: string;
   'forms/updateForm',
   async ({ formId, formData }, { rejectWithValue }) => {
     const response = await formService.updateForm(formId, formData);
+    if (!response.success) {
+      return rejectWithValue(response.message || `Failed to update form with ID: ${formId}`);
+    }
+    return response;
+  }
+);
+
+export const updateFormToInactive = createAsyncThunk<UpdateFormToInactiveResponse, {formId: string}, { rejectValue: string }>(
+  'forms/updateFormToInactive',
+  async ({ formId }, { rejectWithValue }) => {
+    const response = await formService.updateFormToInactive(formId);
     if (!response.success) {
       return rejectWithValue(response.message || `Failed to update form with ID: ${formId}`);
     }
@@ -167,6 +179,25 @@ const formsSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload || 'Failed to update form';
       })
+
+      // updateFormToInactive
+      .addCase(updateFormToInactive.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (action.payload.data) {
+          state.currentForm = action.payload.data;
+          state.successMessage = 'Form updated successfully';
+        }
+      })
+      .addCase(updateFormToInactive.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+        state.successMessage = null;
+      })
+      .addCase(updateFormToInactive.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to update form to inactive';
+      })
+        
 
       // deleteForm
       .addCase(deleteForm.pending, (state) => {

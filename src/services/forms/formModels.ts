@@ -30,6 +30,14 @@ export interface FormFieldForTemplate {
   name: string;
   label: string;
   type: string;
+  placeholder?: string;
+  helpText?: string;
+  validations?: {
+    minLength?: number;
+    maxLength?: number;
+    min?: number;
+    max?: number;
+  };
   required: boolean;
   options?: string[];
 }
@@ -78,4 +86,5 @@ export interface CreateFormRequest extends Omit<FormTemplate, 'id' | 'lastUpdate
 export interface CreateFormResponse extends ApiResponse<FormTemplate> {}
 export interface UpdateFormRequest extends Omit<FormTemplate, 'lastUpdated' | 'createdBy'> {}
 export interface UpdateFormResponse extends ApiResponse<FormTemplate> {}
+export interface UpdateFormToInactiveResponse extends ApiResponse<FormTemplate> {}
 export interface DeleteFormResponse extends ApiResponse<{ id: string }> {}

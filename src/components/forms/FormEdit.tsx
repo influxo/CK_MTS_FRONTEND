@@ -1,9 +1,10 @@
 import { FormBuilder } from "./FormBuilder";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchFormById, selectCurrentForm } from "../../store/slices/formsSlice";
+import { fetchFormById, selectCurrentForm, updateForm } from "../../store/slices/formsSlice";
 import type { AppDispatch } from "../../store";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 export function FormEdit() {
   const { id } = useParams<{ id: string }>();
@@ -16,9 +17,7 @@ export function FormEdit() {
   }
 
   useEffect(() => {
-    if (id) {
-      dispatch(fetchFormById(id));
-    }
+    dispatch(fetchFormById(id));
   }, [id, dispatch]);
 
   if (!form) {
@@ -28,8 +27,25 @@ export function FormEdit() {
   const handleBackToForms = () => {
     navigate('/forms');
   };
+
+  const handleEditForm = async (formData: any) => {
+    try {
+      await dispatch(updateForm({ formId: id, formData })).unwrap();
+
+      toast.success(`"Form updated successfully!`, {
+        description: 'The form has been updated.',
+        duration: 5000,
+      });
+      
+      handleBackToForms();
+    } catch (err) {
+      console.error("Failed to save form:", err);
+      toast.error('Failed to save form', {
+        description: err instanceof Error ? err.message : 'An unknown error occurred',
+        duration: 5000,
+      });
+    }
+  };
  
-  console.log('The form', form);
-  
-  return <FormBuilder formId={id} onBack={handleBackToForms} onSave={() => {}} />;
+  return <FormBuilder formId={id} onBack={handleBackToForms} onSave={handleEditForm} />;
 }

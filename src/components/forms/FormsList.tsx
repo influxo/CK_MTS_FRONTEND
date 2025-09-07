@@ -69,7 +69,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 import type { FormTemplate } from "../../services/forms/formModels";
-import { deleteForm } from "../../store/slices/formsSlice";
+import { deleteForm, updateFormToInactive } from "../../store/slices/formsSlice";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -88,12 +88,14 @@ interface FormsListProps {
   formTemplates: FormTemplate[];
   onCreateForm: () => void;
   onEditForm: (formId: string) => void;
+  onFormDeleted: () => void;
 }
 
 export function FormsList({
   formTemplates,
   onCreateForm,
   onEditForm,
+  onFormDeleted,
 }: FormsListProps) {
   const dispatch = useDispatch<AppDispatch>();
   const projects = useSelector(selectAllProjects);
@@ -104,9 +106,6 @@ export function FormsList({
   useEffect(() => {
     dispatch(fetchProjects());
   }, [dispatch]);
-
-  console.log("FormTemplatesQN", formTemplates);
-  console.log("Projects", projects);
 
   const [viewType, setViewType] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
@@ -124,23 +123,13 @@ export function FormsList({
 
   // Handle form creation
   const handleCreateForm = () => {
-    // In a real app, this would save the new form to the database
-    console.log("Creating new form:", {
-      name: newFormName,
-      description: newFormDescription,
-      category: newFormCategory,
-      project: newFormProject,
-      subProject: newFormSubProject,
-    });
-
     setIsCreateFormOpen(false);
-    // // Call the parent component's handler
+    
     onCreateForm();
   };
 
   // Handle click on a form template to edit
   const handleEditClick = (formId: string) => {
-    // onEditForm(formId);
     navigate(`/forms/edit/${formId}`);
   };
 
@@ -157,7 +146,10 @@ export function FormsList({
 
     setIsDeleting(true);
     try {
-      await dispatch(deleteForm(formToDelete)).unwrap();
+      await dispatch(updateFormToInactive ({ formId: formToDelete })).unwrap();
+
+      onFormDeleted();
+
       toast.success("Form deleted successfully");
     } catch (error) {
       toast.error(

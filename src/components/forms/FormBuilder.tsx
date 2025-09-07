@@ -66,6 +66,7 @@ import {
   selectAllProjects,
 } from "../../store/slices/projectsSlice";
 import { fetchSubProjectsByProjectId, selectAllSubprojects } from "../../store/slices/subProjectSlice";
+import { fetchFormById, selectCurrentForm } from "../../store/slices/formsSlice";
 
 // Field types available for forms
 const fieldTypes = [
@@ -148,50 +149,63 @@ export function FormBuilder({
 }: FormBuilderProps) {
   const dispatch = useDispatch<AppDispatch>();
   const projects = useSelector(selectAllProjects);
-  // const subProjects = useSelector(selectAllSubProjects);
   const subProjects = useSelector(selectAllSubprojects);
+  const formToEdit = useSelector(selectCurrentForm);
+  const isEditing = !!formId;
 
+  const [formData, setFormData] = useState<FormData>({
+    id: "",
+    name: "",
+    description: "",
+    category: "",
+    status: "draft",
+    version: "0.1",
+    fields: [],
+  });
 
-  // Fetch projects when component mounts
   useEffect(() => {
     dispatch(fetchProjects());
   }, [dispatch]);
 
-  // If formId is provided, we're editing an existing form, otherwise creating a new one
-  const isEditing = !!formId;
+  useEffect(() => {
+    if (formId) {
+      dispatch(fetchFormById(formId));
+    }
+  }, [formId, dispatch]);
 
-  // For a real app, we would fetch the form template data based on formId
-  // For this demo, we're using mock data
-  const [formData, setFormData] = useState<FormData>(
-    isEditing
-      ? {
-          id: "123",
-          name: "",
-          description: "",
-          category: "",
-          status: "draft",
-          version: "0.2222",
-          fields: [],
-        }
-      : {
-          id: "",
-          name: "",
-          description: "",
-          category: "",
-          status: "draft",
-          version: "0.1",
-          fields: [],
-        }
-  );
+  useEffect(() => {
+    if (formToEdit) {
+      const projectId = formToEdit.entityAssociations[0].entityId;
 
-  console.log(formData);
+      const fields = formToEdit.schema.fields.map((field, index) => ({
+        id: `field-${Date.now()}-${index}`,
+        name: field.name,
+        label: field.label,
+        type: field.type.toLowerCase(),
+        placeholder: field.placeholder,
+        helpText: field.helpText,
+        validations: field.validations,
+        required: field.required,
+        options: field.options?.map((opt) => ({ value: opt, label: opt })) || [],
+      }));
 
-  // const [activeTab, setActiveTab] = useState("builder");
+      setFormData({
+        id: formToEdit.id,
+        name: formToEdit.name,
+        description: formToEdit.description || "",
+        category: formToEdit.category || "",
+        status: formToEdit.status || "draft",
+        version: formToEdit.version || "0.1",
+        fields: fields,
+        project: projectId,
+      });
+    }
+  }, [formToEdit]);
+
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const [isAddFieldDialogOpen, setIsAddFieldDialogOpen] = useState(false);
   const [showFormJson, setShowFormJson] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
-  // const dispatch = useDispatch<AppDispatch>();
 
   // Handle form field selection
   const handleFieldSelect = (fieldId: string) => {
@@ -258,7 +272,6 @@ export function FormBuilder({
   const handleSaveForm = () => {
     const fields = Array.isArray(formData.fields) ? formData.fields : [];
 
-    // Format the form data to match the required API structure
     const formattedData = {
       name: formData.name,
       entities: [
@@ -276,7 +289,10 @@ export function FormBuilder({
                 type: field.type
                   ? field.type.charAt(0).toUpperCase() + field.type.slice(1)
                   : "Text",
+                placeholder: field.placeholder,
                 required: field.required || false,
+                helpText: field.helpText,
+                validations: field.validations,
                 options: field.options?.map((opt) => opt.value) || [],
               }))
             : [
