@@ -44,7 +44,6 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   // dispatch(fetchUserProfile());
 
   const user = useSelector(selectCurrentUser);
-  console.log("user from topbar", user);
 
   return (
     // <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">

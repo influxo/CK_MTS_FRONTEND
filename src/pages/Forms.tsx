@@ -1,5 +1,32 @@
 import { FormsModule } from "../components/forms/FormsModule";
+import { useSelector } from "react-redux";
+import { fetchForms, selectAllForms } from "../store/slices/formsSlice";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../store";
+import { useCallback, useEffect, useState } from "react";
 
 export function Forms() {
-  return <FormsModule />;
+  const dispatch = useDispatch<AppDispatch>();
+  const forms = useSelector(selectAllForms);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const fetchFormsList = useCallback(() => {
+    dispatch(fetchForms());
+  }, [dispatch]);
+
+  useEffect(() => {
+    fetchFormsList();
+  }, [fetchFormsList, refreshKey]);
+
+  const handleFormCreated = useCallback(() => {
+    // Increment the refresh key to trigger a refetch
+    setRefreshKey(prev => prev + 1);
+  }, []);
+
+  const handleFormDeleted = useCallback(() => {
+    // Increment the refresh key to trigger a refetch
+    setRefreshKey(prev => prev + 1);
+  }, []);
+
+  return <FormsModule forms={forms} onFormCreated={handleFormCreated} onFormDeleted={handleFormDeleted} />;
 }
