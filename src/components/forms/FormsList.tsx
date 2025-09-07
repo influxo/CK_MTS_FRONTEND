@@ -325,21 +325,22 @@ export function FormsList({
             />
           </div>
           <div className="flex gap-3">
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            {/* Comment for now */}
+            {/* <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-[150px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {/* {categories.map((category) => (
+                {categories.map((category) => (
                   <SelectItem key={category} value={category}>
                     {category.charAt(0).toUpperCase() + category.slice(1)}
                   </SelectItem>
-                ))} */}
+                ))}
               </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            </Select> */}
+            {/* <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[150px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
@@ -350,7 +351,7 @@ export function FormsList({
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="archived">Archived</SelectItem>
               </SelectContent>
-            </Select>
+            </Select> */}
           </div>
         </div>
         <div className="flex gap-3">

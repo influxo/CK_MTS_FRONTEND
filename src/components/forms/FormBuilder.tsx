@@ -21,7 +21,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
 import {
@@ -59,8 +59,13 @@ import {
 } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 import { FormField } from "./FormField";
-// import { useDispatch } from "react-redux";
-// import type { AppDispatch } from "../../store";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store";
+import {
+  fetchProjects,
+  selectAllProjects,
+} from "../../store/slices/projectsSlice";
+import { fetchSubProjectsByProjectId, selectAllSubprojects } from "../../store/slices/subProjectSlice";
 
 // Field types available for forms
 const fieldTypes = [
@@ -119,7 +124,6 @@ interface FormField {
     min?: number;
     max?: number;
   };
-  // Add other field properties as needed
 }
 
 interface FormData {
@@ -131,7 +135,8 @@ interface FormData {
   version: string;
   fields: FormField[];
   lastUpdated?: string;
-  // Add other form properties as needed
+  project?: string;
+  subProject?: string;
 }
 
 export function FormBuilder({
@@ -141,6 +146,17 @@ export function FormBuilder({
   isSaving = false,
   error,
 }: FormBuilderProps) {
+  const dispatch = useDispatch<AppDispatch>();
+  const projects = useSelector(selectAllProjects);
+  // const subProjects = useSelector(selectAllSubProjects);
+  const subProjects = useSelector(selectAllSubprojects);
+
+
+  // Fetch projects when component mounts
+  useEffect(() => {
+    dispatch(fetchProjects());
+  }, [dispatch]);
+
   // If formId is provided, we're editing an existing form, otherwise creating a new one
   const isEditing = !!formId;
 
@@ -168,7 +184,7 @@ export function FormBuilder({
         }
   );
 
-  console.log(formData)
+  console.log(formData);
 
   // const [activeTab, setActiveTab] = useState("builder");
   const [selectedField, setSelectedField] = useState<string | null>(null);
@@ -240,7 +256,6 @@ export function FormBuilder({
 
   // Save the form
   const handleSaveForm = () => {
-    // Ensure fields is always an array, even if undefined
     const fields = Array.isArray(formData.fields) ? formData.fields : [];
 
     // Format the form data to match the required API structure
@@ -248,28 +263,33 @@ export function FormBuilder({
       name: formData.name,
       entities: [
         {
-          id: 'd0c24c09-d9e9-46b7-8255-cb4414a3e850',
-          type: 'project'
-        }
+          id: formData.subProject ? formData.subProject : formData.project,
+          type: "project",
+        },
       ],
       schema: {
-        fields: fields.length > 0 ? fields.map(field => ({
-          name: field.name || 'field',
-          label: field.label || 'Field',
-          type: field.type ? field.type.charAt(0).toUpperCase() + field.type.slice(1) : 'Text',
-          required: field.required || false,
-          options: field.options?.map(opt => opt.value) || []
-        })) : [
-          // Default field if no fields are added
-          {
-            name: 'field1',
-            label: 'Field 1',
-            type: 'Text',
-            required: true,
-            options: []
-          }
-        ]
-      }
+        fields:
+          fields.length > 0
+            ? fields.map((field) => ({
+                name: field.name || "field",
+                label: field.label || "Field",
+                type: field.type
+                  ? field.type.charAt(0).toUpperCase() + field.type.slice(1)
+                  : "Text",
+                required: field.required || false,
+                options: field.options?.map((opt) => opt.value) || [],
+              }))
+            : [
+                // Default field if no fields are added
+                {
+                  name: "field1",
+                  label: "Field 1",
+                  type: "Text",
+                  required: true,
+                  options: [],
+                },
+              ],
+      },
     };
 
     onSave(formattedData);
@@ -279,6 +299,18 @@ export function FormBuilder({
   const selectedFieldData = formData.fields.find(
     (field) => field.id === selectedField
   );
+
+  const handleChangeProject = (projectId: string) => {
+    setFormData({ ...formData, project: projectId, subProject: '' });
+
+    if (projectId) {
+      dispatch(fetchSubProjectsByProjectId({ projectId }));
+    }
+  };
+
+  const handleChangeSubProject = (subProjectId: string) => {
+    setFormData({ ...formData, subProject: subProjectId });
+  };
 
   return (
     <div className="space-y-6">
@@ -301,10 +333,7 @@ export function FormBuilder({
             <Eye className="h-4 w-4 mr-2" />
             {previewMode ? "Exit Preview" : "Preview"}
           </Button>
-          <Button
-            onClick={handleSaveForm}
-            disabled={isSaving}
-          >
+          <Button onClick={handleSaveForm} disabled={isSaving}>
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -340,31 +369,50 @@ export function FormBuilder({
                         }
                       />
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="form-category">Category *</Label>
+                      <Label htmlFor="form-project">Project *</Label>
                       <Select
-                        value={formData.category}
-                        onValueChange={(value: any) =>
-                          setFormData({ ...formData, category: value })
-                        }
+                        value={formData.project}
+                        onValueChange={handleChangeProject}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
+                          <SelectValue placeholder="Select a project" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="health">Health</SelectItem>
-                          <SelectItem value="agriculture">
-                            Agriculture
-                          </SelectItem>
-                          <SelectItem value="wash">
-                            Water & Sanitation
-                          </SelectItem>
-                          <SelectItem value="education">Education</SelectItem>
-                          <SelectItem value="training">Training</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          {projects.map((project) => (
+                            <SelectItem key={project.id} value={project.id}>
+                              {project.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {formData.project && (
+                      <>
+                        <div className="space-y-2"></div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="form-project">Sub Project</Label>
+                          <Select
+                            value={formData.subProject}
+                            onValueChange={handleChangeSubProject}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a subproject" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {subProjects.map((subProject) => (
+                                <SelectItem key={subProject.id} value={subProject.id}>
+                                  {subProject.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="form-description">Description</Label>
@@ -936,10 +984,12 @@ export function FormBuilder({
     </div>
   );
 
-  {error && (
-    <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md">
-      <AlertCircle className="h-4 w-4 inline mr-2" />
-      {error}
-    </div>
-  )}
+  {
+    error && (
+      <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md">
+        <AlertCircle className="h-4 w-4 inline mr-2" />
+        {error}
+      </div>
+    );
+  }
 }
