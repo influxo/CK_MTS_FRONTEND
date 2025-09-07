@@ -82,6 +82,7 @@ import {
   AlertDialogTitle,
 } from "../ui/overlay/alert-dialog";
 import { useNavigate } from "react-router-dom";
+import { FormPreview } from "./FormPreview";
 
 // Interface for component props
 interface FormsListProps {
@@ -109,10 +110,9 @@ export function FormsList({
 
   const [viewType, setViewType] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [newFormName, setNewFormName] = useState("");
   const [newFormDescription, setNewFormDescription] = useState("");
   const [newFormCategory, setNewFormCategory] = useState("");
@@ -120,6 +120,7 @@ export function FormsList({
   const [newFormSubProject, setNewFormSubProject] = useState("");
   const [formToDelete, setFormToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentForm, setCurrentForm] = useState<FormTemplate | null>(null);
 
   // Handle form creation
   const handleCreateForm = () => {
@@ -165,7 +166,10 @@ export function FormsList({
     setFormToDelete(null);
   };
 
-  // Get the filtered subprojects based on selected project
+  const handlePreviewClick = (form: FormTemplate) => {
+    setCurrentForm(form);
+    setIsPreviewMode(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -300,6 +304,20 @@ export function FormsList({
                   Create & Open Builder
                 </Button>
               </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isPreviewMode} onOpenChange={setIsPreviewMode}>
+            <DialogContent className="min-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Form Preview</DialogTitle>
+              </DialogHeader>
+
+              <div className="grid gap-4 py-4">
+                {currentForm && (
+                  <FormPreview formData={currentForm} setPreviewMode={setIsPreviewMode} />
+                )}
+              </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -458,33 +476,10 @@ export function FormsList({
                         <Edit className="h-4 w-4 mr-2" />
                         Edit Form
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handlePreviewClick(formTes)}>
                         <Eye className="h-4 w-4 mr-2" />
                         Preview
                       </DropdownMenuItem>
-                      {/* <DropdownMenuItem>
-                        <Copy className="h-4 w-4 mr-2" />
-                        Duplicate
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <FileJson className="h-4 w-4 mr-2" />
-                        Export JSON
-                      </DropdownMenuItem> */}
-                      {/* <DropdownMenuItem>
-                        <Link className="h-4 w-4 mr-2" />
-                        Assign to Project
-                      </DropdownMenuItem> */}
-                      {/* {formTes.status !== "archived" ? (
-                        <DropdownMenuItem>
-                          <AlertCircle className="h-4 w-4 mr-2" />
-                          Archive
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem>
-                          <Check className="h-4 w-4 mr-2" />
-                          Restore
-                        </DropdownMenuItem>
-                      )} */}
                       <DropdownMenuItem
                         className="text-destructive"
                         onClick={() => handleDeleteClick(formTes.id)}
@@ -510,10 +505,10 @@ export function FormsList({
                     >
                       {formTes.status}
                     </Badge>
-                    <Badge variant="outline" className="capitalize">
+                    {/* <Badge variant="outline" className="capitalize">
                       {formTes.category}
                     </Badge>
-                    <Badge variant="outline">v{formTes.version}</Badge>
+                    <Badge variant="outline">v{formTes.version}</Badge> */}
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-sm">
@@ -522,9 +517,9 @@ export function FormsList({
                       <div>{formTes.schema.fields.length}</div>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">
+                      {/* <span className="text-muted-foreground">
                         Submissions:
-                      </span>
+                      </span> */}
                       {/* <div>{formTes.submissions}</div> */}
                     </div>
                     <div className="col-span-2">
@@ -560,7 +555,7 @@ export function FormsList({
                             {association.entityType}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {association.entityId}
+                            {association.entityName}
                           </span>
                         </div>
                       ))}
@@ -605,7 +600,7 @@ export function FormsList({
             <p className="text-sm text-muted-foreground text-center mb-3">
               Design a custom data collection form for your projects
             </p>
-            <Button onClick={() => setIsCreateFormOpen(true)}>
+            <Button onClick={() => handleCreateForm()}>
               Create Form
             </Button>
           </Card>

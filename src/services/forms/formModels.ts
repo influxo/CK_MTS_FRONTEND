@@ -24,6 +24,7 @@ export interface EntityReference {
   entityType: string;
   formTemplateId: string;
   entityId: string;
+  entityName?: string;
 }
 
 export interface FormFieldForTemplate {

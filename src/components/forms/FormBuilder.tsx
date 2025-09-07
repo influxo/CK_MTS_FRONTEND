@@ -71,11 +71,6 @@ import { fetchFormById, selectCurrentForm } from "../../store/slices/formsSlice"
 // Field types available for forms
 const fieldTypes = [
   { id: "text", name: "Text", icon: <Type className="h-4 w-4" /> },
-  {
-    id: "textarea",
-    name: "Text Area",
-    icon: <AlignLeft className="h-4 w-4" />,
-  },
   { id: "number", name: "Number", icon: <Hash className="h-4 w-4" /> },
   { id: "date", name: "Date", icon: <Calendar className="h-4 w-4" /> },
   {
@@ -83,19 +78,11 @@ const fieldTypes = [
     name: "Checkbox",
     icon: <CheckSquare className="h-4 w-4" />,
   },
-  { id: "radio", name: "Radio Group", icon: <Radio className="h-4 w-4" /> },
   {
     id: "dropdown",
     name: "Dropdown",
     icon: <ChevronDown className="h-4 w-4" />,
-  },
-  {
-    id: "multiselect",
-    name: "Multi-Select",
-    icon: <ListChecks className="h-4 w-4" />,
-  },
-  { id: "file", name: "File Upload", icon: <Upload className="h-4 w-4" /> },
-  { id: "boolean", name: "Yes/No", icon: <ToggleLeft className="h-4 w-4" /> },
+  }
 ];
 interface FormBuilderProps {
   formId?: string;
@@ -110,7 +97,7 @@ interface FormFieldOption {
   label: string;
 }
 
-interface FormField {
+export interface FormField {
   id: string;
   name: string;
   type: string;
@@ -127,7 +114,7 @@ interface FormField {
   };
 }
 
-interface FormData {
+export interface FormData {
   id: string;
   name: string;
   description: string;
@@ -164,8 +151,10 @@ export function FormBuilder({
   });
 
   useEffect(() => {
-    dispatch(fetchProjects());
-  }, [dispatch]);
+    if (formId) {
+      dispatch(fetchProjects());
+    }
+  }, [dispatch, formId]);
 
   useEffect(() => {
     if (formId) {
@@ -174,7 +163,7 @@ export function FormBuilder({
   }, [formId, dispatch]);
 
   useEffect(() => {
-    if (formToEdit) {
+    if (formToEdit && formId) {
       const projectId = formToEdit.entityAssociations[0].entityId;
 
       const fields = formToEdit.schema.fields.map((field, index) => ({
@@ -200,7 +189,7 @@ export function FormBuilder({
         project: projectId,
       });
     }
-  }, [formToEdit]);
+  }, [formToEdit, formId]);
 
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const [isAddFieldDialogOpen, setIsAddFieldDialogOpen] = useState(false);
@@ -254,6 +243,7 @@ export function FormBuilder({
         field.id === fieldId ? { ...field, ...updates } : field
       ),
     }));
+
   };
 
   // Delete a field

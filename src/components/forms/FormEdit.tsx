@@ -32,7 +32,7 @@ export function FormEdit() {
     try {
       await dispatch(updateForm({ formId: id, formData })).unwrap();
 
-      toast.success(`"Form updated successfully!`, {
+      toast.success('Form updated successfully!', {
         description: 'The form has been updated.',
         duration: 5000,
       });
