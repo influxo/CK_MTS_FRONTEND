@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch } from "../../store";
+import type { AppDispatch, RootState } from "../../store";
 import {
   createBeneficiary,
   fetchBeneficiaries,
@@ -29,7 +29,11 @@ import {
   selectBeneficiaryError,
   selectBeneficiaryCreateSuccessMessage,
   clearBeneficiaryMessages,
+  associateBeneficiaryToEntities,
+  selectBeneficiaryAssociateLoading,
 } from "../../store/slices/beneficiarySlice";
+import { fetchProjects } from "../../store/slices/projectsSlice";
+import { fetchAllSubProjects } from "../../store/slices/subProjectSlice";
 import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
@@ -278,6 +282,7 @@ export function BeneficiariesList({
   const createLoading = useSelector(selectBeneficiaryIsLoading);
   const createError = useSelector(selectBeneficiaryError);
   const createSuccess = useSelector(selectBeneficiaryCreateSuccessMessage);
+  const associateLoading = useSelector(selectBeneficiaryAssociateLoading);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -289,15 +294,45 @@ export function BeneficiariesList({
   );
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Additional local state for extended details (comma-separated inputs)
-  const [allergiesInput, setAllergiesInput] = useState("");
-  const [disabilitiesInput, setDisabilitiesInput] = useState("");
-  const [chronicConditionsInput, setChronicConditionsInput] = useState("");
-  const [medicationsInput, setMedicationsInput] = useState("");
-  const [bloodTypeInput, setBloodTypeInput] = useState("");
-  const [notesInput, setNotesInput] = useState("");
+  // Associations selection state (similar to InviteEmployee Project Access)
+  const [associateAllProjects, setAssociateAllProjects] = useState(false);
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [selectedSubProjects, setSelectedSubProjects] = useState<string[]>([]);
 
-  // Add Beneficiary form state aligned with CreateBeneficiaryRequest
+  // Projects & Subprojects from Redux
+  const projects = useSelector((state: RootState) => state.projects.projects);
+  const projectsLoading = useSelector(
+    (state: RootState) => state.projects.isLoading
+  );
+  const projectsError = useSelector((state: RootState) => state.projects.error);
+
+  const subprojects = useSelector(
+    (state: RootState) => state.subprojects.subprojects
+  );
+  const subprojectsLoading = useSelector(
+    (state: RootState) => state.subprojects.isLoading
+  );
+  const subprojectsError = useSelector(
+    (state: RootState) => state.subprojects.error
+  );
+
+  const subprojectsByProjectId = useMemo(() => {
+    const map: Record<
+      string,
+      { id: string; name: string; projectId: string }[]
+    > = {};
+    for (const sp of subprojects) {
+      if (!map[sp.projectId]) map[sp.projectId] = [];
+      map[sp.projectId].push({
+        id: sp.id,
+        name: sp.name,
+        projectId: sp.projectId,
+      });
+    }
+    return map;
+  }, [subprojects]);
+
+  // Form state for creating a beneficiary
   const [form, setForm] = useState<CreateBeneficiaryRequest>({
     firstName: "",
     lastName: "",
@@ -311,6 +346,13 @@ export function BeneficiariesList({
     nationality: "",
     status: "active",
   });
+  // Additional local state for extended details (comma-separated inputs)
+  const [allergiesInput, setAllergiesInput] = useState("");
+  const [disabilitiesInput, setDisabilitiesInput] = useState("");
+  const [chronicConditionsInput, setChronicConditionsInput] = useState("");
+  const [medicationsInput, setMedicationsInput] = useState("");
+  const [bloodTypeInput, setBloodTypeInput] = useState("");
+  const [notesInput, setNotesInput] = useState("");
 
   const resetForm = () => {
     setForm({
@@ -332,28 +374,107 @@ export function BeneficiariesList({
     setMedicationsInput("");
     setBloodTypeInput("");
     setNotesInput("");
+    setAssociateAllProjects(false);
+    setSelectedProjects([]);
+    setSelectedSubProjects([]);
   };
 
-  // Kick off loading of real beneficiaries
+  // Kick off loading of beneficiaries
   useEffect(() => {
-    // if (!listLoading && beneficiaries.length === 0) {
     dispatch(fetchBeneficiaries(undefined));
-    // }
+  }, [dispatch]);
+
+  // Load projects & subprojects for association selection
+  useEffect(() => {
+    dispatch(fetchProjects());
+    dispatch(fetchAllSubProjects());
   }, [dispatch]);
 
   // Close dialog and refresh list on successful create
   useEffect(() => {
-    if (createSuccess) {
+    if (createSuccess && !associateLoading) {
       setIsAddDialogOpen(false);
       resetForm();
-      // refresh list and clear create messages
+      // refresh list and clear messages
       dispatch(fetchBeneficiaries(undefined));
       dispatch(clearBeneficiaryMessages());
     }
-  }, [createSuccess, dispatch]);
+  }, [createSuccess, associateLoading, dispatch]);
+
+  // Build a simple view model from API data for table rendering
+  const list = useMemo(() => {
+    return beneficiaries.map((b) => {
+      const pii = (b as any).pii || ({} as any);
+      const firstName: string = pii.firstName || "";
+      const lastName: string = pii.lastName || "";
+      const fullName = `${firstName} ${lastName}`.trim() || b.pseudonym || b.id;
+      const initials =
+        `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase() ||
+        (b.pseudonym ? b.pseudonym.slice(0, 2) : "") ||
+        "BN";
+      return {
+        id: b.id,
+        name: fullName,
+        initials,
+        pseudonym: b.pseudonym,
+        status: b.status,
+        createdAt: b.createdAt,
+        gender: pii.gender || "",
+        dob: pii.dob || "",
+        municipality: pii.municipality || "",
+        nationality: pii.nationality || "",
+        phone: pii.phone || "",
+        email: pii.email || "",
+        address: pii.address || "",
+      };
+    });
+  }, [beneficiaries]);
+
+  // Filter list by search/status (project/tag filters are placeholders)
+  const filteredBeneficiaries = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return list.filter((b) => {
+      const matchesSearch =
+        b.name.toLowerCase().includes(q) ||
+        b.id.toLowerCase().includes(q) ||
+        (b.pseudonym || "").toLowerCase().includes(q) ||
+        b.municipality.toLowerCase().includes(q) ||
+        b.nationality.toLowerCase().includes(q) ||
+        b.phone.toLowerCase().includes(q) ||
+        b.email.toLowerCase().includes(q);
+
+      const matchesStatus = statusFilter === "all" || b.status === statusFilter;
+      const matchesProject = projectFilter === "all"; // no-op for now
+      const matchesTag = tagFilter === "all"; // no-op for now
+      return matchesSearch && matchesStatus && matchesProject && matchesTag;
+    });
+  }, [list, searchQuery, statusFilter, projectFilter, tagFilter]);
+
+  // Unique tags for advanced filter mock (using mockBeneficiaries)
+  const uniqueTags = Array.from(
+    new Set(mockBeneficiaries.flatMap((beneficiary) => beneficiary.tags))
+  );
+
+  // Selection helpers
+  const handleSelectAll = () => {
+    if (selectedBeneficiaries.length === filteredBeneficiaries.length) {
+      setSelectedBeneficiaries([]);
+    } else {
+      setSelectedBeneficiaries(filteredBeneficiaries.map((b) => b.id));
+    }
+  };
+
+  const handleSelectBeneficiary = (id: string) => {
+    if (selectedBeneficiaries.includes(id)) {
+      setSelectedBeneficiaries(
+        selectedBeneficiaries.filter((beneficiaryId) => beneficiaryId !== id)
+      );
+    } else {
+      setSelectedBeneficiaries([...selectedBeneficiaries, id]);
+    }
+  };
 
   const handleCreateSubmit = async () => {
-    // basic required checks (could be enhanced)
     if (!form.firstName || !form.lastName || !form.gender || !form.status) {
       return;
     }
@@ -387,395 +508,477 @@ export function BeneficiariesList({
           }
         : form;
 
-      await dispatch(createBeneficiary(payload)).unwrap();
-      // success handled by effect
+      const createRes = await dispatch(createBeneficiary(payload)).unwrap();
+      const newId = createRes?.data?.id;
+      if (newId) {
+        const projectIdsToSend = associateAllProjects
+          ? projects.map((p) => p.id)
+          : selectedProjects;
+        const subProjectIdsToSend = associateAllProjects
+          ? subprojects.map((sp) => sp.id)
+          : selectedSubProjects;
+
+        const links = [
+          ...projectIdsToSend.map((id) => ({
+            entityId: id,
+            entityType: "project",
+          })),
+          ...subProjectIdsToSend.map((id) => ({
+            entityId: id,
+            entityType: "subproject",
+          })),
+        ];
+
+        if (links.length > 0) {
+          try {
+            await dispatch(
+              associateBeneficiaryToEntities({ id: newId, links })
+            ).unwrap();
+          } catch (_) {
+            // Association errors are surfaced via slice selectors
+          }
+        }
+      }
+      // createSuccess effect will handle closing/reset
     } catch (_) {
       // errors are surfaced via createError
     }
   };
 
-  // Build a simple view model from API data for table rendering
-  const list = useMemo(() => {
-    return beneficiaries.map((b) => {
-      const pii = b.pii || ({} as any);
-      const firstName: string = pii.firstName || "";
-      const lastName: string = pii.lastName || "";
-      const fullName = `${firstName} ${lastName}`.trim() || b.pseudonym || b.id;
-      const initials =
-        `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase() ||
-        b.pseudonym?.slice(0, 2) ||
-        "BN";
-      return {
-        id: b.id,
-        name: fullName,
-        initials,
-        pseudonym: b.pseudonym,
-        status: b.status,
-        createdAt: b.createdAt,
-        gender: pii.gender || "",
-        dob: pii.dob || "",
-        municipality: pii.municipality || "",
-        nationality: pii.nationality || "",
-        phone: pii.phone || "",
-        email: pii.email || "",
-        address: pii.address || "",
-      };
-    });
-  }, [beneficiaries]);
-
-  // Filter beneficiaries based on selected filters (only on available fields)
-  const filteredBeneficiaries = useMemo(() => {
-    const q = searchQuery.toLowerCase();
-    return list.filter((b) => {
-      const matchesSearch =
-        b.name.toLowerCase().includes(q) ||
-        b.id.toLowerCase().includes(q) ||
-        (b.pseudonym || "").toLowerCase().includes(q) ||
-        b.municipality.toLowerCase().includes(q) ||
-        b.nationality.toLowerCase().includes(q) ||
-        b.phone.toLowerCase().includes(q) ||
-        b.email.toLowerCase().includes(q);
-
-      const matchesStatus = statusFilter === "all" || b.status === statusFilter;
-      // project and tag filters are not applicable with current API; keep them as no-op when not "all"
-      const matchesProject = projectFilter === "all";
-      const matchesTag = tagFilter === "all";
-      return matchesSearch && matchesStatus && matchesProject && matchesTag;
-    });
-  }, [list, searchQuery, statusFilter, projectFilter, tagFilter]);
-
-  // Get unique tags from all beneficiaries
-  const uniqueTags = Array.from(
-    new Set(mockBeneficiaries.flatMap((beneficiary) => beneficiary.tags))
-  );
-
-  // Handle selecting all beneficiaries
-  const handleSelectAll = () => {
-    if (selectedBeneficiaries.length === filteredBeneficiaries.length) {
-      setSelectedBeneficiaries([]);
-    } else {
-      setSelectedBeneficiaries(filteredBeneficiaries.map((b) => b.id));
-    }
-  };
-
-  // Handle selecting a single beneficiary
-  const handleSelectBeneficiary = (id: string) => {
-    if (selectedBeneficiaries.includes(id)) {
-      setSelectedBeneficiaries(
-        selectedBeneficiaries.filter((beneficiaryId) => beneficiaryId !== id)
-      );
-    } else {
-      setSelectedBeneficiaries([...selectedBeneficiaries, id]);
-    }
-  };
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2>Beneficiaries</h2>
-          <p className="text-muted-foreground">
-            Manage program beneficiaries and their associations
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Button
-            className="border bg-black/10 text-black"
-            // variant="outline"
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-          >
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
-            Advanced Filters
+      {/* ... (rest of the code remains the same) */}
+
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogTrigger asChild>
+          <Button className="bg-[#2E343E] text-white">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Beneficiary
           </Button>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-[#2E343E] text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Beneficiary
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Add New Beneficiary</DialogTitle>
-                <DialogDescription>
-                  Enter the details of the beneficiary you want to add to the
-                  system.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="firstName" className="text-right">
-                    First Name *
-                  </Label>
-                  <Input
-                    id="firstName"
-                    className="col-span-3"
-                    placeholder="Enter first name"
-                    value={form.firstName}
-                    onChange={(e) =>
-                      setForm({ ...form, firstName: e.target.value })
-                    }
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Beneficiary</DialogTitle>
+            <DialogDescription>
+              Enter the details of the beneficiary you want to add to the
+              system.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="firstName" className="text-right">
+                First Name *
+              </Label>
+              <Input
+                id="firstName"
+                className="col-span-3"
+                placeholder="Enter first name"
+                value={form.firstName}
+                onChange={(e) =>
+                  setForm({ ...form, firstName: e.target.value })
+                }
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="lastName" className="text-right">
+                Last Name *
+              </Label>
+              <Input
+                id="lastName"
+                className="col-span-3"
+                placeholder="Enter last name"
+                value={form.lastName}
+                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Gender *</Label>
+              <RadioGroup
+                className="col-span-3 flex gap-4"
+                value={form.gender}
+                onValueChange={(val) => setForm({ ...form, gender: val })}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="female" id="female" />
+                  <Label htmlFor="female">Female</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="male" id="male" />
+                  <Label htmlFor="male">Male</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="other" id="other" />
+                  <Label htmlFor="other">Other</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="dob" className="text-right">
+                Date of Birth *
+              </Label>
+              <Input
+                id="dob"
+                type="date"
+                className="col-span-3"
+                value={form.dob}
+                onChange={(e) => setForm({ ...form, dob: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="nationalId" className="text-right">
+                National ID *
+              </Label>
+              <Input
+                id="nationalId"
+                className="col-span-3"
+                placeholder="Enter national ID"
+                value={form.nationalId}
+                onChange={(e) =>
+                  setForm({ ...form, nationalId: e.target.value })
+                }
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="phone" className="text-right">
+                Phone
+              </Label>
+              <Input
+                id="phone"
+                className="col-span-3"
+                placeholder="Enter phone number"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="email" className="text-right">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                className="col-span-3"
+                placeholder="Enter email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="address" className="text-right">
+                Address
+              </Label>
+              <Input
+                id="address"
+                className="col-span-3"
+                placeholder="Enter address"
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="municipality" className="text-right">
+                Municipality
+              </Label>
+              <Input
+                id="municipality"
+                className="col-span-3"
+                placeholder="Enter municipality"
+                value={form.municipality}
+                onChange={(e) =>
+                  setForm({ ...form, municipality: e.target.value })
+                }
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="nationality" className="text-right">
+                Nationality
+              </Label>
+              <Input
+                id="nationality"
+                className="col-span-3"
+                placeholder="Enter nationality"
+                value={form.nationality}
+                onChange={(e) =>
+                  setForm({ ...form, nationality: e.target.value })
+                }
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="status" className="text-right">
+                Status *
+              </Label>
+              <Select
+                value={form.status}
+                onValueChange={(val) => setForm({ ...form, status: val })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Extended medical/details section */}
+            <div className="border-t pt-2 mt-2">
+              <div className="text-sm font-medium mb-2">Additional Details</div>
+              <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                <Label htmlFor="allergies" className="text-right">
+                  Allergies
+                </Label>
+                <Input
+                  id="allergies"
+                  className="col-span-3"
+                  placeholder="e.g. peanuts, penicillin"
+                  value={allergiesInput}
+                  onChange={(e) => setAllergiesInput(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                <Label htmlFor="disabilities" className="text-right">
+                  Disabilities
+                </Label>
+                <Input
+                  id="disabilities"
+                  className="col-span-3"
+                  placeholder="e.g. visual impairment"
+                  value={disabilitiesInput}
+                  onChange={(e) => setDisabilitiesInput(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                <Label htmlFor="chronicConditions" className="text-right">
+                  Chronic Conditions
+                </Label>
+                <Input
+                  id="chronicConditions"
+                  className="col-span-3"
+                  placeholder="e.g. asthma"
+                  value={chronicConditionsInput}
+                  onChange={(e) => setChronicConditionsInput(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                <Label htmlFor="medications" className="text-right">
+                  Medications
+                </Label>
+                <Input
+                  id="medications"
+                  className="col-span-3"
+                  placeholder="e.g. inhaler"
+                  value={medicationsInput}
+                  onChange={(e) => setMedicationsInput(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                <Label htmlFor="bloodType" className="text-right">
+                  Blood Type
+                </Label>
+                <Input
+                  id="bloodType"
+                  className="col-span-3"
+                  placeholder="e.g. O+"
+                  value={bloodTypeInput}
+                  onChange={(e) => setBloodTypeInput(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="notes" className="text-right mt-2">
+                  Notes
+                </Label>
+                <textarea
+                  id="notes"
+                  className="col-span-3 bg-white border border-input rounded-md p-2 min-h-[70px]"
+                  placeholder="Any special notes..."
+                  value={notesInput}
+                  onChange={(e) => setNotesInput(e.target.value)}
+                />
+              </div>
+              <div className="text-[11px] text-muted-foreground mt-2">
+                Use commas to separate multiple values.
+              </div>
+            </div>
+
+            {/* Project Associations */}
+            <div className="border-t pt-4 mt-4">
+              <div className="space-y-2">
+                <Label>Project Associations</Label>
+                <div className="flex items-center space-x-2 mt-2">
+                  <Checkbox
+                    className="bg-[#95A4FC] text-white"
+                    id="assocAllProjects"
+                    checked={associateAllProjects}
+                    onCheckedChange={(checked) => {
+                      const val = Boolean(checked);
+                      setAssociateAllProjects(val);
+                      if (val) {
+                        setSelectedProjects([]);
+                        setSelectedSubProjects([]);
+                      }
+                    }}
                   />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="lastName" className="text-right">
-                    Last Name *
+                  <Label htmlFor="assocAllProjects" className="font-normal">
+                    Associate to all projects and sub-projects
                   </Label>
-                  <Input
-                    id="lastName"
-                    className="col-span-3"
-                    placeholder="Enter last name"
-                    value={form.lastName}
-                    onChange={(e) =>
-                      setForm({ ...form, lastName: e.target.value })
-                    }
-                  />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Gender *</Label>
-                  <RadioGroup
-                    className="col-span-3 flex gap-4"
-                    value={form.gender}
-                    onValueChange={(val) => setForm({ ...form, gender: val })}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="female" id="female" />
-                      <Label htmlFor="female">Female</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="male" id="male" />
-                      <Label htmlFor="male">Male</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="other" id="other" />
-                      <Label htmlFor="other">Other</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="dob" className="text-right">
-                    Date of Birth *
-                  </Label>
-                  <Input
-                    id="dob"
-                    type="date"
-                    className="col-span-3"
-                    value={form.dob}
-                    onChange={(e) => setForm({ ...form, dob: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="nationalId" className="text-right">
-                    National ID *
-                  </Label>
-                  <Input
-                    id="nationalId"
-                    className="col-span-3"
-                    placeholder="Enter national ID"
-                    value={form.nationalId}
-                    onChange={(e) =>
-                      setForm({ ...form, nationalId: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="phone" className="text-right">
-                    Phone
-                  </Label>
-                  <Input
-                    id="phone"
-                    className="col-span-3"
-                    placeholder="Enter phone number"
-                    value={form.phone}
-                    onChange={(e) =>
-                      setForm({ ...form, phone: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    className="col-span-3"
-                    placeholder="Enter email"
-                    value={form.email}
-                    onChange={(e) =>
-                      setForm({ ...form, email: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="address" className="text-right">
-                    Address
-                  </Label>
-                  <Input
-                    id="address"
-                    className="col-span-3"
-                    placeholder="Enter address"
-                    value={form.address}
-                    onChange={(e) =>
-                      setForm({ ...form, address: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="municipality" className="text-right">
-                    Municipality
-                  </Label>
-                  <Input
-                    id="municipality"
-                    className="col-span-3"
-                    placeholder="Enter municipality"
-                    value={form.municipality}
-                    onChange={(e) =>
-                      setForm({ ...form, municipality: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="nationality" className="text-right">
-                    Nationality
-                  </Label>
-                  <Input
-                    id="nationality"
-                    className="col-span-3"
-                    placeholder="Enter nationality"
-                    value={form.nationality}
-                    onChange={(e) =>
-                      setForm({ ...form, nationality: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="status" className="text-right">
-                    Status *
-                  </Label>
-                  <Select
-                    value={form.status}
-                    onValueChange={(val) => setForm({ ...form, status: val })}
-                  >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {/* Extended medical/details section */}
-                <div className="border-t pt-2 mt-2">
-                  <div className="text-sm font-medium mb-2">Additional Details</div>
-                  <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                    <Label htmlFor="allergies" className="text-right">
-                      Allergies
-                    </Label>
-                    <Input
-                      id="allergies"
-                      className="col-span-3"
-                      placeholder="e.g. peanuts, penicillin"
-                      value={allergiesInput}
-                      onChange={(e) => setAllergiesInput(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                    <Label htmlFor="disabilities" className="text-right">
-                      Disabilities
-                    </Label>
-                    <Input
-                      id="disabilities"
-                      className="col-span-3"
-                      placeholder="e.g. visual impairment"
-                      value={disabilitiesInput}
-                      onChange={(e) => setDisabilitiesInput(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                    <Label htmlFor="chronicConditions" className="text-right">
-                      Chronic Conditions
-                    </Label>
-                    <Input
-                      id="chronicConditions"
-                      className="col-span-3"
-                      placeholder="e.g. asthma"
-                      value={chronicConditionsInput}
-                      onChange={(e) => setChronicConditionsInput(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                    <Label htmlFor="medications" className="text-right">
-                      Medications
-                    </Label>
-                    <Input
-                      id="medications"
-                      className="col-span-3"
-                      placeholder="e.g. inhaler"
-                      value={medicationsInput}
-                      onChange={(e) => setMedicationsInput(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                    <Label htmlFor="bloodType" className="text-right">
-                      Blood Type
-                    </Label>
-                    <Input
-                      id="bloodType"
-                      className="col-span-3"
-                      placeholder="e.g. O+"
-                      value={bloodTypeInput}
-                      onChange={(e) => setBloodTypeInput(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-start gap-4">
-                    <Label htmlFor="notes" className="text-right mt-2">
-                      Notes
-                    </Label>
-                    <textarea
-                      id="notes"
-                      className="col-span-3 bg-white border border-input rounded-md p-2 min-h-[70px]"
-                      placeholder="Any special notes..."
-                      value={notesInput}
-                      onChange={(e) => setNotesInput(e.target.value)}
-                    />
-                  </div>
-                  <div className="text-[11px] text-muted-foreground mt-2">
-                    Use commas to separate multiple values.
-                  </div>
-                </div>
-                {createError && (
-                  <div className="col-span-4 text-red-600 text-sm">
-                    {createError}
+
+                {!associateAllProjects && (
+                  <div className="mt-4 space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Select specific projects and sub-projects:
+                    </p>
+
+                    {projectsLoading || subprojectsLoading ? (
+                      <div className="text-sm text-muted-foreground px-1">
+                        Loading projects...
+                      </div>
+                    ) : projectsError || subprojectsError ? (
+                      <div className="text-sm text-red-500 px-1">
+                        {projectsError || subprojectsError}
+                      </div>
+                    ) : projects && projects.length > 0 ? (
+                      projects.map((project) => (
+                        <div key={project.id} className="border rounded-md p-4">
+                          <div className="flex items-center space-x-2 mb-4">
+                            <Checkbox
+                              id={`proj-${project.id}`}
+                              checked={selectedProjects.includes(project.id)}
+                              onCheckedChange={() => {
+                                setSelectedProjects((prev) => {
+                                  if (prev.includes(project.id)) {
+                                    const subProjectsForProject =
+                                      subprojectsByProjectId[project.id] || [];
+                                    const subIds = subProjectsForProject.map(
+                                      (sp) => sp.id
+                                    );
+                                    setSelectedSubProjects((prevSubs) =>
+                                      prevSubs.filter(
+                                        (spId) => !subIds.includes(spId)
+                                      )
+                                    );
+                                    return prev.filter((p) => p !== project.id);
+                                  } else {
+                                    const subProjectsForProject =
+                                      subprojectsByProjectId[project.id] || [];
+                                    const subIds = subProjectsForProject.map(
+                                      (sp) => sp.id
+                                    );
+                                    setSelectedSubProjects((prevSubs) => {
+                                      const next = new Set(prevSubs);
+                                      for (const id of subIds) next.add(id);
+                                      return Array.from(next);
+                                    });
+                                    return [...prev, project.id];
+                                  }
+                                });
+                              }}
+                            />
+                            <Label
+                              htmlFor={`proj-${project.id}`}
+                              className="font-medium"
+                            >
+                              {project.name}
+                            </Label>
+                          </div>
+
+                          <div className="pl-6 border-l ml-2 space-y-2">
+                            {(subprojectsByProjectId[project.id] || []).map(
+                              (subProject) => (
+                                <div
+                                  key={subProject.id}
+                                  className="flex items-center space-x-2"
+                                >
+                                  <Checkbox
+                                    id={`sub-${subProject.id}`}
+                                    checked={selectedSubProjects.includes(
+                                      subProject.id
+                                    )}
+                                    onCheckedChange={() => {
+                                      setSelectedSubProjects((prev) => {
+                                        if (prev.includes(subProject.id)) {
+                                          return prev.filter(
+                                            (sp) => sp !== subProject.id
+                                          );
+                                        } else {
+                                          if (
+                                            !selectedProjects.includes(
+                                              project.id
+                                            )
+                                          ) {
+                                            setSelectedProjects(
+                                              (prevProjects) => [
+                                                ...prevProjects,
+                                                project.id,
+                                              ]
+                                            );
+                                          }
+                                          return [...prev, subProject.id];
+                                        }
+                                      });
+                                    }}
+                                    disabled={
+                                      !selectedProjects.includes(project.id)
+                                    }
+                                  />
+                                  <Label
+                                    htmlFor={`sub-${subProject.id}`}
+                                    className="font-normal"
+                                  >
+                                    {subProject.name}
+                                  </Label>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-muted-foreground px-1">
+                        No projects available
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-              <DialogFooter>
-                <div className="flex items-center mr-auto">
-                  <ShieldAlert className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">
-                    Personal data will be pseudonymized
-                  </span>
-                </div>
-                <Button
-                  // variant="outline"
-                  onClick={() => {
-                    setIsAddDialogOpen(false);
-                    resetForm();
-                    dispatch(clearBeneficiaryMessages());
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateSubmit} disabled={createLoading}>
-                  {createLoading ? "Creating..." : "Add Beneficiary"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+            </div>
+
+            {createError && (
+              <div className="col-span-4 text-red-600 text-sm">
+                {createError}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <div className="flex items-center mr-auto">
+              <ShieldAlert className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">
+                Personal data will be pseudonymized
+              </span>
+            </div>
+            <Button
+              onClick={() => {
+                setIsAddDialogOpen(false);
+                resetForm();
+                dispatch(clearBeneficiaryMessages());
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateSubmit}
+              disabled={createLoading || associateLoading}
+            >
+              {createLoading
+                ? "Creating..."
+                : associateLoading
+                ? "Associating..."
+                : "Add Beneficiary"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex flex-col lg:flex-row gap-4 justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">

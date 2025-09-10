@@ -39,7 +39,6 @@ import {
 import { Textarea } from "../ui/form/textarea";
 
 import { SubProjectActivities } from "./SubProjectActivities";
-import { SubProjectBeneficiaries } from "./SubProjectBeneficiaries";
 import { SubProjectForms } from "./SubProjectForms";
 import { SubProjectReports } from "./SubProjectReports";
 import { SubProjectTeam } from "./SubProjectTeam";
@@ -56,6 +55,23 @@ import {
 import { fetchEmployees } from "../../store/slices/employeesSlice";
 import { Progress } from "../ui/feedback/progress";
 import { toast } from "sonner";
+import {
+  fetchBeneficiariesByEntity,
+  selectBeneficiariesByEntity,
+  selectBeneficiariesByEntityError,
+  selectBeneficiariesByEntityLoading,
+  selectBeneficiariesByEntityPagination,
+} from "../../store/slices/beneficiarySlice";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
+import { Checkbox } from "../ui/form/checkbox";
+import {
+  Table,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
+
 // We don't need to import the SubProject type directly as it's already used in Redux selectors
 
 // TODO: remove this mockSubProjectEnhancement, it's just for testing since we dont have that data yet
@@ -112,6 +128,50 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
     selectSubprojectsError(state)
   );
 
+  // Beneficiaries by entity (subproject)
+  const subBeneficiaries = useSelector(selectBeneficiariesByEntity);
+  const subBeneficiariesLoading = useSelector(selectBeneficiariesByEntityLoading);
+  const subBeneficiariesError = useSelector(selectBeneficiariesByEntityError);
+  const subBeneficiariesMeta = useSelector(selectBeneficiariesByEntityPagination);
+
+  // Build view model similar to BeneficiariesList
+  const tableRows = subBeneficiaries.map((b) => {
+    const pii: any = b.pii || {};
+    const firstName: string = pii.firstName || "";
+    const lastName: string = pii.lastName || "";
+    const fullName = `${firstName} ${lastName}`.trim() || b.pseudonym || b.id;
+    const initials = (
+      `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase() ||
+      b.pseudonym?.slice(0, 2) ||
+      "BN"
+    );
+    return {
+      id: b.id,
+      name: fullName,
+      initials,
+      pseudonym: b.pseudonym,
+      status: b.status,
+      createdAt: b.createdAt,
+      gender: pii.gender || "",
+      dob: pii.dob || "",
+      municipality: pii.municipality || "",
+      nationality: pii.nationality || "",
+      phone: pii.phone || "",
+      email: pii.email || "",
+    };
+  });
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const allSelected = selectedIds.length === tableRows.length && tableRows.length > 0;
+  const toggleSelectAll = () => {
+    setSelectedIds(allSelected ? [] : tableRows.map((r) => r.id));
+  };
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
   useEffect(() => {
     if (subprojectId) {
       dispatch(getSubProjectById({ id: subprojectId }));
@@ -128,6 +188,19 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
   useEffect(() => {
     dispatch(fetchEmployees());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (activeTab === "beneficiaries" && subprojectId) {
+      dispatch(
+        fetchBeneficiariesByEntity({
+          entityId: subprojectId,
+          entityType: "subproject",
+          page: 1,
+          limit: 20,
+        })
+      );
+    }
+  }, [activeTab, subprojectId, dispatch]);
 
   const handleBackToProject = () => {
     if (onBack) {
@@ -718,7 +791,90 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
         </TabsContent>
 
         <TabsContent value="beneficiaries" className="pt-6">
-          <SubProjectBeneficiaries subProjectId={subprojectId || ""} />
+          {subBeneficiariesLoading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              Loading beneficiaries...
+            </div>
+          )}
+          {subBeneficiariesError && !subBeneficiariesLoading && (
+            <div className="text-sm text-red-600">{subBeneficiariesError}</div>
+          )}
+          {!subBeneficiariesLoading && !subBeneficiariesError && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-medium">Beneficiaries ({subBeneficiariesMeta.totalItems})</h3>
+              </div>
+              <Table>
+                <TableHeader className="bg-[#E5ECF6]">
+                  <TableRow>
+                    <TableHead className="w-[50px]">
+                      <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                    </TableHead>
+                    <TableHead className="w-[250px]">Beneficiary</TableHead>
+                    <TableHead>Gender/DOB</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Municipality/Nationality</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Registration</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <tbody className="bg-[#F7F9FB]">
+                  {tableRows.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell>
+                        <Checkbox
+          checked={selectedIds.includes(r.id)}
+          onCheckedChange={() => toggleSelectOne(r.id)}
+        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src="" alt={r.name} />
+                            <AvatarFallback>{r.initials}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{r.name}</div>
+                            <div className="text-xs text-muted-foreground">{r.pseudonym}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="capitalize">{r.gender || "-"}</div>
+                          <div className="text-xs text-muted-foreground">{r.dob || "-"}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="capitalize">{r.status}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{r.municipality || "-"}</div>
+                          <div className="text-xs text-muted-foreground">{r.nationality || "-"}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{r.phone || "-"}</div>
+                          <div className="text-xs text-muted-foreground">{r.email || "-"}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{new Date(r.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right text-muted-foreground text-xs">—</TableCell>
+                    </TableRow>
+                  ))}
+                  {tableRows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={8} className="py-4 text-center text-muted-foreground">
+                        No beneficiaries found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </tbody>
+              </Table>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="team" className="pt-6">

@@ -17,6 +17,10 @@ import type {
   GetBeneficiaryEntitiesRequest,
   GetBeneficiaryEntitiesResponse,
   BeneficiaryEntityLinkItem,
+  GetBeneficiariesByEntityRequest,
+  GetBeneficiariesByEntityResponse,
+  AssociateBeneficiaryToEntitiesRequest,
+  AssociateBeneficiaryToEntitiesResponse,
 } from "../../services/beneficiaries/beneficiaryModels";
 
 interface BeneficiaryState {
@@ -32,6 +36,14 @@ interface BeneficiaryState {
   limit: number;
   totalItems: number;
   totalPages: number;
+  // by-entity list state
+  byEntityList: BeneficiaryListItem[];
+  byEntityIsLoading: boolean;
+  byEntityError: string | null;
+  byEntityPage: number;
+  byEntityLimit: number;
+  byEntityTotalItems: number;
+  byEntityTotalPages: number;
   // detail state
   detail: BeneficiaryListItem | null;
   detailIsLoading: boolean;
@@ -62,6 +74,10 @@ interface BeneficiaryState {
   deleteError: string | null;
   deleteSuccessMessage: string | null;
   deleted: Beneficiary | null;
+  // association state
+  associateIsLoading: boolean;
+  associateError: string | null;
+  associateResult: AssociateBeneficiaryToEntitiesResponse["data"] | null;
 }
 
 const initialState: BeneficiaryState = {
@@ -77,6 +93,14 @@ const initialState: BeneficiaryState = {
   limit: 20,
   totalItems: 0,
   totalPages: 0,
+  // by-entity list state
+  byEntityList: [],
+  byEntityIsLoading: false,
+  byEntityError: null,
+  byEntityPage: 1,
+  byEntityLimit: 20,
+  byEntityTotalItems: 0,
+  byEntityTotalPages: 0,
   // detail state
   detail: null,
   detailIsLoading: false,
@@ -107,6 +131,10 @@ const initialState: BeneficiaryState = {
   deleteError: null,
   deleteSuccessMessage: null,
   deleted: null,
+  // association state
+  associateIsLoading: false,
+  associateError: null,
+  associateResult: null,
 };
 
 export const createBeneficiary = createAsyncThunk<
@@ -144,6 +172,40 @@ export const fetchBeneficiaryById = createAsyncThunk<
   }
   return res;
 });
+
+export const associateBeneficiaryToEntities = createAsyncThunk<
+  AssociateBeneficiaryToEntitiesResponse,
+  AssociateBeneficiaryToEntitiesRequest,
+  { rejectValue: string }
+>(
+  "beneficiaries/associateToEntities",
+  async (params, { rejectWithValue }) => {
+    const res = await beneficiaryService.associateBeneficiaryToEntities(params);
+    if (!res.success) {
+      return rejectWithValue(
+        res.message || "Failed to associate beneficiary to entities"
+      );
+    }
+    return res;
+  }
+);
+
+export const fetchBeneficiariesByEntity = createAsyncThunk<
+  GetBeneficiariesByEntityResponse,
+  GetBeneficiariesByEntityRequest,
+  { rejectValue: string }
+>(
+  "beneficiaries/fetchByEntity",
+  async (params, { rejectWithValue }) => {
+    const res = await beneficiaryService.getBeneficiariesByEntity(params);
+    if (!res.success) {
+      return rejectWithValue(
+        res.message || "Failed to fetch beneficiaries by entity"
+      );
+    }
+    return res;
+  }
+);
 
 export const updateBeneficiaryById = createAsyncThunk<
   UpdateBeneficiaryResponse,
@@ -230,6 +292,11 @@ const beneficiarySlice = createSlice({
       state.deleteSuccessMessage = null;
       state.deleted = null;
     },
+    clearBeneficiaryAssociation(state) {
+      state.associateIsLoading = false;
+      state.associateError = null;
+      state.associateResult = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -266,6 +333,25 @@ const beneficiarySlice = createSlice({
         state.listIsLoading = false;
         state.listError = action.payload ?? "Failed to fetch beneficiaries";
         state.list = [];
+      })
+      // by-entity list
+      .addCase(fetchBeneficiariesByEntity.pending, (state) => {
+        state.byEntityIsLoading = true;
+        state.byEntityError = null;
+      })
+      .addCase(fetchBeneficiariesByEntity.fulfilled, (state, action) => {
+        state.byEntityIsLoading = false;
+        state.byEntityList = action.payload.items;
+        state.byEntityPage = action.payload.page;
+        state.byEntityLimit = action.payload.limit;
+        state.byEntityTotalItems = action.payload.totalItems;
+        state.byEntityTotalPages = action.payload.totalPages;
+      })
+      .addCase(fetchBeneficiariesByEntity.rejected, (state, action) => {
+        state.byEntityIsLoading = false;
+        state.byEntityError =
+          action.payload ?? "Failed to fetch beneficiaries by entity";
+        state.byEntityList = [];
       })
       // detail
       .addCase(fetchBeneficiaryById.pending, (state) => {
@@ -372,11 +458,27 @@ const beneficiarySlice = createSlice({
         state.deleteIsLoading = false;
         state.deleteError = action.payload ?? "Failed to delete beneficiary";
         state.deleted = null;
+      })
+      // associate to entities
+      .addCase(associateBeneficiaryToEntities.pending, (state) => {
+        state.associateIsLoading = true;
+        state.associateError = null;
+        state.associateResult = null;
+      })
+      .addCase(associateBeneficiaryToEntities.fulfilled, (state, action) => {
+        state.associateIsLoading = false;
+        state.associateResult = action.payload.data ?? null;
+      })
+      .addCase(associateBeneficiaryToEntities.rejected, (state, action) => {
+        state.associateIsLoading = false;
+        state.associateError =
+          action.payload ?? "Failed to associate beneficiary to entities";
+        state.associateResult = null;
       });
   },
 });
 
-export const { clearBeneficiaryMessages, clearBeneficiaryList, clearBeneficiaryDetail, clearBeneficiaryUpdate, clearBeneficiaryDelete } = beneficiarySlice.actions;
+export const { clearBeneficiaryMessages, clearBeneficiaryList, clearBeneficiaryDetail, clearBeneficiaryUpdate, clearBeneficiaryDelete, clearBeneficiaryAssociation } = beneficiarySlice.actions;
 
 export const selectBeneficiaryIsLoading = (state: {
   beneficiaries: BeneficiaryState;
@@ -467,5 +569,32 @@ export const selectBeneficiaryDeleteSuccessMessage = (state: { beneficiaries: Be
 
 export const selectDeletedBeneficiary = (state: { beneficiaries: BeneficiaryState }) =>
   state.beneficiaries.deleted;
+
+// by-entity selectors
+export const selectBeneficiariesByEntity = (state: { beneficiaries: BeneficiaryState }) =>
+  state.beneficiaries.byEntityList;
+
+export const selectBeneficiariesByEntityLoading = (state: { beneficiaries: BeneficiaryState }) =>
+  state.beneficiaries.byEntityIsLoading;
+
+export const selectBeneficiariesByEntityError = (state: { beneficiaries: BeneficiaryState }) =>
+  state.beneficiaries.byEntityError;
+
+export const selectBeneficiariesByEntityPagination = (state: { beneficiaries: BeneficiaryState }) => ({
+  page: state.beneficiaries.byEntityPage,
+  limit: state.beneficiaries.byEntityLimit,
+  totalItems: state.beneficiaries.byEntityTotalItems,
+  totalPages: state.beneficiaries.byEntityTotalPages,
+});
+
+// association selectors
+export const selectBeneficiaryAssociateLoading = (state: { beneficiaries: BeneficiaryState }) =>
+  state.beneficiaries.associateIsLoading;
+
+export const selectBeneficiaryAssociateError = (state: { beneficiaries: BeneficiaryState }) =>
+  state.beneficiaries.associateError;
+
+export const selectBeneficiaryAssociateResult = (state: { beneficiaries: BeneficiaryState }) =>
+  state.beneficiaries.associateResult;
 
 export default beneficiarySlice.reducer;

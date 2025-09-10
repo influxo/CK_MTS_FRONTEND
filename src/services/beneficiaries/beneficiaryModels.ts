@@ -49,6 +49,15 @@ export interface GetBeneficiariesRequest {
   status?: "active" | "inactive";
 }
 
+// List beneficiaries filtered by an entity (GET /beneficiaries/by-entity)
+export interface GetBeneficiariesByEntityRequest {
+  entityId: string; // required
+  entityType: string; // required (e.g., "project" | "subproject" | "activity")
+  status?: "active" | "inactive";
+  page?: number;
+  limit?: number;
+}
+
 export interface BeneficiaryPIIEncField {
   iv: string;
   alg: string;
@@ -96,6 +105,9 @@ export interface GetBeneficiariesResponse {
   totalPages: number;
   message?: string;
 }
+
+// Response for by-entity list uses the same paging envelope
+export type GetBeneficiariesByEntityResponse = GetBeneficiariesResponse;
 
 // Get beneficiary by ID (GET /beneficiaries/{id})
 export interface GetBeneficiaryByIdResponse {
@@ -203,5 +215,31 @@ export interface BeneficiaryEntityLinkItem {
 export interface GetBeneficiaryEntitiesResponse {
   success: boolean;
   data: BeneficiaryEntityLinkItem[];
+  message?: string;
+}
+
+// Associate beneficiary to entities (POST /beneficiaries/{id}/entities)
+export interface BeneficiaryEntityAssociationItem {
+  entityId: string;
+  entityType: string; // "project" | "subproject" | other entity types
+}
+
+export interface AssociateBeneficiaryToEntitiesRequest {
+  id: string; // beneficiary id (path param)
+  links: BeneficiaryEntityAssociationItem[]; // request body array
+}
+
+export interface AssociateBeneficiaryToEntitiesResponse {
+  success: boolean;
+  data?: {
+    created: number;
+    existing: number;
+    results: Array<{
+      entityId: string;
+      entityType: string;
+      created: boolean;
+      id: string; // association/link id
+    }>;
+  };
   message?: string;
 }
