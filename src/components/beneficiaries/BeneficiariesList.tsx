@@ -295,7 +295,6 @@ export function BeneficiariesList({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Associations selection state (similar to InviteEmployee Project Access)
-  const [associateAllProjects, setAssociateAllProjects] = useState(false);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [selectedSubProjects, setSelectedSubProjects] = useState<string[]>([]);
 
@@ -374,7 +373,6 @@ export function BeneficiariesList({
     setMedicationsInput("");
     setBloodTypeInput("");
     setNotesInput("");
-    setAssociateAllProjects(false);
     setSelectedProjects([]);
     setSelectedSubProjects([]);
   };
@@ -511,12 +509,8 @@ export function BeneficiariesList({
       const createRes = await dispatch(createBeneficiary(payload)).unwrap();
       const newId = createRes?.data?.id;
       if (newId) {
-        const projectIdsToSend = associateAllProjects
-          ? projects.map((p) => p.id)
-          : selectedProjects;
-        const subProjectIdsToSend = associateAllProjects
-          ? subprojects.map((sp) => sp.id)
-          : selectedSubProjects;
+        const projectIdsToSend = selectedProjects;
+        const subProjectIdsToSend = selectedSubProjects;
 
         const links = [
           ...projectIdsToSend.map((id) => ({
@@ -805,142 +799,109 @@ export function BeneficiariesList({
             <div className="border-t pt-4 mt-4">
               <div className="space-y-2">
                 <Label>Project Associations</Label>
-                <div className="flex items-center space-x-2 mt-2">
-                  <Checkbox
-                    className="bg-[#95A4FC] text-white"
-                    id="assocAllProjects"
-                    checked={associateAllProjects}
-                    onCheckedChange={(checked) => {
-                      const val = Boolean(checked);
-                      setAssociateAllProjects(val);
-                      if (val) {
-                        setSelectedProjects([]);
-                        setSelectedSubProjects([]);
-                      }
-                    }}
-                  />
-                  <Label htmlFor="assocAllProjects" className="font-normal">
-                    Associate to all projects and sub-projects
-                  </Label>
-                </div>
+                <div className="mt-4 space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Select specific projects and sub-projects:
+                  </p>
 
-                {!associateAllProjects && (
-                  <div className="mt-4 space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Select specific projects and sub-projects:
-                    </p>
-
-                    {projectsLoading || subprojectsLoading ? (
-                      <div className="text-sm text-muted-foreground px-1">
-                        Loading projects...
-                      </div>
-                    ) : projectsError || subprojectsError ? (
-                      <div className="text-sm text-red-500 px-1">
-                        {projectsError || subprojectsError}
-                      </div>
-                    ) : projects && projects.length > 0 ? (
-                      projects.map((project) => (
-                        <div key={project.id} className="border rounded-md p-4">
-                          <div className="flex items-center space-x-2 mb-4">
-                            <Checkbox
-                              id={`proj-${project.id}`}
-                              checked={selectedProjects.includes(project.id)}
-                              onCheckedChange={() => {
-                                setSelectedProjects((prev) => {
-                                  if (prev.includes(project.id)) {
-                                    const subProjectsForProject =
-                                      subprojectsByProjectId[project.id] || [];
-                                    const subIds = subProjectsForProject.map(
-                                      (sp) => sp.id
-                                    );
-                                    setSelectedSubProjects((prevSubs) =>
-                                      prevSubs.filter(
-                                        (spId) => !subIds.includes(spId)
-                                      )
-                                    );
-                                    return prev.filter((p) => p !== project.id);
-                                  } else {
-                                    const subProjectsForProject =
-                                      subprojectsByProjectId[project.id] || [];
-                                    const subIds = subProjectsForProject.map(
-                                      (sp) => sp.id
-                                    );
-                                    setSelectedSubProjects((prevSubs) => {
-                                      const next = new Set(prevSubs);
-                                      for (const id of subIds) next.add(id);
-                                      return Array.from(next);
-                                    });
-                                    return [...prev, project.id];
-                                  }
-                                });
-                              }}
-                            />
-                            <Label
-                              htmlFor={`proj-${project.id}`}
-                              className="font-medium"
-                            >
-                              {project.name}
-                            </Label>
-                          </div>
-
-                          <div className="pl-6 border-l ml-2 space-y-2">
-                            {(subprojectsByProjectId[project.id] || []).map(
-                              (subProject) => (
-                                <div
-                                  key={subProject.id}
-                                  className="flex items-center space-x-2"
-                                >
-                                  <Checkbox
-                                    id={`sub-${subProject.id}`}
-                                    checked={selectedSubProjects.includes(
-                                      subProject.id
-                                    )}
-                                    onCheckedChange={() => {
-                                      setSelectedSubProjects((prev) => {
-                                        if (prev.includes(subProject.id)) {
-                                          return prev.filter(
-                                            (sp) => sp !== subProject.id
-                                          );
-                                        } else {
-                                          if (
-                                            !selectedProjects.includes(
-                                              project.id
-                                            )
-                                          ) {
-                                            setSelectedProjects(
-                                              (prevProjects) => [
-                                                ...prevProjects,
-                                                project.id,
-                                              ]
-                                            );
-                                          }
-                                          return [...prev, subProject.id];
-                                        }
-                                      });
-                                    }}
-                                    disabled={
-                                      !selectedProjects.includes(project.id)
-                                    }
-                                  />
-                                  <Label
-                                    htmlFor={`sub-${subProject.id}`}
-                                    className="font-normal"
-                                  >
-                                    {subProject.name}
-                                  </Label>
-                                </div>
-                              )
-                            )}
-                          </div>
+                  {projectsLoading || subprojectsLoading ? (
+                    <div className="text-sm text-muted-foreground px-1">
+                      Loading projects...
+                    </div>
+                  ) : projectsError || subprojectsError ? (
+                    <div className="text-sm text-red-500 px-1">
+                      {projectsError || subprojectsError}
+                    </div>
+                  ) : projects && projects.length > 0 ? (
+                    projects.map((project) => (
+                      <div key={project.id} className="border rounded-md p-4">
+                        <div className="flex items-center space-x-2 mb-4">
+                          <Checkbox
+                            id={`proj-${project.id}`}
+                            checked={selectedProjects.includes(project.id)}
+                            onCheckedChange={() => {
+                              setSelectedProjects((prev) => {
+                                if (prev.includes(project.id)) {
+                                  const subProjectsForProject =
+                                    subprojectsByProjectId[project.id] || [];
+                                  const subIds = subProjectsForProject.map(
+                                    (sp) => sp.id
+                                  );
+                                  setSelectedSubProjects((prevSubs) =>
+                                    prevSubs.filter(
+                                      (spId) => !subIds.includes(spId)
+                                    )
+                                  );
+                                  return prev.filter((p) => p !== project.id);
+                                } else {
+                                  return [...prev, project.id];
+                                }
+                              });
+                            }}
+                          />
+                          <Label
+                            htmlFor={`proj-${project.id}`}
+                            className="font-medium"
+                          >
+                            {project.name}
+                          </Label>
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-sm text-muted-foreground px-1">
-                        No projects available
+
+                        <div className="pl-6 border-l ml-2 space-y-2">
+                          {(subprojectsByProjectId[project.id] || []).map(
+                            (subProject) => (
+                              <div
+                                key={subProject.id}
+                                className="flex items-center space-x-2"
+                              >
+                                <Checkbox
+                                  id={`sub-${subProject.id}`}
+                                  checked={selectedSubProjects.includes(
+                                    subProject.id
+                                  )}
+                                  onCheckedChange={() => {
+                                    setSelectedSubProjects((prev) => {
+                                      if (prev.includes(subProject.id)) {
+                                        return prev.filter(
+                                          (sp) => sp !== subProject.id
+                                        );
+                                      } else {
+                                        if (
+                                          !selectedProjects.includes(project.id)
+                                        ) {
+                                          setSelectedProjects(
+                                            (prevProjects) => [
+                                              ...prevProjects,
+                                              project.id,
+                                            ]
+                                          );
+                                        }
+                                        return [...prev, subProject.id];
+                                      }
+                                    });
+                                  }}
+                                  disabled={
+                                    !selectedProjects.includes(project.id)
+                                  }
+                                />
+                                <Label
+                                  htmlFor={`sub-${subProject.id}`}
+                                  className="font-normal"
+                                >
+                                  {subProject.name}
+                                </Label>
+                              </div>
+                            )
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                )}
+                    ))
+                  ) : (
+                    <div className="text-sm text-muted-foreground px-1">
+                      No projects available
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
