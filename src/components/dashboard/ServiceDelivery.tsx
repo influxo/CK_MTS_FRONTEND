@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ChevronDown } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -7,7 +8,10 @@ import {
 } from "../ui/data-display/card";
 import { Badge } from "../ui/data-display/badge";
 import { useDispatch, useSelector } from "react-redux";
-import { selectSeries, fetchDeliveriesSeries } from "../../store/slices/serviceMetricsSlice";
+import {
+  selectSeries,
+  fetchDeliveriesSeries,
+} from "../../store/slices/serviceMetricsSlice";
 import {
   LineChart,
   Line,
@@ -18,7 +22,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { TimeUnit } from "../../services/services/serviceMetricsModels";
-
 
 type Granularity = TimeUnit; // 'day' | 'week' | 'month' | 'quarter' | 'year'
 
@@ -79,6 +82,7 @@ export function ServiceDelivery() {
   const [customOpen, setCustomOpen] = React.useState(false);
   const [customFrom, setCustomFrom] = React.useState<string>("");
   const [customTo, setCustomTo] = React.useState<string>("");
+  const [filtersOpen, setFiltersOpen] = React.useState(false);
 
   const formatLabel = (iso: string) => {
     const d = new Date(iso);
@@ -174,24 +178,6 @@ export function ServiceDelivery() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const FilterButton: React.FC<{
-    active?: boolean;
-    onClick: () => void;
-    children: React.ReactNode;
-  }> = ({ active, onClick, children }) => (
-    <button
-      onClick={onClick}
-      className={[
-        "px-3 py-1.5 rounded-full text-sm border transition",
-        active
-          ? "bg-black text-white border-black"
-          : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50",
-      ].join(" ")}
-    >
-      {children}
-    </button>
-  );
-
   const g = (granularity || "week") as Granularity;
 
   return (
@@ -200,85 +186,163 @@ export function ServiceDelivery() {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <CardTitle>Service Deliveries Over Time</CardTitle>
           <div className="flex items-center gap-2">
-            <FilterButton active={g === "day"} onClick={() => applyQuery("day")}>
-              Day
-            </FilterButton>
-            <FilterButton
-              active={g === "week"}
-              onClick={() => applyQuery("week")}
-            >
-              Week
-            </FilterButton>
-            <FilterButton
-              active={g === "month"}
-              onClick={() => applyQuery("month")}
-            >
-              Month
-            </FilterButton>
-            <FilterButton
-              active={g === "quarter"}
-              onClick={() => applyQuery("quarter")}
-            >
-              Quarter
-            </FilterButton>
-            <FilterButton
-              active={g === "year"}
-              onClick={() => applyQuery("year")}
-            >
-              Year
-            </FilterButton>
-
-            {/* Other / Custom range */}
             <div className="relative">
-              <FilterButton
-                active={customOpen}
-                onClick={() => setCustomOpen((s) => !s)}
+              <button
+                onClick={() => setFiltersOpen((s) => !s)}
+                className="px-3 py-1.5 rounded-md text-sm   bg-black/5 text-black hover:bg-black/20 flex items-center gap-2"
               >
-                Other…
-              </FilterButton>
-              {customOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-10">
-                  <div className="grid grid-cols-1 gap-2">
-                    <label className="text-xs text-gray-600">
-                      From
-                      <input
-                        type="date"
-                        className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
-                        value={customFrom}
-                        onChange={(e) => setCustomFrom(e.target.value)}
-                      />
-                    </label>
-                    <label className="text-xs text-gray-600">
-                      To
-                      <input
-                        type="date"
-                        className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
-                        value={customTo}
-                        onChange={(e) => setCustomTo(e.target.value)}
-                      />
-                    </label>
-                    <div className="flex justify-end gap-2 pt-1">
+                <span>
+                  Granularity:{" "}
+                  <span className="capitalize font-medium">{g}</span>
+                </span>
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              {filtersOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-10">
+                  <ul className="py-1">
+                    <li>
                       <button
-                        onClick={() => setCustomOpen(false)}
-                        className="px-3 py-1.5 rounded-md text-sm border border-gray-200"
+                        onClick={() => {
+                          applyQuery("day");
+                          setCustomOpen(false);
+                          setFiltersOpen(false);
+                        }}
+                        className={[
+                          "w-full text-left px-3 py-2 text-sm rounded-md",
+                          g === "day"
+                            ? "bg-[#E5ECF6] text-gray-900"
+                            : "hover:bg-gray-50",
+                        ].join(" ")}
                       >
-                        Cancel
+                        Day
                       </button>
+                    </li>
+                    <li>
                       <button
-                        onClick={onCustomApply}
-                        className="px-3 py-1.5 rounded-md text-sm bg-black text-white"
+                        onClick={() => {
+                          applyQuery("week");
+                          setCustomOpen(false);
+                          setFiltersOpen(false);
+                        }}
+                        className={[
+                          "w-full text-left px-3 py-2 text-sm rounded-md",
+                          g === "week"
+                            ? "bg-[#E5ECF6] text-gray-900"
+                            : "hover:bg-gray-50",
+                        ].join(" ")}
                       >
-                        Apply
+                        Week
                       </button>
-                    </div>
-                  </div>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          applyQuery("month");
+                          setCustomOpen(false);
+                          setFiltersOpen(false);
+                        }}
+                        className={[
+                          "w-full text-left px-3 py-2 text-sm rounded-md",
+                          g === "month"
+                            ? "bg-[#E5ECF6] text-gray-900"
+                            : "hover:bg-gray-50",
+                        ].join(" ")}
+                      >
+                        Month
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          applyQuery("quarter");
+                          setCustomOpen(false);
+                          setFiltersOpen(false);
+                        }}
+                        className={[
+                          "w-full text-left px-3 py-2 text-sm rounded-md",
+                          g === "quarter"
+                            ? "bg-[#E5ECF6] text-gray-900"
+                            : "hover:bg-gray-50",
+                        ].join(" ")}
+                      >
+                        Quarter
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          applyQuery("year");
+                          setCustomOpen(false);
+                          setFiltersOpen(false);
+                        }}
+                        className={[
+                          "w-full text-left px-3 py-2 text-sm rounded-md",
+                          g === "year"
+                            ? "bg-[#E5ECF6] text-gray-900"
+                            : "hover:bg-gray-50",
+                        ].join(" ")}
+                      >
+                        Year
+                      </button>
+                    </li>
+                    <li className="my-1 border-t border-gray-100" />
+                    <li>
+                      <button
+                        onClick={() => setCustomOpen((s) => !s)}
+                        className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-50"
+                      >
+                        Custom range…
+                      </button>
+                      {customOpen && (
+                        <div className="px-3 pb-2">
+                          <div className="grid grid-cols-1 gap-2">
+                            <label className="text-xs text-gray-600">
+                              From
+                              <input
+                                type="date"
+                                className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                                value={customFrom}
+                                onChange={(e) => setCustomFrom(e.target.value)}
+                              />
+                            </label>
+                            <label className="text-xs text-gray-600">
+                              To
+                              <input
+                                type="date"
+                                className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                                value={customTo}
+                                onChange={(e) => setCustomTo(e.target.value)}
+                              />
+                            </label>
+                            <div className="flex justify-end gap-2 pt-1">
+                              <button
+                                onClick={() => setCustomOpen(false)}
+                                className="px-3 py-1.5 rounded-md text-sm border border-gray-200"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => {
+                                  onCustomApply();
+                                  setFiltersOpen(false);
+                                }}
+                                className="px-3 py-1.5 rounded-md text-sm bg-black text-white"
+                              >
+                                Apply
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </li>
+                  </ul>
                 </div>
               )}
             </div>
 
-            <Badge variant="secondary" className="text-xs capitalize">
+            {/* <Badge variant="secondary" className="text-xs capitalize">
               {g}
-            </Badge>
+            </Badge> */}
           </div>
         </div>
       </CardHeader>

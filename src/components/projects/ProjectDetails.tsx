@@ -536,7 +536,7 @@ export function ProjectDetails() {
           <DialogTrigger asChild>
             <Button
               variant="outline"
-              className="ml-auto bg-[#2E343E] border-0 text-white"
+              className="ml-auto bg-[#0073e6] border-0 text-white"
             >
               <FileEdit className="h-4 w-4 mr-2" />
               Edit Project
@@ -616,7 +616,7 @@ export function ProjectDetails() {
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="planning">Planning</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -677,14 +677,24 @@ export function ProjectDetails() {
                 <Badge variant="outline">{enhancedProject.category}</Badge>
                 <Badge variant="outline">{enhancedProject.type}</Badge>
                 <Badge
-                  style={{ backgroundColor: "#2E343E" }}
-                  variant={
+                  variant="default"
+                  className="border-0"
+                  style={
                     enhancedProject.status === "active"
-                      ? "default"
-                      : "secondary"
+                      ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
+                      : enhancedProject.status === "pending"
+                      ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
+                      : {
+                          backgroundColor: "rgba(28,28,28,0.05)",
+                          color: "rgba(28,28,28,0.4)",
+                        }
                   }
                 >
-                  {enhancedProject.status === "active" ? "Active" : "Inactive"}
+                  {enhancedProject.status === "active"
+                    ? "Active"
+                    : enhancedProject.status === "pending"
+                    ? "Pending"
+                    : "Inactive"}
                 </Badge>
               </div>
               {/* TODO:   */}

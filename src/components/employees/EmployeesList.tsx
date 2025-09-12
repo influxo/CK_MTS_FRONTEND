@@ -881,7 +881,7 @@ export function EmployeesList({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 w-8 p-0"
+                                  className="h-8 w-8 p-0 hover:bg-black/10"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>

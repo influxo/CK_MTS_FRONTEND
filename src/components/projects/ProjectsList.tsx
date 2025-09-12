@@ -462,7 +462,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="planning">Planning</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -515,13 +515,21 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                       <div className="flex gap-2">
                         <Badge variant="outline">{project.category}</Badge>
                         <Badge
-                          variant={
+                          variant="default"
+                          className="border-0"
+                          style={
                             project.status === "active"
-                              ? "default"
-                              : "secondary"
+                              ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
+                              : project.status === "pending"
+                              ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
+                              : { backgroundColor: "rgba(28,28,28,0.05)", color: "rgba(28,28,28,0.4)" }
                           }
                         >
-                          {project.status === "active" ? "Active" : "Inactive"}
+                          {project.status === "active"
+                            ? "Active"
+                            : project.status === "pending"
+                            ? "Pending"
+                            : "Inactive"}
                         </Badge>
                       </div>
                     </div>
@@ -621,11 +629,21 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                     </td>
                     <td className="p-3">
                       <Badge
-                        variant={
-                          project.status === "active" ? "default" : "secondary"
+                        variant="default"
+                        className="border-0"
+                        style={
+                          project.status === "active"
+                            ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
+                            : project.status === "pending"
+                            ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
+                            : { backgroundColor: "rgba(28,28,28,0.05)", color: "rgba(28,28,28,0.4)" }
                         }
                       >
-                        {project.status === "active" ? "Active" : "Inactive"}
+                        {project.status === "active"
+                          ? "Active"
+                          : project.status === "pending"
+                          ? "Pending"
+                          : "Inactive"}
                       </Badge>
                     </td>
                     <td className="p-3">

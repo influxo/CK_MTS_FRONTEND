@@ -7,10 +7,11 @@ import { KpiHighlights } from "../components/dashboard/KpiHighlights";
 import { RecentActivity } from "../components/dashboard/RecentActivity";
 import { ServiceDelivery } from "../components/dashboard/ServiceDelivery";
 import { SummaryMetrics } from "../components/dashboard/SummaryMetrics";
-import { SyncStatus } from "../components/dashboard/SyncStatus";
-import { SystemAlerts } from "../components/dashboard/SystemAlerts";
+
 import type { AppDispatch } from "../store";
+
 import { selectCurrentUser } from "../store/slices/authSlice";
+
 import {
   fetchDeliveriesSeries,
   fetchDeliveriesSummary,
@@ -70,8 +71,8 @@ export function Dashboard() {
           </div>
         </div>
         <div className=" space-y-6">
-          <SyncStatus />
-          <SystemAlerts />
+          {/* <SyncStatus />
+          <SystemAlerts /> */}
           <RecentActivity />
         </div>
       </div>

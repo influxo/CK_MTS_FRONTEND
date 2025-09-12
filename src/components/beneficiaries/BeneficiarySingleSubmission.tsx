@@ -49,6 +49,12 @@ export default function BeneficiarySingleSubmission() {
     return Object.entries(response.data);
   }, [response]);
 
+  const formatLabel = (label: string) => {
+    if (!label) return label;
+    const withSpaces = label.replace(/[_\-]+/g, " ");
+    return withSpaces.replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -63,7 +69,7 @@ export default function BeneficiarySingleSubmission() {
         <h2>Form Submission</h2>
       </div>
 
-      <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
+      <Card className="bg-white drop-shadow-sm shadow-gray-50 border-0">
         <CardContent className="p-6">
           {loading && (
             <div className="text-sm text-muted-foreground">
@@ -115,7 +121,7 @@ export default function BeneficiarySingleSubmission() {
                 </div>
               </div>
 
-              <Card className="bg-white border">
+              <Card className="bg-[#F7F9FB] border-0 ">
                 <CardHeader>
                   <CardTitle className="text-base">Submitted Data</CardTitle>
                 </CardHeader>
@@ -125,16 +131,20 @@ export default function BeneficiarySingleSubmission() {
                       No data fields.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                       {fieldEntries.map(([key, value]) => (
                         <div
                           key={key}
-                          className="p-3 rounded-md border bg-[#F7F9FB]"
+                          className="group relative rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
                         >
-                          <div className="text-xs text-muted-foreground">
-                            {key}
+                          <span
+                            className="pointer-events-none absolute left-0 top-0 h-full w-1 rounded-l-lg bg-[#E5ECF6]"
+                            aria-hidden="true"
+                          ></span>
+                          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                            {formatLabel(key)}
                           </div>
-                          <div className="text-sm break-words">
+                          <div className="mt-1 text-sm font-medium text-slate-900 break-words">
                             {typeof value === "object"
                               ? JSON.stringify(value)
                               : String(value)}
@@ -146,13 +156,13 @@ export default function BeneficiarySingleSubmission() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white border">
-                <CardHeader>
-                  <CardTitle className="text-base">
+              <Card className=" border-0  bg-[#E5ECF6]">
+                <CardHeader className="border-0  ">
+                  <CardTitle className="text-base ">
                     Linked Service Deliveries
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className=" bg-white">
                   {response.serviceDeliveries?.length ? (
                     <Table>
                       <TableHeader>

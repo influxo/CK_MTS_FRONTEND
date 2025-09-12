@@ -518,7 +518,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="planning">Planning</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -589,15 +589,20 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                 <Badge variant="outline">{enhancedSubProject.category}</Badge>
                 <Badge variant="outline">{enhancedSubProject.type}</Badge>
                 <Badge
-                  style={{ backgroundColor: "#2E343E", color: "white" }}
-                  variant={
+                  variant="default"
+                  className="border-0"
+                  style={
                     enhancedSubProject.status === "active"
-                      ? "default"
-                      : "secondary"
+                      ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
+                      : enhancedSubProject.status === "pending"
+                      ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
+                      : { backgroundColor: "rgba(28,28,28,0.05)", color: "rgba(28,28,28,0.4)" }
                   }
                 >
                   {enhancedSubProject.status === "active"
                     ? "Active"
+                    : enhancedSubProject.status === "pending"
+                    ? "Pending"
                     : "Inactive"}
                 </Badge>
               </div>

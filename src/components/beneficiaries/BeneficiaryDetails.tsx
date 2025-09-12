@@ -1195,7 +1195,9 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                               disabled={!s.formResponseId}
                               onClick={() =>
                                 s.formResponseId &&
-                                navigate(`/beneficiaries/${id}/form/${s.formResponseId}`)
+                                navigate(
+                                  `/beneficiaries/${id}/form/${s.formResponseId}`
+                                )
                               }
                               title={
                                 s.formResponseId
@@ -1248,7 +1250,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 </TableBody>
               </Table>
               {/* Simple pagination (prev/next) using meta */}
-              <div className="flex items-center justify-between mt-4 text-sm">
+              {/* <div className="flex items-center justify-between mt-4 text-sm">
                 <div className="text-muted-foreground">
                   Page {servicesMeta.page} of {servicesMeta.totalPages} •{" "}
                   {servicesMeta.totalItems} total
@@ -1292,9 +1294,56 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                     Next
                   </Button>
                 </div>
-              </div>
+              </div> */}
             </CardContent>
           </Card>
+          <div className="flex items-center justify-between mt-4 text-sm">
+            <div className="text-muted-foreground">
+              Page {servicesMeta.page} of {servicesMeta.totalPages} •{" "}
+              {servicesMeta.totalItems} total
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="bg-BLACK/10 border-0 text-black"
+                size="sm"
+                disabled={servicesLoading || servicesMeta.page <= 1}
+                onClick={() =>
+                  id &&
+                  dispatch(
+                    fetchBeneficiaryServices({
+                      id,
+                      page: servicesMeta.page - 1,
+                      limit: servicesMeta.limit,
+                    })
+                  )
+                }
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                className="bg-black/10 text-black"
+                size="sm"
+                disabled={
+                  servicesLoading ||
+                  servicesMeta.page >= servicesMeta.totalPages
+                }
+                onClick={() =>
+                  id &&
+                  dispatch(
+                    fetchBeneficiaryServices({
+                      id,
+                      page: servicesMeta.page + 1,
+                      limit: servicesMeta.limit,
+                    })
+                  )
+                }
+              >
+                Next
+              </Button>
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="info" className="pt-6">
