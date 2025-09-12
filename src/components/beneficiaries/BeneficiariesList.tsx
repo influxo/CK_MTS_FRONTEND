@@ -894,11 +894,12 @@ export function BeneficiariesList({
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button
+                      className="hover:bg-black/10 border-0"
                       // variant="outline"
                       // size="sm"
                       onClick={() => onBeneficiarySelect(beneficiary.id)}
                     >
-                      <Eye className="h-4 w-4 mr-2" />
+                      <Eye className="h-4 w-4 mr-2 " />
                       View
                     </Button>
                     <DropdownMenu>
@@ -906,7 +907,7 @@ export function BeneficiariesList({
                         <Button
                           // variant="ghost"
                           // size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-8 w-8 p-0 hover:bg-black/10 border-0"
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
@@ -949,10 +950,10 @@ export function BeneficiariesList({
       )}
 
       <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
+        {/* <div className="text-sm text-muted-foreground">
           Showing {filteredBeneficiaries.length} of {beneficiaries.length}{" "}
           beneficiaries
-        </div>
+        </div> */}
         <div className="space-x-2">
           <Button
             variant="outline"

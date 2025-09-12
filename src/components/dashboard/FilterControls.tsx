@@ -12,7 +12,7 @@ export function FilterControls() {
   return (
     <div className="flex flex-col  bg-[#F7F9FB]   drop-shadow-sm shadow-gray-50 sm:flex-row gap-4 mb-6 p-4 bg-card rounded-lg ">
       <div className="flex flex-wrap gap-4 flex-1">
-        <Select defaultValue="all-project ">
+        <Select defaultValue="all-projects">
           <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
             <SelectValue placeholder="Select Project" />
           </SelectTrigger>
@@ -40,7 +40,7 @@ export function FilterControls() {
           </SelectContent>
         </Select>
 
-        <Select defaultValue="all-regions">
+        {/* <Select defaultValue="all-regions">
           <SelectTrigger className="w-[150px] bg-black/5 text-black border-0">
             <SelectValue placeholder="Region" />
           </SelectTrigger>
@@ -51,7 +51,7 @@ export function FilterControls() {
             <SelectItem value="east">East</SelectItem>
             <SelectItem value="west">West</SelectItem>
           </SelectContent>
-        </Select>
+        </Select> */}
       </div>
 
       <div className="flex gap-4">

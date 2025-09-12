@@ -1,5 +1,10 @@
 import * as React from "react";
-import { MoreHorizontal, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  MoreHorizontal,
+  TrendingDown,
+  TrendingUp,
+  ChevronDown,
+} from "lucide-react";
 
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
@@ -9,7 +14,14 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/data-display/card";
-import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+// Removed Tabs in favor of a dropdown granularity selector
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/form/select";
 import {
   LineChart,
   Line,
@@ -82,6 +94,12 @@ export function FormSubmissions() {
   const series = useSelector(selectSeries);
   const { loading, items, granularity } = series;
 
+  // UI state for dropdown + custom range
+  const [filtersOpen, setFiltersOpen] = React.useState(false);
+  const [customOpen, setCustomOpen] = React.useState(false);
+  const [customFrom, setCustomFrom] = React.useState<string>("");
+  const [customTo, setCustomTo] = React.useState<string>("");
+
   const dayFmt = new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
@@ -119,11 +137,11 @@ export function FormSubmissions() {
     submissions: it.count,
   }));
 
-  const applyQuery = (g: Granularity) => {
-    const { from, to } = defaultWindowFor(g);
+  const applyQuery = (g: Granularity, from?: Date, to?: Date) => {
+    const window = from && to ? { from, to } : defaultWindowFor(g);
     // normalize bounds
-    let start = new Date(from);
-    let end = new Date(to);
+    let start = new Date(window.from);
+    let end = new Date(window.to);
     switch (g) {
       case "day":
         start.setHours(0, 0, 0, 0);
@@ -155,6 +173,19 @@ export function FormSubmissions() {
         endDate: end.toISOString(),
       })
     );
+  };
+
+  const onCustomApply = () => {
+    if (!customFrom || !customTo) return;
+    const from = new Date(customFrom);
+    const to = new Date(customTo);
+    applyQuery(
+      ((granularity as Granularity) || "week") as Granularity,
+      from,
+      to
+    );
+    setFiltersOpen(false);
+    setCustomOpen(false);
   };
 
   React.useEffect(() => {
@@ -199,40 +230,165 @@ export function FormSubmissions() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Form Submissions Overview</CardTitle>
-          <Tabs
-            defaultValue="weekly"
-            onValueChange={(val) =>
-              applyQuery(
-                (val === "daily"
-                  ? "day"
-                  : val === "weekly"
-                  ? "week"
-                  : "month") as Granularity
-              )
-            }
-          >
-            <TabsList className="grid w-full grid-cols-3 bg-black/5">
-              <TabsTrigger
-                value="daily"
-                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
-              >
-                Daily
-              </TabsTrigger>
-              <TabsTrigger
-                value="weekly"
-                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
-              >
-                Weekly
-              </TabsTrigger>
-              <TabsTrigger
-                value="monthly"
-                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
-              >
-                Monthly
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {/* Granularity dropdown */}
+          <div className=" flex flex-wrap items-center  gap-3">
+            <Select>
+              <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
+                <SelectValue placeholder="Project" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Projects</SelectItem>
+                <SelectItem value="project-a">Project A</SelectItem>
+                <SelectItem value="project-b">Project B</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select>
+              <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
+                <SelectValue placeholder="Subproject" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subprojects</SelectItem>
+                <SelectItem value="sp-1">Subproject 1</SelectItem>
+                <SelectItem value="sp-2">Subproject 2</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select>
+              <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
+                <SelectValue placeholder="Beneficiary" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Beneficiaries</SelectItem>
+                <SelectItem value="b-1">Beneficiary 1</SelectItem>
+                <SelectItem value="b-2">Beneficiary 2</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setFiltersOpen((s) => !s)}
+              className="px-3 py-1.5 rounded-md text-sm bg-black/5 text-black hover:bg-black/20 flex items-center gap-2"
+            >
+              <span>
+                Granularity:{" "}
+                <span className="capitalize font-medium">
+                  {(granularity as Granularity) || "week"}
+                </span>
+              </span>
+              <ChevronDown className="h-4 w-4" />
+            </button>
+            {filtersOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-10">
+                <ul className="py-1">
+                  {(
+                    ["day", "week", "month", "quarter", "year"] as Granularity[]
+                  ).map((g) => (
+                    <li key={g}>
+                      <button
+                        onClick={() => {
+                          applyQuery(g);
+                          setCustomOpen(false);
+                          setFiltersOpen(false);
+                        }}
+                        className={[
+                          "w-full text-left px-3 py-2 text-sm rounded-md capitalize",
+                          granularity === g
+                            ? "bg-[#E5ECF6] text-gray-900"
+                            : "hover:bg-gray-50",
+                        ].join(" ")}
+                      >
+                        {g}
+                      </button>
+                    </li>
+                  ))}
+                  <li className="my-1 border-t border-gray-100" />
+                  <li>
+                    <button
+                      onClick={() => setCustomOpen((s) => !s)}
+                      className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-50"
+                    >
+                      Custom range…
+                    </button>
+                    {customOpen && (
+                      <div className="px-3 pb-2">
+                        <div className="grid grid-cols-1 gap-2">
+                          <label className="text-xs text-gray-600">
+                            From
+                            <input
+                              type="date"
+                              className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                              value={customFrom}
+                              onChange={(e) => setCustomFrom(e.target.value)}
+                            />
+                          </label>
+                          <label className="text-xs text-gray-600">
+                            To
+                            <input
+                              type="date"
+                              className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                              value={customTo}
+                              onChange={(e) => setCustomTo(e.target.value)}
+                            />
+                          </label>
+                          <div className="flex justify-end gap-2 pt-1">
+                            <button
+                              onClick={() => setCustomOpen(false)}
+                              className="px-3 py-1.5 rounded-md text-sm border border-gray-200"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={onCustomApply}
+                              className="px-3 py-1.5 rounded-md text-sm bg-black text-white"
+                            >
+                              Apply
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
+        {/* Lightweight UI-only filters */}
+        {/* <div className="mt-3 flex flex-wrap items-center gap-3">
+          <Select>
+            <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
+              <SelectValue placeholder="Project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
+              <SelectItem value="project-a">Project A</SelectItem>
+              <SelectItem value="project-b">Project B</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select>
+            <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
+              <SelectValue placeholder="Subproject" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Subprojects</SelectItem>
+              <SelectItem value="sp-1">Subproject 1</SelectItem>
+              <SelectItem value="sp-2">Subproject 2</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select>
+            <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
+              <SelectValue placeholder="Beneficiary" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Beneficiaries</SelectItem>
+              <SelectItem value="b-1">Beneficiary 1</SelectItem>
+              <SelectItem value="b-2">Beneficiary 2</SelectItem>
+            </SelectContent>
+          </Select>
+        </div> */}
         <div className="h-64 mt-4">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
