@@ -69,7 +69,10 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 import type { FormTemplate } from "../../services/forms/formModels";
-import { deleteForm, updateFormToInactive } from "../../store/slices/formsSlice";
+import {
+  deleteForm,
+  updateFormToInactive,
+} from "../../store/slices/formsSlice";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -125,7 +128,7 @@ export function FormsList({
   // Handle form creation
   const handleCreateForm = () => {
     setIsCreateFormOpen(false);
-    
+
     onCreateForm();
   };
 
@@ -147,7 +150,7 @@ export function FormsList({
 
     setIsDeleting(true);
     try {
-      await dispatch(updateFormToInactive ({ formId: formToDelete })).unwrap();
+      await dispatch(updateFormToInactive({ formId: formToDelete })).unwrap();
 
       onFormDeleted();
 
@@ -315,7 +318,10 @@ export function FormsList({
 
               <div className="grid gap-4 py-4">
                 {currentForm && (
-                  <FormPreview formData={currentForm} setPreviewMode={setIsPreviewMode} />
+                  <FormPreview
+                    formData={currentForm}
+                    setPreviewMode={setIsPreviewMode}
+                  />
                 )}
               </div>
             </DialogContent>
@@ -369,7 +375,7 @@ export function FormsList({
             <FileDown className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Tabs
+          {/* <Tabs
             value={viewType}
             onValueChange={setViewType}
             className="w-[180px]"
@@ -380,7 +386,7 @@ export function FormsList({
               </TabsTrigger>
               <TabsTrigger value="list">List View</TabsTrigger>
             </TabsList>
-          </Tabs>
+          </Tabs> */}
         </div>
       </div>
 
@@ -447,7 +453,7 @@ export function FormsList({
         </Card>
       )}
 
-      {viewType === "grid" ? (
+      {viewType === "list" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {formTemplates.map((formTes) => (
             // <div>{formTes.name}</div>
@@ -476,7 +482,9 @@ export function FormsList({
                         <Edit className="h-4 w-4 mr-2" />
                         Edit Form
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handlePreviewClick(formTes)}>
+                      <DropdownMenuItem
+                        onClick={() => handlePreviewClick(formTes)}
+                      >
                         <Eye className="h-4 w-4 mr-2" />
                         Preview
                       </DropdownMenuItem>
@@ -600,28 +608,26 @@ export function FormsList({
             <p className="text-sm text-muted-foreground text-center mb-3">
               Design a custom data collection form for your projects
             </p>
-            <Button onClick={() => handleCreateForm()}>
-              Create Form
-            </Button>
+            <Button onClick={() => handleCreateForm()}>Create Form</Button>
           </Card>
         </div>
       ) : (
         <div className="rounded-md border overflow-hidden">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
                 <TableHead className="w-[250px]">Form Name</TableHead>
-                <TableHead>Category</TableHead>
+                {/* <TableHead>Category</TableHead> */}
                 <TableHead>Status</TableHead>
                 <TableHead>Version</TableHead>
                 <TableHead>Fields</TableHead>
-                <TableHead>Submissions</TableHead>
+                {/* <TableHead>Submissions</TableHead> */}
                 <TableHead>Project</TableHead>
                 <TableHead>Last Updated</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="bg-[#F7F9FB]">
               {formTemplates.map((template) => (
                 <TableRow key={template.id}>
                   <TableCell>
@@ -632,11 +638,11 @@ export function FormsList({
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     <Badge variant="outline" className="capitalize">
                       {template.category}
                     </Badge>
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell>
                     <Badge
                       variant={
@@ -658,10 +664,10 @@ export function FormsList({
                       {template.entityAssociations.map(
                         (entityAssociation, index) => (
                           <div key={index} className="text-sm truncate">
-                            {entityAssociation.entityId}
+                            {/* {entityAssociation.entityId} */}
                             {entityAssociation.entityType && (
                               <span className="text-xs text-muted-foreground block">
-                                {entityAssociation.entityType}
+                                {entityAssociation.entityName}
                               </span>
                             )}
                           </div>
@@ -674,7 +680,6 @@ export function FormsList({
                       {template.updatedAt &&
                         new Date(template.updatedAt).toLocaleDateString()}
                     </div>
-                    <div className="text-xs text-muted-foreground">by WHO</div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -697,33 +702,12 @@ export function FormsList({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handlePreviewClick(template)}
+                          >
                             <Eye className="h-4 w-4 mr-2" />
                             Preview
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Copy className="h-4 w-4 mr-2" />
-                            Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <FileJson className="h-4 w-4 mr-2" />
-                            Export JSON
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Link className="h-4 w-4 mr-2" />
-                            Assign to Project
-                          </DropdownMenuItem>
-                          {template.status !== "archived" ? (
-                            <DropdownMenuItem>
-                              <AlertCircle className="h-4 w-4 mr-2" />
-                              Archive
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem>
-                              <Check className="h-4 w-4 mr-2" />
-                              Restore
-                            </DropdownMenuItem>
-                          )}
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => handleDeleteClick(template.id)}
@@ -739,6 +723,22 @@ export function FormsList({
               ))}
             </TableBody>
           </Table>
+          <Dialog open={isPreviewMode} onOpenChange={setIsPreviewMode}>
+            <DialogContent className="min-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Form Preview</DialogTitle>
+              </DialogHeader>
+
+              <div className="grid gap-4 py-4">
+                {currentForm && (
+                  <FormPreview
+                    formData={currentForm}
+                    setPreviewMode={setIsPreviewMode}
+                  />
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
 
