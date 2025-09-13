@@ -126,6 +126,9 @@ export interface FormSubmissionRequest {
    */
   entityId: string;
 
+  // beneficiary id
+  beneficiaryId?: string;
+
   /**
    * The entity type this form is associated with
    * Example: "project" | "subproject" | "activity"
@@ -154,6 +157,7 @@ export interface FormSubmissionData {
   entityId: string;
   entityType: string;
   submittedBy: string;
+  beneficiaryId?: string;
   data: Record<string, any>;
   latitude: string; // API returns these as strings
   longitude: string;

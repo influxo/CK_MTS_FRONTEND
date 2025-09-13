@@ -11,6 +11,12 @@ import type {
   FormResponseData,
 } from "../../services/forms/formModels";
 import formService from "../../services/forms/formServices";
+import beneficiaryService from "../../services/beneficiaries/beneficiaryService";
+import type {
+  GetBeneficiariesByEntityRequest,
+  GetBeneficiariesByEntityResponse,
+  BeneficiaryListItem,
+} from "../../services/beneficiaries/beneficiaryModels";
 
 interface FormTemplatesState {
   templates: FormTemplate[];
@@ -29,6 +35,14 @@ interface FormTemplatesState {
   selectedResponse: FormResponseData | null;
   selectedResponseLoading: boolean;
   selectedResponseError: string | null;
+  // beneficiaries by entity (for data-entry context)
+  byEntityBeneficiaries: BeneficiaryListItem[];
+  byEntityBeneficiariesLoading: boolean;
+  byEntityBeneficiariesError: string | null;
+  byEntityPage: number;
+  byEntityLimit: number;
+  byEntityTotalItems: number;
+  byEntityTotalPages: number;
 }
 
 const initialState: FormTemplatesState = {
@@ -45,6 +59,13 @@ const initialState: FormTemplatesState = {
   selectedResponse: null,
   selectedResponseLoading: false,
   selectedResponseError: null,
+  byEntityBeneficiaries: [],
+  byEntityBeneficiariesLoading: false,
+  byEntityBeneficiariesError: null,
+  byEntityPage: 1,
+  byEntityLimit: 20,
+  byEntityTotalItems: 0,
+  byEntityTotalPages: 0,
 };
 
 export const fetchFormTemplates = createAsyncThunk<
@@ -101,6 +122,24 @@ export const fetchFormResponseById = createAsyncThunk<
   }
   return response;
 });
+
+// Fetch beneficiaries by entity (for use within form submission flows)
+export const fetchBeneficiariesByEntityForForm = createAsyncThunk<
+  GetBeneficiariesByEntityResponse,
+  GetBeneficiariesByEntityRequest,
+  { rejectValue: string }
+>(
+  "form/fetchBeneficiariesByEntity",
+  async (params, { rejectWithValue }) => {
+    const res = await beneficiaryService.getBeneficiariesByEntity(params);
+    if (!res.success) {
+      return rejectWithValue(
+        res.message || "Failed to fetch beneficiaries for this entity"
+      );
+    }
+    return res;
+  }
+);
 
 const formSlice = createSlice({
   name: "form",
@@ -169,6 +208,28 @@ const formSlice = createSlice({
         state.selectedResponseLoading = false;
         state.selectedResponseError =
           action.payload ?? "Failed to fetch form response";
+      })
+      // beneficiaries by entity
+      .addCase(fetchBeneficiariesByEntityForForm.pending, (state) => {
+        state.byEntityBeneficiariesLoading = true;
+        state.byEntityBeneficiariesError = null;
+      })
+      .addCase(
+        fetchBeneficiariesByEntityForForm.fulfilled,
+        (state, action) => {
+          state.byEntityBeneficiariesLoading = false;
+          state.byEntityBeneficiaries = action.payload.items;
+          state.byEntityPage = action.payload.page;
+          state.byEntityLimit = action.payload.limit;
+          state.byEntityTotalItems = action.payload.totalItems;
+          state.byEntityTotalPages = action.payload.totalPages;
+        }
+      )
+      .addCase(fetchBeneficiariesByEntityForForm.rejected, (state, action) => {
+        state.byEntityBeneficiariesLoading = false;
+        state.byEntityBeneficiariesError =
+          action.payload ?? "Failed to fetch beneficiaries for this entity";
+        state.byEntityBeneficiaries = [];
       });
   },
 });
@@ -208,5 +269,19 @@ export const selectSelectedResponseLoading = (state: {
 export const selectSelectedResponseError = (state: {
   form: FormTemplatesState;
 }) => state.form.selectedResponseError;
+
+// Beneficiaries by entity selectors
+export const selectFormBeneficiariesByEntity = (state: { form: FormTemplatesState }) =>
+  state.form.byEntityBeneficiaries;
+export const selectFormBeneficiariesByEntityLoading = (state: { form: FormTemplatesState }) =>
+  state.form.byEntityBeneficiariesLoading;
+export const selectFormBeneficiariesByEntityError = (state: { form: FormTemplatesState }) =>
+  state.form.byEntityBeneficiariesError;
+export const selectFormBeneficiariesByEntityPagination = (state: { form: FormTemplatesState }) => ({
+  page: state.form.byEntityPage,
+  limit: state.form.byEntityLimit,
+  totalItems: state.form.byEntityTotalItems,
+  totalPages: state.form.byEntityTotalPages,
+});
 
 export default formSlice.reducer;

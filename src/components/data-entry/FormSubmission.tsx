@@ -23,6 +23,10 @@ import {
   submitFormResponse,
   selectFormSubmitLoading,
   selectFormSubmitError,
+  fetchBeneficiariesByEntityForForm,
+  selectFormBeneficiariesByEntity,
+  selectFormBeneficiariesByEntityLoading,
+  selectFormBeneficiariesByEntityError,
 } from "../../store/slices/formSlice";
 import type { FormTemplate } from "../../services/forms/formModels";
 import { MapPin } from "lucide-react";
@@ -77,6 +81,13 @@ export function FormSubmission({
   const dispatch = useDispatch<AppDispatch>();
   const submitLoading = useSelector(selectFormSubmitLoading);
   const submitError = useSelector(selectFormSubmitError);
+  const byEntityBeneficiaries = useSelector(selectFormBeneficiariesByEntity);
+  const byEntityBeneficiariesLoading = useSelector(
+    selectFormBeneficiariesByEntityLoading
+  );
+  const byEntityBeneficiariesError = useSelector(
+    selectFormBeneficiariesByEntityError
+  );
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isDraft, setIsDraft] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
@@ -169,6 +180,20 @@ export function FormSubmission({
       setGpsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Load beneficiaries linked to the provided entity context
+    if (entityId && entityType) {
+      dispatch(
+        fetchBeneficiariesByEntityForForm({
+          entityId,
+          entityType,
+          page: 1,
+          limit: 50,
+        })
+      );
+    }
+  }, [dispatch, entityId, entityType]);
 
   useEffect(() => {
     // Calculate progress based on filled required fields
@@ -317,10 +342,15 @@ export function FormSubmission({
             coords = { lat: 0, lng: 0 };
           }
         }
+        const { beneficiaryId: selectedBeneficiaryId, ...restFormData } =
+          formData;
         const payload = {
           entityId,
           entityType,
-          data: formData,
+          ...(selectedBeneficiaryId
+            ? { beneficiaryId: selectedBeneficiaryId }
+            : {}),
+          data: restFormData,
           latitude: coords.lat,
           longitude: coords.lng,
         };
@@ -609,6 +639,49 @@ export function FormSubmission({
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* Beneficiary selector (based on entity context) */}
+          {entityId && entityType && (
+            <div className="space-y-2">
+              <Label htmlFor="beneficiaryId">Beneficiary</Label>
+              <Select
+                value={formData["beneficiaryId"] || ""}
+                onValueChange={(val) => handleFieldChange("beneficiaryId", val)}
+                disabled={byEntityBeneficiariesLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      byEntityBeneficiariesLoading
+                        ? "Loading beneficiaries..."
+                        : "Select a beneficiary"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {byEntityBeneficiaries.map((b) => {
+                    const label = (b as any)?.pii
+                      ? `${(b as any).pii.firstName || ""} ${
+                          (b as any).pii.lastName || ""
+                        }`.trim() ||
+                        b.pseudonym ||
+                        b.id
+                      : b.pseudonym || b.id;
+                    return (
+                      <SelectItem key={b.id} value={b.id}>
+                        {label}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              {byEntityBeneficiariesError && (
+                <p className="text-sm text-destructive">
+                  {byEntityBeneficiariesError}
+                </p>
+              )}
+            </div>
+          )}
+
           {formStructure.fields.map(renderField)}
         </CardContent>
       </Card>
