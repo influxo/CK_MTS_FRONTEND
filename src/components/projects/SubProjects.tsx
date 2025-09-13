@@ -350,7 +350,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
         </Tabs> */}
       </div>
 
-      {viewType === "list" ? (
+      {viewType === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSubProjects.map((subProject: SubProject) => (
             <Card key={subProject.id}>

@@ -1572,8 +1572,14 @@ export function ProjectDetails() {
                       <TableCell>
                         {new Date(r.createdAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right text-muted-foreground text-xs">
-                        —
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/beneficiaries/${r.id}`)}
+                        >
+                          View
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

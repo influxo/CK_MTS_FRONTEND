@@ -56,7 +56,6 @@ import {
   selectSubprojectsLoading,
 } from "../../store/slices/subProjectSlice";
 import { fetchEmployees } from "../../store/slices/employeesSlice";
-import { Progress } from "../ui/feedback/progress";
 import { toast } from "sonner";
 import {
   fetchBeneficiariesByEntity,
@@ -1450,8 +1449,14 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                       <TableCell>
                         {new Date(r.createdAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right text-muted-foreground text-xs">
-                        —
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/beneficiaries/${r.id}`)}
+                        >
+                          View
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
