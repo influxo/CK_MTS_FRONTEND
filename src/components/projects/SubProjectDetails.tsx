@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   Plus,
   Link,
+  X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Badge } from "../ui/data-display/badge";
@@ -247,12 +248,36 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
     nationality: "",
     status: "active",
   });
+  // Chip-based details state (match ProjectDetails.tsx)
+  const [allergies, setAllergies] = useState<string[]>([]);
+  const [disabilities, setDisabilities] = useState<string[]>([]);
+  const [chronicConditions, setChronicConditions] = useState<string[]>([]);
+  const [medications, setMedications] = useState<string[]>([]);
   const [allergiesInput, setAllergiesInput] = useState("");
   const [disabilitiesInput, setDisabilitiesInput] = useState("");
   const [chronicConditionsInput, setChronicConditionsInput] = useState("");
   const [medicationsInput, setMedicationsInput] = useState("");
   const [bloodTypeInput, setBloodTypeInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
+  
+  // Helpers for chip lists (match ProjectDetails.tsx behavior)
+  const addItem = (
+    value: string,
+    list: string[],
+    setter: (next: string[]) => void
+  ) => {
+    const v = (value || "").trim();
+    if (!v) return;
+    if (list.some((i) => i.toLowerCase() === v.toLowerCase())) return;
+    setter([...list, v]);
+  };
+  const removeItemAt = (
+    index: number,
+    list: string[],
+    setter: (next: string[]) => void
+  ) => {
+    setter(list.filter((_, i) => i !== index));
+  };
   // Associate Existing modal state
   const [isAssociateDialogOpen, setIsAssociateDialogOpen] = useState(false);
   const [associateSelectedBeneficiaryId, setAssociateSelectedBeneficiaryId] =
@@ -342,6 +367,10 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
     setMedicationsInput("");
     setBloodTypeInput("");
     setNotesInput("");
+    setAllergies([]);
+    setDisabilities([]);
+    setChronicConditions([]);
+    setMedications([]);
   };
 
   const handleCreateSubmit = async () => {
@@ -349,28 +378,40 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
       return;
     }
     try {
-      const splitCsv = (s: string) =>
-        s
-          .split(",")
-          .map((v) => v.trim())
-          .filter((v) => v.length > 0);
+      // finalize arrays including any residual input as a single item (match ProjectDetails.tsx)
+      const allergiesFinal = [
+        ...allergies,
+        ...(allergiesInput.trim() ? [allergiesInput.trim()] : []),
+      ];
+      const disabilitiesFinal = [
+        ...disabilities,
+        ...(disabilitiesInput.trim() ? [disabilitiesInput.trim()] : []),
+      ];
+      const chronicConditionsFinal = [
+        ...chronicConditions,
+        ...(chronicConditionsInput.trim() ? [chronicConditionsInput.trim()] : []),
+      ];
+      const medicationsFinal = [
+        ...medications,
+        ...(medicationsInput.trim() ? [medicationsInput.trim()] : []),
+      ];
 
       const hasAnyDetails =
-        allergiesInput.trim() ||
-        disabilitiesInput.trim() ||
-        chronicConditionsInput.trim() ||
-        medicationsInput.trim() ||
-        bloodTypeInput.trim() ||
-        notesInput.trim();
+        allergiesFinal.length > 0 ||
+        disabilitiesFinal.length > 0 ||
+        chronicConditionsFinal.length > 0 ||
+        medicationsFinal.length > 0 ||
+        !!bloodTypeInput.trim() ||
+        !!notesInput.trim();
 
       const payload: CreateBeneficiaryRequest = hasAnyDetails
         ? {
             ...form,
             details: {
-              allergies: splitCsv(allergiesInput),
-              disabilities: splitCsv(disabilitiesInput),
-              chronicConditions: splitCsv(chronicConditionsInput),
-              medications: splitCsv(medicationsInput),
+              allergies: allergiesFinal,
+              disabilities: disabilitiesFinal,
+              chronicConditions: chronicConditionsFinal,
+              medications: medicationsFinal,
               bloodType: bloodTypeInput.trim(),
               notes: notesInput.trim() || undefined,
             },
@@ -595,7 +636,10 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                       ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
                       : enhancedSubProject.status === "pending"
                       ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
-                      : { backgroundColor: "rgba(28,28,28,0.05)", color: "rgba(28,28,28,0.4)" }
+                      : {
+                          backgroundColor: "rgba(28,28,28,0.05)",
+                          color: "rgba(28,28,28,0.4)",
+                        }
                   }
                 >
                   {enhancedSubProject.status === "active"
@@ -1198,27 +1242,105 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                           <Label htmlFor="allergies" className="text-right">
                             Allergies
                           </Label>
-                          <Input
-                            id="allergies"
-                            className="col-span-3"
-                            placeholder="e.g. peanuts, penicillin"
-                            value={allergiesInput}
-                            onChange={(e) => setAllergiesInput(e.target.value)}
-                          />
+                          <div className="col-span-3 space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                id="allergies"
+                                placeholder="Type and press Enter"
+                                value={allergiesInput}
+                                onChange={(e) => setAllergiesInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    addItem(allergiesInput, allergies, setAllergies);
+                                    setAllergiesInput("");
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  addItem(allergiesInput, allergies, setAllergies);
+                                  setAllergiesInput("");
+                                }}
+                              >
+                                <Plus className="h-4 w-4 mr-1" /> Add
+                              </Button>
+                            </div>
+                            {allergies.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {allergies.map((a, idx) => (
+                                  <div
+                                    key={`${a}-${idx}`}
+                                    className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                                  >
+                                    <span>{a}</span>
+                                    <button
+                                      type="button"
+                                      className="hover:text-red-600"
+                                      onClick={() => removeItemAt(idx, allergies, setAllergies)}
+                                      aria-label={`Remove ${a}`}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4 mb-2">
                           <Label htmlFor="disabilities" className="text-right">
                             Disabilities
                           </Label>
-                          <Input
-                            id="disabilities"
-                            className="col-span-3"
-                            placeholder="e.g. visual impairment"
-                            value={disabilitiesInput}
-                            onChange={(e) =>
-                              setDisabilitiesInput(e.target.value)
-                            }
-                          />
+                          <div className="col-span-3 space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                id="disabilities"
+                                placeholder="Type and press Enter"
+                                value={disabilitiesInput}
+                                onChange={(e) => setDisabilitiesInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    addItem(disabilitiesInput, disabilities, setDisabilities);
+                                    setDisabilitiesInput("");
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  addItem(disabilitiesInput, disabilities, setDisabilities);
+                                  setDisabilitiesInput("");
+                                }}
+                              >
+                                <Plus className="h-4 w-4 mr-1" /> Add
+                              </Button>
+                            </div>
+                            {disabilities.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {disabilities.map((d, idx) => (
+                                  <div
+                                    key={`${d}-${idx}`}
+                                    className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                                  >
+                                    <span>{d}</span>
+                                    <button
+                                      type="button"
+                                      className="hover:text-red-600"
+                                      onClick={() => removeItemAt(idx, disabilities, setDisabilities)}
+                                      aria-label={`Remove ${d}`}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4 mb-2">
                           <Label
@@ -1227,29 +1349,115 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                           >
                             Chronic Conditions
                           </Label>
-                          <Input
-                            id="chronicConditions"
-                            className="col-span-3"
-                            placeholder="e.g. asthma"
-                            value={chronicConditionsInput}
-                            onChange={(e) =>
-                              setChronicConditionsInput(e.target.value)
-                            }
-                          />
+                          <div className="col-span-3 space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                id="chronicConditions"
+                                placeholder="Type and press Enter"
+                                value={chronicConditionsInput}
+                                onChange={(e) => setChronicConditionsInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    addItem(
+                                      chronicConditionsInput,
+                                      chronicConditions,
+                                      setChronicConditions
+                                    );
+                                    setChronicConditionsInput("");
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  addItem(
+                                    chronicConditionsInput,
+                                    chronicConditions,
+                                    setChronicConditions
+                                  );
+                                  setChronicConditionsInput("");
+                                }}
+                              >
+                                <Plus className="h-4 w-4 mr-1" /> Add
+                              </Button>
+                            </div>
+                            {chronicConditions.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {chronicConditions.map((c, idx) => (
+                                  <div
+                                    key={`${c}-${idx}`}
+                                    className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                                  >
+                                    <span>{c}</span>
+                                    <button
+                                      type="button"
+                                      className="hover:text-red-600"
+                                      onClick={() =>
+                                        removeItemAt(idx, chronicConditions, setChronicConditions)
+                                      }
+                                      aria-label={`Remove ${c}`}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4 mb-2">
                           <Label htmlFor="medications" className="text-right">
                             Medications
                           </Label>
-                          <Input
-                            id="medications"
-                            className="col-span-3"
-                            placeholder="e.g. inhaler"
-                            value={medicationsInput}
-                            onChange={(e) =>
-                              setMedicationsInput(e.target.value)
-                            }
-                          />
+                          <div className="col-span-3 space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                id="medications"
+                                placeholder="Type and press Enter"
+                                value={medicationsInput}
+                                onChange={(e) => setMedicationsInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    addItem(medicationsInput, medications, setMedications);
+                                    setMedicationsInput("");
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  addItem(medicationsInput, medications, setMedications);
+                                  setMedicationsInput("");
+                                }}
+                              >
+                                <Plus className="h-4 w-4 mr-1" /> Add
+                              </Button>
+                            </div>
+                            {medications.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {medications.map((m, idx) => (
+                                  <div
+                                    key={`${m}-${idx}`}
+                                    className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                                  >
+                                    <span>{m}</span>
+                                    <button
+                                      type="button"
+                                      className="hover:text-red-600"
+                                      onClick={() => removeItemAt(idx, medications, setMedications)}
+                                      aria-label={`Remove ${m}`}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4 mb-2">
                           <Label htmlFor="bloodType" className="text-right">
@@ -1276,7 +1484,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                           />
                         </div>
                         <div className="text-[11px] text-muted-foreground mt-2">
-                          Use commas to separate multiple values.
+                          Add each item individually using the field above. Press Enter or click Add.
                         </div>
                       </div>
 
