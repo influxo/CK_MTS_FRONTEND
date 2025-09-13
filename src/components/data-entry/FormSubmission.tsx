@@ -378,7 +378,11 @@ export function FormSubmission({
               placeholder={field.placeholder}
               value={value}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              className={hasError ? "border-destructive" : ""}
+              className={
+                hasError
+                  ? "border-destructive"
+                  : " bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+              }
             />
             {hasError && <p className="text-sm text-destructive">{hasError}</p>}
           </div>
@@ -511,23 +515,23 @@ export function FormSubmission({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center gap-3">
         {/* <Button variant="outline" size="sm" onClick={onBack}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Forms
         </Button> */}
-        <div>
-          <h2>{formStructure.title}</h2>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="mt-2">
+          <h2 className="text-2xl mb-4">{formStructure.title}</h2>
+          {/* <div className="flex items-center bg-[#E5ECF6] rounded-md p-2 w-full gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
-            <span>{formStructure.estimatedTime}</span>
-          </div>
+            <span> Time Captured: {formStructure.estimatedTime}</span>
+          </div> */}
         </div>
       </div>
 
       {/* Location & connectivity status */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      {/* <div className="flex items-center bg-[#E5ECF6] rounded-md p-2  gap-2 text-sm text-muted-foreground">
         <MapPin className="h-4 w-4" />
         {gps ? (
           <span>
@@ -551,7 +555,9 @@ export function FormSubmission({
           </>
         )}
         <span>•</span>
-        <span>{isOnline ? "Online" : "Offline"}</span>
+        <span className="font-semibold text-[#E3F5FF]">
+          {isOnline ? "Online" : "Offline"}
+        </span>
         {queueCount > 0 && (
           <>
             <span>•</span>
@@ -582,28 +588,26 @@ export function FormSubmission({
             )}
           </>
         )}
-      </div>
+      </div> */}
 
       {/* Context Information removed (legacy). */}
 
       {/* Progress Indicator */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Form Completion</span>
-            <span className="text-sm text-muted-foreground">
+
+      {/* Form Fields */}
+
+      <Card className="border-0 bg-white">
+        <CardHeader>
+          <h3>Form Details</h3>
+
+          <div className="flex items-center justify-end ">
+            <span className="text-sm  text-muted-foreground">
               {Math.round(progress)}%
             </span>
           </div>
-          <Progress value={progress} className="h-2" />
-        </CardContent>
-      </Card>
-
-      {/* Form Fields */}
-      <Card>
-        <CardHeader>
-          <h3>Form Details</h3>
+          <Progress value={progress} className="h-2  bg-[#E5ECF6]" />
         </CardHeader>
+
         <CardContent className="space-y-6">
           {formStructure.fields.map(renderField)}
         </CardContent>
@@ -647,7 +651,12 @@ export function FormSubmission({
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 justify-end">
-        <Button variant="outline" onClick={handleSaveDraft} disabled={isDraft}>
+        <Button
+          variant="outline"
+          className="w-full bg-black/10 text-black sm:w-auto"
+          onClick={handleSaveDraft}
+          disabled={isDraft}
+        >
           {isDraft ? (
             <>Saving...</>
           ) : (
@@ -659,6 +668,7 @@ export function FormSubmission({
         </Button>
 
         <Button
+          className="w-full bg-[#2E343E] text-white sm:w-auto"
           onClick={handleSubmit}
           disabled={
             submitLoading ||

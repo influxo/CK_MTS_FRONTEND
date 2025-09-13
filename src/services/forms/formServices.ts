@@ -6,6 +6,7 @@ import type {
   GetFormTemplateByIdResponse,
   FormSubmissionRequest,
   FormSubmissionResponse,
+  GetFormResponseByIdResponse,
 } from "./formModels";
 
 class FormService {
@@ -112,6 +113,42 @@ class FormService {
           latitude: String(payload.latitude ?? ""),
           longitude: String(payload.longitude ?? ""),
           submittedAt: new Date().toISOString(),
+        },
+      };
+    }
+  }
+
+  async getFormResponseById(id: string): Promise<GetFormResponseByIdResponse> {
+    try {
+      const response = await axiosInstance.get<GetFormResponseByIdResponse>(
+        `${this.formsEndpoint}/responses/${id}`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as GetFormResponseByIdResponse;
+      }
+      // Fallback shape to satisfy typing when network error occurs
+      return {
+        success: false,
+        message: error?.message || "Failed to fetch form response.",
+        data: {
+          id,
+          formTemplateId: "",
+          entityId: "",
+          entityType: "",
+          submittedBy: "",
+          beneficiaryId: null,
+          data: {},
+          latitude: null,
+          longitude: null,
+          submittedAt: "",
+          createdAt: "",
+          updatedAt: "",
+          template: { id: "", name: "", version: 0 },
+          submitter: { id: "", firstName: "", lastName: "", email: "" },
+          beneficiary: null,
+          serviceDeliveries: [],
         },
       };
     }

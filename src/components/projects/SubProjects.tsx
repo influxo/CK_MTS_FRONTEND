@@ -96,7 +96,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
   );
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [viewType, setViewType] = useState("grid");
+  const [viewType, setViewType] = useState("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -136,8 +136,8 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
   }, [createSuccessMessage, dispatch]);
 
   const handleViewSubProject = (subProjectId: string) => {
-    console.log(`Navigate to subproject: ${subProjectId}`);
-    // e.g., navigate(`/projects/${projectId}/subprojects/${subProjectId}`);
+    if (!projectId) return;
+    navigate(`/projects/${projectId}/subprojects/${subProjectId}`);
   };
 
   const handleCreateSubmit = async () => {
@@ -175,10 +175,10 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
         <h3>Sub-Projects</h3>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#2B2B2B] text-white">
+            {/* <Button className="bg-[#2E343E] text-white">
               <Plus className="h-4 w-4 mr-2" />
               Create Sub-Project
-            </Button>
+            </Button> */}
           </DialogTrigger>
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
@@ -293,14 +293,15 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search sub-projects..."
-              className="pl-9"
+              className="pl-9 border-0 bg-black/5"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+
           <div className="flex gap-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-[130px] border-0 bg-black/5">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -312,7 +313,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[160px] border-0 bg-black/5">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
@@ -322,7 +323,12 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
             </Select>
           </div>
         </div>
-        <Tabs
+
+        {/* 
+                  KJo o per me ndryshu list ose grid view
+                */}
+
+        {/* <Tabs
           value={viewType}
           onValueChange={setViewType}
           className="w-full sm:w-auto"
@@ -341,7 +347,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
               List View
             </TabsTrigger>
           </TabsList>
-        </Tabs>
+        </Tabs> */}
       </div>
 
       {viewType === "grid" ? (
@@ -450,7 +456,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
       ) : (
         <div className="rounded-md border overflow-hidden">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
                 <TableHead className="w-[250px]">Sub-Project</TableHead>
                 <TableHead>Category</TableHead>
@@ -463,7 +469,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="bg-[#F7F9FB]">
               {filteredSubProjects.map((subProject: SubProject) => (
                 <TableRow key={subProject.id}>
                   <TableCell className="font-medium">
@@ -533,6 +539,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
                     <div className="flex justify-end gap-2">
                       <Button
                         size="sm"
+                        className="hover:bg-black/10 border-0"
                         variant="outline"
                         onClick={() => handleViewSubProject(subProject.id)}
                       >
@@ -543,7 +550,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 hover:bg-black/10"
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>

@@ -10,6 +10,14 @@ import type {
   UpdateBeneficiaryResponse,
   DeleteBeneficiaryResponse,
   GetBeneficiaryPIIByIdResponse,
+  GetBeneficiaryServicesRequest,
+  GetBeneficiaryServicesResponse,
+  GetBeneficiaryEntitiesRequest,
+  GetBeneficiaryEntitiesResponse,
+  GetBeneficiariesByEntityRequest,
+  GetBeneficiariesByEntityResponse,
+  AssociateBeneficiaryToEntitiesRequest,
+  AssociateBeneficiaryToEntitiesResponse,
 } from "./beneficiaryModels";
 
 class BeneficiaryService {
@@ -33,6 +41,61 @@ class BeneficiaryService {
         success: false,
         message: error?.message || "Failed to create beneficiary",
       } as CreateBeneficiaryResponse;
+    }
+  }
+
+  async associateBeneficiaryToEntities(
+    params: AssociateBeneficiaryToEntitiesRequest
+  ): Promise<AssociateBeneficiaryToEntitiesResponse> {
+    const { id, links } = params;
+    try {
+      const response = await axiosInstance.post<AssociateBeneficiaryToEntitiesResponse>(
+        `${this.beneficiaryEndpoint}/${id}/entities`,
+        links
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as AssociateBeneficiaryToEntitiesResponse;
+      }
+      return {
+        success: false,
+        message: error?.message || "Failed to associate beneficiary to entities",
+      } as AssociateBeneficiaryToEntitiesResponse;
+    }
+  }
+
+  async getBeneficiariesByEntity(
+    params: GetBeneficiariesByEntityRequest
+  ): Promise<GetBeneficiariesByEntityResponse> {
+    const { entityId, entityType, status, page, limit } = params;
+    try {
+      const response = await axiosInstance.get<GetBeneficiariesByEntityResponse>(
+        `${this.beneficiaryEndpoint}/by-entity`,
+        {
+          params: {
+            entityId,
+            entityType,
+            status,
+            page,
+            limit,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as GetBeneficiariesByEntityResponse;
+      }
+      return {
+        success: false,
+        items: [],
+        page: page ?? 1,
+        limit: limit ?? 20,
+        totalItems: 0,
+        totalPages: 0,
+        message: error?.message || "Failed to fetch beneficiaries by entity",
+      } as GetBeneficiariesByEntityResponse;
     }
   }
 
@@ -132,6 +195,62 @@ class BeneficiaryService {
         success: false,
         message: error?.message || "Failed to fetch beneficiary PII",
       } as GetBeneficiaryPIIByIdResponse;
+    }
+  }
+
+  async getBeneficiaryServices(
+    params: GetBeneficiaryServicesRequest
+  ): Promise<GetBeneficiaryServicesResponse> {
+    const { id, page, limit, fromDate, toDate } = params;
+    try {
+      const response = await axiosInstance.get<GetBeneficiaryServicesResponse>(
+        `${this.beneficiaryEndpoint}/${id}/services`,
+        {
+          params: {
+            page,
+            limit,
+            fromDate,
+            toDate,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as GetBeneficiaryServicesResponse;
+      }
+      return {
+        success: false,
+        data: [],
+        meta: {
+          page: page ?? 1,
+          limit: limit ?? 20,
+          totalItems: 0,
+          totalPages: 0,
+        },
+        message: error?.message || "Failed to fetch beneficiary services",
+      } as GetBeneficiaryServicesResponse;
+    }
+  }
+
+  async getBeneficiaryEntities(
+    params: GetBeneficiaryEntitiesRequest
+  ): Promise<GetBeneficiaryEntitiesResponse> {
+    const { id } = params;
+    try {
+      const response = await axiosInstance.get<GetBeneficiaryEntitiesResponse>(
+        `${this.beneficiaryEndpoint}/${id}/entities`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as GetBeneficiaryEntitiesResponse;
+      }
+      return {
+        success: false,
+        data: [],
+        message: error?.message || "Failed to fetch beneficiary entities",
+      } as GetBeneficiaryEntitiesResponse;
     }
   }
 }

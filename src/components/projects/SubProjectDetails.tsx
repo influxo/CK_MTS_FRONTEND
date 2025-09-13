@@ -7,6 +7,8 @@ import {
   User,
   Users,
   ArrowLeft,
+  Plus,
+  Link,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Badge } from "../ui/data-display/badge";
@@ -23,6 +25,7 @@ import {
 } from "../ui/overlay/dialog";
 import { Input } from "../ui/form/input";
 import { Label } from "../ui/form/label";
+import { RadioGroup, RadioGroupItem } from "../ui/form/radio-group";
 import {
   Select,
   SelectContent,
@@ -39,10 +42,10 @@ import {
 import { Textarea } from "../ui/form/textarea";
 
 import { SubProjectActivities } from "./SubProjectActivities";
-import { SubProjectBeneficiaries } from "./SubProjectBeneficiaries";
 import { SubProjectForms } from "./SubProjectForms";
 import { SubProjectReports } from "./SubProjectReports";
 import { SubProjectTeam } from "./SubProjectTeam";
+import { SubProjectServices } from "./SubProjectServices";
 import { useParams, useNavigate } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store";
 import { useDispatch, useSelector } from "react-redux";
@@ -53,8 +56,40 @@ import {
   selectSubprojectsLoading,
 } from "../../store/slices/subProjectSlice";
 import { fetchEmployees } from "../../store/slices/employeesSlice";
-import { Progress } from "../ui/feedback/progress";
 import { toast } from "sonner";
+import {
+  fetchBeneficiariesByEntity,
+  selectBeneficiariesByEntity,
+  selectBeneficiariesByEntityError,
+  selectBeneficiariesByEntityLoading,
+  selectBeneficiariesByEntityPagination,
+  // list for association modal
+  fetchBeneficiaries,
+  selectBeneficiaries,
+  selectBeneficiariesLoading,
+  selectBeneficiariesError,
+} from "../../store/slices/beneficiarySlice";
+import {
+  createBeneficiary,
+  associateBeneficiaryToEntities,
+  clearBeneficiaryMessages,
+  selectBeneficiaryIsLoading,
+  selectBeneficiaryError,
+  selectBeneficiaryCreateSuccessMessage,
+  selectBeneficiaryAssociateLoading,
+} from "../../store/slices/beneficiarySlice";
+import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
+import { Checkbox } from "../ui/form/checkbox";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
+
 // We don't need to import the SubProject type directly as it's already used in Redux selectors
 
 // TODO: remove this mockSubProjectEnhancement, it's just for testing since we dont have that data yet
@@ -111,6 +146,118 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
     selectSubprojectsError(state)
   );
 
+  // Beneficiaries by entity (subproject)
+  const subBeneficiaries = useSelector(selectBeneficiariesByEntity);
+  const subBeneficiariesLoading = useSelector(
+    selectBeneficiariesByEntityLoading
+  );
+  const subBeneficiariesError = useSelector(selectBeneficiariesByEntityError);
+  const subBeneficiariesMeta = useSelector(
+    selectBeneficiariesByEntityPagination
+  );
+
+  // Create/associate selectors
+  const createLoading = useSelector(selectBeneficiaryIsLoading);
+  const createError = useSelector(selectBeneficiaryError);
+  const createSuccess = useSelector(selectBeneficiaryCreateSuccessMessage);
+  const associateLoading = useSelector(selectBeneficiaryAssociateLoading);
+
+  // Global beneficiaries list for association modal
+  const listItems = useSelector(selectBeneficiaries);
+  const listLoading = useSelector(selectBeneficiariesLoading);
+  const listError = useSelector(selectBeneficiariesError);
+
+  // Build view model similar to BeneficiariesList
+  const tableRows = subBeneficiaries.map((b) => {
+    const pii: any = b.pii || {};
+    const firstName: string = pii.firstName || "";
+    const lastName: string = pii.lastName || "";
+    const fullName = `${firstName} ${lastName}`.trim() || b.pseudonym || b.id;
+    const initials =
+      `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase() ||
+      b.pseudonym?.slice(0, 2) ||
+      "BN";
+    return {
+      id: b.id,
+      name: fullName,
+      initials,
+      pseudonym: b.pseudonym,
+      status: b.status,
+      createdAt: b.createdAt,
+      gender: pii.gender || "",
+      dob: pii.dob || "",
+      municipality: pii.municipality || "",
+      nationality: pii.nationality || "",
+      phone: pii.phone || "",
+      email: pii.email || "",
+    };
+  });
+
+  const handleAssociateExistingSubmit = async () => {
+    if (!associateSelectedBeneficiaryId || !subprojectId) return;
+    try {
+      await dispatch(
+        associateBeneficiaryToEntities({
+          id: associateSelectedBeneficiaryId,
+          links: [
+            { entityId: subprojectId, entityType: "subproject" as const },
+          ],
+        })
+      ).unwrap();
+      setIsAssociateDialogOpen(false);
+      setAssociateSelectedBeneficiaryId("");
+      // refresh current subproject beneficiaries list
+      dispatch(
+        fetchBeneficiariesByEntity({
+          entityId: subprojectId,
+          entityType: "subproject",
+          page: 1,
+          limit: 20,
+        })
+      );
+    } catch (_) {
+      // errors surfaced via slice
+    }
+  };
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const allSelected =
+    selectedIds.length === tableRows.length && tableRows.length > 0;
+  const toggleSelectAll = () => {
+    setSelectedIds(allSelected ? [] : tableRows.map((r) => r.id));
+  };
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  // Create dialog + form state
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [form, setForm] = useState<CreateBeneficiaryRequest>({
+    firstName: "",
+    lastName: "",
+    dob: "",
+    nationalId: "",
+    phone: "",
+    email: "",
+    address: "",
+    gender: "female",
+    municipality: "",
+    nationality: "",
+    status: "active",
+  });
+  const [allergiesInput, setAllergiesInput] = useState("");
+  const [disabilitiesInput, setDisabilitiesInput] = useState("");
+  const [chronicConditionsInput, setChronicConditionsInput] = useState("");
+  const [medicationsInput, setMedicationsInput] = useState("");
+  const [bloodTypeInput, setBloodTypeInput] = useState("");
+  const [notesInput, setNotesInput] = useState("");
+  // Associate Existing modal state
+  const [isAssociateDialogOpen, setIsAssociateDialogOpen] = useState(false);
+  const [associateSelectedBeneficiaryId, setAssociateSelectedBeneficiaryId] =
+    useState<string>("");
+
   useEffect(() => {
     if (subprojectId) {
       dispatch(getSubProjectById({ id: subprojectId }));
@@ -123,10 +270,47 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
       }
     }
   }, [subprojectId, projectId, dispatch, navigate]);
- 
+
   useEffect(() => {
     dispatch(fetchEmployees());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (activeTab === "beneficiaries" && subprojectId) {
+      dispatch(
+        fetchBeneficiariesByEntity({
+          entityId: subprojectId,
+          entityType: "subproject",
+          page: 1,
+          limit: 20,
+        })
+      );
+    }
+  }, [activeTab, subprojectId, dispatch]);
+
+  // Fetch beneficiaries list when association modal opens
+  useEffect(() => {
+    if (isAssociateDialogOpen) {
+      dispatch(fetchBeneficiaries(undefined));
+    }
+  }, [isAssociateDialogOpen, dispatch]);
+
+  // After successful create (+ association), close dialog, reset form, refresh list
+  useEffect(() => {
+    if (createSuccess && !associateLoading && subprojectId) {
+      setIsAddDialogOpen(false);
+      resetForm();
+      dispatch(
+        fetchBeneficiariesByEntity({
+          entityId: subprojectId,
+          entityType: "subproject",
+          page: 1,
+          limit: 20,
+        })
+      );
+      dispatch(clearBeneficiaryMessages());
+    }
+  }, [createSuccess, associateLoading, subprojectId, dispatch]);
 
   const handleBackToProject = () => {
     if (onBack) {
@@ -135,6 +319,86 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
       navigate(`/projects/${projectId}`);
     } else {
       navigate("/projects");
+    }
+  };
+
+  const resetForm = () => {
+    setForm({
+      firstName: "",
+      lastName: "",
+      dob: "",
+      nationalId: "",
+      phone: "",
+      email: "",
+      address: "",
+      gender: "female",
+      municipality: "",
+      nationality: "",
+      status: "active",
+    });
+    setAllergiesInput("");
+    setDisabilitiesInput("");
+    setChronicConditionsInput("");
+    setMedicationsInput("");
+    setBloodTypeInput("");
+    setNotesInput("");
+  };
+
+  const handleCreateSubmit = async () => {
+    if (!form.firstName || !form.lastName || !form.gender || !form.status) {
+      return;
+    }
+    try {
+      const splitCsv = (s: string) =>
+        s
+          .split(",")
+          .map((v) => v.trim())
+          .filter((v) => v.length > 0);
+
+      const hasAnyDetails =
+        allergiesInput.trim() ||
+        disabilitiesInput.trim() ||
+        chronicConditionsInput.trim() ||
+        medicationsInput.trim() ||
+        bloodTypeInput.trim() ||
+        notesInput.trim();
+
+      const payload: CreateBeneficiaryRequest = hasAnyDetails
+        ? {
+            ...form,
+            details: {
+              allergies: splitCsv(allergiesInput),
+              disabilities: splitCsv(disabilitiesInput),
+              chronicConditions: splitCsv(chronicConditionsInput),
+              medications: splitCsv(medicationsInput),
+              bloodType: bloodTypeInput.trim(),
+              notes: notesInput.trim() || undefined,
+            },
+          }
+        : form;
+
+      const createRes = await dispatch(createBeneficiary(payload)).unwrap();
+      const newId = createRes?.data?.id;
+      if (newId && subprojectId) {
+        try {
+          await dispatch(
+            associateBeneficiaryToEntities({
+              id: newId,
+              links: [
+                {
+                  entityId: subprojectId,
+                  entityType: "subproject",
+                },
+              ],
+            })
+          ).unwrap();
+        } catch (_) {
+          // association errors handled via slice
+        }
+      }
+      // success effect will close/reset/refresh
+    } catch (_) {
+      // errors surfaced via createError
     }
   };
 
@@ -253,7 +517,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="planning">Planning</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -324,15 +588,20 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                 <Badge variant="outline">{enhancedSubProject.category}</Badge>
                 <Badge variant="outline">{enhancedSubProject.type}</Badge>
                 <Badge
-                  style={{ backgroundColor: "#2E343E", color: "white" }}
-                  variant={
+                  variant="default"
+                  className="border-0"
+                  style={
                     enhancedSubProject.status === "active"
-                      ? "default"
-                      : "secondary"
+                      ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
+                      : enhancedSubProject.status === "pending"
+                      ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
+                      : { backgroundColor: "rgba(28,28,28,0.05)", color: "rgba(28,28,28,0.4)" }
                   }
                 >
                   {enhancedSubProject.status === "active"
                     ? "Active"
+                    : enhancedSubProject.status === "pending"
+                    ? "Pending"
                     : "Inactive"}
                 </Badge>
               </div>
@@ -426,6 +695,14 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
               }`}
             >
               Activities
+            </TabsTrigger>
+            <TabsTrigger
+              value="services"
+              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
+                activeTab === "services" ? "border-black" : "border-transparent"
+              }`}
+            >
+              Services
             </TabsTrigger>
             <TabsTrigger
               value="beneficiaries"
@@ -704,8 +981,499 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
           <SubProjectActivities subProjectId={subprojectId || ""} />
         </TabsContent>
 
+        <TabsContent value="services" className="pt-6">
+          <SubProjectServices subProjectId={subprojectId || ""} />
+        </TabsContent>
+
         <TabsContent value="beneficiaries" className="pt-6">
-          <SubProjectBeneficiaries subProjectId={subprojectId || ""} />
+          {subBeneficiariesLoading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              Loading beneficiaries...
+            </div>
+          )}
+          {subBeneficiariesError && !subBeneficiariesLoading && (
+            <div className="text-sm text-red-600">{subBeneficiariesError}</div>
+          )}
+          {!subBeneficiariesLoading && !subBeneficiariesError && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-medium">
+                  Beneficiaries ({subBeneficiariesMeta.totalItems})
+                </h3>
+                <Dialog
+                  open={isAddDialogOpen}
+                  onOpenChange={setIsAddDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button className="bg-[#2E343E] text-white">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Beneficiary
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Add New Beneficiary</DialogTitle>
+                      <DialogDescription>
+                        Enter the details of the beneficiary you want to add to
+                        this sub-project.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="firstName" className="text-right">
+                          First Name *
+                        </Label>
+                        <Input
+                          id="firstName"
+                          className="col-span-3"
+                          placeholder="Enter first name"
+                          value={form.firstName}
+                          onChange={(e) =>
+                            setForm({ ...form, firstName: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="lastName" className="text-right">
+                          Last Name *
+                        </Label>
+                        <Input
+                          id="lastName"
+                          className="col-span-3"
+                          placeholder="Enter last name"
+                          value={form.lastName}
+                          onChange={(e) =>
+                            setForm({ ...form, lastName: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Gender *</Label>
+                        <RadioGroup
+                          className="col-span-3 flex gap-4"
+                          value={form.gender}
+                          onValueChange={(val) =>
+                            setForm({ ...form, gender: val })
+                          }
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="female" id="female" />
+                            <Label htmlFor="female">Female</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="male" id="male" />
+                            <Label htmlFor="male">Male</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="other" id="other" />
+                            <Label htmlFor="other">Other</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="dob" className="text-right">
+                          Date of Birth *
+                        </Label>
+                        <Input
+                          id="dob"
+                          type="date"
+                          className="col-span-3"
+                          value={form.dob}
+                          onChange={(e) =>
+                            setForm({ ...form, dob: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="nationalId" className="text-right">
+                          National ID *
+                        </Label>
+                        <Input
+                          id="nationalId"
+                          className="col-span-3"
+                          placeholder="Enter national ID"
+                          value={form.nationalId}
+                          onChange={(e) =>
+                            setForm({ ...form, nationalId: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="phone" className="text-right">
+                          Phone
+                        </Label>
+                        <Input
+                          id="phone"
+                          className="col-span-3"
+                          placeholder="Enter phone number"
+                          value={form.phone}
+                          onChange={(e) =>
+                            setForm({ ...form, phone: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="email" className="text-right">
+                          Email
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          className="col-span-3"
+                          placeholder="Enter email"
+                          value={form.email}
+                          onChange={(e) =>
+                            setForm({ ...form, email: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="address" className="text-right">
+                          Address
+                        </Label>
+                        <Input
+                          id="address"
+                          className="col-span-3"
+                          placeholder="Enter address"
+                          value={form.address}
+                          onChange={(e) =>
+                            setForm({ ...form, address: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="municipality" className="text-right">
+                          Municipality
+                        </Label>
+                        <Input
+                          id="municipality"
+                          className="col-span-3"
+                          placeholder="Enter municipality"
+                          value={form.municipality}
+                          onChange={(e) =>
+                            setForm({ ...form, municipality: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="nationality" className="text-right">
+                          Nationality
+                        </Label>
+                        <Input
+                          id="nationality"
+                          className="col-span-3"
+                          placeholder="Enter nationality"
+                          value={form.nationality}
+                          onChange={(e) =>
+                            setForm({ ...form, nationality: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="status" className="text-right">
+                          Status *
+                        </Label>
+                        <Select
+                          value={form.status}
+                          onValueChange={(val) =>
+                            setForm({ ...form, status: val })
+                          }
+                        >
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="border-t pt-2 mt-2">
+                        <div className="text-sm font-medium mb-2">
+                          Additional Details
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                          <Label htmlFor="allergies" className="text-right">
+                            Allergies
+                          </Label>
+                          <Input
+                            id="allergies"
+                            className="col-span-3"
+                            placeholder="e.g. peanuts, penicillin"
+                            value={allergiesInput}
+                            onChange={(e) => setAllergiesInput(e.target.value)}
+                          />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                          <Label htmlFor="disabilities" className="text-right">
+                            Disabilities
+                          </Label>
+                          <Input
+                            id="disabilities"
+                            className="col-span-3"
+                            placeholder="e.g. visual impairment"
+                            value={disabilitiesInput}
+                            onChange={(e) =>
+                              setDisabilitiesInput(e.target.value)
+                            }
+                          />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                          <Label
+                            htmlFor="chronicConditions"
+                            className="text-right"
+                          >
+                            Chronic Conditions
+                          </Label>
+                          <Input
+                            id="chronicConditions"
+                            className="col-span-3"
+                            placeholder="e.g. asthma"
+                            value={chronicConditionsInput}
+                            onChange={(e) =>
+                              setChronicConditionsInput(e.target.value)
+                            }
+                          />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                          <Label htmlFor="medications" className="text-right">
+                            Medications
+                          </Label>
+                          <Input
+                            id="medications"
+                            className="col-span-3"
+                            placeholder="e.g. inhaler"
+                            value={medicationsInput}
+                            onChange={(e) =>
+                              setMedicationsInput(e.target.value)
+                            }
+                          />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                          <Label htmlFor="bloodType" className="text-right">
+                            Blood Type
+                          </Label>
+                          <Input
+                            id="bloodType"
+                            className="col-span-3"
+                            placeholder="e.g. O+"
+                            value={bloodTypeInput}
+                            onChange={(e) => setBloodTypeInput(e.target.value)}
+                          />
+                        </div>
+                        <div className="grid grid-cols-4 items-start gap-4">
+                          <Label htmlFor="notes" className="text-right mt-2">
+                            Notes
+                          </Label>
+                          <textarea
+                            id="notes"
+                            className="col-span-3 bg-white border border-input rounded-md p-2 min-h-[70px]"
+                            placeholder="Any special notes..."
+                            value={notesInput}
+                            onChange={(e) => setNotesInput(e.target.value)}
+                          />
+                        </div>
+                        <div className="text-[11px] text-muted-foreground mt-2">
+                          Use commas to separate multiple values.
+                        </div>
+                      </div>
+
+                      {createError && (
+                        <div className="text-sm text-red-600">
+                          {createError}
+                        </div>
+                      )}
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsAddDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleCreateSubmit}
+                        disabled={createLoading}
+                      >
+                        {createLoading ? "Saving..." : "Save"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <Dialog
+                  open={isAssociateDialogOpen}
+                  onOpenChange={setIsAssociateDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="ml-2">
+                      <Link className="h-4 w-4 mr-2" />
+                      Associate Existing
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Associate Existing Beneficiary</DialogTitle>
+                      <DialogDescription>
+                        Select an existing beneficiary to associate with this
+                        sub-project.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label className="text-right">Beneficiary *</Label>
+                        <div className="col-span-3">
+                          {listLoading ? (
+                            <div className="text-sm text-muted-foreground">
+                              Loading beneficiaries...
+                            </div>
+                          ) : listError ? (
+                            <div className="text-sm text-red-600">
+                              {listError}
+                            </div>
+                          ) : (
+                            <Select
+                              value={associateSelectedBeneficiaryId}
+                              onValueChange={setAssociateSelectedBeneficiaryId}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select beneficiary" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-64 overflow-y-auto">
+                                {listItems.map((b) => {
+                                  const pii: any = (b as any).pii || {};
+                                  const fullName =
+                                    `${pii.firstName || ""} ${
+                                      pii.lastName || ""
+                                    }`.trim() ||
+                                    b.pseudonym ||
+                                    b.id;
+                                  return (
+                                    <SelectItem key={b.id} value={b.id}>
+                                      {fullName} ({b.pseudonym})
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsAssociateDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleAssociateExistingSubmit}
+                        disabled={
+                          associateLoading || !associateSelectedBeneficiaryId
+                        }
+                      >
+                        {associateLoading ? "Associating..." : "Associate"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <Table>
+                <TableHeader className="bg-[#E5ECF6]">
+                  <TableRow>
+                    <TableHead className="w-[50px]">
+                      <Checkbox
+                        checked={allSelected}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
+                    <TableHead className="w-[250px]">Beneficiary</TableHead>
+                    <TableHead>Gender/DOB</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Municipality/Nationality</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Registration</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="bg-[#F7F9FB]">
+                  {tableRows.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.includes(r.id)}
+                          onCheckedChange={() => toggleSelectOne(r.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src="" alt={r.name} />
+                            <AvatarFallback>{r.initials}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{r.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {r.pseudonym}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="capitalize">{r.gender || "-"}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {r.dob || "-"}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="capitalize">{r.status}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{r.municipality || "-"}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {r.nationality || "-"}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{r.phone || "-"}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {r.email || "-"}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(r.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/beneficiaries/${r.id}`)}
+                        >
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {tableRows.length === 0 && (
+                    <TableRow>
+                      <TableCell
+                        colSpan={8}
+                        className="py-4 text-center text-muted-foreground"
+                      >
+                        No beneficiaries found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="team" className="pt-6">

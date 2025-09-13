@@ -685,6 +685,7 @@ export function FormsList({
                     <div className="flex justify-end gap-2">
                       <Button
                         variant="outline"
+                        className="hover:bg-black/10 border-0"
                         size="sm"
                         onClick={() => handleEditClick(template.id)}
                       >
@@ -696,7 +697,7 @@ export function FormsList({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 hover:bg-black/10"
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>

@@ -8,7 +8,6 @@ import {
   Eye,
   FileEdit,
   Link,
-  Link2,
   MapPin,
   MoreHorizontal,
   Phone,
@@ -16,7 +15,6 @@ import {
   Shield,
   ShieldAlert,
   Trash,
-  User,
   Users,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -33,6 +31,15 @@ import {
   selectBeneficiaryUpdateError,
   selectBeneficiaryUpdateSuccessMessage,
   clearBeneficiaryUpdate,
+  fetchBeneficiaryServices,
+  selectBeneficiaryServices,
+  selectBeneficiaryServicesLoading,
+  selectBeneficiaryServicesError,
+  selectBeneficiaryServicesMeta,
+  fetchBeneficiaryEntities,
+  selectBeneficiaryEntities,
+  selectBeneficiaryEntitiesLoading,
+  selectBeneficiaryEntitiesError,
 } from "../../store/slices/beneficiarySlice";
 import type { UpdateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
@@ -121,50 +128,7 @@ type BeneficiaryVM = {
   associatedFamily: FamilyMember[];
 };
 
-// Mock service history
-const mockServiceHistory = [
-  {
-    id: "serv-001",
-    date: "2025-05-10",
-    type: "Health Check-up",
-    description: "Prenatal check-up - 2nd trimester",
-    provider: "Dr. Sarah Adams",
-    subProject: "Maternal Health Services",
-    location: "Mobile Clinic, Northern District",
-    notes: "Blood pressure normal, provided vitamin supplements.",
-  },
-  {
-    id: "serv-002",
-    date: "2025-04-12",
-    type: "Training",
-    description: "Nutrition education session",
-    provider: "Robert Johnson",
-    subProject: "Maternal Health Services",
-    location: "Community Center, Village A",
-    notes: "Participated actively in the session. Received nutrition guide.",
-  },
-  {
-    id: "serv-003",
-    date: "2025-03-15",
-    type: "Health Check-up",
-    description: "Prenatal check-up - 1st trimester",
-    provider: "Dr. Sarah Adams",
-    subProject: "Maternal Health Services",
-    location: "Mobile Clinic, Northern District",
-    notes: "First prenatal visit. All vitals normal.",
-  },
-  {
-    id: "serv-004",
-    date: "2025-02-20",
-    type: "Distribution",
-    description: "Prenatal care kit distribution",
-    provider: "Field Staff",
-    subProject: "Maternal Health Services",
-    location: "Village A Distribution Center",
-    notes:
-      "Received prenatal care kit including vitamins and educational materials.",
-  },
-];
+// Services are fetched from API; remove mocks
 
 // Mock projects for association
 const mockProjects = [
@@ -213,7 +177,9 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
     nationality: "",
     status: "active",
   });
-  const [localValidationError, setLocalValidationError] = useState<string | null>(null);
+  const [localValidationError, setLocalValidationError] = useState<
+    string | null
+  >(null);
 
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -224,10 +190,21 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
   const updateLoading = useSelector(selectBeneficiaryUpdateLoading);
   const updateError = useSelector(selectBeneficiaryUpdateError);
   const updateSuccess = useSelector(selectBeneficiaryUpdateSuccessMessage);
+  const services = useSelector(selectBeneficiaryServices);
+  const servicesLoading = useSelector(selectBeneficiaryServicesLoading);
+  const servicesError = useSelector(selectBeneficiaryServicesError);
+  const servicesMeta = useSelector(selectBeneficiaryServicesMeta);
+  const entities = useSelector(selectBeneficiaryEntities);
+  const entitiesLoading = useSelector(selectBeneficiaryEntitiesLoading);
+  const entitiesError = useSelector(selectBeneficiaryEntitiesError);
 
   useEffect(() => {
     if (id) {
       dispatch(fetchBeneficiaryById(id));
+      // Preload first page of services for overview widgets
+      dispatch(fetchBeneficiaryServices({ id, page: 1, limit: 20 }));
+      // Load associated entities for overview
+      dispatch(fetchBeneficiaryEntities({ id }));
     }
   }, [dispatch, id]);
 
@@ -261,17 +238,39 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
     }
   }, [updateSuccess, id, dispatch]);
 
+  // Ensure services are refreshed when Services tab becomes active
+  // useEffect(() => {
+  //   if (activeTab === "services" && id) {
+  //     dispatch(
+  //       fetchBeneficiaryServices({
+  //         id,
+  //         page: servicesMeta.page || 1,
+  //         limit: servicesMeta.limit || 20,
+  //       })
+  //     );
+  //   }
+  // }, [activeTab, id, dispatch]);
+
   const handleEditInput = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { id: fieldId, value } = e.target as HTMLInputElement;
-    setEditForm((prev) => ({ ...prev, [fieldId]: value } as UpdateBeneficiaryRequest));
+    setEditForm(
+      (prev) => ({ ...prev, [fieldId]: value } as UpdateBeneficiaryRequest)
+    );
   };
 
   const handleEditSubmit = () => {
     setLocalValidationError(null);
-    if (!editForm.firstName || !editForm.lastName || !editForm.gender || !editForm.status) {
-      setLocalValidationError("Please fill in all required fields: first name, last name, gender, status.");
+    if (
+      !editForm.firstName ||
+      !editForm.lastName ||
+      !editForm.gender ||
+      !editForm.status
+    ) {
+      setLocalValidationError(
+        "Please fill in all required fields: first name, last name, gender, status."
+      );
       return;
     }
     if (!id) return;
@@ -345,13 +344,16 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
         </Button>
 
         <h2>{beneficiary.name}</h2>
-        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
-          setIsEditDialogOpen(open);
-          if (!open) {
-            setLocalValidationError(null);
-            dispatch(clearBeneficiaryUpdate());
-          }
-        }}>
+        <Dialog
+          open={isEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) {
+              setLocalValidationError(null);
+              dispatch(clearBeneficiaryUpdate());
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="bg-[#2E343E] text-white ml-auto">
               <Edit className="h-4 w-4 mr-2" />
@@ -368,42 +370,103 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               {localValidationError && (
-                <div className="col-span-4 text-sm text-red-600">{localValidationError}</div>
+                <div className="col-span-4 text-sm text-red-600">
+                  {localValidationError}
+                </div>
               )}
               {updateError && (
-                <div className="col-span-4 text-sm text-red-600">{updateError}</div>
+                <div className="col-span-4 text-sm text-red-600">
+                  {updateError}
+                </div>
               )}
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="firstName" className="text-right">First Name *</Label>
-                <Input id="firstName" className="col-span-3" value={editForm.firstName} onChange={handleEditInput} />
+                <Label htmlFor="firstName" className="text-right">
+                  First Name *
+                </Label>
+                <Input
+                  id="firstName"
+                  className="col-span-3"
+                  value={editForm.firstName}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="lastName" className="text-right">Last Name *</Label>
-                <Input id="lastName" className="col-span-3" value={editForm.lastName} onChange={handleEditInput} />
+                <Label htmlFor="lastName" className="text-right">
+                  Last Name *
+                </Label>
+                <Input
+                  id="lastName"
+                  className="col-span-3"
+                  value={editForm.lastName}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="dob" className="text-right">Date of Birth *</Label>
-                <Input id="dob" type="date" className="col-span-3" value={editForm.dob} onChange={handleEditInput} />
+                <Label htmlFor="dob" className="text-right">
+                  Date of Birth *
+                </Label>
+                <Input
+                  id="dob"
+                  type="date"
+                  className="col-span-3"
+                  value={editForm.dob}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="nationalId" className="text-right">National ID</Label>
-                <Input id="nationalId" className="col-span-3" value={editForm.nationalId} onChange={handleEditInput} />
+                <Label htmlFor="nationalId" className="text-right">
+                  National ID
+                </Label>
+                <Input
+                  id="nationalId"
+                  className="col-span-3"
+                  value={editForm.nationalId}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">Phone</Label>
-                <Input id="phone" className="col-span-3" value={editForm.phone} onChange={handleEditInput} />
+                <Label htmlFor="phone" className="text-right">
+                  Phone
+                </Label>
+                <Input
+                  id="phone"
+                  className="col-span-3"
+                  value={editForm.phone}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">Email</Label>
-                <Input id="email" className="col-span-3" type="email" value={editForm.email} onChange={handleEditInput} />
+                <Label htmlFor="email" className="text-right">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  className="col-span-3"
+                  type="email"
+                  value={editForm.email}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="address" className="text-right">Address</Label>
-                <Input id="address" className="col-span-3" value={editForm.address} onChange={handleEditInput} />
+                <Label htmlFor="address" className="text-right">
+                  Address
+                </Label>
+                <Input
+                  id="address"
+                  className="col-span-3"
+                  value={editForm.address}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right">Gender *</Label>
-                <RadioGroup className="col-span-3 flex gap-4" value={editForm.gender} onValueChange={(v) => setEditForm((p) => ({ ...p, gender: v }))}>
+                <RadioGroup
+                  className="col-span-3 flex gap-4"
+                  value={editForm.gender}
+                  onValueChange={(v) =>
+                    setEditForm((p) => ({ ...p, gender: v }))
+                  }
+                >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="female" id="female" />
                     <Label htmlFor="female">Female</Label>
@@ -419,16 +482,37 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 </RadioGroup>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="municipality" className="text-right">Municipality</Label>
-                <Input id="municipality" className="col-span-3" value={editForm.municipality} onChange={handleEditInput} />
+                <Label htmlFor="municipality" className="text-right">
+                  Municipality
+                </Label>
+                <Input
+                  id="municipality"
+                  className="col-span-3"
+                  value={editForm.municipality}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="nationality" className="text-right">Nationality</Label>
-                <Input id="nationality" className="col-span-3" value={editForm.nationality} onChange={handleEditInput} />
+                <Label htmlFor="nationality" className="text-right">
+                  Nationality
+                </Label>
+                <Input
+                  id="nationality"
+                  className="col-span-3"
+                  value={editForm.nationality}
+                  onChange={handleEditInput}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">Status *</Label>
-                <Select value={editForm.status} onValueChange={(v) => setEditForm((p) => ({ ...p, status: v }))}>
+                <Label htmlFor="status" className="text-right">
+                  Status *
+                </Label>
+                <Select
+                  value={editForm.status}
+                  onValueChange={(v) =>
+                    setEditForm((p) => ({ ...p, status: v }))
+                  }
+                >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -786,20 +870,12 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               Service History
             </TabsTrigger>
             <TabsTrigger
-              value="family"
+              value="info"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent ${
-                activeTab === "family" ? "border-[#2E343E]" : ""
+                activeTab === "info" ? "border-[#2E343E]" : ""
               }`}
             >
-              Family
-            </TabsTrigger>
-            <TabsTrigger
-              value="documents"
-              className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent ${
-                activeTab === "documents" ? "border-[#2E343E]" : ""
-              }`}
-            >
-              Documents
+              Info
             </TabsTrigger>
           </div>
         </TabsList>
@@ -821,24 +897,33 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
 
                   <div>
                     <h4 className="font-medium mb-2">Current Projects</h4>
-                    <div className="space-y-3">
-                      {beneficiary.projects.map((project, index) => (
-                        <div
-                          key={index}
-                          className=" text-black rounded-md p-3 bg-[#E5ECF6]"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{project}</span>
-                          </div>
-                          {beneficiary.subProjects[index] && (
-                            <div className="text-sm text-muted-foreground mt-1 ml-6">
-                              Sub-project: {beneficiary.subProjects[index]}
+                    {entitiesLoading && (
+                      <div className="text-sm text-muted-foreground">Loading associated entities...</div>
+                    )}
+                    {entitiesError && !entitiesLoading && (
+                      <div className="text-sm text-red-600">{entitiesError}</div>
+                    )}
+                    {!entitiesLoading && !entitiesError && (
+                      <div className="space-y-3">
+                        {entities.length > 0 ? (
+                          entities.map((link, index) => (
+                            <div
+                              key={`${link.entity.id}-${index}`}
+                              className=" text-black rounded-md p-3 bg-[#E5ECF6]"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                                <span className="font-medium">
+                                  {link.entity.type}: {link.entity.name}
+                                </span>
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                          ))
+                        ) : (
+                          <div className="text-sm text-muted-foreground">No associated entities.</div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -891,30 +976,51 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {mockServiceHistory.slice(0, 3).map((service) => (
-                      <div
-                        key={service.id}
-                        className="flex items-start gap-3 pb-3 border-b last:border-b-0 last:pb-0"
-                      >
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                          <CheckCircle className="h-4 w-4 text-muted-foreground " />
-                        </div>
-                        <div>
-                          <div className="font-medium">
-                            {service.type}: {service.description}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {service.subProject} | {service.location}
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                            <Clock className="h-3 w-3" />
-                            <span>
-                              {new Date(service.date).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
+                    {servicesLoading && (
+                      <div className="text-sm text-muted-foreground">
+                        Loading services...
                       </div>
-                    ))}
+                    )}
+                    {servicesError && (
+                      <div className="text-sm text-red-600">
+                        {servicesError}
+                      </div>
+                    )}
+                    {!servicesLoading &&
+                      !servicesError &&
+                      services.slice(0, 3).map((s) => (
+                        <div
+                          key={s.id}
+                          className="flex items-start gap-3 pb-3 border-b last:border-b-0 last:pb-0"
+                        >
+                          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                            <CheckCircle className="h-4 w-4 text-muted-foreground " />
+                          </div>
+                          <div>
+                            <div className="font-medium">
+                              {s.service.category}: {s.service.name}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {s.entity?.name ?? "—"} | {"—"}
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                              <Clock className="h-3 w-3" />
+                              <span>
+                                {s.deliveredAt
+                                  ? new Date(s.deliveredAt).toLocaleDateString()
+                                  : "—"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    {!servicesLoading &&
+                      !servicesError &&
+                      services.length === 0 && (
+                        <div className="text-sm text-muted-foreground">
+                          No services recorded yet.
+                        </div>
+                      )}
                   </div>
                 </CardContent>
               </Card>
@@ -969,38 +1075,6 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   >
                     <Plus className="h-4 w-4 mr-2 " />
                     Record New Service
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
-                <CardHeader>
-                  <CardTitle className="text-base">Family Members</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {beneficiary.associatedFamily.map((member, index) => (
-                    <div
-                      key={index}
-                      className="flex justify-between items-center pb-2 border-b last:border-b-0 last:pb-0"
-                    >
-                      <div>
-                        <div className="font-medium">{member.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {member.relationship}, {member.age} years
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm">
-                        <Link2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-
-                  <Button
-                    variant="outline"
-                    className="w-full bg-[#2E343E] text-white"
-                    onClick={() => setActiveTab("family")}
-                  >
-                    Manage Family
                   </Button>
                 </CardContent>
               </Card>
@@ -1063,173 +1137,288 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
-                    <TableHead>Service Type</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Provider</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Sub-Project</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Staff's Name</TableHead>
+                    <TableHead>Staff's Email</TableHead>
+                    {/* <TableHead>Location</TableHead> */}
+                    <TableHead>Entity</TableHead>
+                    <TableHead>Entity Type</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockServiceHistory.map((service) => (
-                    <TableRow key={service.id}>
-                      <TableCell>
-                        {new Date(service.date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{service.type}</Badge>
-                      </TableCell>
-                      <TableCell>{service.description}</TableCell>
-                      <TableCell>{service.provider}</TableCell>
-                      <TableCell>{service.location}</TableCell>
-                      <TableCell>{service.subProject}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <FileEdit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Download className="h-4 w-4 mr-2" />
-                                Export
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
-                                <Trash className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                  {servicesLoading && (
+                    <TableRow>
+                      <TableCell colSpan={7}>
+                        <div className="text-sm text-muted-foreground">
+                          Loading services...
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="family" className="pt-6">
-          <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Family Members</CardTitle>
-              <Button size="sm" className="bg-[#2E343E] text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Family Member
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Relationship</TableHead>
-                    <TableHead>Age</TableHead>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {beneficiary.associatedFamily.map((member, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">
-                        {member.name}
-                      </TableCell>
-                      <TableCell>{member.relationship}</TableCell>
-                      <TableCell>{member.age} years</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <ShieldAlert className="h-3 w-3" />
-                          <span>{member.id}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="default"
-                          className="bg-[#2E343E] text-white"
-                        >
-                          Active
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-[#2E343E] text-white"
-                          >
-                            <Link2 className="h-4 w-4 mr-2" />
-                            View Profile
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <FileEdit className="h-4 w-4 mr-2" />
-                                Edit Relationship
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
-                                <Trash className="h-4 w-4 mr-2" />
-                                Remove
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                  )}
+                  {servicesError && !servicesLoading && (
+                    <TableRow>
+                      <TableCell colSpan={7}>
+                        <div className="text-sm text-red-600">
+                          {servicesError}
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
+                  {!servicesLoading &&
+                    !servicesError &&
+                    services.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell>
+                          {s.deliveredAt
+                            ? new Date(s.deliveredAt).toLocaleDateString()
+                            : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{s.service.category}</Badge>
+                        </TableCell>
+                        <TableCell>{s.service.name}</TableCell>
+                        <TableCell>
+                          {`${s.staff?.firstName ?? ""} ${
+                            s.staff?.lastName ?? ""
+                          }`.trim() || "—"}
+                        </TableCell>
+                        <TableCell>{s.staff?.email ?? "—"}</TableCell>
+                        <TableCell>{s.entity?.name ?? "—"}</TableCell>
+                        <TableCell>{s.entity?.type ?? "—"}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={!s.formResponseId}
+                              onClick={() =>
+                                s.formResponseId &&
+                                navigate(
+                                  `/beneficiaries/${id}/form/${s.formResponseId}`
+                                )
+                              }
+                              title={
+                                s.formResponseId
+                                  ? "View linked form submission"
+                                  : "No linked form submission"
+                              }
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <FileEdit className="h-4 w-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Download className="h-4 w-4 mr-2" />
+                                  Export
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">
+                                  <Trash className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  {!servicesLoading &&
+                    !servicesError &&
+                    services.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7}>
+                          <div className="text-sm text-muted-foreground">
+                            No services recorded yet.
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="documents" className="pt-6">
-          <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Documents</CardTitle>
-              <Button size="sm" className="bg-[#2E343E] text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Upload Document
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-center h-48 border border-dashed rounded-md">
-                <div className="text-center">
-                  <User className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                  <h3 className="text-lg mb-2">No documents found</h3>
-                  <p className="text-muted-foreground">
-                    Upload a document to associate with this beneficiary.
-                  </p>
+              {/* Simple pagination (prev/next) using meta */}
+              {/* <div className="flex items-center justify-between mt-4 text-sm">
+                <div className="text-muted-foreground">
+                  Page {servicesMeta.page} of {servicesMeta.totalPages} •{" "}
+                  {servicesMeta.totalItems} total
                 </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={servicesLoading || servicesMeta.page <= 1}
+                    onClick={() =>
+                      id &&
+                      dispatch(
+                        fetchBeneficiaryServices({
+                          id,
+                          page: servicesMeta.page - 1,
+                          limit: servicesMeta.limit,
+                        })
+                      )
+                    }
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={
+                      servicesLoading ||
+                      servicesMeta.page >= servicesMeta.totalPages
+                    }
+                    onClick={() =>
+                      id &&
+                      dispatch(
+                        fetchBeneficiaryServices({
+                          id,
+                          page: servicesMeta.page + 1,
+                          limit: servicesMeta.limit,
+                        })
+                      )
+                    }
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div> */}
+            </CardContent>
+          </Card>
+          <div className="flex items-center justify-between mt-4 text-sm">
+            <div className="text-muted-foreground">
+              Page {servicesMeta.page} of {servicesMeta.totalPages} •{" "}
+              {servicesMeta.totalItems} total
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="bg-BLACK/10 border-0 text-black"
+                size="sm"
+                disabled={servicesLoading || servicesMeta.page <= 1}
+                onClick={() =>
+                  id &&
+                  dispatch(
+                    fetchBeneficiaryServices({
+                      id,
+                      page: servicesMeta.page - 1,
+                      limit: servicesMeta.limit,
+                    })
+                  )
+                }
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                className="bg-black/10 text-black"
+                size="sm"
+                disabled={
+                  servicesLoading ||
+                  servicesMeta.page >= servicesMeta.totalPages
+                }
+                onClick={() =>
+                  id &&
+                  dispatch(
+                    fetchBeneficiaryServices({
+                      id,
+                      page: servicesMeta.page + 1,
+                      limit: servicesMeta.limit,
+                    })
+                  )
+                }
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="info" className="pt-6">
+          <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
+            <CardHeader>
+              <CardTitle className="text-base">Info</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Blood Type:</span>
+                  <div>{((detail as any)?.details?.bloodType) ?? "—"}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Notes:</span>
+                  <div className="whitespace-pre-wrap">{((detail as any)?.details?.notes) ?? "—"}</div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Allergies</h4>
+                {(((detail as any)?.details?.allergies) ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {((detail as any)?.details?.allergies ?? []).map((a: string, idx: number) => (
+                      <Badge key={idx} variant="outline">{a}</Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">—</div>
+                )}
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Chronic Conditions</h4>
+                {(((detail as any)?.details?.chronicConditions) ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {((detail as any)?.details?.chronicConditions ?? []).map((c: string, idx: number) => (
+                      <Badge key={idx} variant="outline">{c}</Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">—</div>
+                )}
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Disabilities</h4>
+                {(((detail as any)?.details?.disabilities) ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {((detail as any)?.details?.disabilities ?? []).map((d: string, idx: number) => (
+                      <Badge key={idx} variant="outline">{d}</Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">—</div>
+                )}
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Medications</h4>
+                {(((detail as any)?.details?.medications) ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {((detail as any)?.details?.medications ?? []).map((m: string, idx: number) => (
+                      <Badge key={idx} variant="outline">{m}</Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">—</div>
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
+
+        
       </Tabs>
     </div>
   );

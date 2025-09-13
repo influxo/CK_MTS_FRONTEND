@@ -72,7 +72,6 @@ export interface FormTemplateAndPagination {
   pagination: FormTemplatePagination;
 }
 
-
 // API Response Types
 export interface ApiResponse<T> {
   success: boolean;
@@ -81,11 +80,142 @@ export interface ApiResponse<T> {
   data?: any;
 }
 
+// Get single Form Template by id response
+export interface GetFormTemplateByIdResponse {
+  success: boolean;
+  message?: string;
+  data: FormTemplate;
+}
+
+// Request for submitting a form
+export interface FormSubmissionRequest {
+  /**
+   * UUID of the form template (provided as a path param in the API)
+   */
+  // id: string; // This is in the path, not in the request body
+
+  /**
+   * UUID of the entity (project, subproject, or activity) this submission belongs to
+   */
+  entityId: string;
+
+  /**
+   * The entity type this form is associated with
+   * Example: "project" | "subproject" | "activity"
+   */
+  entityType: string;
+
+  /**
+   * Dynamic form field values
+   * Keys come from FormField.name in the template
+   */
+  data: Record<string, any>;
+
+  /**
+   * GPS coordinates where the form was submitted
+   */
+  latitude: number;
+  longitude: number;
+}
+
+// Data returned when a form is successfully submitted
+export interface FormSubmissionData {
+  createdAt: string;
+  updatedAt: string;
+  id: string;
+  formTemplateId: string;
+  entityId: string;
+  entityType: string;
+  submittedBy: string;
+  data: Record<string, any>;
+  latitude: string; // API returns these as strings
+  longitude: string;
+  submittedAt: string;
+}
+
+// API response for a form submission
+export interface FormSubmissionResponse {
+  success: boolean;
+  message: string;
+  data: FormSubmissionData;
+}
+
+// Minimal user info (submitter or staff)
+export interface MinimalUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+// Template summary inside a response
+export interface TemplateSummary {
+  id: string;
+  name: string;
+  version: number;
+}
+
+// Beneficiary summary inside a response
+export interface BeneficiarySummary {
+  id: string;
+  pseudonym: string;
+  status: string;
+}
+
+// Service summary for deliveries
+export interface ServiceSummary {
+  id: string;
+  name: string;
+  category: string;
+}
+
+// Service delivery record linked to a form response
+export interface ServiceDelivery {
+  id: string;
+  serviceId: string;
+  deliveredAt: string;
+  staffUserId: string;
+  notes: string | null;
+  entityId: string;
+  entityType: string; // e.g., "project" | "subproject" | "activity"
+  service: ServiceSummary;
+  staff: MinimalUser;
+}
+
+// Single form response payload
+export interface FormResponseData {
+  id: string;
+  formTemplateId: string;
+  entityId: string;
+  entityType: string;
+  submittedBy: string;
+  beneficiaryId: string | null;
+  data: Record<string, any>; // dynamic fields per template
+  latitude: string | null;
+  longitude: string | null;
+  submittedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  template: TemplateSummary;
+  submitter: MinimalUser;
+  beneficiary: BeneficiarySummary | null;
+  serviceDeliveries: ServiceDelivery[];
+}
+
+// API response for fetching a form response by id
+export interface GetFormResponseByIdResponse {
+  success: boolean;
+  message?: string;
+  data: FormResponseData;
+}
 export interface GetFormsResponse extends ApiResponse<FormTemplate[]> {}
 export interface GetFormResponse extends ApiResponse<FormTemplate> {}
-export interface CreateFormRequest extends Omit<FormTemplate, 'id' | 'lastUpdated' | 'createdBy'> {}
+export interface CreateFormRequest
+  extends Omit<FormTemplate, "id" | "lastUpdated" | "createdBy"> {}
 export interface CreateFormResponse extends ApiResponse<FormTemplate> {}
-export interface UpdateFormRequest extends Omit<FormTemplate, 'lastUpdated' | 'createdBy'> {}
+export interface UpdateFormRequest
+  extends Omit<FormTemplate, "lastUpdated" | "createdBy"> {}
 export interface UpdateFormResponse extends ApiResponse<FormTemplate> {}
-export interface UpdateFormToInactiveResponse extends ApiResponse<FormTemplate> {}
+export interface UpdateFormToInactiveResponse
+  extends ApiResponse<FormTemplate> {}
 export interface DeleteFormResponse extends ApiResponse<{ id: string }> {}

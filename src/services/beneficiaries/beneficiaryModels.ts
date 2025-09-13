@@ -12,6 +12,18 @@ export interface CreateBeneficiaryRequest {
   municipality: string;
   nationality: string;
   status: string; // e.g., "active"
+  // Optional medical and additional details
+  details?: BeneficiaryDetails;
+}
+
+// Extended medical and additional details for a beneficiary
+export interface BeneficiaryDetails {
+  allergies: string[];
+  disabilities: string[];
+  chronicConditions: string[];
+  medications: string[];
+  bloodType: string;
+  notes?: string;
 }
 
 export interface Beneficiary {
@@ -20,6 +32,8 @@ export interface Beneficiary {
   status: string;
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
+  // Present on create/get when available
+  details?: BeneficiaryDetails;
 }
 
 export interface CreateBeneficiaryResponse {
@@ -33,6 +47,15 @@ export interface GetBeneficiariesRequest {
   page?: number;
   limit?: number;
   status?: "active" | "inactive";
+}
+
+// List beneficiaries filtered by an entity (GET /beneficiaries/by-entity)
+export interface GetBeneficiariesByEntityRequest {
+  entityId: string; // required
+  entityType: string; // required (e.g., "project" | "subproject" | "activity")
+  status?: "active" | "inactive";
+  page?: number;
+  limit?: number;
 }
 
 export interface BeneficiaryPIIEncField {
@@ -83,6 +106,9 @@ export interface GetBeneficiariesResponse {
   message?: string;
 }
 
+// Response for by-entity list uses the same paging envelope
+export type GetBeneficiariesByEntityResponse = GetBeneficiariesResponse;
+
 // Get beneficiary by ID (GET /beneficiaries/{id})
 export interface GetBeneficiaryByIdResponse {
   success: boolean;
@@ -114,6 +140,106 @@ export interface GetBeneficiaryPIIByIdResponse {
     pseudonym: string;
     status: string;
     pii: BeneficiaryPII;
+  };
+  message?: string;
+}
+
+// Get beneficiary services (GET /beneficiaries/{id}/services)
+export interface GetBeneficiaryServicesRequest {
+  id: string;
+  page?: number;
+  limit?: number;
+  fromDate?: string; // ISO date string
+  toDate?: string; // ISO date string
+}
+
+export interface BeneficiaryServiceItem {
+  id: string;
+  service: {
+    id: string;
+    name: string;
+    category: string;
+  };
+  deliveredAt: string; // ISO datetime
+  staff: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  notes?: string;
+  entity: {
+    id: string;
+    name: string;
+    type: string;
+    subprojectId?: string;
+  };
+  formResponseId?: string;
+}
+
+export interface GetBeneficiaryServicesResponse {
+  success: boolean;
+  data: BeneficiaryServiceItem[];
+  meta: {
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalItems: number;
+  };
+  message?: string;
+}
+
+// Get beneficiary linked entities (GET /beneficiaries/{id}/entities)
+export interface GetBeneficiaryEntitiesRequest {
+  id: string;
+}
+
+export interface BeneficiaryEntityRef {
+  id: string;
+  type: string; // e.g., "project" | "subproject" | "activity"
+  name: string;
+}
+
+export interface BeneficiaryFormResponseLite {
+  id: string;
+  formTemplateId: string;
+  submittedAt: string; // ISO datetime
+}
+
+export interface BeneficiaryEntityLinkItem {
+  entity: BeneficiaryEntityRef;
+  formResponses: BeneficiaryFormResponseLite[];
+  services: BeneficiaryServiceItem[];
+}
+
+export interface GetBeneficiaryEntitiesResponse {
+  success: boolean;
+  data: BeneficiaryEntityLinkItem[];
+  message?: string;
+}
+
+// Associate beneficiary to entities (POST /beneficiaries/{id}/entities)
+export interface BeneficiaryEntityAssociationItem {
+  entityId: string;
+  entityType: string; // "project" | "subproject" | other entity types
+}
+
+export interface AssociateBeneficiaryToEntitiesRequest {
+  id: string; // beneficiary id (path param)
+  links: BeneficiaryEntityAssociationItem[]; // request body array
+}
+
+export interface AssociateBeneficiaryToEntitiesResponse {
+  success: boolean;
+  data?: {
+    created: number;
+    existing: number;
+    results: Array<{
+      entityId: string;
+      entityType: string;
+      created: boolean;
+      id: string; // association/link id
+    }>;
   };
   message?: string;
 }

@@ -178,6 +178,7 @@ export function DataEntryTemplates() {
                           <TableCell>
                             <div className="flex gap-2 justify-end">
                               <Button
+                                className="hover:bg-black/10 border-0"
                                 size="sm"
                                 variant={
                                   selectedTemplateId === tpl.id
