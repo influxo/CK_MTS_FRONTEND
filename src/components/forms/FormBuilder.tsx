@@ -18,8 +18,10 @@ import {
   Type,
   Upload,
   X,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
 import {
@@ -57,15 +59,18 @@ import {
 } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 import { FormField } from "./FormField";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store";
+import {
+  fetchProjects,
+  selectAllProjects,
+} from "../../store/slices/projectsSlice";
+import { fetchSubProjectsByProjectId, selectAllSubprojects } from "../../store/slices/subProjectSlice";
+import { fetchFormById, selectCurrentForm } from "../../store/slices/formsSlice";
 
 // Field types available for forms
 const fieldTypes = [
   { id: "text", name: "Text", icon: <Type className="h-4 w-4" /> },
-  {
-    id: "textarea",
-    name: "Text Area",
-    icon: <AlignLeft className="h-4 w-4" />,
-  },
   { id: "number", name: "Number", icon: <Hash className="h-4 w-4" /> },
   { id: "date", name: "Date", icon: <Calendar className="h-4 w-4" /> },
   {
@@ -73,151 +78,28 @@ const fieldTypes = [
     name: "Checkbox",
     icon: <CheckSquare className="h-4 w-4" />,
   },
-  { id: "radio", name: "Radio Group", icon: <Radio className="h-4 w-4" /> },
   {
     id: "dropdown",
     name: "Dropdown",
     icon: <ChevronDown className="h-4 w-4" />,
-  },
-  {
-    id: "multiselect",
-    name: "Multi-Select",
-    icon: <ListChecks className="h-4 w-4" />,
-  },
-  { id: "file", name: "File Upload", icon: <Upload className="h-4 w-4" /> },
-  { id: "boolean", name: "Yes/No", icon: <ToggleLeft className="h-4 w-4" /> },
+  }
 ];
-
-// Mock form template for editing
-const mockFormTemplate = {
-  id: "form-001",
-  name: "Maternal Health Assessment",
-  description: "Assessment form for pregnant women and new mothers",
-  category: "health",
-  lastUpdated: "2025-05-10T14:30:00",
-  status: "active",
-  version: "1.2",
-  createdBy: "Jane Smith",
-  associatedProjects: ["Rural Healthcare Initiative"],
-  associatedSubProjects: ["Maternal Health Services"],
-  fields: [
-    {
-      id: "field-001",
-      type: "text",
-      label: "Full Name",
-      placeholder: "Enter full name",
-      required: true,
-      helpText:
-        "Enter the beneficiary's full name as it appears on ID documents",
-      validations: { minLength: 2, maxLength: 100 },
-    },
-    {
-      id: "field-002",
-      type: "radio",
-      label: "Pregnancy Status",
-      required: true,
-      options: [
-        { value: "pregnant", label: "Currently Pregnant" },
-        { value: "postpartum", label: "Postpartum (within 42 days)" },
-        { value: "not_pregnant", label: "Not Pregnant" },
-      ],
-      helpText: "Select the current pregnancy status",
-    },
-    {
-      id: "field-003",
-      type: "number",
-      label: "Age",
-      placeholder: "Enter age",
-      required: true,
-      validations: { min: 12, max: 65 },
-    },
-    {
-      id: "field-004",
-      type: "date",
-      label: "Date of Last Visit",
-      required: false,
-      helpText: "If this is the first visit, leave blank",
-    },
-    {
-      id: "field-005",
-      type: "checkbox",
-      label: "Symptoms",
-      required: false,
-      options: [
-        { value: "fever", label: "Fever" },
-        { value: "headache", label: "Headache" },
-        { value: "nausea", label: "Nausea/Vomiting" },
-        { value: "fatigue", label: "Fatigue" },
-        { value: "abdominal_pain", label: "Abdominal Pain" },
-      ],
-      helpText: "Select all symptoms that apply",
-    },
-    {
-      id: "field-006",
-      type: "dropdown",
-      label: "Number of Previous Pregnancies",
-      required: true,
-      options: [
-        { value: "0", label: "0 (First pregnancy)" },
-        { value: "1", label: "1" },
-        { value: "2", label: "2" },
-        { value: "3", label: "3" },
-        { value: "4", label: "4" },
-        { value: "5_plus", label: "5 or more" },
-      ],
-    },
-    {
-      id: "field-007",
-      type: "textarea",
-      label: "Additional Notes",
-      placeholder: "Enter any additional information",
-      required: false,
-      validations: { maxLength: 1000 },
-    },
-  ],
-};
-
-// Mock data for projects
-const mockProjects = [
-  {
-    id: "proj-001",
-    title: "Rural Healthcare Initiative",
-    subProjects: [
-      { id: "sub-001", title: "Maternal Health Services" },
-      { id: "sub-002", title: "Child Vaccination Campaign" },
-      { id: "sub-004", title: "Nutrition Support" },
-    ],
-  },
-  {
-    id: "proj-002",
-    title: "Community Development",
-    subProjects: [
-      { id: "sub-003", title: "Water Access Program" },
-      { id: "sub-005", title: "Food Security Initiative" },
-    ],
-  },
-  {
-    id: "proj-003",
-    title: "Youth Empowerment Program",
-    subProjects: [
-      { id: "sub-006", title: "Education Support" },
-      { id: "sub-007", title: "Skills Training" },
-    ],
-  },
-];
-
 interface FormBuilderProps {
   formId?: string;
   onBack: () => void;
   onSave: (formData: any) => void;
+  isSaving?: boolean;
+  error?: string | null;
 }
+
 interface FormFieldOption {
   value: string;
   label: string;
 }
 
-interface FormField {
+export interface FormField {
   id: string;
+  name: string;
   type: string;
   label: string;
   required?: boolean;
@@ -230,9 +112,9 @@ interface FormField {
     min?: number;
     max?: number;
   };
-  // Add other field properties as needed
 }
-interface FormData {
+
+export interface FormData {
   id: string;
   name: string;
   description: string;
@@ -241,30 +123,74 @@ interface FormData {
   version: string;
   fields: FormField[];
   lastUpdated?: string;
-  // Add other form properties as needed
+  project?: string;
+  subProject?: string;
 }
 
-export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
-  // If formId is provided, we're editing an existing form, otherwise creating a new one
+export function FormBuilder({
+  formId,
+  onBack,
+  onSave,
+  isSaving = false,
+  error,
+}: FormBuilderProps) {
+  const dispatch = useDispatch<AppDispatch>();
+  const projects = useSelector(selectAllProjects);
+  const subProjects = useSelector(selectAllSubprojects);
+  const formToEdit = useSelector(selectCurrentForm);
   const isEditing = !!formId;
 
-  // For a real app, we would fetch the form template data based on formId
-  // For this demo, we're using mock data
-  const [formData, setFormData] = useState<FormData>(
-    isEditing
-      ? mockFormTemplate
-      : {
-          id: "",
-          name: "",
-          description: "",
-          category: "",
-          status: "draft",
-          version: "0.1",
-          fields: [],
-        }
-  );
+  const [formData, setFormData] = useState<FormData>({
+    id: "",
+    name: "",
+    description: "",
+    category: "",
+    status: "draft",
+    version: "0.1",
+    fields: [],
+  });
 
-  // const [activeTab, setActiveTab] = useState("builder");
+  useEffect(() => {
+    if (formId) {
+      dispatch(fetchProjects());
+    }
+  }, [dispatch, formId]);
+
+  useEffect(() => {
+    if (formId) {
+      dispatch(fetchFormById(formId));
+    }
+  }, [formId, dispatch]);
+
+  useEffect(() => {
+    if (formToEdit && formId) {
+      const projectId = formToEdit.entityAssociations[0].entityId;
+
+      const fields = formToEdit.schema.fields.map((field, index) => ({
+        id: `field-${Date.now()}-${index}`,
+        name: field.name,
+        label: field.label,
+        type: field.type.toLowerCase(),
+        placeholder: field.placeholder,
+        helpText: field.helpText,
+        validations: field.validations,
+        required: field.required,
+        options: field.options?.map((opt) => ({ value: opt, label: opt })) || [],
+      }));
+
+      setFormData({
+        id: formToEdit.id,
+        name: formToEdit.name,
+        description: formToEdit.description || "",
+        category: formToEdit.category || "",
+        status: formToEdit.status || "draft",
+        version: formToEdit.version || "0.1",
+        fields: fields,
+        project: projectId,
+      });
+    }
+  }, [formToEdit, formId]);
+
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const [isAddFieldDialogOpen, setIsAddFieldDialogOpen] = useState(false);
   const [showFormJson, setShowFormJson] = useState(false);
@@ -278,6 +204,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
   // Add a new field to the form
   const handleAddField = (fieldType: string) => {
     const baseField: FormField = {
+      name: `field-${Date.now()}`,
       id: `field-${Date.now()}`,
       type: fieldType,
       label: `New ${
@@ -316,6 +243,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
         field.id === fieldId ? { ...field, ...updates } : field
       ),
     }));
+
   };
 
   // Delete a field
@@ -332,14 +260,45 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
 
   // Save the form
   const handleSaveForm = () => {
-    // Update last updated timestamp
-    const updatedForm = {
-      ...formData,
-      lastUpdated: new Date().toISOString(),
+    const fields = Array.isArray(formData.fields) ? formData.fields : [];
+
+    const formattedData = {
+      name: formData.name,
+      entities: [
+        {
+          id: formData.subProject ? formData.subProject : formData.project,
+          type: "project",
+        },
+      ],
+      schema: {
+        fields:
+          fields.length > 0
+            ? fields.map((field) => ({
+                name: field.name || "field",
+                label: field.label || "Field",
+                type: field.type
+                  ? field.type.charAt(0).toUpperCase() + field.type.slice(1)
+                  : "Text",
+                placeholder: field.placeholder,
+                required: field.required || false,
+                helpText: field.helpText,
+                validations: field.validations,
+                options: field.options?.map((opt) => opt.value) || [],
+              }))
+            : [
+                // Default field if no fields are added
+                {
+                  name: "field1",
+                  label: "Field 1",
+                  type: "Text",
+                  required: true,
+                  options: [],
+                },
+              ],
+      },
     };
 
-    // Call the parent's save handler
-    onSave(updatedForm);
+    onSave(formattedData);
   };
 
   // Get the selected field data
@@ -347,9 +306,21 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
     (field) => field.id === selectedField
   );
 
+  const handleChangeProject = (projectId: string) => {
+    setFormData({ ...formData, project: projectId, subProject: '' });
+
+    if (projectId) {
+      dispatch(fetchSubProjectsByProjectId({ projectId }));
+    }
+  };
+
+  const handleChangeSubProject = (subProjectId: string) => {
+    setFormData({ ...formData, subProject: subProjectId });
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between ">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={onBack}>
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -360,18 +331,26 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
           </h2>
           {isEditing && <Badge variant="outline">v{formData.version}</Badge>}
         </div>
-        <div className="flex gap-2 ">
+        <div className="flex gap-2">
           <Button
-            className="bg-[#2E343E] text-white"
             variant="outline"
             onClick={() => setPreviewMode(!previewMode)}
           >
             <Eye className="h-4 w-4 mr-2" />
             {previewMode ? "Exit Preview" : "Preview"}
           </Button>
-          <Button className="bg-[#2E343E] text-white" onClick={handleSaveForm}>
-            <Save className="h-4 w-4 mr-2" />
-            Save Form
+          <Button onClick={handleSaveForm} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Save Form
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -379,7 +358,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
       {!previewMode ? (
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 lg:col-span-8">
-            <Card className="mb-6 bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
+            <Card className="mb-6">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Form Builder</CardTitle>
               </CardHeader>
@@ -390,43 +369,60 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                       <Label htmlFor="form-name">Form Name *</Label>
                       <Input
                         id="form-name"
-                        className="bg-black/5 border-0"
                         value={formData.name}
                         onChange={(e) =>
                           setFormData({ ...formData, name: e.target.value })
                         }
                       />
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="form-category">Category *</Label>
+                      <Label htmlFor="form-project">Project *</Label>
                       <Select
-                        value={formData.category}
-                        onValueChange={(value: any) =>
-                          setFormData({ ...formData, category: value })
-                        }
+                        value={formData.project}
+                        onValueChange={handleChangeProject}
                       >
-                        <SelectTrigger className="bg-black/5 border-0">
-                          <SelectValue placeholder="Select a category" />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a project" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="health">Health</SelectItem>
-                          <SelectItem value="agriculture">
-                            Agriculture
-                          </SelectItem>
-                          <SelectItem value="wash">
-                            Water & Sanitation
-                          </SelectItem>
-                          <SelectItem value="education">Education</SelectItem>
-                          <SelectItem value="training">Training</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          {projects.map((project) => (
+                            <SelectItem key={project.id} value={project.id}>
+                              {project.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {formData.project && (
+                      <>
+                        <div className="space-y-2"></div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="form-project">Sub Project</Label>
+                          <Select
+                            value={formData.subProject}
+                            onValueChange={handleChangeSubProject}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a subproject" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {subProjects.map((subProject) => (
+                                <SelectItem key={subProject.id} value={subProject.id}>
+                                  {subProject.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="form-description">Description</Label>
                     <Textarea
-                      className="bg-black/5 border-0"
                       id="form-description"
                       value={formData.description}
                       onChange={(e) =>
@@ -442,7 +438,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
               </CardContent>
             </Card>
 
-            <Card className="mb-6 bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <CardTitle className="text-base">Form Fields</CardTitle>
                 <Dialog
@@ -450,7 +446,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                   onOpenChange={setIsAddFieldDialogOpen}
                 >
                   <DialogTrigger asChild>
-                    <Button size="sm" className="bg-[#2E343E] text-white">
+                    <Button size="sm">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Field
                     </Button>
@@ -496,7 +492,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                     {formData.fields.map((field) => (
                       <div
                         key={field.id}
-                        className={` rounded-md p-3 flex items-center gap-3 bg-[#E3F5FF] cursor-pointer ${
+                        className={`border rounded-md p-3 flex items-center gap-3 cursor-pointer ${
                           selectedField === field.id
                             ? "border-primary bg-muted/30"
                             : ""
@@ -522,7 +518,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 "
+                          className="h-8 w-8 p-0"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteField(field.id);
@@ -534,7 +530,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                     ))}
                     <Button
                       variant="outline"
-                      className="w-full border-dashed bg-[#E5ECF6] "
+                      className="w-full border-dashed"
                       onClick={() => setIsAddFieldDialogOpen(true)}
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -549,22 +545,12 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
           <div className="col-span-12 lg:col-span-4">
             <div className="sticky top-6">
               <Tabs defaultValue="properties" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-black/5">
-                  <TabsTrigger
-                    value="properties"
-                    className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
-                  >
-                    Field Properties
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="form-settings"
-                    className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
-                  >
-                    Form Settings
-                  </TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="properties">Field Properties</TabsTrigger>
+                  <TabsTrigger value="form-settings">Form Settings</TabsTrigger>
                 </TabsList>
                 <TabsContent value="properties">
-                  <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50 ">
+                  <Card>
                     <CardContent className="p-6">
                       {selectedFieldData ? (
                         <div className="space-y-4">
@@ -572,7 +558,6 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                             <Label htmlFor="field-label">Field Label</Label>
                             <Input
                               id="field-label"
-                              className="bg-black/5 border-0"
                               value={selectedFieldData.label}
                               onChange={(e) =>
                                 handleFieldUpdate(selectedField!, {
@@ -590,7 +575,6 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                 Placeholder
                               </Label>
                               <Input
-                                className="bg-black/5 border-0"
                                 id="field-placeholder"
                                 value={selectedFieldData.placeholder || ""}
                                 onChange={(e) =>
@@ -606,7 +590,6 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                             <div className="flex items-center space-x-2">
                               <Checkbox
                                 id="field-required"
-                                className="bg-white"
                                 checked={selectedFieldData.required}
                                 onCheckedChange={(checked: any) =>
                                   handleFieldUpdate(selectedField!, {
@@ -624,7 +607,6 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                             <Label htmlFor="field-help-text">Help Text</Label>
                             <Textarea
                               id="field-help-text"
-                              className="bg-black/5 border-0"
                               value={selectedFieldData.helpText || ""}
                               onChange={(e) =>
                                 handleFieldUpdate(selectedField!, {
@@ -672,7 +654,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                   (option, index) => (
                                     <div
                                       key={index}
-                                      className="flex items-center gap-2 bg-black/5 border-0"
+                                      className="flex items-center gap-2"
                                     >
                                       <Input
                                         value={option.label}
@@ -723,7 +705,6 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                 <Input
                                   id="field-min"
                                   type="number"
-                                  className="bg-black/5 border-0"
                                   value={
                                     selectedFieldData.validations?.min || ""
                                   }
@@ -746,7 +727,6 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                 <Input
                                   id="field-max"
                                   type="number"
-                                  className="bg-black/5 border-0"
                                   value={
                                     selectedFieldData.validations?.max || ""
                                   }
@@ -777,7 +757,6 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                 <Input
                                   id="field-min-length"
                                   type="number"
-                                  className="bg-black/5 border-0"
                                   value={
                                     selectedFieldData.validations?.minLength ||
                                     ""
@@ -803,7 +782,6 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                 <Input
                                   id="field-max-length"
                                   type="number"
-                                  className="bg-black/5 border-0"
                                   value={
                                     selectedFieldData.validations?.maxLength ||
                                     ""
@@ -830,11 +808,11 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                           <div className="pt-2">
                             <Button
                               variant="outline"
-                              className="w-full bg-[#2E343E] text-white border-0"
+                              className="w-full"
                               size="sm"
                               onClick={() => handleDeleteField(selectedField!)}
                             >
-                              <Trash className="h-4 w-4 mr-2 " />
+                              <Trash className="h-4 w-4 mr-2" />
                               Delete Field
                             </Button>
                           </div>
@@ -852,7 +830,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                   </Card>
                 </TabsContent>
                 <TabsContent value="form-settings">
-                  <Card className="bg-[#F7F9FB] border-0">
+                  <Card>
                     <CardContent className="p-6 space-y-6">
                       <div className="space-y-2">
                         <Label htmlFor="form-status">Form Status</Label>
@@ -862,10 +840,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                             setFormData({ ...formData, status: value })
                           }
                         >
-                          <SelectTrigger
-                            id="form-status"
-                            className="bg-black/5 border-0"
-                          >
+                          <SelectTrigger id="form-status">
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                           <SelectContent>
@@ -879,18 +854,15 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                       <div className="space-y-2">
                         <Label>Associated Projects</Label>
                         <Select>
-                          <SelectTrigger
-                            className="bg-black/5 border-0"
-                            id="form-project"
-                          >
+                          <SelectTrigger>
                             <SelectValue placeholder="Select a project" />
                           </SelectTrigger>
                           <SelectContent>
-                            {mockProjects.map((project) => (
+                            {/* {mockProjects.map((project) => (
                               <SelectItem key={project.id} value={project.id}>
                                 {project.title}
                               </SelectItem>
-                            ))}
+                            ))} */}
                           </SelectContent>
                         </Select>
                       </div>
@@ -898,14 +870,11 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                       <div className="space-y-2">
                         <Label>Associated Sub-Projects</Label>
                         <Select>
-                          <SelectTrigger
-                            className="bg-black/5 border-0"
-                            id="form-sub-project"
-                          >
+                          <SelectTrigger>
                             <SelectValue placeholder="Select a sub-project" />
                           </SelectTrigger>
                           <SelectContent>
-                            {mockProjects.flatMap((project) =>
+                            {/* {mockProjects.flatMap((project) =>
                               project.subProjects.map((subProject) => (
                                 <SelectItem
                                   key={subProject.id}
@@ -914,7 +883,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                                   {subProject.title} ({project.title})
                                 </SelectItem>
                               ))
-                            )}
+                            )} */}
                           </SelectContent>
                         </Select>
                       </div>
@@ -927,7 +896,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                           <div className="flex items-center space-x-2">
                             <Label
                               htmlFor="version-control"
-                              className="text-muted-foreground text-sm text-black  bg-black/10 black px-2 py-1 rounded "
+                              className="text-muted-foreground text-sm"
                             >
                               Enabled
                             </Label>
@@ -935,20 +904,17 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                           </div>
                         </div>
                         {isEditing && (
-                          <div className="border rounded-md p-3 space-y-2 bg-[#E5ECF6]">
+                          <div className="border rounded-md p-3 space-y-2">
                             <div className="flex items-center justify-between">
                               <span className="text-sm">Current Version</span>
-                              <Badge
-                                variant="outline"
-                                className="bg-[#2E343E] text-white"
-                              >
+                              <Badge variant="outline">
                                 v{formData.version}
                               </Badge>
                             </div>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="w-full bg-black/10 text-black border-0"
+                              className="w-full"
                             >
                               <Plus className="h-4 w-4 mr-2" />
                               Create New Version
@@ -979,7 +945,7 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
                       <div className="pt-2">
                         <Button
                           variant="outline"
-                          className="w-full bg-[#2E343E] text-white border-gray-50"
+                          className="w-full"
                           onClick={handleSaveForm}
                         >
                           <Save className="h-4 w-4 mr-2" />
@@ -1023,4 +989,13 @@ export function FormBuilder({ formId, onBack, onSave }: FormBuilderProps) {
       )}
     </div>
   );
+
+  {
+    error && (
+      <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md">
+        <AlertCircle className="h-4 w-4 inline mr-2" />
+        {error}
+      </div>
+    );
+  }
 }
