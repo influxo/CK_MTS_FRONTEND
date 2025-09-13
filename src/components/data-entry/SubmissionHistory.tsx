@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button/button";
-import { Card, CardContent } from "../ui/data-display/card";
+import { Card, CardContent, CardHeader } from "../ui/data-display/card";
 import { Input } from "../ui/form/input";
 import {
   Select,
@@ -18,191 +18,165 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
+import { ArrowLeft, Search, Filter, MoreHorizontal, Eye, Calendar, Loader2 } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
-import {
-  ArrowLeft,
-  Search,
-  Filter,
-  MoreHorizontal,
-  Download,
-  Eye,
-  Edit,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  XCircle,
-} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/overlay/dropdown-menu";
+import {
+  Pagination as Pager,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationLink,
+} from "../ui/navigation/pagination";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader as DialogHeaderUI,
+  DialogTitle,
+} from "../ui/overlay/dialog";
+import type { AppDispatch } from "../../store";
+import {
+  fetchFormResponsesByEntity,
+  fetchAllFormResponses,
+  fetchFormResponseById,
+  selectResponses,
+  selectResponsesError,
+  selectResponsesLoading,
+  selectResponsesPagination,
+  selectSelectedResponse,
+  selectSelectedResponseError,
+  selectSelectedResponseLoading,
+  fetchFormTemplateById,
+  selectSelectedTemplate,
+  selectSelectedTemplateLoading,
+} from "../../store/slices/formSlice";
 
 interface SubmissionHistoryProps {
+  entityId?: string;
+  entityType?: "project" | "subproject" | "activity";
   onBack: () => void;
-  onEditSubmission: (formId: string) => void;
 }
 
-// Mock submission data
-const submissions = [
-  {
-    id: "sub-001",
-    formId: "form-001",
-    formTitle: "Community Health Assessment",
-    projectName: "Active",
-    subProjectName: "Community Health Screening",
-    submittedDate: "2025-01-07T14:30:00Z",
-    status: "submitted",
-    beneficiaryId: "BEN-001234",
-    submittedBy: "Arben Kosumi",
-    syncStatus: "synced",
-  },
-  {
-    id: "sub-002",
-    formId: "form-002",
-    formTitle: "Healthcare Service Delivery Report",
-    projectName: "Cares",
-    subProjectName: "Mobile Health Services",
-    submittedDate: "2025-01-06T16:45:00Z",
-    status: "submitted",
-    beneficiaryId: "-",
-    submittedBy: "Shpresa Musliu",
-    syncStatus: "synced",
-  },
-  {
-    id: "sub-003",
-    formId: "form-001",
-    formTitle: "Community Health Assessment",
-    projectName: "Active",
-    subProjectName: "Community Health Screening",
-    submittedDate: "2025-01-06T09:15:00Z",
-    status: "draft",
-    beneficiaryId: "BEN-001235",
-    submittedBy: "Fatima Gashi",
-    syncStatus: "pending",
-  },
-  {
-    id: "sub-004",
-    formId: "form-003",
-    formTitle: "Legal Aid Case Documentation",
-    projectName: "MyRight",
-    subProjectName: "Legal Support Services",
-    submittedDate: "2025-01-05T11:20:00Z",
-    status: "submitted",
-    beneficiaryId: "BEN-001236",
-    submittedBy: "Gentiana Zymberi",
-    syncStatus: "synced",
-  },
-  {
-    id: "sub-005",
-    formId: "form-001",
-    formTitle: "Community Health Assessment",
-    projectName: "Active",
-    subProjectName: "Community Health Screening",
-    submittedDate: "2025-01-04T13:50:00Z",
-    status: "submitted",
-    beneficiaryId: "BEN-001237",
-    submittedBy: "Arben Kosumi",
-    syncStatus: "failed",
-  },
-  {
-    id: "sub-006",
-    formId: "form-005",
-    formTitle: "Home Care Service Log",
-    projectName: "Cares",
-    subProjectName: "Elderly Care Program",
-    submittedDate: "2025-01-03T08:30:00Z",
-    status: "submitted",
-    beneficiaryId: "BEN-001238",
-    submittedBy: "Driton Hoxha",
-    syncStatus: "synced",
-  },
-];
-
 export function SubmissionHistory({
+  entityId,
+  entityType,
   onBack,
-  onEditSubmission,
 }: SubmissionHistoryProps) {
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+
+  const items = useSelector(selectResponses) as any;
+  const safeItems = Array.isArray(items) ? (items as any[]) : [];
+  const loading = useSelector(selectResponsesLoading);
+  const error = useSelector(selectResponsesError);
+  const pagination = useSelector(selectResponsesPagination);
+
+  const selected = useSelector(selectSelectedResponse);
+  const selectedLoading = useSelector(selectSelectedResponseLoading);
+  const selectedError = useSelector(selectSelectedResponseError);
+  const selectedTemplate = useSelector(selectSelectedTemplate);
+  const selectedTemplateLoading = useSelector(selectSelectedTemplateLoading);
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [syncFilter, setSyncFilter] = useState("all");
-  const [projectFilter, setProjectFilter] = useState("all");
+  const [templateFilter, setTemplateFilter] = useState<string>("all"); // stores templateId or "all"
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(20);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewingId, setViewingId] = useState<string | null>(null);
 
-  // Filter submissions
-  const filteredSubmissions = submissions.filter((submission) => {
-    const matchesSearch =
-      submission.formTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      submission.projectName
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      submission.beneficiaryId
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" || submission.status === statusFilter;
-    const matchesSync =
-      syncFilter === "all" || submission.syncStatus === syncFilter;
-    const matchesProject =
-      projectFilter === "all" || submission.projectName === projectFilter;
-
-    return matchesSearch && matchesStatus && matchesSync && matchesProject;
-  });
-
-  // Get unique projects for filter
-  const projects = [...new Set(submissions.map((s) => s.projectName))];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "submitted":
-        return "default";
-      case "draft":
-        return "secondary";
-      case "rejected":
-        return "destructive";
-      default:
-        return "outline";
+  // Fetch template for selected response to resolve field labels
+  useEffect(() => {
+    if (!viewerOpen) return;
+    if (!selected) return;
+    const templateId = selected.template?.id || (selected as any)?.formTemplateId;
+    if (templateId) {
+      dispatch(fetchFormTemplateById({ id: templateId }));
     }
-  };
+  }, [viewerOpen, selected, dispatch]);
 
-  const getSyncStatusIcon = (syncStatus: string) => {
-    switch (syncStatus) {
-      case "synced":
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-      case "pending":
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      case "failed":
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return null;
+  // Build mapping name -> label from the template schema
+  const labelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    const fields = (selectedTemplate as any)?.schema?.fields || [];
+    for (const f of fields) {
+      if (f?.name) map[f.name] = f.label || f.name;
     }
-  };
+    return map;
+  }, [selectedTemplate]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+  useEffect(() => {
+    const templateIdParam = templateFilter === "all" ? undefined : templateFilter;
+    if (entityId && entityType) {
+      dispatch(
+        fetchFormResponsesByEntity({
+          entityId,
+          entityType,
+          templateId: templateIdParam,
+          fromDate: fromDate || undefined,
+          toDate: toDate || undefined,
+          page,
+          limit,
+        })
+      );
+    } else {
+      dispatch(
+        fetchAllFormResponses({
+          templateId: templateIdParam,
+          fromDate: fromDate || undefined,
+          toDate: toDate || undefined,
+          page,
+          limit,
+        })
+      );
+    }
+  }, [dispatch, entityId, entityType, templateFilter, fromDate, toDate, page, limit]);
+
+  const templateOptions = useMemo(() => {
+    const names = new Map<string, string>();
+    safeItems.forEach((r: any) => {
+      if (r?.template?.id) names.set(r.template.id, r.template.name);
     });
+    return Array.from(names.entries()).map(([id, name]) => ({ id, name }));
+  }, [safeItems]);
+
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return safeItems.filter((r: any) => {
+      const matchSearch =
+        !q ||
+        r.template?.name?.toLowerCase().includes(q) ||
+        r.submitter?.firstName?.toLowerCase().includes(q) ||
+        r.submitter?.lastName?.toLowerCase().includes(q) ||
+        r.beneficiary?.pseudonym?.toLowerCase().includes(q);
+      return matchSearch;
+    });
+  }, [safeItems, searchQuery]);
+
+  const handleView = (responseId: string, beneficiaryId?: string | null) => {
+    if (beneficiaryId) {
+      navigate(`/beneficiaries/${beneficiaryId}/form/${responseId}`);
+      return;
+    }
+    setViewingId(responseId);
+    setViewerOpen(true);
+    dispatch(fetchFormResponseById({ id: responseId }));
   };
 
-  const handleRetrySync = (submissionId: string) => {
-    // Implement retry sync logic
-    console.log("Retrying sync for:", submissionId);
-  };
-
-  const handleDownload = (submissionId: string) => {
-    // Implement download logic
-    console.log("Downloading submission:", submissionId);
-  };
-
-  const handleView = (submissionId: string) => {
-    // Implement view logic
-    console.log("Viewing submission:", submissionId);
-  };
+  const totalPages = pagination?.totalPages ?? 1;
+  const currentPage = page;
+  const canPrev = currentPage > 1;
+  const canNext = currentPage < totalPages;
 
   return (
     <div className="space-y-6">
@@ -213,69 +187,8 @@ export function SubmissionHistory({
         </Button>
         <div>
           <h2>Submission History</h2>
-          <p className="text-muted-foreground">
-            View and manage your form submissions
-          </p>
+          <p className="text-muted-foreground">View completed submissions</p>
         </div>
-      </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-              <div>
-                <div className="text-sm text-muted-foreground">Submitted</div>
-                <div className="text-xl font-medium">
-                  {submissions.filter((s) => s.status === "submitted").length}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-yellow-500" />
-              <div>
-                <div className="text-sm text-muted-foreground">Drafts</div>
-                <div className="text-xl font-medium">
-                  {submissions.filter((s) => s.status === "draft").length}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-blue-500" />
-              <div>
-                <div className="text-sm text-muted-foreground">Synced</div>
-                <div className="text-xl font-medium">
-                  {submissions.filter((s) => s.syncStatus === "synced").length}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-500" />
-              <div>
-                <div className="text-sm text-muted-foreground">Failed</div>
-                <div className="text-xl font-medium">
-                  {submissions.filter((s) => s.syncStatus === "failed").length}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Filters */}
@@ -283,180 +196,265 @@ export function SubmissionHistory({
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search submissions..."
+            placeholder="Search by form, submitter, beneficiary..."
             className="pl-9"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[140px]">
+          <Select value={templateFilter} onValueChange={setTemplateFilter}>
+            <SelectTrigger className="w-full sm:w-[220px]">
               <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder="Template" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="submitted">Submitted</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={syncFilter} onValueChange={setSyncFilter}>
-            <SelectTrigger className="w-full sm:w-[140px]">
-              <SelectValue placeholder="Sync Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sync</SelectItem>
-              <SelectItem value="synced">Synced</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="failed">Failed</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={projectFilter} onValueChange={setProjectFilter}>
-            <SelectTrigger className="w-full sm:w-[160px]">
-              <SelectValue placeholder="Project" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Projects</SelectItem>
-              {projects.map((project) => (
-                <SelectItem key={project} value={project}>
-                  {project}
+              <SelectItem value="all">All Templates</SelectItem>
+              {templateOptions.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+
+          <div className="flex gap-2">
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={(e) => {
+                setPage(1);
+                setFromDate(e.target.value);
+              }}
+              className="w-[160px]"
+              placeholder="From"
+            />
+            <Input
+              type="date"
+              value={toDate}
+              onChange={(e) => {
+                setPage(1);
+                setToDate(e.target.value);
+              }}
+              className="w-[160px]"
+              placeholder="To"
+            />
+          </div>
+
+          <Select
+            value={String(limit)}
+            onValueChange={(v) => {
+              setPage(1);
+              setLimit(Number(v));
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-[120px]">
+              <SelectValue placeholder="Page size" />
+            </SelectTrigger>
+            <SelectContent>
+              {[10, 20, 50, 100].map((n) => (
+                <SelectItem key={n} value={String(n)}>
+                  {n} / page
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setTemplateFilter("all");
+              setFromDate("");
+              setToDate("");
+              setPage(1);
+              setLimit(20);
+              setSearchQuery("");
+            }}
+          >
+            Reset
+          </Button>
         </div>
       </div>
 
-      {/* Submissions Table */}
       <Card>
+        <CardHeader className="py-3 px-4">
+          {loading && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading submissions...
+            </div>
+          )}
+          {!loading && error && (
+            <div className="text-sm text-red-600">{error}</div>
+          )}
+        </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Form</TableHead>
-                  <TableHead>Project</TableHead>
-                  <TableHead>Beneficiary ID</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Sync Status</TableHead>
-                  <TableHead>Submitted Date</TableHead>
+                  <TableHead>Beneficiary</TableHead>
+                  <TableHead>Submitted</TableHead>
                   <TableHead>Submitted By</TableHead>
                   <TableHead className="w-[70px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSubmissions.map((submission) => (
-                  <TableRow key={submission.id}>
+                {filtered.map((r) => (
+                  <TableRow key={r.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">
-                          {submission.formTitle}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {submission.subProjectName}
+                        <div className="font-medium">{r.template?.name ?? "—"}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {entityType && (
+                            <Badge variant="outline" className="mr-1">
+                              {entityType}
+                            </Badge>
+                          )}
+                          <span className="font-mono">{r.entityId}</span>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{submission.projectName}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-mono text-sm">
-                        {submission.beneficiaryId}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusColor(submission.status)}>
-                        {submission.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getSyncStatusIcon(submission.syncStatus)}
-                        <span className="text-sm">{submission.syncStatus}</span>
-                      </div>
+                      {r.beneficiary ? (
+                        <Badge variant="secondary">{r.beneficiary.pseudonym}</Badge>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm">
-                          {formatDate(submission.submittedDate)}
+                          {r.submittedAt ? new Date(r.submittedAt).toLocaleString() : "—"}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm">{submission.submittedBy}</span>
+                      <span className="text-sm">{`${r.submitter?.firstName ?? ""} ${r.submitter?.lastName ?? ""}`.trim() || "—"}</span>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                          >
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => handleView(submission.id)}
+                            onClick={() => handleView(r.id, r.beneficiary?.id)}
                           >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View
+                            <Eye className="h-4 w-4 mr-2" /> View
                           </DropdownMenuItem>
-                          {submission.status === "draft" && (
-                            <DropdownMenuItem
-                              onClick={() =>
-                                onEditSubmission(submission.formId)
-                              }
-                            >
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            onClick={() => handleDownload(submission.id)}
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Download
-                          </DropdownMenuItem>
-                          {submission.syncStatus === "failed" && (
-                            <DropdownMenuItem
-                              onClick={() => handleRetrySync(submission.id)}
-                            >
-                              <CheckCircle2 className="h-4 w-4 mr-2" />
-                              Retry Sync
-                            </DropdownMenuItem>
-                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
+                {!loading && filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      No submissions found
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination controls */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="py-3">
+              <Pager>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      className={!canPrev ? "pointer-events-none opacity-50" : ""}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (canPrev) setPage((p) => Math.max(1, p - 1));
+                      }}
+                      href="#"
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: totalPages }).slice(0, 7).map((_, idx) => {
+                    const p = idx + 1;
+                    return (
+                      <PaginationItem key={p}>
+                        <PaginationLink
+                          href="#"
+                          isActive={p === currentPage}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setPage(p);
+                          }}
+                        >
+                          {p}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  <PaginationItem>
+                    <PaginationNext
+                      className={!canNext ? "pointer-events-none opacity-50" : ""}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (canNext) setPage((p) => Math.min(totalPages, p + 1));
+                      }}
+                      href="#"
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pager>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {filteredSubmissions.length === 0 && (
-        <div className="text-center py-12">
-          <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="font-medium mb-2">No submissions found</h3>
-          <p className="text-muted-foreground">
-            {searchQuery ||
-            statusFilter !== "all" ||
-            syncFilter !== "all" ||
-            projectFilter !== "all"
-              ? "No submissions match your current filters. Try adjusting your search criteria."
-              : "You haven't submitted any forms yet. Start by filling out available forms."}
-          </p>
-        </div>
-      )}
+      <Dialog open={viewerOpen} onOpenChange={(o) => (!o ? setViewerOpen(false) : null)}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeaderUI>
+            <DialogTitle>Form Submission</DialogTitle>
+          </DialogHeaderUI>
+          {selectedLoading && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading...
+            </div>
+          )}
+          {!selectedLoading && selectedError && (
+            <div className="text-sm text-red-600">{selectedError}</div>
+          )}
+          {!selectedLoading && !selectedError && selected && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="text-lg font-medium">{selected.template?.name ?? "Untitled Template"}</div>
+                  <div className="text-sm text-muted-foreground">
+                    Submitted on {selected.submittedAt ? new Date(selected.submittedAt).toLocaleString() : "—"}
+                  </div>
+                </div>
+                {selected.template?.version !== undefined && (
+                  <Badge variant="outline">v{selected.template.version}</Badge>
+                )}
+              </div>
+              {selectedTemplateLoading && (
+                <div className="text-sm text-muted-foreground">Loading form definition…</div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {Object.entries(selected.data || {}).map(([k, v]) => (
+                  <div key={k} className="rounded-md border p-3 bg-white">
+                    <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
+                      {labelMap[k] ?? k.replace(/[_\-]+/g, " ")}
+                    </div>
+                    <div className="text-sm font-medium break-words">
+                      {typeof v === "object" ? JSON.stringify(v) : String(v)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
