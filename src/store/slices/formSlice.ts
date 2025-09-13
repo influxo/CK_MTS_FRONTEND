@@ -51,7 +51,7 @@ export const fetchFormTemplates = createAsyncThunk<
   GetFormTemplatesResponse,
   GetFormTemplatesRequest,
   { rejectValue: string }
->("forms/fetchFormTemplates", async (params, { rejectWithValue }) => {
+>("form/fetchFormTemplates", async (params, { rejectWithValue }) => {
   const response = await formService.getFormTemplates(params);
   if (!response.success) {
     return rejectWithValue(
@@ -65,19 +65,24 @@ export const submitFormResponse = createAsyncThunk<
   FormSubmissionResponse,
   { templateId: string; payload: FormSubmissionRequest },
   { rejectValue: string }
->("forms/submitFormResponse", async ({ templateId, payload }, { rejectWithValue }) => {
-  const response = await formService.submitForm(templateId, payload);
-  if (!response.success) {
-    return rejectWithValue(response.message || "Failed to submit form response");
+>(
+  "form/submitFormResponse",
+  async ({ templateId, payload }, { rejectWithValue }) => {
+    const response = await formService.submitForm(templateId, payload);
+    if (!response.success) {
+      return rejectWithValue(
+        response.message || "Failed to submit form response"
+      );
+    }
+    return response;
   }
-  return response;
-});
+);
 
 export const fetchFormTemplateById = createAsyncThunk<
   GetFormTemplateByIdResponse,
   { id: string },
   { rejectValue: string }
->("forms/fetchFormTemplateById", async ({ id }, { rejectWithValue }) => {
+>("form/fetchFormTemplateById", async ({ id }, { rejectWithValue }) => {
   const response = await formService.getFormTemplateById(id);
   if (!response.success) {
     return rejectWithValue(response.message || "Failed to fetch form template");
@@ -89,7 +94,7 @@ export const fetchFormResponseById = createAsyncThunk<
   GetFormResponseByIdResponse,
   { id: string },
   { rejectValue: string }
->("forms/fetchFormResponseById", async ({ id }, { rejectWithValue }) => {
+>("form/fetchFormResponseById", async ({ id }, { rejectWithValue }) => {
   const response = await formService.getFormResponseById(id);
   if (!response.success) {
     return rejectWithValue(response.message || "Failed to fetch form response");
@@ -98,7 +103,7 @@ export const fetchFormResponseById = createAsyncThunk<
 });
 
 const formSlice = createSlice({
-  name: "forms",
+  name: "form",
   initialState,
   reducers: {
     clearFormErrors(state) {
@@ -147,7 +152,8 @@ const formSlice = createSlice({
       })
       .addCase(fetchFormTemplateById.rejected, (state, action) => {
         state.selectedTemplateLoading = false;
-        state.selectedTemplateError = action.payload ?? "Failed to fetch form template";
+        state.selectedTemplateError =
+          action.payload ?? "Failed to fetch form template";
       })
       // fetch single response by id
       .addCase(fetchFormResponseById.pending, (state) => {
@@ -161,44 +167,46 @@ const formSlice = createSlice({
       })
       .addCase(fetchFormResponseById.rejected, (state, action) => {
         state.selectedResponseLoading = false;
-        state.selectedResponseError = action.payload ?? "Failed to fetch form response";
+        state.selectedResponseError =
+          action.payload ?? "Failed to fetch form response";
       });
   },
 });
 
 export const { clearFormErrors } = formSlice.actions;
 
-export const selectFormTemplates = (state: { forms: FormTemplatesState }) =>
-  state.forms.templates;
+export const selectFormTemplates = (state: { form: FormTemplatesState }) =>
+  state.form.templates;
 export const selectFormTemplatesLoading = (state: {
-  forms: FormTemplatesState;
-}) => state.forms.isLoading;
-export const selectFormTemplatesError = (state: {
-  forms: FormTemplatesState;
-}) => state.forms.error;
+  form: FormTemplatesState;
+}) => state.form.isLoading;
+export const selectFormTemplatesError = (state: { form: FormTemplatesState }) =>
+  state.form.error;
 export const selectFormTemplatesPagination = (state: {
-  forms: FormTemplatesState;
-}) => state.forms.pagination;
-export const selectFormSubmitLoading = (state: { forms: FormTemplatesState }) =>
-  state.forms.submitLoading;
-export const selectFormSubmitError = (state: { forms: FormTemplatesState }) =>
-  state.forms.submitError;
-export const selectLastFormSubmission = (state: { forms: FormTemplatesState }) =>
-  state.forms.lastSubmission;
-export const selectSelectedTemplate = (state: { forms: FormTemplatesState }) =>
-  state.forms.selectedTemplate;
+  form: FormTemplatesState;
+}) => state.form.pagination;
+export const selectFormSubmitLoading = (state: { form: FormTemplatesState }) =>
+  state.form.submitLoading;
+export const selectFormSubmitError = (state: { form: FormTemplatesState }) =>
+  state.form.submitError;
+export const selectLastFormSubmission = (state: { form: FormTemplatesState }) =>
+  state.form.lastSubmission;
+export const selectSelectedTemplate = (state: { form: FormTemplatesState }) =>
+  state.form.selectedTemplate;
 export const selectSelectedTemplateLoading = (state: {
-  forms: FormTemplatesState;
-}) => state.forms.selectedTemplateLoading;
-export const selectSelectedTemplateError = (state: { forms: FormTemplatesState }) =>
-  state.forms.selectedTemplateError;
+  form: FormTemplatesState;
+}) => state.form.selectedTemplateLoading;
+export const selectSelectedTemplateError = (state: {
+  form: FormTemplatesState;
+}) => state.form.selectedTemplateError;
 
-export const selectSelectedResponse = (state: { forms: FormTemplatesState }) =>
-  state.forms.selectedResponse;
+export const selectSelectedResponse = (state: { form: FormTemplatesState }) =>
+  state.form.selectedResponse;
 export const selectSelectedResponseLoading = (state: {
-  forms: FormTemplatesState;
-}) => state.forms.selectedResponseLoading;
-export const selectSelectedResponseError = (state: { forms: FormTemplatesState }) =>
-  state.forms.selectedResponseError;
+  form: FormTemplatesState;
+}) => state.form.selectedResponseLoading;
+export const selectSelectedResponseError = (state: {
+  form: FormTemplatesState;
+}) => state.form.selectedResponseError;
 
 export default formSlice.reducer;

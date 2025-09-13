@@ -1,3 +1,28 @@
+export interface GetFormTemplatesRequest {
+  projectId?: string; // uuid string
+  subprojectId?: string; // uuid string
+  activityId?: string; // uuid string
+  entityType?: string; // example: "project" | "subproject" | "activity"
+  page?: number;
+  limit?: number;
+}
+
+// Pagination model used in list responses
+export interface Pagination {
+  page: number;
+  limit: number;
+  totalPages: number;
+  totalCount: number;
+}
+
+export interface GetFormTemplatesResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    templates: FormTemplate[];
+    pagination: Pagination;
+  };
+}
 export interface FormFieldOption {
   value: string;
   label: string;
@@ -50,6 +75,7 @@ export interface FormSchema {
 export interface FormTemplate {
   id: string;
   name: string;
+  programId: string;
   description?: string;
   category?: string;
   status?: string;
@@ -58,6 +84,7 @@ export interface FormTemplate {
   schema: FormSchema;
   updatedAt?: string;
   createdAt?: string;
+  deletedAt?: string;
 }
 
 export interface FormTemplatePagination {
