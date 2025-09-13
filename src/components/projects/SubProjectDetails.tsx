@@ -8,7 +8,6 @@ import {
   Users,
   ArrowLeft,
   Plus,
-  Link,
   X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -205,7 +204,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
           ],
         })
       ).unwrap();
-      setIsAssociateDialogOpen(false);
+      setIsAddDialogOpen(false);
       setAssociateSelectedBeneficiaryId("");
       // refresh current subproject beneficiaries list
       dispatch(
@@ -235,6 +234,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
 
   // Create dialog + form state
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [addBeneficiaryTab, setAddBeneficiaryTab] = useState<"new" | "existing">("new");
   const [form, setForm] = useState<CreateBeneficiaryRequest>({
     firstName: "",
     lastName: "",
@@ -278,8 +278,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
   ) => {
     setter(list.filter((_, i) => i !== index));
   };
-  // Associate Existing modal state
-  const [isAssociateDialogOpen, setIsAssociateDialogOpen] = useState(false);
+  // Associate Existing state (used in Add dialog > Add Existing tab)
   const [associateSelectedBeneficiaryId, setAssociateSelectedBeneficiaryId] =
     useState<string>("");
 
@@ -313,12 +312,12 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
     }
   }, [activeTab, subprojectId, dispatch]);
 
-  // Fetch beneficiaries list when association modal opens
+  // Fetch beneficiaries list when Add dialog is open and tab is "existing"
   useEffect(() => {
-    if (isAssociateDialogOpen) {
+    if (isAddDialogOpen && addBeneficiaryTab === "existing") {
       dispatch(fetchBeneficiaries(undefined));
     }
-  }, [isAssociateDialogOpen, dispatch]);
+  }, [isAddDialogOpen, addBeneficiaryTab, dispatch]);
 
   // After successful create (+ association), close dialog, reset form, refresh list
   useEffect(() => {
@@ -1057,13 +1056,23 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle>Add New Beneficiary</DialogTitle>
+                      <DialogTitle>Add Beneficiary</DialogTitle>
                       <DialogDescription>
-                        Enter the details of the beneficiary you want to add to
-                        this sub-project.
+                        Use the tabs below to add a brand new beneficiary or associate an existing one with this sub-project.
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
+
+                    <Tabs
+                      value={addBeneficiaryTab}
+                      onValueChange={(v) => setAddBeneficiaryTab(v as "new" | "existing")}
+                    >
+                      <TabsList className="mb-4">
+                        <TabsTrigger value="new">Add New</TabsTrigger>
+                        <TabsTrigger value="existing">Add Existing</TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="new" className="m-0 p-0">
+                        <div className="grid gap-4 py-4">
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="firstName" className="text-right">
                           First Name *
@@ -1493,7 +1502,54 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                           {createError}
                         </div>
                       )}
-                    </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="existing" className="m-0 p-0">
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">Beneficiary *</Label>
+                            <div className="col-span-3">
+                              {listLoading ? (
+                                <div className="text-sm text-muted-foreground">
+                                  Loading beneficiaries...
+                                </div>
+                              ) : listError ? (
+                                <div className="text-sm text-red-600">
+                                  {listError}
+                                </div>
+                              ) : (
+                                <Select
+                                  value={associateSelectedBeneficiaryId}
+                                  onValueChange={setAssociateSelectedBeneficiaryId}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select beneficiary" />
+                                  </SelectTrigger>
+                                  <SelectContent className="max-h-64 overflow-y-auto">
+                                    {listItems.map((b) => {
+                                      const pii: any = (b as any).pii || {};
+                                      const fullName =
+                                        `${pii.firstName || ""} ${
+                                          pii.lastName || ""
+                                        }`.trim() ||
+                                        b.pseudonym ||
+                                        b.id;
+                                      return (
+                                        <SelectItem key={b.id} value={b.id}>
+                                          {fullName} ({b.pseudonym})
+                                        </SelectItem>
+                                      );
+                                    })}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+
                     <DialogFooter>
                       <Button
                         variant="outline"
@@ -1501,89 +1557,18 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                       >
                         Cancel
                       </Button>
-                      <Button
-                        onClick={handleCreateSubmit}
-                        disabled={createLoading}
-                      >
-                        {createLoading ? "Saving..." : "Save"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-                <Dialog
-                  open={isAssociateDialogOpen}
-                  onOpenChange={setIsAssociateDialogOpen}
-                >
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="ml-2">
-                      <Link className="h-4 w-4 mr-2" />
-                      Associate Existing
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Associate Existing Beneficiary</DialogTitle>
-                      <DialogDescription>
-                        Select an existing beneficiary to associate with this
-                        sub-project.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Beneficiary *</Label>
-                        <div className="col-span-3">
-                          {listLoading ? (
-                            <div className="text-sm text-muted-foreground">
-                              Loading beneficiaries...
-                            </div>
-                          ) : listError ? (
-                            <div className="text-sm text-red-600">
-                              {listError}
-                            </div>
-                          ) : (
-                            <Select
-                              value={associateSelectedBeneficiaryId}
-                              onValueChange={setAssociateSelectedBeneficiaryId}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select beneficiary" />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-64 overflow-y-auto">
-                                {listItems.map((b) => {
-                                  const pii: any = (b as any).pii || {};
-                                  const fullName =
-                                    `${pii.firstName || ""} ${
-                                      pii.lastName || ""
-                                    }`.trim() ||
-                                    b.pseudonym ||
-                                    b.id;
-                                  return (
-                                    <SelectItem key={b.id} value={b.id}>
-                                      {fullName} ({b.pseudonym})
-                                    </SelectItem>
-                                  );
-                                })}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button
-                        variant="outline"
-                        onClick={() => setIsAssociateDialogOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleAssociateExistingSubmit}
-                        disabled={
-                          associateLoading || !associateSelectedBeneficiaryId
-                        }
-                      >
-                        {associateLoading ? "Associating..." : "Associate"}
-                      </Button>
+                      {addBeneficiaryTab === "new" ? (
+                        <Button onClick={handleCreateSubmit} disabled={createLoading}>
+                          {createLoading ? "Saving..." : "Save"}
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={handleAssociateExistingSubmit}
+                          disabled={associateLoading || !associateSelectedBeneficiaryId}
+                        >
+                          {associateLoading ? "Associating..." : "Associate"}
+                        </Button>
+                      )}
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
