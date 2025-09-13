@@ -52,9 +52,7 @@ class FormService {
     }
   }
 
-  async getFormTemplateById(
-    id: string
-  ): Promise<GetFormTemplateByIdResponse> {
+  async getFormTemplateById(id: string): Promise<GetFormTemplateByIdResponse> {
     try {
       const response = await axiosInstance.get<GetFormTemplateByIdResponse>(
         `${this.formsEndpoint}/templates/${id}`
@@ -71,11 +69,11 @@ class FormService {
           id,
           name: "",
           schema: { fields: [] },
-          version: 0,
+          version: "",
           createdAt: "",
           updatedAt: "",
-          deletedAt: null,
-          programId: null,
+          deletedAt: "",
+          programId: "",
           entityAssociations: [],
         },
       };

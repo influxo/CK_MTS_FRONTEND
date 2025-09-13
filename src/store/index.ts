@@ -12,7 +12,7 @@ import serviceMetricsReducer from "./slices/serviceMetricsSlice";
 import kpiReducer from "./slices/kpiSlice";
 import demographicsReducer from "./slices/demographicsSlice";
 import formsReducer from "./slices/formsSlice";
-
+import formReducer from "./slices/formSlice";
 
 // Configure the Redux store
 export const store = configureStore({
@@ -21,6 +21,7 @@ export const store = configureStore({
     projects: projectsReducer,
     subprojects: subprojectsReducer,
     forms: formsReducer,
+    form: formReducer,
     employees: employeesReducer,
     roles: rolesReducer,
     activities: activitiesReducer,
