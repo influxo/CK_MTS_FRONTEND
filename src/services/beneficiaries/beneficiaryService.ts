@@ -18,11 +18,14 @@ import type {
   GetBeneficiariesByEntityResponse,
   AssociateBeneficiaryToEntitiesRequest,
   AssociateBeneficiaryToEntitiesResponse,
+  GetServiceDeliveriesSummaryRequest,
+  GetServiceDeliveriesSummaryResponse,
 } from "./beneficiaryModels";
 
 class BeneficiaryService {
   private baseUrl = getApiUrl();
   private beneficiaryEndpoint = `${this.baseUrl}/beneficiaries`;
+  private serviceEndpoint = `${this.baseUrl}/services`;
 
   async createBeneficiary(
     req: CreateBeneficiaryRequest
@@ -49,10 +52,11 @@ class BeneficiaryService {
   ): Promise<AssociateBeneficiaryToEntitiesResponse> {
     const { id, links } = params;
     try {
-      const response = await axiosInstance.post<AssociateBeneficiaryToEntitiesResponse>(
-        `${this.beneficiaryEndpoint}/${id}/entities`,
-        links
-      );
+      const response =
+        await axiosInstance.post<AssociateBeneficiaryToEntitiesResponse>(
+          `${this.beneficiaryEndpoint}/${id}/entities`,
+          links
+        );
       return response.data;
     } catch (error: any) {
       if (error?.response) {
@@ -60,7 +64,8 @@ class BeneficiaryService {
       }
       return {
         success: false,
-        message: error?.message || "Failed to associate beneficiary to entities",
+        message:
+          error?.message || "Failed to associate beneficiary to entities",
       } as AssociateBeneficiaryToEntitiesResponse;
     }
   }
@@ -70,18 +75,19 @@ class BeneficiaryService {
   ): Promise<GetBeneficiariesByEntityResponse> {
     const { entityId, entityType, status, page, limit } = params;
     try {
-      const response = await axiosInstance.get<GetBeneficiariesByEntityResponse>(
-        `${this.beneficiaryEndpoint}/by-entity`,
-        {
-          params: {
-            entityId,
-            entityType,
-            status,
-            page,
-            limit,
-          },
-        }
-      );
+      const response =
+        await axiosInstance.get<GetBeneficiariesByEntityResponse>(
+          `${this.beneficiaryEndpoint}/by-entity`,
+          {
+            params: {
+              entityId,
+              entityType,
+              status,
+              page,
+              limit,
+            },
+          }
+        );
       return response.data;
     } catch (error: any) {
       if (error?.response) {
@@ -251,6 +257,32 @@ class BeneficiaryService {
         data: [],
         message: error?.message || "Failed to fetch beneficiary entities",
       } as GetBeneficiaryEntitiesResponse;
+    }
+  }
+
+  // Service deliveries summary metrics
+  async getServiceDeliveriesSummary(
+    params?: GetServiceDeliveriesSummaryRequest
+  ): Promise<GetServiceDeliveriesSummaryResponse> {
+    try {
+      const response = await axiosInstance.get<GetServiceDeliveriesSummaryResponse>(
+        `${this.serviceEndpoint}/metrics/deliveries/summary`,
+        {
+          params: {
+            beneficiaryId: params?.beneficiaryId,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as GetServiceDeliveriesSummaryResponse;
+      }
+      return {
+        success: false,
+        message:
+          error?.message || "Failed to fetch service deliveries summary",
+      } as GetServiceDeliveriesSummaryResponse;
     }
   }
 }

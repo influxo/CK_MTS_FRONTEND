@@ -35,12 +35,21 @@ class ServiceMetricsService {
         { params: mapped }
       );
 
-      const dyn = response.data as { success: boolean; data?: any; message?: string };
+      const dyn = response.data as {
+        success: boolean;
+        data?: any;
+        message?: string;
+      };
       if (!dyn.success) {
         return {
           success: false,
-          message: dyn.message || 'Failed to fetch metrics summary',
-          data: { totalDeliveries: 0, uniqueBeneficiaries: 0, uniqueStaff: 0, uniqueServices: 0 },
+          message: dyn.message || "Failed to fetch metrics summary",
+          data: {
+            totalDeliveries: 0,
+            uniqueBeneficiaries: 0,
+            uniqueStaff: 0,
+            uniqueServices: 0,
+          },
         };
       }
 
@@ -78,7 +87,7 @@ class ServiceMetricsService {
     try {
       // Map to new dynamic series API (metric=submissions)
       const mapped: any = {
-        metric: 'submissions',
+        metric: "submissions",
         groupBy: params.groupBy,
         entityId: params.entityId,
         entityType: params.entityType,
@@ -94,20 +103,31 @@ class ServiceMetricsService {
         { params: mapped }
       );
 
-      const dyn = response.data as { success: boolean; data?: { metric: string; granularity: any; series: Array<{ periodStart: string; value: number }> }; message?: string };
+      const dyn = response.data as {
+        success: boolean;
+        data?: {
+          metric: string;
+          granularity: any;
+          series: Array<{ periodStart: string; value: number }>;
+        };
+        message?: string;
+      };
       if (!dyn.success || !dyn.data) {
         return {
           success: false,
-          message: dyn.message || 'Failed to fetch deliveries series',
+          message: dyn.message || "Failed to fetch deliveries series",
           items: [],
-          granularity: (params.groupBy as any) || 'month',
+          granularity: (params.groupBy as any) || "month",
           groupedBy: null,
         };
       }
 
       // Adapt dynamic series -> deliveries series model
       const items = (dyn.data.series || []).map((s) => ({
-        periodStart: typeof s.periodStart === 'string' ? s.periodStart : new Date(s.periodStart as any).toISOString(),
+        periodStart:
+          typeof s.periodStart === "string"
+            ? s.periodStart
+            : new Date(s.periodStart as any).toISOString(),
         count: Number(s.value || 0),
       }));
 
@@ -125,7 +145,7 @@ class ServiceMetricsService {
         success: false,
         message: error?.message || "Failed to fetch deliveries series",
         items: [],
-        granularity: (params.groupBy as any) || 'month',
+        granularity: (params.groupBy as any) || "month",
         groupedBy: null,
       };
     }

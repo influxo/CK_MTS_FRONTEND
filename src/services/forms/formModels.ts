@@ -114,6 +114,13 @@ export interface GetFormTemplateByIdResponse {
   data: FormTemplate;
 }
 
+export interface ServicePayload {
+  serviceId: string;
+  deliveredAt: string;
+  staffUserId: string;
+  notes?: string;
+}
+
 // Request for submitting a form
 export interface FormSubmissionRequest {
   /**
@@ -125,6 +132,9 @@ export interface FormSubmissionRequest {
    * UUID of the entity (project, subproject, or activity) this submission belongs to
    */
   entityId: string;
+
+  // beneficiary id
+  beneficiaryId?: string;
 
   /**
    * The entity type this form is associated with
@@ -143,6 +153,7 @@ export interface FormSubmissionRequest {
    */
   latitude: number;
   longitude: number;
+  services?: ServicePayload[];
 }
 
 // Data returned when a form is successfully submitted
@@ -154,6 +165,7 @@ export interface FormSubmissionData {
   entityId: string;
   entityType: string;
   submittedBy: string;
+  beneficiaryId?: string;
   data: Record<string, any>;
   latitude: string; // API returns these as strings
   longitude: string;

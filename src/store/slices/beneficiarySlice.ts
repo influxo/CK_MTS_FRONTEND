@@ -21,6 +21,9 @@ import type {
   GetBeneficiariesByEntityResponse,
   AssociateBeneficiaryToEntitiesRequest,
   AssociateBeneficiaryToEntitiesResponse,
+  GetServiceDeliveriesSummaryRequest,
+  GetServiceDeliveriesSummaryResponse,
+  ServiceDeliveriesSummaryData,
 } from "../../services/beneficiaries/beneficiaryModels";
 
 interface BeneficiaryState {
@@ -78,6 +81,10 @@ interface BeneficiaryState {
   associateIsLoading: boolean;
   associateError: string | null;
   associateResult: AssociateBeneficiaryToEntitiesResponse["data"] | null;
+  // service deliveries summary metrics
+  deliveriesSummary: ServiceDeliveriesSummaryData | null;
+  deliveriesSummaryIsLoading: boolean;
+  deliveriesSummaryError: string | null;
 }
 
 const initialState: BeneficiaryState = {
@@ -135,6 +142,10 @@ const initialState: BeneficiaryState = {
   associateIsLoading: false,
   associateError: null,
   associateResult: null,
+  // service deliveries summary metrics
+  deliveriesSummary: null,
+  deliveriesSummaryIsLoading: false,
+  deliveriesSummaryError: null,
 };
 
 export const createBeneficiary = createAsyncThunk<
@@ -246,6 +257,24 @@ export const fetchBeneficiaryEntities = createAsyncThunk<
   return res;
 });
 
+// Service deliveries summary metrics
+export const fetchServiceDeliveriesSummary = createAsyncThunk<
+  GetServiceDeliveriesSummaryResponse,
+  GetServiceDeliveriesSummaryRequest | undefined,
+  { rejectValue: string }
+>(
+  "beneficiaries/fetchServiceDeliveriesSummary",
+  async (params, { rejectWithValue }) => {
+    const res = await beneficiaryService.getServiceDeliveriesSummary(params);
+    if (!res.success) {
+      return rejectWithValue(
+        res.message || "Failed to fetch service deliveries summary"
+      );
+    }
+    return res;
+  }
+);
+
 export const deleteBeneficiaryById = createAsyncThunk<
   DeleteBeneficiaryResponse,
   string,
@@ -296,6 +325,11 @@ const beneficiarySlice = createSlice({
       state.associateIsLoading = false;
       state.associateError = null;
       state.associateResult = null;
+    },
+    clearServiceDeliveriesSummary(state) {
+      state.deliveriesSummary = null;
+      state.deliveriesSummaryIsLoading = false;
+      state.deliveriesSummaryError = null;
     },
   },
   extraReducers: (builder) => {
@@ -474,11 +508,26 @@ const beneficiarySlice = createSlice({
         state.associateError =
           action.payload ?? "Failed to associate beneficiary to entities";
         state.associateResult = null;
+      })
+      // service deliveries summary
+      .addCase(fetchServiceDeliveriesSummary.pending, (state) => {
+        state.deliveriesSummaryIsLoading = true;
+        state.deliveriesSummaryError = null;
+      })
+      .addCase(fetchServiceDeliveriesSummary.fulfilled, (state, action) => {
+        state.deliveriesSummaryIsLoading = false;
+        state.deliveriesSummary = action.payload.data ?? null;
+      })
+      .addCase(fetchServiceDeliveriesSummary.rejected, (state, action) => {
+        state.deliveriesSummaryIsLoading = false;
+        state.deliveriesSummaryError =
+          action.payload ?? "Failed to fetch service deliveries summary";
+        state.deliveriesSummary = null;
       });
   },
 });
 
-export const { clearBeneficiaryMessages, clearBeneficiaryList, clearBeneficiaryDetail, clearBeneficiaryUpdate, clearBeneficiaryDelete, clearBeneficiaryAssociation } = beneficiarySlice.actions;
+export const { clearBeneficiaryMessages, clearBeneficiaryList, clearBeneficiaryDetail, clearBeneficiaryUpdate, clearBeneficiaryDelete, clearBeneficiaryAssociation, clearServiceDeliveriesSummary } = beneficiarySlice.actions;
 
 export const selectBeneficiaryIsLoading = (state: {
   beneficiaries: BeneficiaryState;
@@ -596,5 +645,15 @@ export const selectBeneficiaryAssociateError = (state: { beneficiaries: Benefici
 
 export const selectBeneficiaryAssociateResult = (state: { beneficiaries: BeneficiaryState }) =>
   state.beneficiaries.associateResult;
+
+// service deliveries summary selectors
+export const selectServiceDeliveriesSummary = (state: { beneficiaries: BeneficiaryState }) =>
+  state.beneficiaries.deliveriesSummary;
+
+export const selectServiceDeliveriesSummaryLoading = (state: { beneficiaries: BeneficiaryState }) =>
+  state.beneficiaries.deliveriesSummaryIsLoading;
+
+export const selectServiceDeliveriesSummaryError = (state: { beneficiaries: BeneficiaryState }) =>
+  state.beneficiaries.deliveriesSummaryError;
 
 export default beneficiarySlice.reducer;

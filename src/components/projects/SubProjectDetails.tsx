@@ -8,7 +8,7 @@ import {
   Users,
   ArrowLeft,
   Plus,
-  Link,
+  X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Badge } from "../ui/data-display/badge";
@@ -204,7 +204,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
           ],
         })
       ).unwrap();
-      setIsAssociateDialogOpen(false);
+      setIsAddDialogOpen(false);
       setAssociateSelectedBeneficiaryId("");
       // refresh current subproject beneficiaries list
       dispatch(
@@ -234,6 +234,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
 
   // Create dialog + form state
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [addBeneficiaryTab, setAddBeneficiaryTab] = useState<"new" | "existing">("new");
   const [form, setForm] = useState<CreateBeneficiaryRequest>({
     firstName: "",
     lastName: "",
@@ -247,14 +248,37 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
     nationality: "",
     status: "active",
   });
+  // Chip-based details state (match ProjectDetails.tsx)
+  const [allergies, setAllergies] = useState<string[]>([]);
+  const [disabilities, setDisabilities] = useState<string[]>([]);
+  const [chronicConditions, setChronicConditions] = useState<string[]>([]);
+  const [medications, setMedications] = useState<string[]>([]);
   const [allergiesInput, setAllergiesInput] = useState("");
   const [disabilitiesInput, setDisabilitiesInput] = useState("");
   const [chronicConditionsInput, setChronicConditionsInput] = useState("");
   const [medicationsInput, setMedicationsInput] = useState("");
   const [bloodTypeInput, setBloodTypeInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
-  // Associate Existing modal state
-  const [isAssociateDialogOpen, setIsAssociateDialogOpen] = useState(false);
+  
+  // Helpers for chip lists (match ProjectDetails.tsx behavior)
+  const addItem = (
+    value: string,
+    list: string[],
+    setter: (next: string[]) => void
+  ) => {
+    const v = (value || "").trim();
+    if (!v) return;
+    if (list.some((i) => i.toLowerCase() === v.toLowerCase())) return;
+    setter([...list, v]);
+  };
+  const removeItemAt = (
+    index: number,
+    list: string[],
+    setter: (next: string[]) => void
+  ) => {
+    setter(list.filter((_, i) => i !== index));
+  };
+  // Associate Existing state (used in Add dialog > Add Existing tab)
   const [associateSelectedBeneficiaryId, setAssociateSelectedBeneficiaryId] =
     useState<string>("");
 
@@ -288,12 +312,12 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
     }
   }, [activeTab, subprojectId, dispatch]);
 
-  // Fetch beneficiaries list when association modal opens
+  // Fetch beneficiaries list when Add dialog is open and tab is "existing"
   useEffect(() => {
-    if (isAssociateDialogOpen) {
+    if (isAddDialogOpen && addBeneficiaryTab === "existing") {
       dispatch(fetchBeneficiaries(undefined));
     }
-  }, [isAssociateDialogOpen, dispatch]);
+  }, [isAddDialogOpen, addBeneficiaryTab, dispatch]);
 
   // After successful create (+ association), close dialog, reset form, refresh list
   useEffect(() => {
@@ -342,6 +366,10 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
     setMedicationsInput("");
     setBloodTypeInput("");
     setNotesInput("");
+    setAllergies([]);
+    setDisabilities([]);
+    setChronicConditions([]);
+    setMedications([]);
   };
 
   const handleCreateSubmit = async () => {
@@ -349,28 +377,40 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
       return;
     }
     try {
-      const splitCsv = (s: string) =>
-        s
-          .split(",")
-          .map((v) => v.trim())
-          .filter((v) => v.length > 0);
+      // finalize arrays including any residual input as a single item (match ProjectDetails.tsx)
+      const allergiesFinal = [
+        ...allergies,
+        ...(allergiesInput.trim() ? [allergiesInput.trim()] : []),
+      ];
+      const disabilitiesFinal = [
+        ...disabilities,
+        ...(disabilitiesInput.trim() ? [disabilitiesInput.trim()] : []),
+      ];
+      const chronicConditionsFinal = [
+        ...chronicConditions,
+        ...(chronicConditionsInput.trim() ? [chronicConditionsInput.trim()] : []),
+      ];
+      const medicationsFinal = [
+        ...medications,
+        ...(medicationsInput.trim() ? [medicationsInput.trim()] : []),
+      ];
 
       const hasAnyDetails =
-        allergiesInput.trim() ||
-        disabilitiesInput.trim() ||
-        chronicConditionsInput.trim() ||
-        medicationsInput.trim() ||
-        bloodTypeInput.trim() ||
-        notesInput.trim();
+        allergiesFinal.length > 0 ||
+        disabilitiesFinal.length > 0 ||
+        chronicConditionsFinal.length > 0 ||
+        medicationsFinal.length > 0 ||
+        !!bloodTypeInput.trim() ||
+        !!notesInput.trim();
 
       const payload: CreateBeneficiaryRequest = hasAnyDetails
         ? {
             ...form,
             details: {
-              allergies: splitCsv(allergiesInput),
-              disabilities: splitCsv(disabilitiesInput),
-              chronicConditions: splitCsv(chronicConditionsInput),
-              medications: splitCsv(medicationsInput),
+              allergies: allergiesFinal,
+              disabilities: disabilitiesFinal,
+              chronicConditions: chronicConditionsFinal,
+              medications: medicationsFinal,
               bloodType: bloodTypeInput.trim(),
               notes: notesInput.trim() || undefined,
             },
@@ -595,7 +635,10 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                       ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
                       : enhancedSubProject.status === "pending"
                       ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
-                      : { backgroundColor: "rgba(28,28,28,0.05)", color: "rgba(28,28,28,0.4)" }
+                      : {
+                          backgroundColor: "rgba(28,28,28,0.05)",
+                          color: "rgba(28,28,28,0.4)",
+                        }
                   }
                 >
                   {enhancedSubProject.status === "active"
@@ -1013,13 +1056,23 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle>Add New Beneficiary</DialogTitle>
+                      <DialogTitle>Add Beneficiary</DialogTitle>
                       <DialogDescription>
-                        Enter the details of the beneficiary you want to add to
-                        this sub-project.
+                        Use the tabs below to add a brand new beneficiary or associate an existing one with this sub-project.
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
+
+                    <Tabs
+                      value={addBeneficiaryTab}
+                      onValueChange={(v) => setAddBeneficiaryTab(v as "new" | "existing")}
+                    >
+                      <TabsList className="mb-4">
+                        <TabsTrigger value="new">Add New</TabsTrigger>
+                        <TabsTrigger value="existing">Add Existing</TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="new" className="m-0 p-0">
+                        <div className="grid gap-4 py-4">
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="firstName" className="text-right">
                           First Name *
@@ -1198,27 +1251,105 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                           <Label htmlFor="allergies" className="text-right">
                             Allergies
                           </Label>
-                          <Input
-                            id="allergies"
-                            className="col-span-3"
-                            placeholder="e.g. peanuts, penicillin"
-                            value={allergiesInput}
-                            onChange={(e) => setAllergiesInput(e.target.value)}
-                          />
+                          <div className="col-span-3 space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                id="allergies"
+                                placeholder="Type and press Enter"
+                                value={allergiesInput}
+                                onChange={(e) => setAllergiesInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    addItem(allergiesInput, allergies, setAllergies);
+                                    setAllergiesInput("");
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  addItem(allergiesInput, allergies, setAllergies);
+                                  setAllergiesInput("");
+                                }}
+                              >
+                                <Plus className="h-4 w-4 mr-1" /> Add
+                              </Button>
+                            </div>
+                            {allergies.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {allergies.map((a, idx) => (
+                                  <div
+                                    key={`${a}-${idx}`}
+                                    className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                                  >
+                                    <span>{a}</span>
+                                    <button
+                                      type="button"
+                                      className="hover:text-red-600"
+                                      onClick={() => removeItemAt(idx, allergies, setAllergies)}
+                                      aria-label={`Remove ${a}`}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4 mb-2">
                           <Label htmlFor="disabilities" className="text-right">
                             Disabilities
                           </Label>
-                          <Input
-                            id="disabilities"
-                            className="col-span-3"
-                            placeholder="e.g. visual impairment"
-                            value={disabilitiesInput}
-                            onChange={(e) =>
-                              setDisabilitiesInput(e.target.value)
-                            }
-                          />
+                          <div className="col-span-3 space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                id="disabilities"
+                                placeholder="Type and press Enter"
+                                value={disabilitiesInput}
+                                onChange={(e) => setDisabilitiesInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    addItem(disabilitiesInput, disabilities, setDisabilities);
+                                    setDisabilitiesInput("");
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  addItem(disabilitiesInput, disabilities, setDisabilities);
+                                  setDisabilitiesInput("");
+                                }}
+                              >
+                                <Plus className="h-4 w-4 mr-1" /> Add
+                              </Button>
+                            </div>
+                            {disabilities.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {disabilities.map((d, idx) => (
+                                  <div
+                                    key={`${d}-${idx}`}
+                                    className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                                  >
+                                    <span>{d}</span>
+                                    <button
+                                      type="button"
+                                      className="hover:text-red-600"
+                                      onClick={() => removeItemAt(idx, disabilities, setDisabilities)}
+                                      aria-label={`Remove ${d}`}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4 mb-2">
                           <Label
@@ -1227,29 +1358,115 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                           >
                             Chronic Conditions
                           </Label>
-                          <Input
-                            id="chronicConditions"
-                            className="col-span-3"
-                            placeholder="e.g. asthma"
-                            value={chronicConditionsInput}
-                            onChange={(e) =>
-                              setChronicConditionsInput(e.target.value)
-                            }
-                          />
+                          <div className="col-span-3 space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                id="chronicConditions"
+                                placeholder="Type and press Enter"
+                                value={chronicConditionsInput}
+                                onChange={(e) => setChronicConditionsInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    addItem(
+                                      chronicConditionsInput,
+                                      chronicConditions,
+                                      setChronicConditions
+                                    );
+                                    setChronicConditionsInput("");
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  addItem(
+                                    chronicConditionsInput,
+                                    chronicConditions,
+                                    setChronicConditions
+                                  );
+                                  setChronicConditionsInput("");
+                                }}
+                              >
+                                <Plus className="h-4 w-4 mr-1" /> Add
+                              </Button>
+                            </div>
+                            {chronicConditions.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {chronicConditions.map((c, idx) => (
+                                  <div
+                                    key={`${c}-${idx}`}
+                                    className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                                  >
+                                    <span>{c}</span>
+                                    <button
+                                      type="button"
+                                      className="hover:text-red-600"
+                                      onClick={() =>
+                                        removeItemAt(idx, chronicConditions, setChronicConditions)
+                                      }
+                                      aria-label={`Remove ${c}`}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4 mb-2">
                           <Label htmlFor="medications" className="text-right">
                             Medications
                           </Label>
-                          <Input
-                            id="medications"
-                            className="col-span-3"
-                            placeholder="e.g. inhaler"
-                            value={medicationsInput}
-                            onChange={(e) =>
-                              setMedicationsInput(e.target.value)
-                            }
-                          />
+                          <div className="col-span-3 space-y-2">
+                            <div className="flex gap-2">
+                              <Input
+                                id="medications"
+                                placeholder="Type and press Enter"
+                                value={medicationsInput}
+                                onChange={(e) => setMedicationsInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    addItem(medicationsInput, medications, setMedications);
+                                    setMedicationsInput("");
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  addItem(medicationsInput, medications, setMedications);
+                                  setMedicationsInput("");
+                                }}
+                              >
+                                <Plus className="h-4 w-4 mr-1" /> Add
+                              </Button>
+                            </div>
+                            {medications.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {medications.map((m, idx) => (
+                                  <div
+                                    key={`${m}-${idx}`}
+                                    className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                                  >
+                                    <span>{m}</span>
+                                    <button
+                                      type="button"
+                                      className="hover:text-red-600"
+                                      onClick={() => removeItemAt(idx, medications, setMedications)}
+                                      aria-label={`Remove ${m}`}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4 mb-2">
                           <Label htmlFor="bloodType" className="text-right">
@@ -1276,7 +1493,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                           />
                         </div>
                         <div className="text-[11px] text-muted-foreground mt-2">
-                          Use commas to separate multiple values.
+                          Add each item individually using the field above. Press Enter or click Add.
                         </div>
                       </div>
 
@@ -1285,7 +1502,54 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                           {createError}
                         </div>
                       )}
-                    </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="existing" className="m-0 p-0">
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">Beneficiary *</Label>
+                            <div className="col-span-3">
+                              {listLoading ? (
+                                <div className="text-sm text-muted-foreground">
+                                  Loading beneficiaries...
+                                </div>
+                              ) : listError ? (
+                                <div className="text-sm text-red-600">
+                                  {listError}
+                                </div>
+                              ) : (
+                                <Select
+                                  value={associateSelectedBeneficiaryId}
+                                  onValueChange={setAssociateSelectedBeneficiaryId}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select beneficiary" />
+                                  </SelectTrigger>
+                                  <SelectContent className="max-h-64 overflow-y-auto">
+                                    {listItems.map((b) => {
+                                      const pii: any = (b as any).pii || {};
+                                      const fullName =
+                                        `${pii.firstName || ""} ${
+                                          pii.lastName || ""
+                                        }`.trim() ||
+                                        b.pseudonym ||
+                                        b.id;
+                                      return (
+                                        <SelectItem key={b.id} value={b.id}>
+                                          {fullName} ({b.pseudonym})
+                                        </SelectItem>
+                                      );
+                                    })}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+
                     <DialogFooter>
                       <Button
                         variant="outline"
@@ -1293,89 +1557,18 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                       >
                         Cancel
                       </Button>
-                      <Button
-                        onClick={handleCreateSubmit}
-                        disabled={createLoading}
-                      >
-                        {createLoading ? "Saving..." : "Save"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-                <Dialog
-                  open={isAssociateDialogOpen}
-                  onOpenChange={setIsAssociateDialogOpen}
-                >
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="ml-2">
-                      <Link className="h-4 w-4 mr-2" />
-                      Associate Existing
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Associate Existing Beneficiary</DialogTitle>
-                      <DialogDescription>
-                        Select an existing beneficiary to associate with this
-                        sub-project.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label className="text-right">Beneficiary *</Label>
-                        <div className="col-span-3">
-                          {listLoading ? (
-                            <div className="text-sm text-muted-foreground">
-                              Loading beneficiaries...
-                            </div>
-                          ) : listError ? (
-                            <div className="text-sm text-red-600">
-                              {listError}
-                            </div>
-                          ) : (
-                            <Select
-                              value={associateSelectedBeneficiaryId}
-                              onValueChange={setAssociateSelectedBeneficiaryId}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select beneficiary" />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-64 overflow-y-auto">
-                                {listItems.map((b) => {
-                                  const pii: any = (b as any).pii || {};
-                                  const fullName =
-                                    `${pii.firstName || ""} ${
-                                      pii.lastName || ""
-                                    }`.trim() ||
-                                    b.pseudonym ||
-                                    b.id;
-                                  return (
-                                    <SelectItem key={b.id} value={b.id}>
-                                      {fullName} ({b.pseudonym})
-                                    </SelectItem>
-                                  );
-                                })}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button
-                        variant="outline"
-                        onClick={() => setIsAssociateDialogOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleAssociateExistingSubmit}
-                        disabled={
-                          associateLoading || !associateSelectedBeneficiaryId
-                        }
-                      >
-                        {associateLoading ? "Associating..." : "Associate"}
-                      </Button>
+                      {addBeneficiaryTab === "new" ? (
+                        <Button onClick={handleCreateSubmit} disabled={createLoading}>
+                          {createLoading ? "Saving..." : "Save"}
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={handleAssociateExistingSubmit}
+                          disabled={associateLoading || !associateSelectedBeneficiaryId}
+                        >
+                          {associateLoading ? "Associating..." : "Associate"}
+                        </Button>
+                      )}
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
