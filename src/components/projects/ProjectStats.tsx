@@ -1,10 +1,10 @@
 import {
-  Bar,
-  BarChart,
   ResponsiveContainer,
   Tooltip,
-  XAxis,
-  YAxis,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from "recharts";
 import {
   Card,
@@ -38,133 +38,173 @@ const mockMonthlyData = [
 
 export function ProjectStats({ projectId }: ProjectStatsProps) {
   console.log("projectId, veq sa me i ik unused declaration", projectId);
-  // For a real application, we would filter stats based on projectId
 
   return (
-    <div className="grid  grid-cols-1 md:grid-cols-2 gap-6">
-      <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Project Progress</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Overall Progress</span>
-              <span>65%</span>
-            </div>
-            <Progress value={65} className="h-2 " />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Budget Utilization</span>
-              <span>42%</span>
-            </div>
-            <Progress value={42} className="h-2" />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Beneficiary Target</span>
-              <span>78%</span>
-            </div>
-            <Progress value={78} className="h-2" />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Activity Completion</span>
-              <span>51%</span>
-            </div>
-            <Progress value={51} className="h-2" />
-          </div>
-
-          <div className="pt-8">
-            <div className="text-sm font-medium mb-2">Key Statistics</div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className=" bg-[#E5ECF6] rounded-md p-3">
-                <div className="text-sm text-muted-foreground">Activities</div>
-                <div className="text-xl font-medium">128</div>
+    <div className="space-y-6">
+      {/* Top full-width Key Statistics row */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <h1 className="text-base sm:text-lg font-semibold md:col-span-1">
+          Key Statistics
+        </h1>
+        <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="bg-[#B1E3FF] drop-shadow-sm shadow-gray-50 border-0">
+            <CardContent className="p-6">
+              <div className="text-sm text-muted-foreground">Activities</div>
+              <div className="text-3xl font-medium mt-1">128</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-[#B1E3FF] drop-shadow-sm shadow-gray-50 border-0">
+            <CardContent className="p-6">
+              <div className="text-sm text-muted-foreground">
+                Services Delivered
               </div>
-              <div className=" bg-[#E5ECF6] rounded-md p-3">
-                <div className="text-sm text-muted-foreground">
-                  Services Delivered
-                </div>
-                <div className="text-xl font-medium">1,088</div>
+              <div className="text-3xl font-medium mt-1">1,088</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-[#B1E3FF] drop-shadow-sm shadow-gray-50 border-0">
+            <CardContent className="p-6">
+              <div className="text-sm text-muted-foreground">
+                Forms Submitted
               </div>
-              <div className=" bg-[#E5ECF6] rounded-md p-3">
-                <div className="text-sm text-muted-foreground">
-                  Forms Submitted
-                </div>
-                <div className="text-xl font-medium">287</div>
+              <div className="text-3xl font-medium mt-1">287</div>
+            </CardContent>
+          </Card>
+          <Card className="bg-[#B1E3FF] drop-shadow-sm shadow-gray-50 border-0">
+            <CardContent className="p-6">
+              <div className="text-sm text-muted-foreground">
+                Active Beneficiaries
               </div>
-              <div className=" bg-[#E5ECF6] rounded-md p-3">
-                <div className="text-sm text-muted-foreground">
-                  Active Beneficiaries
-                </div>
-                <div className="text-xl font-medium">1,245</div>
+              <div className="text-3xl font-medium mt-1">1,245</div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Existing two-column grid content */}
+      <div className="grid  grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="bg-[#F7F9FB]  border-0 drop-shadow-sm shadow-gray-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Project Progress</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Overall Progress</span>
+                <span>65%</span>
               </div>
+              <Progress value={65} className="h-2 " />
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Monthly Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={mockMonthlyData}
-                margin={{
-                  top: 20,
-                  right: 30,
-                  left: 0,
-                  bottom: 5,
-                }}
-              >
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar
-                  dataKey="activities"
-                  name="Activities"
-                  fill="var(--chart-1)"
-                />
-                <Bar
-                  dataKey="beneficiaries"
-                  name="Beneficiaries"
-                  fill="var(--chart-2)"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">
+                  Budget Utilization
+                </span>
+                <span>42%</span>
+              </div>
+              <Progress value={42} className="h-2" />
+            </div>
 
-          <div className="mt-6">
-            <div className="text-sm font-medium mb-3">Services Delivered</div>
-            <div className="space-y-3">
-              {mockServiceStats.map((service, index) => (
-                <div key={index}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>{service.name}</span>
-                    <span>{service.value}</span>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">
+                  Beneficiary Target
+                </span>
+                <span>78%</span>
+              </div>
+              <Progress value={78} className="h-2" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">
+                  Activity Completion
+                </span>
+                <span>51%</span>
+              </div>
+              <Progress value={51} className="h-2" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Monthly Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              {(() => {
+                const totalActivities = mockMonthlyData.reduce(
+                  (sum, m) => sum + m.activities,
+                  0
+                );
+                const totalBeneficiaries = mockMonthlyData.reduce(
+                  (sum, m) => sum + m.beneficiaries,
+                  0
+                );
+                const pieData = [
+                  { name: "Activities", value: totalActivities },
+                  { name: "Beneficiaries", value: totalBeneficiaries },
+                ];
+                const COLORS = ["#FF5E3A", "#6366F1"]; // brand orange + indigo
+                return (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Tooltip
+                        formatter={(value: number) => value.toLocaleString()}
+                      />
+                      <Legend verticalAlign="bottom" height={24} />
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="48%"
+                        innerRadius={55}
+                        outerRadius={80}
+                        paddingAngle={3}
+                        dataKey="value"
+                        nameKey="name"
+                        isAnimationActive
+                        animationBegin={200}
+                        animationDuration={900}
+                        animationEasing="ease-out"
+                      >
+                        {pieData.map((_, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                );
+              })()}
+            </div>
+
+            {/* <div className="mt-6">
+              <div className="text-sm font-medium mb-3">Services Delivered</div>
+              <div className="space-y-3">
+                {mockServiceStats.map((service, index) => (
+                  <div key={index}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>{service.name}</span>
+                      <span>{service.value}</span>
+                    </div>
+                    <Progress
+                      value={
+                        (service.value /
+                          Math.max(...mockServiceStats.map((s) => s.value))) *
+                        100
+                      }
+                      className="h-1.5"
+                    />
                   </div>
-                  <Progress
-                    value={
-                      (service.value /
-                        Math.max(...mockServiceStats.map((s) => s.value))) *
-                      100
-                    }
-                    className="h-1.5"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            </div> */}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

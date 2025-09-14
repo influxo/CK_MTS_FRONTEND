@@ -87,19 +87,25 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
 
   // Unassign dialog state
   const [isUnassignOpen, setIsUnassignOpen] = useState(false);
-  const [serviceToUnassign, setServiceToUnassign] = useState<Service | null>(null);
+  const [serviceToUnassign, setServiceToUnassign] = useState<Service | null>(
+    null
+  );
   const unassignLoading = useSelector(selectServiceUnassignLoading);
   const unassignError = useSelector(selectServiceUnassignError);
 
   useEffect(() => {
     if (subProjectId) {
-      dispatch(getEntityServices({ entityId: subProjectId, entityType: "subproject" }));
+      dispatch(
+        getEntityServices({ entityId: subProjectId, entityType: "subproject" })
+      );
     }
   }, [subProjectId, dispatch]);
 
   const refresh = () => {
     if (subProjectId) {
-      dispatch(getEntityServices({ entityId: subProjectId, entityType: "subproject" }));
+      dispatch(
+        getEntityServices({ entityId: subProjectId, entityType: "subproject" })
+      );
     }
   };
 
@@ -117,12 +123,20 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
     setCreating(true);
     try {
       const res = await dispatch(
-        createService({ name: name.trim(), description: description.trim(), category: category.trim(), status })
+        createService({
+          name: name.trim(),
+          description: description.trim(),
+          category: category.trim(),
+          status,
+        })
       ).unwrap();
       const created = res.data;
       if (created?.id) {
         await dispatch(
-          assignServiceToEntity({ id: created.id, data: { entityId: subProjectId, entityType: "subproject" } })
+          assignServiceToEntity({
+            id: created.id,
+            data: { entityId: subProjectId, entityType: "subproject" },
+          })
         ).unwrap();
         refresh();
         setIsCreateOpen(false);
@@ -150,11 +164,19 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
     try {
       if (selectedIds.length === 1) {
         await dispatch(
-          assignServiceToEntity({ id: selectedIds[0], data: { entityId: subProjectId, entityType: "subproject" } })
+          assignServiceToEntity({
+            id: selectedIds[0],
+            data: { entityId: subProjectId, entityType: "subproject" },
+          })
         ).unwrap();
       } else {
         await dispatch(
-          assignServicesBatch({ entityId: subProjectId, entityType: "subproject", serviceIds: selectedIds, removeUnlisted: false })
+          assignServicesBatch({
+            entityId: subProjectId,
+            entityType: "subproject",
+            serviceIds: selectedIds,
+            removeUnlisted: false,
+          })
         ).unwrap();
       }
       refresh();
@@ -175,7 +197,10 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
     if (!subProjectId || !serviceToUnassign) return;
     try {
       await dispatch(
-        unassignServiceFromEntity({ id: serviceToUnassign.id, data: { entityId: subProjectId, entityType: "subproject" } })
+        unassignServiceFromEntity({
+          id: serviceToUnassign.id,
+          data: { entityId: subProjectId, entityType: "subproject" },
+        })
       ).unwrap();
       setIsUnassignOpen(false);
       setServiceToUnassign(null);
@@ -192,31 +217,59 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
         <div className="flex gap-2">
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#2B2B2B] text-white">Create Service</Button>
+              <Button className="bg-[#2E343E] text-white">
+                Create Service
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[560px]">
               <DialogHeader>
                 <DialogTitle>Create and Assign Service</DialogTitle>
                 <DialogDescription>
-                  Create a new service. It will be assigned to this sub-project automatically after creation.
+                  Create a new service. It will be assigned to this sub-project
+                  automatically after creation.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="svc-name" className="text-right">Name *</Label>
-                  <Input id="svc-name" className="col-span-3" value={name} onChange={(e) => setName(e.currentTarget.value)} />
+                  <Label htmlFor="svc-name" className="text-right">
+                    Name *
+                  </Label>
+                  <Input
+                    id="svc-name"
+                    className="col-span-3"
+                    value={name}
+                    onChange={(e) => setName(e.currentTarget.value)}
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="svc-category" className="text-right">Category *</Label>
-                  <Input id="svc-category" className="col-span-3" value={category} onChange={(e) => setCategory(e.currentTarget.value)} />
+                  <Label htmlFor="svc-category" className="text-right">
+                    Category *
+                  </Label>
+                  <Input
+                    id="svc-category"
+                    className="col-span-3"
+                    value={category}
+                    onChange={(e) => setCategory(e.currentTarget.value)}
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-start gap-4">
-                  <Label htmlFor="svc-description" className="text-right pt-2">Description</Label>
-                  <Textarea id="svc-description" className="col-span-3" rows={3} value={description} onChange={(e) => setDescription(e.currentTarget.value)} />
+                  <Label htmlFor="svc-description" className="text-right pt-2">
+                    Description
+                  </Label>
+                  <Textarea
+                    id="svc-description"
+                    className="col-span-3"
+                    rows={3}
+                    value={description}
+                    onChange={(e) => setDescription(e.currentTarget.value)}
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Status *</Label>
-                  <Select value={status} onValueChange={(v) => setStatus(v as "active" | "inactive")}>
+                  <Select
+                    value={status}
+                    onValueChange={(v) => setStatus(v as "active" | "inactive")}
+                  >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -228,8 +281,17 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={creating}>Cancel</Button>
-                <Button onClick={handleCreateAndAssign} disabled={creating || !name.trim() || !category.trim()}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateOpen(false)}
+                  disabled={creating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateAndAssign}
+                  disabled={creating || !name.trim() || !category.trim()}
+                >
                   {creating ? "Creating..." : "Create & Assign"}
                 </Button>
               </DialogFooter>
@@ -238,7 +300,12 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
 
           <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">Assign Service</Button>
+              <Button
+                variant="outline"
+                className="bg-black/5 text-black border-0"
+              >
+                Assign Service
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[720px]">
               <DialogHeader>
@@ -249,16 +316,36 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
               </DialogHeader>
               <div className="space-y-3">
                 <div className="flex gap-3 items-center">
-                  <Input placeholder="Search services..." value={search} onChange={(e) => setSearch(e.currentTarget.value)} />
-                  <Button variant="outline" onClick={() => dispatch(getAllServices({ page: 1, limit: 200 }))} disabled={allLoading}>Reload</Button>
+                  <Input
+                    placeholder="Search services..."
+                    value={search}
+                    onChange={(e) => setSearch(e.currentTarget.value)}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      dispatch(getAllServices({ page: 1, limit: 200 }))
+                    }
+                    disabled={allLoading}
+                  >
+                    Reload
+                  </Button>
                 </div>
-                {allLoading && <div className="text-sm text-muted-foreground">Loading services...</div>}
-                {allError && <div className="text-sm text-destructive">{allError}</div>}
+                {allLoading && (
+                  <div className="text-sm text-muted-foreground">
+                    Loading services...
+                  </div>
+                )}
+                {allError && (
+                  <div className="text-sm text-destructive">{allError}</div>
+                )}
                 <div className="rounded-md border max-h-[360px] overflow-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[48px]"><span className="sr-only">Select</span></TableHead>
+                        <TableHead className="w-[48px]">
+                          <span className="sr-only">Select</span>
+                        </TableHead>
                         <TableHead className="w-[320px]">Service</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Status</TableHead>
@@ -276,18 +363,32 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                           </TableCell>
                           <TableCell>
                             <div className="font-medium">{svc.name}</div>
-                            <div className="text-sm text-muted-foreground line-clamp-1">{svc.description}</div>
+                            <div className="text-sm text-muted-foreground line-clamp-1">
+                              {svc.description}
+                            </div>
                           </TableCell>
-                          <TableCell><Badge variant="outline">{svc.category}</Badge></TableCell>
                           <TableCell>
-                            <Badge className={svc.status === "active" ? "bg-[#2E343E] text-white" : ""}>{svc.status}</Badge>
+                            <Badge variant="outline">{svc.category}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={
+                                svc.status === "active"
+                                  ? "bg-[#2E343E] text-white"
+                                  : ""
+                              }
+                            >
+                              {svc.status}
+                            </Badge>
                           </TableCell>
                         </TableRow>
                       ))}
                       {filteredAllServices.length === 0 && !allLoading && (
                         <TableRow>
                           <TableCell colSpan={4}>
-                            <div className="text-sm text-muted-foreground">No services found.</div>
+                            <div className="text-sm text-muted-foreground">
+                              No services found.
+                            </div>
                           </TableCell>
                         </TableRow>
                       )}
@@ -296,15 +397,33 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAssignOpen(false)} disabled={assigning}>Cancel</Button>
-                <Button onClick={handleAssignSelected} disabled={assigning || selectedIds.length === 0}>
-                  {assigning ? "Assigning..." : selectedIds.length > 1 ? "Assign Selected (Batch)" : "Assign Selected"}
+                <Button
+                  variant="outline"
+                  onClick={() => setIsAssignOpen(false)}
+                  disabled={assigning}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleAssignSelected}
+                  disabled={assigning || selectedIds.length === 0}
+                >
+                  {assigning
+                    ? "Assigning..."
+                    : selectedIds.length > 1
+                    ? "Assign Selected (Batch)"
+                    : "Assign Selected"}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
 
-          <Button variant="outline" onClick={refresh} disabled={isLoading}>
+          <Button
+            variant="outline"
+            className="bg-black/5 text-black border-0"
+            onClick={refresh}
+            disabled={isLoading}
+          >
             {isLoading ? "Refreshing..." : "Refresh"}
           </Button>
         </div>
@@ -313,18 +432,18 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
       {isLoading && (
         <div className="text-sm text-muted-foreground">Loading services...</div>
       )}
-      {error && (
-        <div className="text-sm text-destructive">{error}</div>
-      )}
+      {error && <div className="text-sm text-destructive">{error}</div>}
 
       {!isLoading && !error && services.length === 0 && (
-        <div className="text-sm text-muted-foreground">No services assigned to this sub-project.</div>
+        <div className="text-sm text-muted-foreground">
+          No services assigned to this sub-project.
+        </div>
       )}
 
       {services.length > 0 && (
         <div className="rounded-md border overflow-hidden">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-[#E5ECF6] text-black border-0">
               <TableRow>
                 <TableHead className="w-[280px]">Service</TableHead>
                 <TableHead>Category</TableHead>
@@ -334,29 +453,50 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="bg-[#F7F9FB]">
               {services.map((svc) => (
                 <TableRow key={svc.id}>
                   <TableCell>
                     <div className="font-medium">{svc.name}</div>
-                    <div className="text-sm text-muted-foreground line-clamp-1">{svc.description}</div>
+                    <div className="text-sm text-muted-foreground line-clamp-1">
+                      {svc.description}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{svc.category}</Badge>
+                    <Badge
+                      variant="outline"
+                      className="bg-[#0073e6] text-white"
+                    >
+                      {svc.category}
+                    </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className={svc.status === "active" ? "bg-[#2E343E] text-white" : ""}>
+                    <Badge
+                      className={
+                        svc.status === "active"
+                          ? "bg-[#DEF8EE] text-[#4AA785]"
+                          : ""
+                      }
+                    >
                       {svc.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm">
-                    {svc.createdAt ? new Date(svc.createdAt).toLocaleDateString() : "—"}
+                    {svc.createdAt
+                      ? new Date(svc.createdAt).toLocaleDateString()
+                      : "—"}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {svc.updatedAt ? new Date(svc.updatedAt).toLocaleDateString() : "—"}
+                    {svc.updatedAt
+                      ? new Date(svc.updatedAt).toLocaleDateString()
+                      : "—"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" className="text-red-600" onClick={() => openUnassign(svc)}>
+                    <Button
+                      variant="outline"
+                      className="hover:bg-black/5 text-black border-0"
+                      onClick={() => openUnassign(svc)}
+                    >
                       Unassign
                     </Button>
                   </TableCell>
@@ -373,7 +513,7 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
           <DialogHeader>
             <DialogTitle>Unassign Service</DialogTitle>
             <DialogDescription>
-              Are you sure you want to unassign {" "}
+              Are you sure you want to unassign{" "}
               <span className="font-medium">{serviceToUnassign?.name}</span>{" "}
               from this sub-project?
             </DialogDescription>
@@ -382,7 +522,11 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
             <div className="text-sm text-destructive">{unassignError}</div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsUnassignOpen(false)} disabled={unassignLoading}>
+            <Button
+              variant="outline"
+              onClick={() => setIsUnassignOpen(false)}
+              disabled={unassignLoading}
+            >
               Cancel
             </Button>
             <Button onClick={handleConfirmUnassign} disabled={unassignLoading}>

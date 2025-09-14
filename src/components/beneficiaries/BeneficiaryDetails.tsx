@@ -16,6 +16,8 @@ import {
   ShieldAlert,
   Trash,
   Users,
+  User,
+  Home,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -821,20 +823,24 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               </div>
               <div className="flex mt-10 flex-col gap-4 md:text-right">
                 <div className="flex items-center gap-2 text-muted-foreground">
+                  <User className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Gender</span>
                   <span className="text-lg font-medium">
                     {beneficiary.gender}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Age</span>
                   <span className="ml-1">{beneficiary.age} years</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
+                  <Home className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Household:</span>
                   <span className="ml-1">{beneficiary.household}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
+                  <ShieldAlert className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Vulnerability:</span>
                   <span className="ml-1">{beneficiary.vulnerabilityScore}</span>
                 </div>
@@ -889,38 +895,55 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                     Beneficiary Summary
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-5">
                   <div>
                     <h4 className="font-medium mb-2">About</h4>
-                    <p className="text-muted-foreground">{beneficiary.notes}</p>
+                    <div className="bg-white/60 rounded-md p-3 text-sm">
+                      <p className="text-muted-foreground">
+                        {beneficiary.notes || "No additional notes provided."}
+                      </p>
+                    </div>
                   </div>
 
                   <div>
                     <h4 className="font-medium mb-2">Current Projects</h4>
                     {entitiesLoading && (
-                      <div className="text-sm text-muted-foreground">Loading associated entities...</div>
+                      <div className="text-sm text-muted-foreground">
+                        Loading associated entities...
+                      </div>
                     )}
                     {entitiesError && !entitiesLoading && (
-                      <div className="text-sm text-red-600">{entitiesError}</div>
+                      <div className="text-sm text-red-600">
+                        {entitiesError}
+                      </div>
                     )}
                     {!entitiesLoading && !entitiesError && (
-                      <div className="space-y-3">
+                      <div>
                         {entities.length > 0 ? (
-                          entities.map((link, index) => (
-                            <div
-                              key={`${link.entity.id}-${index}`}
-                              className=" text-black rounded-md p-3 bg-[#E5ECF6]"
-                            >
-                              <div className="flex items-center gap-2">
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium">
-                                  {link.entity.type}: {link.entity.name}
-                                </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {entities.map((link, index) => (
+                              <div
+                                key={`${link.entity.id}-${index}`}
+                                className="rounded-md p-3 bg-[#E5ECF6] text-black"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4 text-muted-foreground" />
+                                  <div>
+                                    <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                                      {link.entity.type}
+                                    </div>
+                                    <div className="font-medium leading-tight">
+                                      {link.entity.name}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          ))
+                            ))}
+                          </div>
                         ) : (
-                          <div className="text-sm text-muted-foreground">No associated entities.</div>
+                          <div className="text-sm text-muted-foreground">
+                            No associated entities.
+                          </div>
                         )}
                       </div>
                     )}
@@ -930,32 +953,50 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                     <h4 className="font-medium mb-2">
                       Registration Information
                     </h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">
-                          Registration Date:
-                        </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div className="flex items-center gap-2 bg-[#EDEDFF] rounded-md p-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
                         <div>
-                          {new Date(
-                            beneficiary.registrationDate
-                          ).toLocaleDateString()}
+                          <div className="text-xs text-muted-foreground">
+                            Registration Date
+                          </div>
+                          <div className="font-medium">
+                            {new Date(
+                              beneficiary.registrationDate
+                            ).toLocaleDateString()}
+                          </div>
                         </div>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">
-                          Registered By:
-                        </span>
-                        <div>{beneficiary.registeredBy}</div>
+                      <div className="flex items-center gap-2 bg-[#EDEDFF] rounded-md p-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Registered By
+                          </div>
+                          <div className="font-medium">
+                            {beneficiary.registeredBy}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">ID:</span>
-                        <div>{beneficiary.id}</div>
+                      <div className="flex items-center gap-2 bg-[#EDEDFF] rounded-md p-2">
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            ID
+                          </div>
+                          <div className="font-medium">{beneficiary.id}</div>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">
-                          Pseudonymized ID:
-                        </span>
-                        <div>{beneficiary.pseudoId}</div>
+                      <div className="flex items-center gap-2 bg-[#EDEDFF] rounded-md p-2">
+                        <ShieldAlert className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <div className="text-xs text-muted-foreground">
+                            Pseudonymized ID
+                          </div>
+                          <div className="font-medium">
+                            {beneficiary.pseudoId}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1190,6 +1231,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
+                              className="hover:bg-black/10"
                               variant="ghost"
                               size="sm"
                               disabled={!s.formResponseId}
@@ -1212,7 +1254,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 w-8 p-0"
+                                  className="h-8 w-8 p-0 hover:bg-black/10"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
@@ -1351,74 +1393,108 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
             <CardHeader>
               <CardTitle className="text-base">Info</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Blood Type:</span>
-                  <div>{((detail as any)?.details?.bloodType) ?? "—"}</div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Notes:</span>
-                  <div className="whitespace-pre-wrap">{((detail as any)?.details?.notes) ?? "—"}</div>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2">Allergies</h4>
-                {(((detail as any)?.details?.allergies) ?? []).length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {((detail as any)?.details?.allergies ?? []).map((a: string, idx: number) => (
-                      <Badge key={idx} variant="outline">{a}</Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">—</div>
-                )}
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2">Chronic Conditions</h4>
-                {(((detail as any)?.details?.chronicConditions) ?? []).length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {((detail as any)?.details?.chronicConditions ?? []).map((c: string, idx: number) => (
-                      <Badge key={idx} variant="outline">{c}</Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">—</div>
-                )}
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2">Disabilities</h4>
-                {(((detail as any)?.details?.disabilities) ?? []).length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {((detail as any)?.details?.disabilities ?? []).map((d: string, idx: number) => (
-                      <Badge key={idx} variant="outline">{d}</Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">—</div>
-                )}
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2">Medications</h4>
-                {(((detail as any)?.details?.medications) ?? []).length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {((detail as any)?.details?.medications ?? []).map((m: string, idx: number) => (
-                      <Badge key={idx} variant="outline">{m}</Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">—</div>
-                )}
+            <CardContent>
+              <div className="rounded-md overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-[#E5ECF6]">
+                    <TableRow>
+                      <TableHead>Blood Type</TableHead>
+                      <TableHead>Allergies</TableHead>
+                      <TableHead>Chronic Conditions</TableHead>
+                      <TableHead>Disabilities</TableHead>
+                      <TableHead>Medications</TableHead>
+                      <TableHead>Notes</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="bg-[#F7F9FB] ">
+                    <TableRow>
+                      <TableCell>
+                        {(detail as any)?.details?.bloodType ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        {((detail as any)?.details?.allergies ?? []).length >
+                        0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {((detail as any)?.details?.allergies ?? []).map(
+                              (a: string, idx: number) => (
+                                <Badge key={idx} variant="outline">
+                                  {a}
+                                </Badge>
+                              )
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {((detail as any)?.details?.chronicConditions ?? [])
+                          .length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {(
+                              (detail as any)?.details?.chronicConditions ?? []
+                            ).map((c: string, idx: number) => (
+                              <Badge key={idx} variant="outline">
+                                {c}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {((detail as any)?.details?.disabilities ?? []).length >
+                        0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {((detail as any)?.details?.disabilities ?? []).map(
+                              (d: string, idx: number) => (
+                                <Badge key={idx} variant="outline">
+                                  {d}
+                                </Badge>
+                              )
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {((detail as any)?.details?.medications ?? []).length >
+                        0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {((detail as any)?.details?.medications ?? []).map(
+                              (m: string, idx: number) => (
+                                <Badge key={idx} variant="outline">
+                                  {m}
+                                </Badge>
+                              )
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="whitespace-pre-wrap">
+                          {(detail as any)?.details?.notes ?? "—"}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-
-        
       </Tabs>
     </div>
   );

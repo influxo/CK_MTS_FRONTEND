@@ -35,7 +35,9 @@ export function SummaryMetrics() {
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-2xl">{loading ? "…" : data.totalDeliveries.toLocaleString()}</div>
+              <div className="text-2xl">
+                {loading ? "…" : data.totalDeliveries.toLocaleString()}
+              </div>
               <div className="flex items-center text-xs text-muted-foreground">
                 <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
                 +12% from last month
@@ -56,7 +58,9 @@ export function SummaryMetrics() {
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-2xl">{loading ? "…" : data.uniqueBeneficiaries.toLocaleString()}</div>
+              <div className="text-2xl">
+                {loading ? "…" : data.uniqueBeneficiaries.toLocaleString()}
+              </div>
               <div className="flex items-center text-xs text-muted-foreground">
                 <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
                 +8% from last month
@@ -77,7 +81,9 @@ export function SummaryMetrics() {
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-2xl">{loading ? "…" : data.uniqueStaff.toLocaleString()}</div>
+              <div className="text-2xl">
+                {loading ? "…" : data.uniqueStaff.toLocaleString()}
+              </div>
               <div className="flex items-center text-xs text-muted-foreground">
                 <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
                 Snapshot
@@ -98,7 +104,9 @@ export function SummaryMetrics() {
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-2xl">{loading ? "…" : data.uniqueServices.toLocaleString()}</div>
+              <div className="text-2xl">
+                {loading ? "…" : data.uniqueServices.toLocaleString()}
+              </div>
               <div className="flex items-center text-xs text-muted-foreground">
                 <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
                 Snapshot

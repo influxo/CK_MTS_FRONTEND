@@ -217,7 +217,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
         <div className="flex gap-2">
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#2B2B2B] text-white">
+              <Button className="bg-[#2E343E] text-white">
                 Create Service
               </Button>
             </DialogTrigger>
@@ -300,7 +300,12 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
 
           <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">Assign Service</Button>
+              <Button
+                variant="outline"
+                className="bg-black/10 hover:bg-black/20"
+              >
+                Assign Service
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[720px]">
               <DialogHeader>
@@ -433,7 +438,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
       {services.length > 0 && (
         <div className="rounded-md border overflow-hidden">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
                 <TableHead className="w-[280px]">Service</TableHead>
                 <TableHead>Category</TableHead>
@@ -443,7 +448,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="bg-[#F7F9FB]">
               {services.map((svc) => (
                 <TableRow key={svc.id}>
                   <TableCell>
@@ -453,12 +458,19 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{svc.category}</Badge>
+                    <Badge
+                      variant="outline"
+                      className="bg-[#0073e6] text-white border-0"
+                    >
+                      {svc.category}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge
                       className={
-                        svc.status === "active" ? "bg-[#2E343E] text-white" : ""
+                        svc.status === "active"
+                          ? "bg-[#DEF8EE] text-[#4AA785]"
+                          : ""
                       }
                     >
                       {svc.status}
@@ -477,7 +489,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                   <TableCell className="text-right">
                     <Button
                       variant="outline"
-                      className="text-red-600"
+                      className="hover:bg-black/10 border-0"
                       onClick={() => openUnassign(svc)}
                     >
                       Unassign

@@ -350,7 +350,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
         </Tabs> */}
       </div>
 
-      {viewType === "list" ? (
+      {viewType === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSubProjects.map((subProject: SubProject) => (
             <Card key={subProject.id}>
@@ -484,13 +484,28 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{subProject.category}</Badge>
+                    <Badge
+                      variant="outline"
+                      className="bg-[#0073e6] border-0 text-white"
+                    >
+                      {subProject.category}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge
                       variant={
                         subProject.status === "active" ? "default" : "secondary"
                       }
+                      style={{
+                        backgroundColor:
+                          subProject.status === "active"
+                            ? "#DEF8EE"
+                            : "rgba(28,28,28,0.05)",
+                        color:
+                          subProject.status === "active"
+                            ? "#4AA785"
+                            : "rgba(28,28,28,0.4)",
+                      }}
                     >
                       {subProject.status === "active" ? "Active" : "Inactive"}
                     </Badge>
