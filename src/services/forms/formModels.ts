@@ -247,6 +247,47 @@ export interface GetFormResponseByIdResponse {
   message?: string;
   data: FormResponseData;
 }
+
+// List form responses by entity (project, subproject, activity)
+export interface GetFormResponsesByEntityRequest {
+  entityId: string;
+  entityType: "project" | "subproject" | "activity";
+  templateId?: string;
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GetFormResponsesByEntityResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    items: FormResponseData[];
+    pagination: Pagination;
+  };
+}
+
+// Global list of form responses (no required entity)
+export interface GetAllFormResponsesRequest {
+  templateId?: string;
+  entityId?: string;
+  entityType?: "project" | "subproject" | "activity";
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GetAllFormResponsesResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    items: FormResponseData[];
+    pagination: Pagination;
+  };
+}
+
 export interface GetFormsResponse extends ApiResponse<FormTemplate[]> {}
 export interface GetFormResponse extends ApiResponse<FormTemplate> {}
 export interface CreateFormRequest
