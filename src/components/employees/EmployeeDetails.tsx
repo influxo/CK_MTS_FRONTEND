@@ -914,25 +914,27 @@ export function EmployeeDetails() {
                       No permissions found for this role.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                       {permissions.map((permission) => (
                         <div
                           key={permission.id}
-                          className="flex items-center space-x-2"
+                          className="group flex items-center gap-2 rounded-md bg-white   px-3 py-2 hover:bg-black/5 transition-colors"
                         >
-                          {/* <Checkbox
-                            id={permission.id}
-                            checked={permission.granted}
-                            onCheckedChange={() =>
-                              handlePermissionToggle(permission.id)
-                            }
-                            disabled={!isEditing}
-                          /> */}
-                          -
+                          {/* Left indicator: green tick if granted, gray dot otherwise */}
+                          {permission.granted ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <span
+                              className="inline-block h-2.5 w-2.5 rounded-full bg-gray-300"
+                              aria-hidden
+                            />
+                          )}
                           <Label
                             htmlFor={permission.id}
-                            className={`font-normal ${
-                              !permission.granted && "text-muted-foreground"
+                            className={`cursor-default text-sm transition-colors group-hover:font-medium ${
+                              permission.granted
+                                ? "text-foreground"
+                                : "text-muted-foreground"
                             }`}
                           >
                             {permission.name}
@@ -944,7 +946,7 @@ export function EmployeeDetails() {
                 </CardContent>
               </Card>
 
-              <div className="bg-[#EDEDFF] border  rounded-md p-4 flex items-start gap-3 ">
+              {/* <div className="bg-[#EDEDFF] border  rounded-md p-4 flex items-start gap-3 ">
                 <AlertTriangle className="h-5 w-5 text-[#8A8CD9] mt-0.5" />
                 <div>
                   <h4 className="font-medium text-[#8A8CD9] ">
@@ -955,7 +957,7 @@ export function EmployeeDetails() {
                     sure you understand the implications of each permission.
                   </p>
                 </div>
-              </div>
+              </div> */}
             </TabsContent>
 
             <TabsContent value="projects" className="space-y-6 pt-6">
@@ -1077,7 +1079,7 @@ export function EmployeeDetails() {
                   <CardTitle className="text-lg">Account Security</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="border rounded-md p-4">
+                  <div className=" bg-white rounded-md p-4">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">
                         <div className="bg-primary/10 p-2 rounded-full">
@@ -1100,7 +1102,7 @@ export function EmployeeDetails() {
                     </div>
                   </div>
 
-                  <div className="border rounded-md p-4">
+                  <div className="bg-white rounded-md p-4">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">
                         <div className="bg-primary/10 p-2 rounded-full">
@@ -1134,7 +1136,7 @@ export function EmployeeDetails() {
                     </div>
                   </div>
 
-                  <div className="border rounded-md p-4">
+                  <div className="bg-white rounded-md p-4">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">
                         <div className="bg-[primary/10] p-2 rounded-full">

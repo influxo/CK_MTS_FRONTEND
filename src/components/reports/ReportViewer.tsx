@@ -10,6 +10,7 @@ import {
   Repeat,
   Share,
   UserCircle,
+  Calendar,
 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
@@ -415,20 +416,20 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                 <h3>{report.name}</h3>
                 <Badge
                   variant="outline"
-                  className="capitalize bg-[#2E343E] text-white border-0"
+                  className="capitalize bg-[#0073e6] text-white border-0"
                 >
                   {report.type}
                 </Badge>
               </div>
               <div className="flex gap-1.5 items-center text-muted-foreground">
-                <span>Date Range:</span>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">
                   {formatDate(report.dateRange.startDate)} -{" "}
                   {formatDate(report.dateRange.endDate)}
                 </span>
               </div>
               <div className="flex gap-1.5 items-center text-muted-foreground">
-                <span>Scope:</span>
+                <UserCircle className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium capitalize">
                   {report.level}: {report.scope}
                 </span>
@@ -451,7 +452,10 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                 </span>
               </div>
               <div className="pt-2">
-                <Badge variant={report.scheduled ? "default" : "outline"}>
+                <Badge
+                  className="border-0"
+                  variant={report.scheduled ? "default" : "outline"}
+                >
                   {report.scheduled ? "Scheduled" : "One-time Report"}
                 </Badge>
               </div>
@@ -780,7 +784,9 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                                   className={
                                     cell === "Active"
                                       ? "text-[#4AA785] bg-[#DEF8EE] border-0"
-                                      : "text-[#59A8D4] bg-[#E2F5FF] border-0"
+                                      : cell === "Pending"
+                                      ? "text-[#59A8D4] bg-[#E2F5FF] border-0"
+                                      : "text-[rgba(28,28,28,0.4)] bg-[rgba(28,28,28,0.05)] border-0"
                                   }
                                 >
                                   {cell}
@@ -832,7 +838,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </div>
                 </CardContent>
                 <div className="px-6 py-4 bg-muted/50 mt-4 flex justify-center">
-                  <Button className="bg-[#2E343E] text-white border-0">
+                  <Button className="bg-[#2E343E] text-white w-full border-0">
                     <FileText className="h-4 w-4 mr-2" />
                     Export PDF
                   </Button>
@@ -864,7 +870,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </div>
                 </CardContent>
                 <div className="px-6 py-4 bg-muted/50 mt-4 flex justify-center">
-                  <Button className="bg-[#2E343E] text-white border-0">
+                  <Button className="bg-[#2E343E] w-full text-white border-0">
                     <FileSpreadsheet className="h-4 w-4 mr-2" />
                     Export Excel
                   </Button>
@@ -898,7 +904,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                 <div className="px-6 py-4 bg-muted/50 mt-4 flex justify-center">
                   <Button
                     onClick={() => setIsShareDialogOpen(true)}
-                    className="bg-[#2E343E] text-white border-0"
+                    className="bg-[#2E343E] w-full text-white border-0"
                   >
                     <Mail className="h-4 w-4 mr-2" />
                     Email Report
@@ -931,7 +937,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </div>
                 </CardContent>
                 <div className="px-6 py-4 bg-muted/50 mt-4 flex justify-center">
-                  <Button className="bg-[#2E343E] text-white border-0">
+                  <Button className="bg-[#2E343E] w-full text-white border-0">
                     <Printer className="h-4 w-4 mr-2" />
                     Print Report
                   </Button>
@@ -967,7 +973,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                 <div className="px-6 py-4 bg-muted/50 mt-4 flex justify-center">
                   <Button
                     onClick={() => setIsScheduleDialogOpen(true)}
-                    className="bg-[#2E343E] text-white border-0"
+                    className="bg-[#2E343E] w-full text-white border-0"
                   >
                     <Repeat className="h-4 w-4 mr-2" />
                     Set Schedule
@@ -1000,7 +1006,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                   </div>
                 </CardContent>
                 <div className="px-6 py-4 bg-muted/50 mt-4 flex justify-center">
-                  <Button className="bg-[#2E343E] text-white border-0">
+                  <Button className="bg-[#2E343E] w-full text-white border-0">
                     <Download className="h-4 w-4 mr-2" />
                     Export Raw Data
                   </Button>

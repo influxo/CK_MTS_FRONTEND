@@ -718,7 +718,12 @@ export function ProjectDetails() {
           <div className="flex flex-col md:flex-row gap-6 w-full">
             <div className="flex-1 space-y-5">
               <div className="flex gap-2">
-                <Badge variant="outline">{enhancedProject.category}</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-[#0073e6] text-white border-0"
+                >
+                  {enhancedProject.category}
+                </Badge>
                 <Badge variant="outline">{enhancedProject.type}</Badge>
                 <Badge
                   variant="default"
@@ -997,12 +1002,13 @@ export function ProjectDetails() {
         </TabsList>
 
         <TabsContent value="overview" className="pt-6">
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 gap-6">
             <div className="col-span-2 space-y-6">
               <ProjectStats projectId={enhancedProject.id} />
+              {/* <ProjectActivity projectId={enhancedProject.id} /> */}
             </div>
             <div className="space-y-6">
-              <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
+              {/* <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
                 <CardContent className="p-6">
                   <h3 className="mb-3">Project Objectives</h3>
                   <ul className="space-y-2">
@@ -1031,7 +1037,7 @@ export function ProjectDetails() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
               <ProjectActivity projectId={enhancedProject.id} />
             </div>
           </div>
@@ -1775,23 +1781,12 @@ export function ProjectDetails() {
                       >
                         Cancel
                       </Button>
-                      {addBeneficiaryTab === "new" ? (
-                        <Button
-                          onClick={handleCreateSubmit}
-                          disabled={createLoading}
-                        >
-                          {createLoading ? "Saving..." : "Save"}
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={handleAssociateSubmit}
-                          disabled={
-                            associateLoading || !associateSelectedBeneficiaryId
-                          }
-                        >
-                          {associateLoading ? "Associating..." : "Associate"}
-                        </Button>
-                      )}
+                      <Button
+                        onClick={handleCreateSubmit}
+                        disabled={createLoading}
+                      >
+                        {createLoading ? "Saving..." : "Save"}
+                      </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -1845,7 +1840,28 @@ export function ProjectDetails() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="capitalize">{r.status}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="default"
+                          className="border-0"
+                          style={
+                            r.status === "active"
+                              ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
+                              : r.status === "pending"
+                              ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
+                              : {
+                                  backgroundColor: "rgba(28,28,28,0.05)",
+                                  color: "rgba(28,28,28,0.4)",
+                                }
+                          }
+                        >
+                          {r.status === "active"
+                            ? "Active"
+                            : r.status === "pending"
+                            ? "Pending"
+                            : "Inactive"}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <div className="text-sm">
                           <div>{r.municipality || "-"}</div>

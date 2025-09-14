@@ -486,7 +486,7 @@ export function EmployeesList({
                             {employee.projects[0] === "All Projects" ? (
                               <Badge
                                 variant="outline"
-                                className="bg-[#2E343E] text-white border-0 "
+                                className="bg-[#0073e6] text-white border-0"
                               >
                                 All Projects
                               </Badge>

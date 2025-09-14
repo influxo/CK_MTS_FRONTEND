@@ -145,8 +145,7 @@ export function SubProjectActivities({
 
   // Filter activities from API for this sub-project
   const filteredActivities = activities.filter((activity) => {
-    const matchesSubProject =
-      activity.subprojectId === effectiveSubProjectId;
+    const matchesSubProject = activity.subprojectId === effectiveSubProjectId;
     const matchesSearch =
       activity.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (activity.description || "")
@@ -369,7 +368,9 @@ export function SubProjectActivities({
                     setIsCreateActivityDialogOpen(false);
                     // Refresh activities list
                     if (effectiveSubProjectId) {
-                      dispatch(fetchSubprojectActivities(effectiveSubProjectId));
+                      dispatch(
+                        fetchSubprojectActivities(effectiveSubProjectId)
+                      );
                     }
                   } catch (e) {
                     // error shown via createError
@@ -460,16 +461,19 @@ export function SubProjectActivities({
                   </TableCell>
                 </TableRow>
               )}
-              {!listLoading && !listError && filteredActivities.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7}>
-                    <span className="text-sm text-muted-foreground">
-                      No activities found.
-                    </span>
-                  </TableCell>
-                </TableRow>
-              )}
-              {!listLoading && !listError &&
+              {!listLoading &&
+                !listError &&
+                filteredActivities.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7}>
+                      <span className="text-sm text-muted-foreground">
+                        No activities found.
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                )}
+              {!listLoading &&
+                !listError &&
                 filteredActivities.map((activity) => (
                   <TableRow key={activity.id}>
                     <TableCell>
@@ -479,15 +483,24 @@ export function SubProjectActivities({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{activity.category}</Badge>
+                      <Badge
+                        variant="outline"
+                        className="bg-[#0073e6] border-0 text-white"
+                      >
+                        {activity.category}
+                      </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{activity.frequency}</Badge>
+                      <Badge variant="secondary" className="bg-black/5">
+                        {activity.frequency}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={activity.status === "active" ? "default" : "outline"}
-                        className="mt-1"
+                        variant={
+                          activity.status === "active" ? "default" : "outline"
+                        }
+                        className="mt-1 text-[#4AA785] bg-[#DEF8EE]"
                       >
                         {activity.status}
                       </Badge>

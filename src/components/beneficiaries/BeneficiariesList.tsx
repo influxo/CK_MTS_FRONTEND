@@ -1351,6 +1351,11 @@ export function BeneficiariesList({
                 </TableCell>
                 <TableCell>
                   <Badge
+                    className={
+                      beneficiary.status === "active"
+                        ? "bg-[#DEF8EE] text-[#4AA785] border-0"
+                        : "bg-black/10 text-black/40 border-0"
+                    }
                     variant={
                       beneficiary.status === "active" ? "default" : "secondary"
                     }

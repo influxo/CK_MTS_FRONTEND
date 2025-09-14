@@ -23,8 +23,9 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import {
-  LineChart,
+  ComposedChart,
   Line,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -391,7 +392,7 @@ export function FormSubmissions() {
         </div> */}
         <div className="h-64 mt-4">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
+            <ComposedChart
               data={chartData}
               margin={{
                 top: 5,
@@ -400,6 +401,18 @@ export function FormSubmissions() {
                 bottom: 5,
               }}
             >
+              <defs>
+                <linearGradient
+                  id="submissionsFill"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis
                 dataKey="name"
@@ -420,6 +433,13 @@ export function FormSubmissions() {
                   boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                 }}
               />
+              <Area
+                type="monotone"
+                dataKey="submissions"
+                stroke="none"
+                fill="url(#submissionsFill)"
+                fillOpacity={1}
+              />
               <Line
                 type="monotone"
                 dataKey="submissions"
@@ -428,7 +448,7 @@ export function FormSubmissions() {
                 dot={false}
                 activeDot={{ r: 6, fill: "#3b82f6" }}
               />
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </CardHeader>
@@ -436,7 +456,7 @@ export function FormSubmissions() {
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2   lg:grid-cols-4 gap-4">
           {submissions.map((submission, index) => (
-            <div key={index} className="p-4  bg-[#E5ECF6] rounded-lg">
+            <div key={index} className="p-4  bg-[#B1E3FF] rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-medium text-sm">{submission.form}</h4>
                 <Button variant="ghost" size="sm">

@@ -777,241 +777,214 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
         </TabsList>
 
         <TabsContent value="overview" className="pt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3  gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <Card className="flex  bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50 ">
+          <div className="space-y-6">
+            <Card className="flex   border-0   drop-shadow-sm shadow-gray-50 ">
+              <CardContent className="p-6 ">
+                <h3 className="mb-4">Key Metrics</h3>
+
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                  <div className="space-y-1 bg-[#B1E3FF] p-4 rounded-lg h-28">
+                    <div className="text-muted-foreground text-sm">
+                      Activities
+                    </div>
+                    <div className="text-2xl font-medium">
+                      {enhancedSubProject.activities}
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      Total activities
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 bg-[#B1E3FF] p-4 rounded-lg h-28">
+                    <div className="text-muted-foreground text-sm">
+                      Beneficiaries
+                    </div>
+                    <div className="text-2xl font-medium">
+                      {enhancedSubProject.beneficiaries}
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      Registered individuals
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 bg-[#B1E3FF] p-4 rounded-lg h-28">
+                    <div className="text-muted-foreground text-sm">Forms</div>
+                    <div className="text-2xl font-medium">
+                      {enhancedSubProject.forms}
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      Submissions collected
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 bg-[#B1E3FF] p-4 rounded-lg h-28">
+                    <div className="text-muted-foreground text-sm">
+                      Services
+                    </div>
+                    <div className="text-2xl font-medium">
+                      {enhancedSubProject.services}
+                    </div>
+                    <div className="text-muted-foreground text-sm">
+                      Services delivered
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="flex bg-[#E5ECF6] border-0 drop-shadow-sm shadow-gray-50">
                 <CardContent className="p-6 ">
-                  <h3 className="mb-4">Key Metrics</h3>
+                  <h4 className="mb-3">Recent Updates</h4>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <div className="space-y-1">
-                      <div className="text-muted-foreground text-sm">
-                        Activities
+                  <div className="space-y-4">
+                    <div className="flex gap-3">
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <CheckCircle className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <div className="text-2xl font-medium">
-                        {enhancedSubProject.activities}
-                      </div>
-                      <div className="text-muted-foreground text-sm">
-                        Total activities
+                      <div>
+                        <div className="font-medium">
+                          Health Education Session Completed
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          28 participants attended the maternal nutrition
+                          workshop
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Today at 10:30 AM
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <div className="text-muted-foreground text-sm">
-                        Beneficiaries
+                    <div className="flex gap-3">
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <Users className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <div className="text-2xl font-medium">
-                        {enhancedSubProject.beneficiaries}
-                      </div>
-                      <div className="text-muted-foreground text-sm">
-                        Registered individuals
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="text-muted-foreground text-sm">Forms</div>
-                      <div className="text-2xl font-medium">
-                        {enhancedSubProject.forms}
-                      </div>
-                      <div className="text-muted-foreground text-sm">
-                        Submissions collected
+                      <div>
+                        <div className="font-medium">
+                          15 New Beneficiaries Registered
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          New pregnant women registered in the Eastern Village
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Yesterday at 2:15 PM
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <div className="text-muted-foreground text-sm">
-                        Services
+                    <div className="flex gap-3">
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <FileEdit className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <div className="text-2xl font-medium">
-                        {enhancedSubProject.services}
-                      </div>
-                      <div className="text-muted-foreground text-sm">
-                        Services delivered
+                      <div>
+                        <div className="font-medium">
+                          Monthly Report Generated
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          April 2025 activity report has been generated
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          May 5, 2025
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="border-t mt-6 pt-6">
-                    <h4 className="mb-3">Recent Updates</h4>
-
-                    <div className="space-y-4">
-                      <div className="flex gap-3">
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                          <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <div className="font-medium">
-                            Health Education Session Completed
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            28 participants attended the maternal nutrition
-                            workshop
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Today at 10:30 AM
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3">
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <div className="font-medium">
-                            15 New Beneficiaries Registered
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            New pregnant women registered in the Eastern Village
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Yesterday at 2:15 PM
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3">
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                          <FileEdit className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <div className="font-medium">
-                            Monthly Report Generated
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            April 2025 activity report has been generated
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            May 5, 2025
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end mt-4">
-                      {/* <Button
-                      variant="outline" size="sm">
-                        View All Updates
-                      </Button> */}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="space-y-6">
-              <Card className="flex  bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50 ">
-                <CardContent className="p-6">
-                  <h3 className="mb-3">Sub-Project Objectives</h3>
-                  <ul className="space-y-2">
-                    {enhancedSubProject.objectives.map((objective, index) => (
-                      <li key={index} className="flex items-baseline gap-2">
-                        <CheckCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                        <span className="text-sm">{objective}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="mt-4 pt-4 border-t">
-                    <div className="mb-2">
-                      <span className="text-sm text-muted-foreground">
-                        Budget
-                      </span>
-                      <div className="text-xl font-medium">
-                        ${enhancedSubProject.budget.toLocaleString()}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-sm text-muted-foreground">
-                        Funding Source
-                      </span>
-                      <div>{enhancedSubProject.fundingSource}</div>
-                    </div>
+                  <div className="flex justify-end mt-4">
+                    {/* <Button variant="outline" size="sm">View All Updates</Button> */}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="flex  bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50 ">
-                <CardContent className="p-6">
-                  <h3 className="mb-3">Last Synchronization</h3>
-
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Last synced
-                      </span>
-                      <span className="text-sm">
-                        {new Date(enhancedSubProject.lastSync).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Sync status
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className="flex items-center gap-1"
-                      >
-                        <CheckCircle className="h-3 w-3 text-green-500" />
-                        <span>Complete</span>
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* <Button variant="outline" className="w-full" size="sm">
-                    Sync Now
-                  </Button> */}
-                </CardContent>
-              </Card>
-
-              {enhancedSubProject.recentReports.length > 0 && (
-                <Card className="flex  bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50 ">
+              <div className="flex flex-col gap-6">
+                <Card className="flex bg-[#F7F9FB] border-0 h-[120px] drop-shadow-sm shadow-gray-50">
                   <CardContent className="p-6">
-                    <div className="flex justify-between items-center mb-3">
-                      <h3>Recent Reports</h3>
-                      {/* <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setActiveTab("reports")}
-                      >
-                        View All
-                      </Button> */}
+                    <h3 className="mb-3">Last Synchronization</h3>
+
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">
+                          Last synced
+                        </span>
+                        <span className="text-sm">
+                          {new Date(
+                            enhancedSubProject.lastSync
+                          ).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">
+                          Sync status
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
+                          <CheckCircle className="h-3 w-3 text-green-500" />
+                          <span>Complete</span>
+                        </Badge>
+                      </div>
                     </div>
 
-                    <div className="space-y-3">
-                      {enhancedSubProject.recentReports.map((report) => (
-                        <div key={report.id} className="flex items-start gap-3">
-                          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <div>
-                            <div className="font-medium">{report.title}</div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-xs">
-                                {report.type}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(
-                                  report.createdDate
-                                ).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    {/* 
-                    <Button
-                      variant="outline"
-                      className="w-full mt-4"
-                      size="sm"
-                      onClick={() => setActiveTab("reports")}
-                    >
-                      Generate New Report
+                    {/* <Button variant="outline" className="w-full" size="sm">
+                      Sync Now
                     </Button> */}
                   </CardContent>
                 </Card>
-              )}
+
+                {enhancedSubProject.recentReports.length > 0 && (
+                  <Card className="flex bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-center mb-3">
+                        <h3>Recent Reports</h3>
+                        {/* <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setActiveTab("reports")}
+                        >
+                          View All
+                        </Button> */}
+                      </div>
+
+                      <div className="space-y-3">
+                        {enhancedSubProject.recentReports.map((report) => (
+                          <div
+                            key={report.id}
+                            className="flex items-start gap-3"
+                          >
+                            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <div>
+                              <div className="font-medium">{report.title}</div>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {report.type}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(
+                                    report.createdDate
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {/*
+                      // <Button
+                      //   variant="outline"
+                      //   className="w-full mt-4"
+                      //   size="sm"
+                      //   onClick={() => setActiveTab("reports")}
+                      // >
+                      //   Generate New Report
+                      // </Button> */}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             </div>
           </div>
         </TabsContent>
@@ -1622,7 +1595,28 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="capitalize">{r.status}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="default"
+                          className="border-0"
+                          style={
+                            r.status === "active"
+                              ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
+                              : r.status === "pending"
+                              ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
+                              : {
+                                  backgroundColor: "rgba(28,28,28,0.05)",
+                                  color: "rgba(28,28,28,0.4)",
+                                }
+                          }
+                        >
+                          {r.status === "active"
+                            ? "Active"
+                            : r.status === "pending"
+                            ? "Pending"
+                            : "Inactive"}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <div className="text-sm">
                           <div>{r.municipality || "-"}</div>

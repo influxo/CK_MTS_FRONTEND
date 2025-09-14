@@ -133,7 +133,7 @@ export function ProjectActivity({ projectId }: ProjectActivityProps) {
   );
 
   return (
-    <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
+    <Card className="bg-[#E5ECF6] border-0 drop-shadow-sm shadow-gray-50">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <CardTitle className="text-base">Recent Activity</CardTitle>

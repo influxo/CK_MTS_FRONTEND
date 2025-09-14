@@ -131,26 +131,34 @@ export default function BeneficiarySingleSubmission() {
                       No data fields.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                      {fieldEntries.map(([key, value]) => (
-                        <div
-                          key={key}
-                          className="group relative rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
-                        >
-                          <span
-                            className="pointer-events-none absolute left-0 top-0 h-full w-1 rounded-l-lg bg-[#E5ECF6]"
-                            aria-hidden="true"
-                          ></span>
-                          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                            {formatLabel(key)}
-                          </div>
-                          <div className="mt-1 text-sm font-medium text-slate-900 break-words">
-                            {typeof value === "object"
-                              ? JSON.stringify(value)
-                              : String(value)}
-                          </div>
-                        </div>
-                      ))}
+                    <div className="rounded-md overflow-x-auto">
+                      <Table>
+                        <TableHeader className="bg-[#E5ECF6]">
+                          <TableRow>
+                            {fieldEntries.map(([key]) => (
+                              <TableHead
+                                key={key}
+                                className="whitespace-nowrap"
+                              >
+                                {formatLabel(key)}
+                              </TableHead>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody className="bg-[#F7F9FB]">
+                          <TableRow>
+                            {fieldEntries.map(([key, value]) => (
+                              <TableCell key={key}>
+                                <div className="text-sm break-words max-w-[360px]">
+                                  {typeof value === "object"
+                                    ? JSON.stringify(value)
+                                    : String(value)}
+                                </div>
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        </TableBody>
+                      </Table>
                     </div>
                   )}
                 </CardContent>

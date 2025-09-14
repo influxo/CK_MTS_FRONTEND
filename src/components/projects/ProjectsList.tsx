@@ -72,7 +72,7 @@ const mockProjects = [
     startDate: "2025-01-15",
     endDate: "2025-07-15",
     leads: ["Pal Baftijaj", "Alfred Pjetri"],
-    services: ["Sherbime Infermierore", ],
+    services: ["Sherbime Infermierore"],
     description:
       "Comprehensive healthcare services for underserved rural communities in the northern region.",
   },
@@ -284,7 +284,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-black text-white">
+            <Button className="bg-[#0272e3] text-white">
               <Plus className="h-4 w-4 mr-2" />
               Create Project
             </Button>
@@ -448,14 +448,14 @@ export function ProjectsList({ projects }: ProjectsListProps) {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search projects..."
-              className="pl-9"
+              className="pl-9 bg-black/5 border-0"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex gap-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-[130px] bg-black/5 border-0">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -467,7 +467,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[160px] bg-black/5 border-0">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
@@ -486,26 +486,11 @@ export function ProjectsList({ projects }: ProjectsListProps) {
           value={viewType}
           onValueChange={setViewType}
           className="w-full sm:w-auto"
-        >
-          <TabsList className="grid w-full sm:w-[180px] grid-cols-2 bg-gray-200 rounded-full">
-            <TabsTrigger
-              value="grid"
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full transition-colors"
-            >
-              Grid View
-            </TabsTrigger>
-            <TabsTrigger
-              value="list"
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full transition-colors"
-            >
-              List View
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        ></Tabs>
       </div>
 
       <div className="mt-6">
-        {viewType === "grid" ? (
+        {viewType === "list" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
               <Card key={project.id} className="overflow-hidden">
@@ -523,7 +508,10 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                               ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
                               : project.status === "pending"
                               ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
-                              : { backgroundColor: "rgba(28,28,28,0.05)", color: "rgba(28,28,28,0.4)" }
+                              : {
+                                  backgroundColor: "rgba(28,28,28,0.05)",
+                                  color: "rgba(28,28,28,0.4)",
+                                }
                           }
                         >
                           {project.status === "active"
@@ -603,7 +591,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
         ) : (
           <div className="rounded-md border overflow-hidden">
             <table className="w-full">
-              <thead>
+              <thead className="bg-[#E5ECF6]">
                 <tr className="bg-muted border-b">
                   <th className="text-left p-3 font-medium">Project Name</th>
                   <th className="text-left p-3 font-medium">Category</th>
@@ -614,7 +602,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                   <th className="text-left p-3 font-medium">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-[#F7F9FB]">
                 {/* {filteredProjects.map((project) => ( */}
                 {projects.map((project) => (
                   <tr key={project.id} className="border-b">
@@ -637,7 +625,10 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                             ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
                             : project.status === "pending"
                             ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
-                            : { backgroundColor: "rgba(28,28,28,0.05)", color: "rgba(28,28,28,0.4)" }
+                            : {
+                                backgroundColor: "rgba(28,28,28,0.05)",
+                                color: "rgba(28,28,28,0.4)",
+                              }
                         }
                       >
                         {project.status === "active"
