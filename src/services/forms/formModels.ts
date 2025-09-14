@@ -114,6 +114,13 @@ export interface GetFormTemplateByIdResponse {
   data: FormTemplate;
 }
 
+export interface ServicePayload {
+  serviceId: string;
+  deliveredAt: string;
+  staffUserId: string;
+  notes?: string;
+}
+
 // Request for submitting a form
 export interface FormSubmissionRequest {
   /**
@@ -146,6 +153,7 @@ export interface FormSubmissionRequest {
    */
   latitude: number;
   longitude: number;
+  services?: ServicePayload[];
 }
 
 // Data returned when a form is successfully submitted

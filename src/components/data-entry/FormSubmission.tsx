@@ -31,6 +31,14 @@ import {
 import type { FormTemplate } from "../../services/forms/formModels";
 import { MapPin } from "lucide-react";
 import {
+  getEntityServices,
+  selectEntityServices,
+  selectEntityServicesLoading,
+  selectEntityServicesError,
+} from "../../store/slices/serviceSlice";
+import { useAuth } from "../../hooks/useAuth";
+import type { ServicePayload } from "../../services/forms/formModels";
+import {
   enqueueSubmission,
   flushQueue,
   peekQueue,
@@ -88,6 +96,10 @@ export function FormSubmission({
   const byEntityBeneficiariesError = useSelector(
     selectFormBeneficiariesByEntityError
   );
+  const entityServices = useSelector(selectEntityServices);
+  const entityServicesLoading = useSelector(selectEntityServicesLoading);
+  const entityServicesError = useSelector(selectEntityServicesError);
+  const { user } = useAuth();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isDraft, setIsDraft] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
@@ -103,6 +115,15 @@ export function FormSubmission({
   const [syncing, setSyncing] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
   const [localNotice, setLocalNotice] = useState<string | null>(null);
+  // Track selected services for this submission
+  const [selectedServices, setSelectedServices] = useState<
+    Array<{
+      serviceId: string;
+      notes?: string;
+    }>
+  >([]);
+  // Query to filter a potentially large services list
+  const [servicesQuery, setServicesQuery] = useState("");
   const isMobileOrTablet =
     typeof navigator !== "undefined" &&
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -190,6 +211,13 @@ export function FormSubmission({
           entityType,
           page: 1,
           limit: 50,
+        })
+      );
+      // Load services assigned to this entity for selection in delivery section
+      dispatch(
+        getEntityServices({
+          entityId,
+          entityType: (entityType as any) as "project" | "subproject",
         })
       );
     }
@@ -344,6 +372,14 @@ export function FormSubmission({
         }
         const { beneficiaryId: selectedBeneficiaryId, ...restFormData } =
           formData;
+        // Build services payload from selected services state
+        const submissionTimeIso = new Date().toISOString();
+        const servicesPayload: ServicePayload[] = selectedServices.map((s) => ({
+          serviceId: s.serviceId,
+          deliveredAt: submissionTimeIso,
+          staffUserId: String(user?.id ?? ""),
+          ...(s.notes ? { notes: s.notes } : {}),
+        }));
         const payload = {
           entityId,
           entityType,
@@ -353,6 +389,7 @@ export function FormSubmission({
           data: restFormData,
           latitude: coords.lat,
           longitude: coords.lng,
+          ...(servicesPayload.length > 0 ? { services: servicesPayload } : {}),
         };
 
         if (!isOnline) {
@@ -678,6 +715,123 @@ export function FormSubmission({
                 <p className="text-sm text-destructive">
                   {byEntityBeneficiariesError}
                 </p>
+              )}
+            </div>
+          )}
+
+          {/* Services selection (from assigned services to entity) */}
+          {entityId && entityType && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Services Delivered</Label>
+                {selectedServices.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {selectedServices.length} selected
+                  </span>
+                )}
+              </div>
+              {entityServicesLoading ? (
+                <p className="text-sm text-muted-foreground">Loading services...</p>
+              ) : entityServicesError ? (
+                <p className="text-sm text-destructive">{entityServicesError}</p>
+              ) : entityServices.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No services assigned to this entity.
+                </p>
+              ) : (
+                <>
+                  <Input
+                    placeholder="Search services..."
+                    value={servicesQuery}
+                    onChange={(e) => setServicesQuery(e.target.value)}
+                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+                  />
+                  {/* Selected chips */}
+                  {selectedServices.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedServices.map((s) => {
+                        const svc = entityServices.find((x) => x.id === s.serviceId);
+                        if (!svc) return null;
+                        return (
+                          <div
+                            key={s.serviceId}
+                            className="px-2 py-1 rounded-full bg-[#E5ECF6] text-xs flex items-center gap-2"
+                          >
+                            <span>{svc.name}</span>
+                            <button
+                              type="button"
+                              className="text-muted-foreground hover:text-destructive"
+                              onClick={() =>
+                                setSelectedServices((prev) =>
+                                  prev.filter((it) => it.serviceId !== s.serviceId)
+                                )
+                              }
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {/* Services list */}
+                  <div className="max-h-64 overflow-auto rounded-md border border-black/10">
+                    <div className="divide-y">
+                      {entityServices
+                        .filter((svc) =>
+                          svc.name.toLowerCase().includes(servicesQuery.toLowerCase())
+                        )
+                        .map((svc) => {
+                          const isChecked = selectedServices.some((s) => s.serviceId === svc.id);
+                          const current = selectedServices.find((s) => s.serviceId === svc.id);
+                          return (
+                            <div key={svc.id} className="p-3 hover:bg-black/5">
+                              <div className="flex items-center gap-3">
+                                <Checkbox
+                                  id={`svc-${svc.id}`}
+                                  checked={isChecked}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedServices((prev) => [
+                                        ...prev,
+                                        { serviceId: svc.id, notes: "" },
+                                      ]);
+                                    } else {
+                                      setSelectedServices((prev) =>
+                                        prev.filter((s) => s.serviceId !== svc.id)
+                                      );
+                                    }
+                                  }}
+                                />
+                                <Label htmlFor={`svc-${svc.id}`} className="font-medium">
+                                  {svc.name}
+                                </Label>
+                              </div>
+                              {isChecked && (
+                                <div className="mt-2 ml-6">
+                                  <Label htmlFor={`notes-${svc.id}`} className="text-xs">Notes</Label>
+                                  <Textarea
+                                    id={`notes-${svc.id}`}
+                                    rows={2}
+                                    placeholder="Optional notes"
+                                    value={current?.notes || ""}
+                                    onChange={(e) => {
+                                      const notes = e.target.value;
+                                      setSelectedServices((prev) =>
+                                        prev.map((s) =>
+                                          s.serviceId === svc.id ? { ...s, notes } : s
+                                        )
+                                      );
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           )}
