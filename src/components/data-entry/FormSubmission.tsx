@@ -70,7 +70,10 @@ const mapFieldType = (t: string | undefined) => {
     case "radio":
       return "radio";
     case "checkbox":
+      // API single boolean checkbox
+      return "checkbox";
     case "checkbox-group":
+      // For potential multi-select checkbox groups
       return "checkbox-group";
     default:
       return "text";
@@ -431,11 +434,10 @@ export function FormSubmission({
   };
 
   const renderField = (field: any) => {
-    const value = formData[field.id] || "";
+    const value = formData[field.id] ?? "";
     const hasError = validationErrors[field.id];
 
     switch (field.type) {
-      case "text":
       case "number":
         return (
           <div key={field.id} className="space-y-2">
@@ -445,7 +447,34 @@ export function FormSubmission({
             </Label>
             <Input
               id={field.id}
-              type={field.type}
+              type="number"
+              placeholder={field.placeholder}
+              value={value}
+              onChange={(e) => {
+                const raw = e.target.value;
+                // Keep empty string if user clears input, else parse to number
+                const parsed = raw === "" ? "" : Number(raw);
+                handleFieldChange(field.id, parsed);
+              }}
+              className={
+                hasError
+                  ? "border-destructive"
+                  : " bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+              }
+            />
+            {hasError && <p className="text-sm text-destructive">{hasError}</p>}
+          </div>
+        );
+      case "text":
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}{" "}
+              {field.required && <span className="text-destructive">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              type="text"
               placeholder={field.placeholder}
               value={value}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
@@ -540,6 +569,27 @@ export function FormSubmission({
                 </div>
               ))}
             </RadioGroup>
+            {hasError && <p className="text-sm text-destructive">{hasError}</p>}
+          </div>
+        );
+
+      case "checkbox":
+        // Single boolean checkbox
+        return (
+          <div key={field.id} className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id={field.id}
+                checked={!!formData[field.id]}
+                onCheckedChange={(checked) =>
+                  handleFieldChange(field.id, checked === true)
+                }
+              />
+              <Label htmlFor={field.id}>
+                {field.label}{" "}
+                {field.required && <span className="text-destructive">*</span>}
+              </Label>
+            </div>
             {hasError && <p className="text-sm text-destructive">{hasError}</p>}
           </div>
         );
