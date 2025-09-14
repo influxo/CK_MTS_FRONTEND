@@ -20,6 +20,9 @@ import DataEntryTemplates from "./pages/DataEntryTemplates";
 import { EmployeeDetails } from "./components/employees/EmployeeDetails";
 import AcceptInvitation from "./pages/auth/AcceptInvitation";
 import { Profile } from "./pages/Profile";
+import { FormDetails } from "./components/forms/FormDetails";
+import { FormCreate } from "./components/forms/FormCreate";
+import { FormEdit } from "./components/forms/FormEdit";
 
 const routes = [
   {
@@ -85,6 +88,14 @@ const routes = [
       {
         path: "forms",
         element: <Forms />,
+      },
+      {
+        path: "forms/create",
+        element: <FormCreate />,
+      },
+      {
+        path: "forms/edit/:id",
+        element: <FormEdit />,
       },
       {
         path: "data-entry",

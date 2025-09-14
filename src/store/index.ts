@@ -2,7 +2,6 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
 import projectsReducer from "./slices/projectsSlice";
 import subprojectsReducer from "./slices/subProjectSlice";
-import formsReducer from "./slices/formSlice";
 import employeesReducer from "./slices/employeesSlice";
 import rolesReducer from "./slices/roleSlice";
 import activitiesReducer from "./slices/activitySlice";
@@ -12,6 +11,9 @@ import userProjectsReducer from "./slices/userProjectsSlice";
 import serviceMetricsReducer from "./slices/serviceMetricsSlice";
 import kpiReducer from "./slices/kpiSlice";
 import demographicsReducer from "./slices/demographicsSlice";
+import formsReducer from "./slices/formsSlice";
+import formReducer from "./slices/formSlice";
+
 // Configure the Redux store
 export const store = configureStore({
   reducer: {
@@ -19,6 +21,7 @@ export const store = configureStore({
     projects: projectsReducer,
     subprojects: subprojectsReducer,
     forms: formsReducer,
+    form: formReducer,
     employees: employeesReducer,
     roles: rolesReducer,
     activities: activitiesReducer,

@@ -7,6 +7,10 @@ import type {
   FormSubmissionRequest,
   FormSubmissionResponse,
   GetFormResponseByIdResponse,
+  GetFormResponsesByEntityRequest,
+  GetFormResponsesByEntityResponse,
+  GetAllFormResponsesRequest,
+  GetAllFormResponsesResponse,
 } from "./formModels";
 
 class FormService {
@@ -52,9 +56,7 @@ class FormService {
     }
   }
 
-  async getFormTemplateById(
-    id: string
-  ): Promise<GetFormTemplateByIdResponse> {
+  async getFormTemplateById(id: string): Promise<GetFormTemplateByIdResponse> {
     try {
       const response = await axiosInstance.get<GetFormTemplateByIdResponse>(
         `${this.formsEndpoint}/templates/${id}`
@@ -71,11 +73,11 @@ class FormService {
           id,
           name: "",
           schema: { fields: [] },
-          version: 0,
+          version: "",
           createdAt: "",
           updatedAt: "",
-          deletedAt: null,
-          programId: null,
+          deletedAt: "",
+          programId: "",
           entityAssociations: [],
         },
       };
@@ -149,6 +151,136 @@ class FormService {
           submitter: { id: "", firstName: "", lastName: "", email: "" },
           beneficiary: null,
           serviceDeliveries: [],
+        },
+      };
+    }
+  }
+
+  async getFormResponsesByEntity(
+    params: GetFormResponsesByEntityRequest
+  ): Promise<GetFormResponsesByEntityResponse> {
+    try {
+      const response = await axiosInstance.get<any>(
+        `${this.formsEndpoint}/responses/by-entity`,
+        { params }
+      );
+      // Backend returns { success, data: FormResponseData[], meta }
+      const { data, meta, success, message } = response.data || {};
+      const mapped = {
+        success: Boolean(success),
+        message,
+        data: {
+          items: Array.isArray(data) ? data : [],
+          pagination: {
+            page: meta?.page ?? params.page ?? 1,
+            limit: meta?.limit ?? params.limit ?? 20,
+            totalPages: meta?.totalPages ?? 0,
+            totalCount: meta?.totalItems ?? 0,
+          },
+        },
+      } as GetFormResponsesByEntityResponse;
+      return mapped;
+    } catch (error: any) {
+      if (error?.response) {
+        const resp = error.response.data;
+        // Attempt to map if shape differs
+        if (resp && Array.isArray(resp.data) && resp.meta) {
+          return {
+            success: false,
+            message: resp.message,
+            data: {
+              items: resp.data,
+              pagination: {
+                page: resp.meta.page ?? params.page ?? 1,
+                limit: resp.meta.limit ?? params.limit ?? 20,
+                totalPages: resp.meta.totalPages ?? 0,
+                totalCount: resp.meta.totalItems ?? 0,
+              },
+            },
+          };
+        }
+        return {
+          success: false,
+          message: resp?.message || "Failed to fetch form responses.",
+          data: {
+            items: [],
+            pagination: {
+              page: params.page ?? 1,
+              limit: params.limit ?? 20,
+              totalPages: 0,
+              totalCount: 0,
+            },
+          },
+        };
+      }
+      return {
+        success: false,
+        message: error?.message || "Failed to fetch form responses.",
+        data: {
+          items: [],
+          pagination: {
+            page: params.page ?? 1,
+            limit: params.limit ?? 20,
+            totalPages: 0,
+            totalCount: 0,
+          },
+        },
+      };
+    }
+  }
+
+  async getAllFormResponses(
+    params: GetAllFormResponsesRequest
+  ): Promise<GetAllFormResponsesResponse> {
+    try {
+      const response = await axiosInstance.get<any>(
+        `${this.formsEndpoint}/responses`,
+        { params }
+      );
+      const { data, meta, success, message } = response.data || {};
+      return {
+        success: Boolean(success),
+        message,
+        data: {
+          items: Array.isArray(data) ? data : [],
+          pagination: {
+            page: meta?.page ?? params.page ?? 1,
+            limit: meta?.limit ?? params.limit ?? 20,
+            totalPages: meta?.totalPages ?? 0,
+            totalCount: meta?.totalItems ?? 0,
+          },
+        },
+      };
+    } catch (error: any) {
+      if (error?.response) {
+        const resp = error.response.data;
+        if (resp && Array.isArray(resp.data) && resp.meta) {
+          return {
+            success: false,
+            message: resp.message,
+            data: {
+              items: resp.data,
+              pagination: {
+                page: resp.meta.page ?? params.page ?? 1,
+                limit: resp.meta.limit ?? params.limit ?? 20,
+                totalPages: resp.meta.totalPages ?? 0,
+                totalCount: resp.meta.totalItems ?? 0,
+              },
+            },
+          };
+        }
+      }
+      return {
+        success: false,
+        message: error?.message || "Failed to fetch form responses.",
+        data: {
+          items: [],
+          pagination: {
+            page: params.page ?? 1,
+            limit: params.limit ?? 20,
+            totalPages: 0,
+            totalCount: 0,
+          },
         },
       };
     }

@@ -243,3 +243,22 @@ export interface AssociateBeneficiaryToEntitiesResponse {
   };
   message?: string;
 }
+
+// Service deliveries summary metrics (GET /services/metrics/deliveries/summary)
+// We only implement the beneficiaryId query for now
+export interface GetServiceDeliveriesSummaryRequest {
+  beneficiaryId?: string;
+}
+
+export interface ServiceDeliveriesSummaryData {
+  totalDeliveries: number;
+  uniqueBeneficiaries: number;
+  uniqueStaff: number;
+  uniqueServices: number;
+}
+
+export interface GetServiceDeliveriesSummaryResponse {
+  success: boolean;
+  data?: ServiceDeliveriesSummaryData;
+  message?: string;
+}

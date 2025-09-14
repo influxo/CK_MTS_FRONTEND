@@ -15,44 +15,6 @@ export interface Pagination {
   totalCount: number;
 }
 
-// Form field definition inside a template schema
-export interface FormField {
-  name: string;
-  type: string; // e.g., "Text", "Dropdown"
-  label: string;
-  required: boolean;
-  options?: string[]; // present only for fields like Dropdown; optional
-}
-
-// Schema wrapper for a form template
-export interface FormTemplateSchema {
-  fields: FormField[];
-}
-
-// Entity association for a form template
-export interface EntityAssociation {
-  id: string;
-  formTemplateId: string;
-  entityId: string;
-  entityType: string; // e.g., "project" | "subproject" | "activity"
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Form Template model
-export interface FormTemplate {
-  id: string;
-  name: string;
-  schema: FormTemplateSchema;
-  version: number;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-  programId: string | null;
-  entityAssociations: EntityAssociation[];
-}
-
-// Get Form Templates response
 export interface GetFormTemplatesResponse {
   success: boolean;
   message?: string;
@@ -61,12 +23,102 @@ export interface GetFormTemplatesResponse {
     pagination: Pagination;
   };
 }
+export interface FormFieldOption {
+  value: string;
+  label: string;
+}
+
+export interface FormField {
+  id: string;
+  type: string;
+  label: string;
+  required?: boolean;
+  placeholder?: string;
+  helpText?: string;
+  options?: FormFieldOption[];
+  validations?: {
+    minLength?: number;
+    maxLength?: number;
+    min?: number;
+    max?: number;
+  };
+}
+
+export interface EntityReference {
+  id: string;
+  entityType: string;
+  formTemplateId: string;
+  entityId: string;
+  entityName?: string;
+}
+
+export interface FormFieldForTemplate {
+  name: string;
+  label: string;
+  type: string;
+  placeholder?: string;
+  helpText?: string;
+  validations?: {
+    minLength?: number;
+    maxLength?: number;
+    min?: number;
+    max?: number;
+  };
+  required: boolean;
+  options?: string[];
+}
+
+export interface FormSchema {
+  fields: FormFieldForTemplate[];
+}
+
+export interface FormTemplate {
+  id: string;
+  name: string;
+  programId: string;
+  description?: string;
+  category?: string;
+  status?: string;
+  version?: string;
+  entityAssociations: EntityReference[];
+  schema: FormSchema;
+  updatedAt?: string;
+  createdAt?: string;
+  deletedAt?: string;
+}
+
+export interface FormTemplatePagination {
+  page: number;
+  limit: number;
+  totalPages: number;
+  totalCount: number;
+}
+
+export interface FormTemplateAndPagination {
+  templates: FormTemplate[];
+  pagination: FormTemplatePagination;
+}
+
+// API Response Types
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  // data?: T;
+  data?: any;
+}
 
 // Get single Form Template by id response
 export interface GetFormTemplateByIdResponse {
   success: boolean;
   message?: string;
   data: FormTemplate;
+}
+
+export interface ServicePayload {
+  serviceId: string;
+  deliveredAt: string;
+  staffUserId: string;
+  notes?: string;
 }
 
 // Request for submitting a form
@@ -80,6 +132,9 @@ export interface FormSubmissionRequest {
    * UUID of the entity (project, subproject, or activity) this submission belongs to
    */
   entityId: string;
+
+  // beneficiary id
+  beneficiaryId?: string;
 
   /**
    * The entity type this form is associated with
@@ -98,6 +153,7 @@ export interface FormSubmissionRequest {
    */
   latitude: number;
   longitude: number;
+  services?: ServicePayload[];
 }
 
 // Data returned when a form is successfully submitted
@@ -109,6 +165,7 @@ export interface FormSubmissionData {
   entityId: string;
   entityType: string;
   submittedBy: string;
+  beneficiaryId?: string;
   data: Record<string, any>;
   latitude: string; // API returns these as strings
   longitude: string;
@@ -190,3 +247,55 @@ export interface GetFormResponseByIdResponse {
   message?: string;
   data: FormResponseData;
 }
+
+// List form responses by entity (project, subproject, activity)
+export interface GetFormResponsesByEntityRequest {
+  entityId: string;
+  entityType: "project" | "subproject" | "activity";
+  templateId?: string;
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GetFormResponsesByEntityResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    items: FormResponseData[];
+    pagination: Pagination;
+  };
+}
+
+// Global list of form responses (no required entity)
+export interface GetAllFormResponsesRequest {
+  templateId?: string;
+  entityId?: string;
+  entityType?: "project" | "subproject" | "activity";
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GetAllFormResponsesResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    items: FormResponseData[];
+    pagination: Pagination;
+  };
+}
+
+export interface GetFormsResponse extends ApiResponse<FormTemplate[]> {}
+export interface GetFormResponse extends ApiResponse<FormTemplate> {}
+export interface CreateFormRequest
+  extends Omit<FormTemplate, "id" | "lastUpdated" | "createdBy"> {}
+export interface CreateFormResponse extends ApiResponse<FormTemplate> {}
+export interface UpdateFormRequest
+  extends Omit<FormTemplate, "lastUpdated" | "createdBy"> {}
+export interface UpdateFormResponse extends ApiResponse<FormTemplate> {}
+export interface UpdateFormToInactiveResponse
+  extends ApiResponse<FormTemplate> {}
+export interface DeleteFormResponse extends ApiResponse<{ id: string }> {}

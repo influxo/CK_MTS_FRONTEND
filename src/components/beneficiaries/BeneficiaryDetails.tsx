@@ -42,6 +42,10 @@ import {
   selectBeneficiaryEntities,
   selectBeneficiaryEntitiesLoading,
   selectBeneficiaryEntitiesError,
+  fetchServiceDeliveriesSummary,
+  selectServiceDeliveriesSummary,
+  selectServiceDeliveriesSummaryLoading,
+  selectServiceDeliveriesSummaryError,
 } from "../../store/slices/beneficiarySlice";
 import type { UpdateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
@@ -199,6 +203,13 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
   const entities = useSelector(selectBeneficiaryEntities);
   const entitiesLoading = useSelector(selectBeneficiaryEntitiesLoading);
   const entitiesError = useSelector(selectBeneficiaryEntitiesError);
+  const deliveriesSummary = useSelector(selectServiceDeliveriesSummary);
+  const deliveriesSummaryLoading = useSelector(
+    selectServiceDeliveriesSummaryLoading
+  );
+  const deliveriesSummaryError = useSelector(
+    selectServiceDeliveriesSummaryError
+  );
 
   useEffect(() => {
     if (id) {
@@ -207,6 +218,8 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
       dispatch(fetchBeneficiaryServices({ id, page: 1, limit: 20 }));
       // Load associated entities for overview
       dispatch(fetchBeneficiaryEntities({ id }));
+      // Load service deliveries summary metrics
+      dispatch(fetchServiceDeliveriesSummary({ beneficiaryId: id }));
     }
   }, [dispatch, id]);
 
@@ -1075,48 +1088,43 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 <CardContent className="space-y-4">
                   <div className="text-center">
                     <div className="text-3xl font-medium">
-                      {beneficiary.serviceCount}
+                      {deliveriesSummaryLoading
+                        ? "—"
+                        : deliveriesSummary?.totalDeliveries ?? 0}
                     </div>
                     <div className="text-muted-foreground">
                       Total Services Received
                     </div>
                   </div>
 
+                  {deliveriesSummaryError && (
+                    <div className="text-sm text-red-600 text-center">
+                      {deliveriesSummaryError}
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
-                        Last Service:
+                        Unique Staff
                       </span>
                       <span>
-                        {beneficiary.lastService
-                          ? new Date(
-                              beneficiary.lastService
-                            ).toLocaleDateString()
-                          : "—"}
+                        {deliveriesSummaryLoading
+                          ? "—"
+                          : deliveriesSummary?.uniqueStaff ?? 0}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
-                        Service Frequency:
+                        Unique Services
                       </span>
-                      <span>Monthly</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Next Scheduled:
+                      <span>
+                        {deliveriesSummaryLoading
+                          ? "—"
+                          : deliveriesSummary?.uniqueServices ?? 0}
                       </span>
-                      <span>June 10, 2025</span>
                     </div>
                   </div>
-
-                  <Button
-                    variant="outline"
-                    className="w-full bg-[#2E343E] text-white"
-                    onClick={() => setIsAddServiceDialogOpen(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2 " />
-                    Record New Service
-                  </Button>
                 </CardContent>
               </Card>
 
@@ -1393,104 +1401,87 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
             <CardHeader>
               <CardTitle className="text-base">Info</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="rounded-md overflow-hidden">
-                <Table>
-                  <TableHeader className="bg-[#E5ECF6]">
-                    <TableRow>
-                      <TableHead>Blood Type</TableHead>
-                      <TableHead>Allergies</TableHead>
-                      <TableHead>Chronic Conditions</TableHead>
-                      <TableHead>Disabilities</TableHead>
-                      <TableHead>Medications</TableHead>
-                      <TableHead>Notes</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody className="bg-[#F7F9FB] ">
-                    <TableRow>
-                      <TableCell>
-                        {(detail as any)?.details?.bloodType ?? "—"}
-                      </TableCell>
-                      <TableCell>
-                        {((detail as any)?.details?.allergies ?? []).length >
-                        0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {((detail as any)?.details?.allergies ?? []).map(
-                              (a: string, idx: number) => (
-                                <Badge key={idx} variant="outline">
-                                  {a}
-                                </Badge>
-                              )
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            —
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {((detail as any)?.details?.chronicConditions ?? [])
-                          .length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {(
-                              (detail as any)?.details?.chronicConditions ?? []
-                            ).map((c: string, idx: number) => (
-                              <Badge key={idx} variant="outline">
-                                {c}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            —
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {((detail as any)?.details?.disabilities ?? []).length >
-                        0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {((detail as any)?.details?.disabilities ?? []).map(
-                              (d: string, idx: number) => (
-                                <Badge key={idx} variant="outline">
-                                  {d}
-                                </Badge>
-                              )
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            —
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {((detail as any)?.details?.medications ?? []).length >
-                        0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {((detail as any)?.details?.medications ?? []).map(
-                              (m: string, idx: number) => (
-                                <Badge key={idx} variant="outline">
-                                  {m}
-                                </Badge>
-                              )
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            —
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="whitespace-pre-wrap">
-                          {(detail as any)?.details?.notes ?? "—"}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Blood Type:</span>
+                  <div>{(detail as any)?.details?.bloodType ?? "—"}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Notes:</span>
+                  <div className="whitespace-pre-wrap">
+                    {(detail as any)?.details?.notes ?? "—"}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Allergies</h4>
+                {((detail as any)?.details?.allergies ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {((detail as any)?.details?.allergies ?? []).map(
+                      (a: string, idx: number) => (
+                        <Badge key={idx} variant="outline">
+                          {a}
+                        </Badge>
+                      )
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">—</div>
+                )}
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Chronic Conditions</h4>
+                {((detail as any)?.details?.chronicConditions ?? []).length >
+                0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {((detail as any)?.details?.chronicConditions ?? []).map(
+                      (c: string, idx: number) => (
+                        <Badge key={idx} variant="outline">
+                          {c}
+                        </Badge>
+                      )
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">—</div>
+                )}
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Disabilities</h4>
+                {((detail as any)?.details?.disabilities ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {((detail as any)?.details?.disabilities ?? []).map(
+                      (d: string, idx: number) => (
+                        <Badge key={idx} variant="outline">
+                          {d}
+                        </Badge>
+                      )
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">—</div>
+                )}
+              </div>
+
+              <div>
+                <h4 className="font-medium mb-2">Medications</h4>
+                {((detail as any)?.details?.medications ?? []).length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {((detail as any)?.details?.medications ?? []).map(
+                      (m: string, idx: number) => (
+                        <Badge key={idx} variant="outline">
+                          {m}
+                        </Badge>
+                      )
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">—</div>
+                )}
               </div>
             </CardContent>
           </Card>
