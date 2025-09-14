@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader } from "../ui/data-display/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
 import { Input } from "../ui/form/input";
 import {
   Select,
@@ -18,9 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import { ArrowLeft, Search, Filter, MoreHorizontal, Eye, Calendar, Loader2 } from "lucide-react";
+import { ArrowLeft, Search, Filter, MoreHorizontal, Eye, Calendar, Loader2, MapPin, User } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 
 import {
   DropdownMenu,
@@ -72,7 +71,6 @@ export function SubmissionHistory({
   onBack,
 }: SubmissionHistoryProps) {
   const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
 
   const items = useSelector(selectResponses) as any;
   const safeItems = Array.isArray(items) ? (items as any[]) : [];
@@ -93,7 +91,6 @@ export function SubmissionHistory({
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(20);
   const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewingId, setViewingId] = useState<string | null>(null);
 
   // Fetch template for selected response to resolve field labels
   useEffect(() => {
@@ -114,6 +111,12 @@ export function SubmissionHistory({
     }
     return map;
   }, [selectedTemplate]);
+
+  const formatLabel = (label: string) => {
+    if (!label) return label;
+    const withSpaces = label.replace(/[_\-]+/g, " ");
+    return withSpaces.replace(/\b\w/g, (c) => c.toUpperCase());
+  };
 
   useEffect(() => {
     const templateIdParam = templateFilter === "all" ? undefined : templateFilter;
@@ -163,12 +166,7 @@ export function SubmissionHistory({
     });
   }, [safeItems, searchQuery]);
 
-  const handleView = (responseId: string, beneficiaryId?: string | null) => {
-    if (beneficiaryId) {
-      navigate(`/beneficiaries/${beneficiaryId}/form/${responseId}`);
-      return;
-    }
-    setViewingId(responseId);
+  const handleView = (responseId: string) => {
     setViewerOpen(true);
     dispatch(fetchFormResponseById({ id: responseId }));
   };
@@ -341,7 +339,7 @@ export function SubmissionHistory({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => handleView(r.id, r.beneficiary?.id)}
+                            onClick={() => handleView(r.id)}
                           >
                             <Eye className="h-4 w-4 mr-2" /> View
                           </DropdownMenuItem>
@@ -411,46 +409,120 @@ export function SubmissionHistory({
       </Card>
 
       <Dialog open={viewerOpen} onOpenChange={(o) => (!o ? setViewerOpen(false) : null)}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="sm:max-w-5xl max-h-[85vh] overflow-y-auto">
           <DialogHeaderUI>
             <DialogTitle>Form Submission</DialogTitle>
           </DialogHeaderUI>
           {selectedLoading && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading...
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading form response...
             </div>
           )}
           {!selectedLoading && selectedError && (
             <div className="text-sm text-red-600">{selectedError}</div>
           )}
           {!selectedLoading && !selectedError && selected && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <div className="text-lg font-medium">{selected.template?.name ?? "Untitled Template"}</div>
-                  <div className="text-sm text-muted-foreground">
-                    Submitted on {selected.submittedAt ? new Date(selected.submittedAt).toLocaleString() : "—"}
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="flex flex-col md:flex-row justify-between gap-6">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h1 className="font-medium text-2xl">{selected.template?.name || "Untitled Template"}</h1>
+                    {selected.template?.version !== undefined && (
+                      <Badge variant="outline">v{selected.template.version}</Badge>
+                    )}
                   </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>
+                      Submitted on {selected.submittedAt ? new Date(selected.submittedAt).toLocaleString() : "—"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <User className="h-3.5 w-3.5" />
+                    <span>
+                      By {`${selected.submitter?.firstName ?? ""} ${selected.submitter?.lastName ?? ""}`.trim() || "—"}
+                      {selected.submitter?.email ? ` (${selected.submitter.email})` : ""}
+                    </span>
+                  </div>
+                  {selected.beneficiary && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5" />
+                      <span>Beneficiary: {selected.beneficiary.pseudonym}</span>
+                    </div>
+                  )}
                 </div>
-                {selected.template?.version !== undefined && (
-                  <Badge variant="outline">v{selected.template.version}</Badge>
-                )}
               </div>
+
               {selectedTemplateLoading && (
                 <div className="text-sm text-muted-foreground">Loading form definition…</div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {Object.entries(selected.data || {}).map(([k, v]) => (
-                  <div key={k} className="rounded-md border p-3 bg-white">
-                    <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
-                      {labelMap[k] ?? k.replace(/[_\-]+/g, " ")}
+
+              {/* Submitted Data */}
+              <Card className="bg-[#F7F9FB] border-0 ">
+                <CardHeader>
+                  <CardTitle className="text-base">Submitted Data</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {Object.keys(selected.data || {}).length === 0 ? (
+                    <div className="text-sm text-muted-foreground">No data fields.</div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                      {Object.entries(selected.data || {}).map(([key, value]) => (
+                        <div key={key} className="group relative rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+                          <span className="pointer-events-none absolute left-0 top-0 h-full w-1 rounded-l-lg bg-[#E5ECF6]" aria-hidden="true"></span>
+                          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                            {labelMap[key] ?? formatLabel(key)}
+                          </div>
+                          <div className="mt-1 text-sm font-medium text-slate-900 break-words">
+                            {typeof value === "object" ? JSON.stringify(value) : String(value)}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="text-sm font-medium break-words">
-                      {typeof v === "object" ? JSON.stringify(v) : String(v)}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Linked Service Deliveries */}
+              <Card className=" border-0  bg-[#E5ECF6]">
+                <CardHeader className="border-0  ">
+                  <CardTitle className="text-base ">Linked Service Deliveries</CardTitle>
+                </CardHeader>
+                <CardContent className=" bg-white">
+                  {selected.serviceDeliveries?.length ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Service</TableHead>
+                          <TableHead>Staff</TableHead>
+                          <TableHead>Entity</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selected.serviceDeliveries.map((d: any) => (
+                          <TableRow key={d.id}>
+                            <TableCell>{d.deliveredAt ? new Date(d.deliveredAt).toLocaleDateString() : "—"}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{d.service?.category ?? "—"}</Badge>
+                            </TableCell>
+                            <TableCell>{d.service?.name ?? "—"}</TableCell>
+                            <TableCell>{`${d.staff?.firstName ?? ""} ${d.staff?.lastName ?? ""}`.trim() || "—"}</TableCell>
+                            <TableCell>
+                              {`${d.entityType || ""}`}
+                              {d.entityId ? ` • ${d.entityId}` : ""}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">No linked service deliveries.</div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
         </DialogContent>
