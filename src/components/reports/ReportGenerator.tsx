@@ -17,7 +17,12 @@ import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
 import { Calendar } from "../ui/data-display/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import { Checkbox } from "../ui/form/checkbox";
 import { Input } from "../ui/form/input";
 import { Label } from "../ui/form/label";
@@ -32,7 +37,12 @@ import {
 } from "../ui/form/select";
 import { Separator } from "../ui/layout/separator";
 import { Switch } from "../ui/form/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 
 // Mock data for projects

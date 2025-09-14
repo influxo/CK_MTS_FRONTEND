@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import { Input } from "../ui/form/input";
 import {
   Select,
@@ -18,7 +23,22 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import { ArrowLeft, Search, Filter, MoreHorizontal, Eye, Calendar, Loader2, MapPin, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Search,
+  Filter,
+  MoreHorizontal,
+  Eye,
+  Calendar,
+  Loader2,
+  MapPin,
+  User,
+  Phone,
+  Mail,
+  Home,
+  Hash,
+  Flag,
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
@@ -96,7 +116,8 @@ export function SubmissionHistory({
   useEffect(() => {
     if (!viewerOpen) return;
     if (!selected) return;
-    const templateId = selected.template?.id || (selected as any)?.formTemplateId;
+    const templateId =
+      selected.template?.id || (selected as any)?.formTemplateId;
     if (templateId) {
       dispatch(fetchFormTemplateById({ id: templateId }));
     }
@@ -119,7 +140,8 @@ export function SubmissionHistory({
   };
 
   useEffect(() => {
-    const templateIdParam = templateFilter === "all" ? undefined : templateFilter;
+    const templateIdParam =
+      templateFilter === "all" ? undefined : templateFilter;
     if (entityId && entityType) {
       dispatch(
         fetchFormResponsesByEntity({
@@ -143,7 +165,16 @@ export function SubmissionHistory({
         })
       );
     }
-  }, [dispatch, entityId, entityType, templateFilter, fromDate, toDate, page, limit]);
+  }, [
+    dispatch,
+    entityId,
+    entityType,
+    templateFilter,
+    fromDate,
+    toDate,
+    page,
+    limit,
+  ]);
 
   const templateOptions = useMemo(() => {
     const names = new Map<string, string>();
@@ -195,15 +226,15 @@ export function SubmissionHistory({
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by form, submitter, beneficiary..."
-            className="pl-9"
+            className="pl-9 bg-black/5 border-0"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <Select value={templateFilter} onValueChange={setTemplateFilter}>
-            <SelectTrigger className="w-full sm:w-[220px]">
-              <Filter className="h-4 w-4 mr-2" />
+            <SelectTrigger className="w-full bg-black/5 border-0 sm:w-[220px]">
+              <Filter className="h-4 w-4 mr-2 " />
               <SelectValue placeholder="Template" />
             </SelectTrigger>
             <SelectContent>
@@ -216,7 +247,7 @@ export function SubmissionHistory({
             </SelectContent>
           </Select>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 ">
             <Input
               type="date"
               value={fromDate}
@@ -224,7 +255,7 @@ export function SubmissionHistory({
                 setPage(1);
                 setFromDate(e.target.value);
               }}
-              className="w-[160px]"
+              className="w-[160px] bg-black/5 border-0"
               placeholder="From"
             />
             <Input
@@ -234,7 +265,7 @@ export function SubmissionHistory({
                 setPage(1);
                 setToDate(e.target.value);
               }}
-              className="w-[160px]"
+              className="w-[160px] bg-black/5 border-0"
               placeholder="To"
             />
           </div>
@@ -246,7 +277,7 @@ export function SubmissionHistory({
               setLimit(Number(v));
             }}
           >
-            <SelectTrigger className="w-full sm:w-[120px]">
+            <SelectTrigger className="w-full sm:w-[120px] bg-black/5 border-0">
               <SelectValue placeholder="Page size" />
             </SelectTrigger>
             <SelectContent>
@@ -258,6 +289,7 @@ export function SubmissionHistory({
             </SelectContent>
           </Select>
           <Button
+            className="bg-black/5 hover:bg-black/10"
             variant="ghost"
             onClick={() => {
               setTemplateFilter("all");
@@ -277,7 +309,8 @@ export function SubmissionHistory({
         <CardHeader className="py-3 px-4">
           {loading && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading submissions...
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading
+              submissions...
             </div>
           )}
           {!loading && error && (
@@ -301,7 +334,9 @@ export function SubmissionHistory({
                   <TableRow key={r.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{r.template?.name ?? "—"}</div>
+                        <div className="font-medium">
+                          {r.template?.name ?? "—"}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {entityType && (
                             <Badge variant="outline" className="mr-1">
@@ -314,7 +349,9 @@ export function SubmissionHistory({
                     </TableCell>
                     <TableCell>
                       {r.beneficiary ? (
-                        <Badge variant="secondary">{r.beneficiary.pseudonym}</Badge>
+                        <Badge variant="secondary">
+                          {r.beneficiary.pseudonym}
+                        </Badge>
                       ) : (
                         <span className="text-sm text-muted-foreground">—</span>
                       )}
@@ -323,25 +360,34 @@ export function SubmissionHistory({
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm">
-                          {r.submittedAt ? new Date(r.submittedAt).toLocaleString() : "—"}
+                          {r.submittedAt
+                            ? new Date(r.submittedAt).toLocaleString()
+                            : "—"}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm">{`${r.submitter?.firstName ?? ""} ${r.submitter?.lastName ?? ""}`.trim() || "—"}</span>
+                      <span className="text-sm">
+                        {`${r.submitter?.firstName ?? ""} ${
+                          r.submitter?.lastName ?? ""
+                        }`.trim() || "—"}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-black/5"
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleView(r.id)}
-                          >
-                            <Eye className="h-4 w-4 mr-2" /> View
+                          <DropdownMenuItem onClick={() => handleView(r.id)}>
+                            <Eye className="h-4 w-4 mr-2 hover:bg-black/5" />{" "}
+                            View
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -350,7 +396,10 @@ export function SubmissionHistory({
                 ))}
                 {!loading && filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center py-8 text-muted-foreground"
+                    >
                       No submissions found
                     </TableCell>
                   </TableRow>
@@ -364,9 +413,11 @@ export function SubmissionHistory({
             <div className="py-3">
               <Pager>
                 <PaginationContent>
-                  <PaginationItem>
+                  <PaginationItem className="hover:bg-black/5">
                     <PaginationPrevious
-                      className={!canPrev ? "pointer-events-none opacity-50" : ""}
+                      className={
+                        !canPrev ? "pointer-events-none opacity-50 " : ""
+                      }
                       onClick={(e) => {
                         e.preventDefault();
                         if (canPrev) setPage((p) => Math.max(1, p - 1));
@@ -374,29 +425,34 @@ export function SubmissionHistory({
                       href="#"
                     />
                   </PaginationItem>
-                  {Array.from({ length: totalPages }).slice(0, 7).map((_, idx) => {
-                    const p = idx + 1;
-                    return (
-                      <PaginationItem key={p}>
-                        <PaginationLink
-                          href="#"
-                          isActive={p === currentPage}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setPage(p);
-                          }}
-                        >
-                          {p}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  })}
+                  {Array.from({ length: totalPages })
+                    .slice(0, 7)
+                    .map((_, idx) => {
+                      const p = idx + 1;
+                      return (
+                        <PaginationItem key={p}>
+                          <PaginationLink
+                            href="#"
+                            isActive={p === currentPage}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setPage(p);
+                            }}
+                          >
+                            {p}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
                   <PaginationItem>
                     <PaginationNext
-                      className={!canNext ? "pointer-events-none opacity-50" : ""}
+                      className={
+                        !canNext ? "pointer-events-none opacity-50" : ""
+                      }
                       onClick={(e) => {
                         e.preventDefault();
-                        if (canNext) setPage((p) => Math.min(totalPages, p + 1));
+                        if (canNext)
+                          setPage((p) => Math.min(totalPages, p + 1));
                       }}
                       href="#"
                     />
@@ -408,41 +464,57 @@ export function SubmissionHistory({
         </CardContent>
       </Card>
 
-      <Dialog open={viewerOpen} onOpenChange={(o) => (!o ? setViewerOpen(false) : null)}>
+      <Dialog
+        open={viewerOpen}
+        onOpenChange={(o) => (!o ? setViewerOpen(false) : null)}
+      >
         <DialogContent className="sm:max-w-5xl max-h-[85vh] overflow-y-auto">
           <DialogHeaderUI>
-            <DialogTitle>Form Submission</DialogTitle>
+            <DialogTitle className="text-lg ml-10">Form Submission</DialogTitle>
           </DialogHeaderUI>
           {selectedLoading && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading form response...
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading form
+              response...
             </div>
           )}
           {!selectedLoading && selectedError && (
             <div className="text-sm text-red-600">{selectedError}</div>
           )}
           {!selectedLoading && !selectedError && selected && (
-            <div className="space-y-6">
+            <div className="space-y-6 px-6 ml-4">
               {/* Header */}
               <div className="flex flex-col md:flex-row justify-between gap-6">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <h1 className="font-medium text-2xl">{selected.template?.name || "Untitled Template"}</h1>
+                    <h1 className="font-medium text-2xl">
+                      {selected.template?.name || "Untitled Template"}
+                    </h1>
                     {selected.template?.version !== undefined && (
-                      <Badge variant="outline">v{selected.template.version}</Badge>
+                      <Badge variant="outline">
+                        v{selected.template.version}
+                      </Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5" />
                     <span>
-                      Submitted on {selected.submittedAt ? new Date(selected.submittedAt).toLocaleString() : "—"}
+                      Submitted on{" "}
+                      {selected.submittedAt
+                        ? new Date(selected.submittedAt).toLocaleString()
+                        : "—"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <User className="h-3.5 w-3.5" />
                     <span>
-                      By {`${selected.submitter?.firstName ?? ""} ${selected.submitter?.lastName ?? ""}`.trim() || "—"}
-                      {selected.submitter?.email ? ` (${selected.submitter.email})` : ""}
+                      By{" "}
+                      {`${selected.submitter?.firstName ?? ""} ${
+                        selected.submitter?.lastName ?? ""
+                      }`.trim() || "—"}
+                      {selected.submitter?.email
+                        ? ` (${selected.submitter.email})`
+                        : ""}
                     </span>
                   </div>
                   {selected.beneficiary && (
@@ -455,7 +527,9 @@ export function SubmissionHistory({
               </div>
 
               {selectedTemplateLoading && (
-                <div className="text-sm text-muted-foreground">Loading form definition…</div>
+                <div className="text-sm text-muted-foreground">
+                  Loading form definition…
+                </div>
               )}
 
               {/* Submitted Data */}
@@ -465,20 +539,61 @@ export function SubmissionHistory({
                 </CardHeader>
                 <CardContent>
                   {Object.keys(selected.data || {}).length === 0 ? (
-                    <div className="text-sm text-muted-foreground">No data fields.</div>
+                    <div className="text-sm text-muted-foreground">
+                      No data fields.
+                    </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                      {Object.entries(selected.data || {}).map(([key, value]) => (
-                        <div key={key} className="group relative rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
-                          <span className="pointer-events-none absolute left-0 top-0 h-full w-1 rounded-l-lg bg-[#E5ECF6]" aria-hidden="true"></span>
-                          <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                            {labelMap[key] ?? formatLabel(key)}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-t border-slate-200 md:border-t">
+                      {Object.entries(selected.data || {}).map(
+                        ([key, value]) => (
+                          <div
+                            key={key}
+                            className="group relative p-4 border-b border-slate-200 odd:md:border-r"
+                          >
+                            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                              {(() => {
+                                const displayLabel =
+                                  labelMap[key] ?? formatLabel(key);
+                                const l = displayLabel.toLowerCase();
+                                const Icon =
+                                  l.includes("date of birth") ||
+                                  l.includes("dob") ||
+                                  l.includes("birth")
+                                    ? Calendar
+                                    : l === "email" || l.includes("email")
+                                    ? Mail
+                                    : l === "phone" || l.includes("phone")
+                                    ? Phone
+                                    : l === "gender" || l.includes("gender")
+                                    ? User
+                                    : l.includes("address")
+                                    ? Home
+                                    : l.includes("last name") ||
+                                      l.includes("first name")
+                                    ? User
+                                    : l.includes("national id") ||
+                                      l === "id" ||
+                                      l.includes(" id")
+                                    ? Hash
+                                    : l.includes("nationality")
+                                    ? Flag
+                                    : l.includes("municipality")
+                                    ? MapPin
+                                    : undefined;
+                                return Icon ? (
+                                  <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                                ) : null;
+                              })()}
+                              <span>{labelMap[key] ?? formatLabel(key)}</span>
+                            </div>
+                            <div className="mt-1 text-sm font-medium text-slate-900 break-words">
+                              {typeof value === "object"
+                                ? JSON.stringify(value)
+                                : String(value)}
+                            </div>
                           </div>
-                          <div className="mt-1 text-sm font-medium text-slate-900 break-words">
-                            {typeof value === "object" ? JSON.stringify(value) : String(value)}
-                          </div>
-                        </div>
-                      ))}
+                        )
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -487,7 +602,9 @@ export function SubmissionHistory({
               {/* Linked Service Deliveries */}
               <Card className=" border-0  bg-[#E5ECF6]">
                 <CardHeader className="border-0  ">
-                  <CardTitle className="text-base ">Linked Service Deliveries</CardTitle>
+                  <CardTitle className="text-base ">
+                    Linked Service Deliveries
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className=" bg-white">
                   {selected.serviceDeliveries?.length ? (
@@ -504,12 +621,22 @@ export function SubmissionHistory({
                       <TableBody>
                         {selected.serviceDeliveries.map((d: any) => (
                           <TableRow key={d.id}>
-                            <TableCell>{d.deliveredAt ? new Date(d.deliveredAt).toLocaleDateString() : "—"}</TableCell>
                             <TableCell>
-                              <Badge variant="outline">{d.service?.category ?? "—"}</Badge>
+                              {d.deliveredAt
+                                ? new Date(d.deliveredAt).toLocaleDateString()
+                                : "—"}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {d.service?.category ?? "—"}
+                              </Badge>
                             </TableCell>
                             <TableCell>{d.service?.name ?? "—"}</TableCell>
-                            <TableCell>{`${d.staff?.firstName ?? ""} ${d.staff?.lastName ?? ""}`.trim() || "—"}</TableCell>
+                            <TableCell>
+                              {`${d.staff?.firstName ?? ""} ${
+                                d.staff?.lastName ?? ""
+                              }`.trim() || "—"}
+                            </TableCell>
                             <TableCell>
                               {`${d.entityType || ""}`}
                               {d.entityId ? ` • ${d.entityId}` : ""}
@@ -519,7 +646,9 @@ export function SubmissionHistory({
                       </TableBody>
                     </Table>
                   ) : (
-                    <div className="text-sm text-muted-foreground">No linked service deliveries.</div>
+                    <div className="text-sm text-muted-foreground">
+                      No linked service deliveries.
+                    </div>
                   )}
                 </CardContent>
               </Card>
