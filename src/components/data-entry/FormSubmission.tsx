@@ -114,7 +114,11 @@ export function FormSubmission({
       }
     : null;
   const formStructure = dynamicFormStructure;
-
+      useEffect(() => {
+        if (template) {
+          console.log(template);
+        }
+      }, [template])
   const requestGps = async (): Promise<{ lat: number; lng: number }> => {
     setGpsError(null);
     setGpsLoading(true);

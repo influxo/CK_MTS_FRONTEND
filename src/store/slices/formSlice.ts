@@ -9,6 +9,10 @@ import type {
   FormSubmissionResponse,
   GetFormResponseByIdResponse,
   FormResponseData,
+  GetFormResponsesByEntityRequest,
+  GetFormResponsesByEntityResponse,
+  GetAllFormResponsesRequest,
+  GetAllFormResponsesResponse,
 } from "../../services/forms/formModels";
 import formService from "../../services/forms/formServices";
 
@@ -29,6 +33,11 @@ interface FormTemplatesState {
   selectedResponse: FormResponseData | null;
   selectedResponseLoading: boolean;
   selectedResponseError: string | null;
+  // responses list (by entity)
+  responses: FormResponseData[];
+  responsesPagination: Pagination | null;
+  responsesLoading: boolean;
+  responsesError: string | null;
 }
 
 const initialState: FormTemplatesState = {
@@ -45,6 +54,10 @@ const initialState: FormTemplatesState = {
   selectedResponse: null,
   selectedResponseLoading: false,
   selectedResponseError: null,
+  responses: [],
+  responsesPagination: null,
+  responsesLoading: false,
+  responsesError: null,
 };
 
 export const fetchFormTemplates = createAsyncThunk<
@@ -101,6 +114,36 @@ export const fetchFormResponseById = createAsyncThunk<
   }
   return response;
 });
+
+export const fetchFormResponsesByEntity = createAsyncThunk<
+  GetFormResponsesByEntityResponse,
+  GetFormResponsesByEntityRequest,
+  { rejectValue: string }
+>(
+  "form/fetchFormResponsesByEntity",
+  async (params, { rejectWithValue }) => {
+    const response = await formService.getFormResponsesByEntity(params);
+    if (!response.success && response.message) {
+      // Still return mapping so UI can show empty with error
+    }
+    return response;
+  }
+);
+
+export const fetchAllFormResponses = createAsyncThunk<
+  GetAllFormResponsesResponse,
+  GetAllFormResponsesRequest,
+  { rejectValue: string }
+>(
+  "form/fetchAllFormResponses",
+  async (params, { rejectWithValue }) => {
+    const response = await formService.getAllFormResponses(params);
+    if (!response.success && response.message) {
+      // Return response with pagination even on error mapping
+    }
+    return response;
+  }
+);
 
 const formSlice = createSlice({
   name: "form",
@@ -169,6 +212,34 @@ const formSlice = createSlice({
         state.selectedResponseLoading = false;
         state.selectedResponseError =
           action.payload ?? "Failed to fetch form response";
+      })
+      // list responses by entity
+      .addCase(fetchFormResponsesByEntity.pending, (state) => {
+        state.responsesLoading = true;
+        state.responsesError = null;
+      })
+      .addCase(fetchFormResponsesByEntity.fulfilled, (state, action) => {
+        state.responsesLoading = false;
+        state.responses = action.payload.data.items;
+        state.responsesPagination = action.payload.data.pagination;
+      })
+      .addCase(fetchFormResponsesByEntity.rejected, (state, action) => {
+        state.responsesLoading = false;
+        state.responsesError = action.payload ?? "Failed to fetch form responses";
+      })
+      // list all responses
+      .addCase(fetchAllFormResponses.pending, (state) => {
+        state.responsesLoading = true;
+        state.responsesError = null;
+      })
+      .addCase(fetchAllFormResponses.fulfilled, (state, action) => {
+        state.responsesLoading = false;
+        state.responses = action.payload.data.items;
+        state.responsesPagination = action.payload.data.pagination;
+      })
+      .addCase(fetchAllFormResponses.rejected, (state, action) => {
+        state.responsesLoading = false;
+        state.responsesError = action.payload ?? "Failed to fetch form responses";
       });
   },
 });
@@ -208,5 +279,14 @@ export const selectSelectedResponseLoading = (state: {
 export const selectSelectedResponseError = (state: {
   form: FormTemplatesState;
 }) => state.form.selectedResponseError;
+
+export const selectResponses = (state: { form: FormTemplatesState }) =>
+  state.form.responses;
+export const selectResponsesLoading = (state: { form: FormTemplatesState }) =>
+  state.form.responsesLoading;
+export const selectResponsesError = (state: { form: FormTemplatesState }) =>
+  state.form.responsesError;
+export const selectResponsesPagination = (state: { form: FormTemplatesState }) =>
+  state.form.responsesPagination;
 
 export default formSlice.reducer;

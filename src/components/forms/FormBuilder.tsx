@@ -219,9 +219,7 @@ export function FormBuilder({
       ...(fieldType === "text" && { placeholder: "Enter text" }),
       ...(fieldType === "textarea" && { placeholder: "Enter longer text" }),
       ...(fieldType === "number" && { placeholder: "Enter number" }),
-      ...((fieldType === "dropdown" ||
-        fieldType === "radio" ||
-        fieldType === "checkbox") && {
+      ...(fieldType === "dropdown" && {
         options: [{ value: "option1", label: "Option 1" }],
       }),
     };
@@ -283,7 +281,10 @@ export function FormBuilder({
                 required: field.required || false,
                 helpText: field.helpText,
                 validations: field.validations,
-                options: field.options?.map((opt) => opt.value) || [],
+                options:
+                  field.type === "dropdown"
+                    ? field.options?.map((opt) => opt.value) || []
+                    : [],
               }))
             : [
                 // Default field if no fields are added
@@ -617,9 +618,7 @@ export function FormBuilder({
                               rows={2}
                             />
                           </div>
-                          {(selectedFieldData?.type === "dropdown" ||
-                            selectedFieldData?.type === "radio" ||
-                            selectedFieldData?.type === "checkbox") && (
+                          {selectedFieldData?.type === "dropdown" && (
                             <div className="space-y-2">
                               <div className="flex justify-between items-center">
                                 <Label>Options</Label>
