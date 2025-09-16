@@ -1,6 +1,7 @@
-export type TimeUnit = 'day' | 'week' | 'month' | 'quarter' | 'year';
-export type GroupField = 'service' | 'user' | 'beneficiary';
-export type GroupedByKey = 'serviceId' | 'staffUserId' | 'beneficiaryId' | null;
+export type TimeUnit = "day" | "week" | "month" | "quarter" | "year";
+export type GroupField = "service" | "user" | "beneficiary";
+export type GroupedByKey = "serviceId" | "staffUserId" | "beneficiaryId" | null;
+export type MetricType = "submissions" | "serviceDeliveries" | "uniqueBeneficiaries";
 
 export interface DeliveriesFilters {
   serviceId?: string;
@@ -8,15 +9,18 @@ export interface DeliveriesFilters {
   staffUserId?: string;
   beneficiaryId?: string;
   entityId?: string;
-  entityType?: 'project' | 'subproject' | 'activity';
+  entityType?: "project" | "subproject" | "activity";
   formResponseId?: string;
+  formTemplateId?: string;
+  formTemplateIds?: string[];
   startDate?: string; // ISO date
-  endDate?: string;   // ISO date
+  endDate?: string; // ISO date
 }
 
 export interface DeliveriesSeriesParams extends DeliveriesFilters {
   groupBy?: TimeUnit;
   groupField?: GroupField;
+  metric?: MetricType;
 }
 
 export interface DeliveriesSummaryData {

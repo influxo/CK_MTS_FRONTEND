@@ -9,11 +9,13 @@ import type {
   DeliveriesSummaryResponse,
   TimeUnit,
   GroupField,
+  MetricType,
 } from "../../services/services/serviceMetricsModels";
 
 export interface MetricsFilters extends DeliveriesFilters {
   groupBy?: TimeUnit;
   groupField?: GroupField;
+  metric?: MetricType;
 }
 
 interface SummaryState {
@@ -46,6 +48,7 @@ const initialState: ServiceMetricsState = {
     entityType: undefined,
     groupBy: "month",
     groupField: undefined,
+    metric: "submissions",
   },
   summary: {
     loading: false,

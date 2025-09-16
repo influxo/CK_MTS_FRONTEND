@@ -35,9 +35,12 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import {
   selectSeries,
-  fetchDeliveriesSeries,
+  setFilters,
+  selectMetricsFilters,
 } from "../../store/slices/serviceMetricsSlice";
 import type { TimeUnit } from "../../services/services/serviceMetricsModels";
+import { getAllServices, getEntityServices, selectAllServices, selectEntityServices } from "../../store/slices/serviceSlice";
+import { fetchForms, selectAllForms } from "../../store/slices/formsSlice";
 
 type Granularity = TimeUnit; // 'day' | 'week' | 'month' | 'quarter' | 'year'
 
@@ -94,6 +97,10 @@ export function FormSubmissions() {
   const dispatch: any = useDispatch();
   const series = useSelector(selectSeries);
   const { loading, items, granularity } = series;
+  const filters = useSelector(selectMetricsFilters);
+  const entityServices = useSelector(selectEntityServices);
+  const allServices = useSelector(selectAllServices);
+  const formsState = useSelector(selectAllForms);
 
   // UI state for dropdown + custom range
   const [filtersOpen, setFiltersOpen] = React.useState(false);
@@ -135,7 +142,7 @@ export function FormSubmissions() {
 
   const chartData = (items || []).map((it) => ({
     name: formatLabel(it.periodStart),
-    submissions: it.count,
+    value: it.count,
   }));
 
   const applyQuery = (g: Granularity, from?: Date, to?: Date) => {
@@ -166,9 +173,9 @@ export function FormSubmissions() {
         break;
     }
 
+    // Update global filters; Dashboard will fetch series/summary
     dispatch(
-      // @ts-ignore untyped dispatch
-      fetchDeliveriesSeries({
+      setFilters({
         groupBy: g,
         startDate: start.toISOString(),
         endDate: end.toISOString(),
@@ -190,11 +197,29 @@ export function FormSubmissions() {
   };
 
   React.useEffect(() => {
+    // initial load ensure we have a series window
     if (!items?.length && !loading) {
       applyQuery((granularity as Granularity) || "week");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fetch services depending on selected entity (project/subproject); fallback to all services
+  React.useEffect(() => {
+    if (filters.entityId && filters.entityType) {
+      dispatch(getEntityServices({
+        entityId: filters.entityId,
+        entityType: filters.entityType as any,
+      }));
+    } else {
+      dispatch(getAllServices({ page: 1, limit: 100 }));
+    }
+  }, [dispatch, filters.entityId, filters.entityType]);
+
+  // Fetch form templates once
+  React.useEffect(() => {
+    dispatch(fetchForms());
+  }, [dispatch]);
   const submissions = [
     {
       form: "Healthcare Assessment",
@@ -230,39 +255,69 @@ export function FormSubmissions() {
     <Card className="mb-6 bg-[#F7F9FB]   drop-shadow-md shadow-gray-50 border-0">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Form Submissions Overview</CardTitle>
-          {/* Granularity dropdown */}
+          <CardTitle>
+            {filters.metric === "serviceDeliveries"
+              ? "Service Deliveries Overview"
+              : filters.metric === "uniqueBeneficiaries"
+              ? "Unique Beneficiaries Overview"
+              : "Form Submissions Overview"}
+          </CardTitle>
+          {/* Filters specific to Form Submissions: metric, service, and form template */}
           <div className=" flex flex-wrap items-center  gap-3">
-            <Select>
+            {/* Metric */}
+            <Select
+              value={String(filters.metric || "submissions")}
+              onValueChange={(v) => dispatch(setFilters({ metric: v as any }))}
+            >
               <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
-                <SelectValue placeholder="Project" />
+                <SelectValue placeholder="Metric" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Projects</SelectItem>
-                <SelectItem value="project-a">Project A</SelectItem>
-                <SelectItem value="project-b">Project B</SelectItem>
+                <SelectItem value="submissions">Submissions</SelectItem>
+                <SelectItem value="serviceDeliveries">Service Deliveries</SelectItem>
+                <SelectItem value="uniqueBeneficiaries">Unique Beneficiaries</SelectItem>
               </SelectContent>
             </Select>
 
-            <Select>
+            {/* Service */}
+            <Select
+              value={filters.serviceId || "all"}
+              onValueChange={(v) =>
+                dispatch(setFilters({ serviceId: v === "all" ? undefined : v }))
+              }
+            >
               <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
-                <SelectValue placeholder="Subproject" />
+                <SelectValue placeholder="Service" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Subprojects</SelectItem>
-                <SelectItem value="sp-1">Subproject 1</SelectItem>
-                <SelectItem value="sp-2">Subproject 2</SelectItem>
+                <SelectItem value="all">All Services</SelectItem>
+                {(filters.entityId ? entityServices : allServices).map((s: any) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
-            <Select>
+            {/* Form Template */}
+            <Select
+              value={filters.formTemplateId || "all"}
+              onValueChange={(v) =>
+                dispatch(
+                  setFilters({ formTemplateId: v === "all" ? undefined : v })
+                )
+              }
+            >
               <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
-                <SelectValue placeholder="Beneficiary" />
+                <SelectValue placeholder="Form Template" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Beneficiaries</SelectItem>
-                <SelectItem value="b-1">Beneficiary 1</SelectItem>
-                <SelectItem value="b-2">Beneficiary 2</SelectItem>
+                <SelectItem value="all">All Templates</SelectItem>
+                {(formsState?.templates || []).map((t: any) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -435,14 +490,14 @@ export function FormSubmissions() {
               />
               <Area
                 type="monotone"
-                dataKey="submissions"
+                dataKey="value"
                 stroke="none"
                 fill="url(#submissionsFill)"
                 fillOpacity={1}
               />
               <Line
                 type="monotone"
-                dataKey="submissions"
+                dataKey="value"
                 stroke="#3b82f6"
                 strokeWidth={2}
                 dot={false}

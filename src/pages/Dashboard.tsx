@@ -23,6 +23,7 @@ import {
   selectUserProjectsLoading,
   selectUserProjectsTree,
 } from "../store/slices/userProjectsSlice";
+import { selectAllProjects } from "../store/slices/projectsSlice";
 
 export function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -32,6 +33,10 @@ export function Dashboard() {
   const userProjectsLoading = useSelector(selectUserProjectsLoading);
   const userProjectsError = useSelector(selectUserProjectsError);
   const metricsFilters = useSelector(selectMetricsFilters);
+
+  const projects = useSelector(selectAllProjects);
+
+  console.log("projects from dashboard", projects);
 
   useEffect(() => {
     if (user?.id) {
@@ -47,7 +52,7 @@ export function Dashboard() {
 
   return (
     <>
-      <FilterControls />
+      <FilterControls projects={projects} />
       <div className="flex justify-end mb-4">
         {/* Create Project Dialog */}
         {/* TODO: make this a component */}
