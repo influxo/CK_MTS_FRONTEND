@@ -44,12 +44,26 @@ export function DataEntry({}: DataEntryModuleProps) {
           <h2>Data Entry</h2>
           <p className="text-muted-foreground">Submit forms or view submission history</p>
         </div>
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <TabsList>
-            <TabsTrigger value="entry">Data Entry</TabsTrigger>
-            <TabsTrigger value="history">Submission History</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as any)}
+            className="w-[280px]"
+          >
+            <TabsList className="grid w-full grid-cols-2 bg-black/5">
+              <TabsTrigger
+                value="entry"
+                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+              >
+                Data Entry
+              </TabsTrigger>
+              <TabsTrigger
+                value="history"
+                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+              >
+                Submission History
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
@@ -58,7 +72,7 @@ export function DataEntry({}: DataEntryModuleProps) {
         </TabsContent>
 
         <TabsContent value="history">
-          <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
+          <Card className="drop-shadow-sm shadow-gray-50 border-0">
             <CardContent className="p-4 space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <Select
