@@ -13,7 +13,11 @@ export function FilterControls() {
     <div className="flex flex-col  bg-[#F7F9FB]   drop-shadow-sm shadow-gray-50 sm:flex-row gap-4 mb-6 p-4 bg-card rounded-lg ">
       <div className="flex flex-wrap gap-4 flex-1">
         <Select defaultValue="all-projects">
-          <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
+          <SelectTrigger
+            className="w-[200px] bg-white p-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
             <SelectValue placeholder="Select Project" />
           </SelectTrigger>
           <SelectContent>
@@ -29,7 +33,11 @@ export function FilterControls() {
         </Select>
 
         <Select defaultValue="last-30-days">
-          <SelectTrigger className="w-[180px] bg-black/5 text-black border-0">
+          <SelectTrigger
+            className="w-[180px] bg-white border-0 border-gray-100 p-2 rounded-md 
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
             <SelectValue placeholder="Time Period" />
           </SelectTrigger>
           <SelectContent>
@@ -58,7 +66,9 @@ export function FilterControls() {
         <Button
           variant="outline"
           size="sm"
-          className="bg-black/5 text-black border-0"
+          className="bg-[#E0F2FE] text-black border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px]"
         >
           <Filter className="h-4 w-4 mr-2" />
           More Filters
@@ -66,7 +76,9 @@ export function FilterControls() {
         <Button
           variant="outline"
           size="sm"
-          className="bg-[#2E343E] text-white  border-0"
+          className="bg-[#0073e6] text-white border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px]"
         >
           <Download className="h-4 w-4 mr-2" />
           Export

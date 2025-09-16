@@ -92,10 +92,10 @@ export function Sidebar({
   return (
     <aside
       style={{
-        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.08)",
       }}
       className={cn(
-        "flex flex-col  bg-sidebar bg-white shadow-lg text-sidebar-foreground transition-all duration-300 ease-in-out",
+        "flex flex-col  bg-sidebar bg-[#F5F5F5] bg-opacity-20 shadow-lg text-sidebar-foreground transition-all duration-300 ease-in-out",
         collapsed ? "w-[70px]" : "w-[240px]",
         "lg:relative fixed inset-y-0 left-0 z-50 lg:z-auto transform",
         mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
@@ -111,8 +111,11 @@ export function Sidebar({
       >
         {!collapsed && (
           <NavLink to="/dashboard" className="flex items-center gap-2">
-            <PieChart className="h-6 w-6 text-sidebar-primary" />
-            <h1 className="font-semibold text-lg">CaritasMotherTeresa</h1>
+            <img
+              src="/images/logo.jpg"
+              alt="Caritas Mother Teresa"
+              className=" w-auto object-center h-20"
+            />
           </NavLink>
         )}
         {collapsed && !mobileOpen && (
@@ -153,7 +156,7 @@ export function Sidebar({
                     "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors w-full text-left",
                     "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-black before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
                     isProjectsExpanded
-                      ? "text-black bg-black bg-opacity-5 before:scale-x-100"
+                      ? "text-blue bg-blue-900 bg-opacity-5 before:scale-x-100"
                       : "text-black hover:text-black hover:bg-black hover:bg-opacity-5 before:scale-x-0",
                     collapsed && "justify-center px-2"
                   )}
