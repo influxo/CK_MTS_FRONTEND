@@ -175,10 +175,10 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
         <h3>Sub-Projects</h3>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            {/* <Button className="bg-[#2E343E] text-white">
+            <Button className="bg-[#2E343E] text-white">
               <Plus className="h-4 w-4 mr-2" />
               Create Sub-Project
-            </Button> */}
+            </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>

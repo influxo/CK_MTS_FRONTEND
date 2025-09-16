@@ -87,7 +87,7 @@ class ServiceMetricsService {
     try {
       // Map to new dynamic series API (metric=submissions)
       const mapped: any = {
-        metric: "submissions",
+        metric: (params as any).metric || "submissions",
         groupBy: params.groupBy,
         entityId: params.entityId,
         entityType: params.entityType,
@@ -96,6 +96,8 @@ class ServiceMetricsService {
         serviceId: params.serviceId,
         serviceIds: params.serviceIds,
         beneficiaryId: params.beneficiaryId,
+        formTemplateId: params.formTemplateId,
+        formTemplateIds: params.formTemplateIds,
       };
 
       const response = await axiosInstance.get(

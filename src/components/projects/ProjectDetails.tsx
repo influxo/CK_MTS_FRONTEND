@@ -369,7 +369,14 @@ export function ProjectDetails() {
   }, [isAddDialogOpen, addBeneficiaryTab, dispatch]);
 
   const handleAssociateSubmit = async () => {
-    if (!associateSelectedBeneficiaryId || !id) return;
+    if (!id) {
+      toast.error("Missing project ID");
+      return;
+    }
+    if (!associateSelectedBeneficiaryId) {
+      toast("Please select a beneficiary to associate");
+      return;
+    }
     const links = [
       { entityId: id, entityType: "project" as const },
       ...associateSelectedSubProjects.map((spId) => ({
@@ -384,10 +391,11 @@ export function ProjectDetails() {
           links,
         })
       ).unwrap();
+      toast.success("Beneficiary associated successfully");
       setIsAddDialogOpen(false);
       resetAssociateForm();
       // refresh table
-      dispatch(
+      await dispatch(
         fetchBeneficiariesByEntity({
           entityId: id,
           entityType: "project",
@@ -396,7 +404,7 @@ export function ProjectDetails() {
         })
       );
     } catch (_) {
-      // surfaced via slice
+      toast.error("Failed to associate beneficiary. Please try again.");
     }
   };
 
@@ -497,6 +505,15 @@ export function ProjectDetails() {
                 links,
               })
             ).unwrap();
+            // Explicitly refetch to update the table immediately after association
+            await dispatch(
+              fetchBeneficiariesByEntity({
+                entityId: id,
+                entityType: "project",
+                page: 1,
+                limit: 20,
+              })
+            );
           } catch (_) {
             // association error handled via slice selectors
           }
@@ -1781,12 +1798,18 @@ export function ProjectDetails() {
                       >
                         Cancel
                       </Button>
-                      <Button
-                        onClick={handleCreateSubmit}
-                        disabled={createLoading}
-                      >
-                        {createLoading ? "Saving..." : "Save"}
-                      </Button>
+                      {addBeneficiaryTab === "new" ? (
+                        <Button onClick={handleCreateSubmit} disabled={createLoading}>
+                          {createLoading ? "Saving..." : "Save"}
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={handleAssociateSubmit}
+                          disabled={associateLoading || !associateSelectedBeneficiaryId}
+                        >
+                          {associateLoading ? "Associating..." : "Associate"}
+                        </Button>
+                      )}
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
