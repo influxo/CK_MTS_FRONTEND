@@ -10,7 +10,10 @@ import {
 } from "../ui/form/select";
 import type { Project } from "../../services/projects/projectModels";
 import { useDispatch, useSelector } from "react-redux";
-import { setFilters, selectMetricsFilters } from "../../store/slices/serviceMetricsSlice";
+import {
+  setFilters,
+  selectMetricsFilters,
+} from "../../store/slices/serviceMetricsSlice";
 import {
   fetchSubProjectsByProjectId,
   selectAllSubprojects,
@@ -36,9 +39,15 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   const [projectId, setProjectId] = React.useState<string>("");
   const [subprojectId, setSubprojectId] = React.useState<string>("");
   const [timePreset, setTimePreset] = React.useState<string>("last-30-days");
-  const [metric, setMetric] = React.useState<string>(metricsFilters.metric || "submissions");
-  const [serviceId, setServiceId] = React.useState<string>(metricsFilters.serviceId || "");
-  const [formTemplateId, setFormTemplateId] = React.useState<string>(metricsFilters.formTemplateId || "");
+  const [metric, setMetric] = React.useState<string>(
+    metricsFilters.metric || "submissions"
+  );
+  const [serviceId, setServiceId] = React.useState<string>(
+    metricsFilters.serviceId || ""
+  );
+  const [formTemplateId, setFormTemplateId] = React.useState<string>(
+    metricsFilters.formTemplateId || ""
+  );
 
   // Fetch subprojects when project changes
   React.useEffect(() => {
@@ -50,9 +59,13 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   // Fetch services globally depending on selected entity (project/subproject)
   React.useEffect(() => {
     if (subprojectId) {
-      dispatch(getEntityServices({ entityId: subprojectId, entityType: "subproject" }));
+      dispatch(
+        getEntityServices({ entityId: subprojectId, entityType: "subproject" })
+      );
     } else if (projectId) {
-      dispatch(getEntityServices({ entityId: projectId, entityType: "project" }));
+      dispatch(
+        getEntityServices({ entityId: projectId, entityType: "project" })
+      );
     } else {
       dispatch(getAllServices({ page: 1, limit: 100 }));
     }
@@ -114,13 +127,18 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     );
   };
 
-  const servicesForSelect = (subprojectId || projectId) ? entityServices : allServices;
+  const servicesForSelect =
+    subprojectId || projectId ? entityServices : allServices;
 
   return (
     <div className="flex flex-col  bg-[#F7F9FB]   drop-shadow-sm shadow-gray-50 sm:flex-row gap-4 mb-6 p-4 bg-card rounded-lg ">
       <div className="flex flex-wrap gap-4 flex-1">
         <Select value={projectId || "all"} onValueChange={onProjectChange}>
-          <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
+          <SelectTrigger
+            className="w-[200px] bg-white p-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
             <SelectValue placeholder="Select Project" />
           </SelectTrigger>
           <SelectContent>
@@ -138,7 +156,11 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           onValueChange={onSubprojectChange}
           disabled={!projectId}
         >
-          <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
+          <SelectTrigger
+            className="w-[180px] bg-white border-0 border-gray-100 p-2 rounded-md 
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
             <SelectValue placeholder="Select Subproject" />
           </SelectTrigger>
           <SelectContent>
@@ -160,7 +182,11 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         </Select>
 
         <Select value={timePreset} onValueChange={onTimePresetChange}>
-          <SelectTrigger className="w-[180px] bg-black/5 text-black border-0">
+          <SelectTrigger
+            className="w-[200px] bg-white p-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
             <SelectValue placeholder="Time Period" />
           </SelectTrigger>
           <SelectContent>
@@ -179,13 +205,21 @@ export function FilterControls({ projects }: { projects: Project[] }) {
             dispatch(setFilters({ metric: v as any }));
           }}
         >
-          <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
+          <SelectTrigger
+            className="w-[200px] bg-white p-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
             <SelectValue placeholder="Metric" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="submissions">Submissions</SelectItem>
-            <SelectItem value="serviceDeliveries">Service Deliveries</SelectItem>
-            <SelectItem value="uniqueBeneficiaries">Unique Beneficiaries</SelectItem>
+            <SelectItem value="serviceDeliveries">
+              Service Deliveries
+            </SelectItem>
+            <SelectItem value="uniqueBeneficiaries">
+              Unique Beneficiaries
+            </SelectItem>
           </SelectContent>
         </Select>
 
@@ -198,7 +232,11 @@ export function FilterControls({ projects }: { projects: Project[] }) {
             dispatch(setFilters({ serviceId: id || undefined }));
           }}
         >
-          <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
+          <SelectTrigger
+            className="w-[220px] bg-white p-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
             <SelectValue placeholder="Service" />
           </SelectTrigger>
           <SelectContent>
@@ -220,7 +258,11 @@ export function FilterControls({ projects }: { projects: Project[] }) {
             dispatch(setFilters({ formTemplateId: id || undefined }));
           }}
         >
-          <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
+          <SelectTrigger
+            className="w-[220px] bg-white p-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
             <SelectValue placeholder="Form Template" />
           </SelectTrigger>
           <SelectContent>
@@ -232,14 +274,15 @@ export function FilterControls({ projects }: { projects: Project[] }) {
             ))}
           </SelectContent>
         </Select>
-
       </div>
 
       <div className="flex gap-4">
         <Button
           variant="outline"
           size="sm"
-          className="bg-black/5 text-black border-0"
+          className="bg-[#E0F2FE] text-black border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px]"
         >
           <Filter className="h-4 w-4 mr-2" />
           More Filters
@@ -247,7 +290,9 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         <Button
           variant="outline"
           size="sm"
-          className="bg-[#2E343E] text-white  border-0"
+          className="bg-[#0073e6] text-white border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px]"
         >
           <Download className="h-4 w-4 mr-2" />
           Export

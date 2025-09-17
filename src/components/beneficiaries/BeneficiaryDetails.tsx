@@ -1401,87 +1401,104 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
             <CardHeader>
               <CardTitle className="text-base">Info</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Blood Type:</span>
-                  <div>{(detail as any)?.details?.bloodType ?? "—"}</div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Notes:</span>
-                  <div className="whitespace-pre-wrap">
-                    {(detail as any)?.details?.notes ?? "—"}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2">Allergies</h4>
-                {((detail as any)?.details?.allergies ?? []).length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {((detail as any)?.details?.allergies ?? []).map(
-                      (a: string, idx: number) => (
-                        <Badge key={idx} variant="outline">
-                          {a}
-                        </Badge>
-                      )
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">—</div>
-                )}
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2">Chronic Conditions</h4>
-                {((detail as any)?.details?.chronicConditions ?? []).length >
-                0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {((detail as any)?.details?.chronicConditions ?? []).map(
-                      (c: string, idx: number) => (
-                        <Badge key={idx} variant="outline">
-                          {c}
-                        </Badge>
-                      )
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">—</div>
-                )}
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2">Disabilities</h4>
-                {((detail as any)?.details?.disabilities ?? []).length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {((detail as any)?.details?.disabilities ?? []).map(
-                      (d: string, idx: number) => (
-                        <Badge key={idx} variant="outline">
-                          {d}
-                        </Badge>
-                      )
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">—</div>
-                )}
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2">Medications</h4>
-                {((detail as any)?.details?.medications ?? []).length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {((detail as any)?.details?.medications ?? []).map(
-                      (m: string, idx: number) => (
-                        <Badge key={idx} variant="outline">
-                          {m}
-                        </Badge>
-                      )
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">—</div>
-                )}
+            <CardContent>
+              <div className="rounded-md overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-[#E5ECF6]">
+                    <TableRow>
+                      <TableHead>Blood Type</TableHead>
+                      <TableHead>Allergies</TableHead>
+                      <TableHead>Chronic Conditions</TableHead>
+                      <TableHead>Disabilities</TableHead>
+                      <TableHead>Medications</TableHead>
+                      <TableHead>Notes</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="bg-[#F7F9FB] ">
+                    <TableRow>
+                      <TableCell>
+                        {(detail as any)?.details?.bloodType ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        {((detail as any)?.details?.allergies ?? []).length >
+                        0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {((detail as any)?.details?.allergies ?? []).map(
+                              (a: string, idx: number) => (
+                                <Badge key={idx} variant="outline">
+                                  {a}
+                                </Badge>
+                              )
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {((detail as any)?.details?.chronicConditions ?? [])
+                          .length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {(
+                              (detail as any)?.details?.chronicConditions ?? []
+                            ).map((c: string, idx: number) => (
+                              <Badge key={idx} variant="outline">
+                                {c}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {((detail as any)?.details?.disabilities ?? []).length >
+                        0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {((detail as any)?.details?.disabilities ?? []).map(
+                              (d: string, idx: number) => (
+                                <Badge key={idx} variant="outline">
+                                  {d}
+                                </Badge>
+                              )
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {((detail as any)?.details?.medications ?? []).length >
+                        0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {((detail as any)?.details?.medications ?? []).map(
+                              (m: string, idx: number) => (
+                                <Badge key={idx} variant="outline">
+                                  {m}
+                                </Badge>
+                              )
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="whitespace-pre-wrap">
+                          {(detail as any)?.details?.notes ?? "—"}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>

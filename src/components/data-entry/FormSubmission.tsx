@@ -149,11 +149,11 @@ export function FormSubmission({
       }
     : null;
   const formStructure = dynamicFormStructure;
-      useEffect(() => {
-        if (template) {
-          console.log(template);
-        }
-      }, [template])
+  useEffect(() => {
+    if (template) {
+      console.log(template);
+    }
+  }, [template]);
   const requestGps = async (): Promise<{ lat: number; lng: number }> => {
     setGpsError(null);
     setGpsLoading(true);
@@ -224,7 +224,7 @@ export function FormSubmission({
       dispatch(
         getEntityServices({
           entityId,
-          entityType: (entityType as any) as "project" | "subproject",
+          entityType: entityType as any as "project" | "subproject",
         })
       );
     }
@@ -481,7 +481,7 @@ export function FormSubmission({
               className={
                 hasError
                   ? "border-destructive"
-                  : " bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+                  : " bg-[#EAF4FB]  border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
               }
             />
             {hasError && <p className="text-sm text-destructive">{hasError}</p>}
@@ -739,7 +739,7 @@ export function FormSubmission({
                 onValueChange={(val) => handleFieldChange("beneficiaryId", val)}
                 disabled={byEntityBeneficiariesLoading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-[#EAF4FB] border-0 text-blue-900">
                   <SelectValue
                     placeholder={
                       byEntityBeneficiariesLoading
@@ -785,9 +785,13 @@ export function FormSubmission({
                 )}
               </div>
               {entityServicesLoading ? (
-                <p className="text-sm text-muted-foreground">Loading services...</p>
+                <p className="text-sm text-muted-foreground">
+                  Loading services...
+                </p>
               ) : entityServicesError ? (
-                <p className="text-sm text-destructive">{entityServicesError}</p>
+                <p className="text-sm text-destructive">
+                  {entityServicesError}
+                </p>
               ) : entityServices.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No services assigned to this entity.
@@ -798,13 +802,15 @@ export function FormSubmission({
                     placeholder="Search services..."
                     value={servicesQuery}
                     onChange={(e) => setServicesQuery(e.target.value)}
-                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+                    className="bg-[#EAF4FB] border-0 text-blue-900 focus:ring-1 focus:border-1 focus:ring-[#EAF4FB] focus:border-[#EAF4FB]"
                   />
                   {/* Selected chips */}
                   {selectedServices.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {selectedServices.map((s) => {
-                        const svc = entityServices.find((x) => x.id === s.serviceId);
+                        const svc = entityServices.find(
+                          (x) => x.id === s.serviceId
+                        );
                         if (!svc) return null;
                         return (
                           <div
@@ -817,7 +823,9 @@ export function FormSubmission({
                               className="text-muted-foreground hover:text-destructive"
                               onClick={() =>
                                 setSelectedServices((prev) =>
-                                  prev.filter((it) => it.serviceId !== s.serviceId)
+                                  prev.filter(
+                                    (it) => it.serviceId !== s.serviceId
+                                  )
                                 )
                               }
                             >
@@ -833,15 +841,25 @@ export function FormSubmission({
                     <div className="divide-y">
                       {entityServices
                         .filter((svc) =>
-                          svc.name.toLowerCase().includes(servicesQuery.toLowerCase())
+                          svc.name
+                            .toLowerCase()
+                            .includes(servicesQuery.toLowerCase())
                         )
                         .map((svc) => {
-                          const isChecked = selectedServices.some((s) => s.serviceId === svc.id);
-                          const current = selectedServices.find((s) => s.serviceId === svc.id);
+                          const isChecked = selectedServices.some(
+                            (s) => s.serviceId === svc.id
+                          );
+                          const current = selectedServices.find(
+                            (s) => s.serviceId === svc.id
+                          );
                           return (
-                            <div key={svc.id} className="p-3 hover:bg-black/5">
+                            <div
+                              key={svc.id}
+                              className="p-3 bg-[#EAF4FB] border-0 "
+                            >
                               <div className="flex items-center gap-3">
                                 <Checkbox
+                                  className="bg-blue-200 border-0"
                                   id={`svc-${svc.id}`}
                                   checked={isChecked}
                                   onCheckedChange={(checked) => {
@@ -852,18 +870,28 @@ export function FormSubmission({
                                       ]);
                                     } else {
                                       setSelectedServices((prev) =>
-                                        prev.filter((s) => s.serviceId !== svc.id)
+                                        prev.filter(
+                                          (s) => s.serviceId !== svc.id
+                                        )
                                       );
                                     }
                                   }}
                                 />
-                                <Label htmlFor={`svc-${svc.id}`} className="font-medium">
+                                <Label
+                                  htmlFor={`svc-${svc.id}`}
+                                  className="font-medium "
+                                >
                                   {svc.name}
                                 </Label>
                               </div>
                               {isChecked && (
                                 <div className="mt-2 ml-6">
-                                  <Label htmlFor={`notes-${svc.id}`} className="text-xs">Notes</Label>
+                                  <Label
+                                    htmlFor={`notes-${svc.id}`}
+                                    className="text-xs"
+                                  >
+                                    Notes
+                                  </Label>
                                   <Textarea
                                     id={`notes-${svc.id}`}
                                     rows={2}
@@ -873,7 +901,9 @@ export function FormSubmission({
                                       const notes = e.target.value;
                                       setSelectedServices((prev) =>
                                         prev.map((s) =>
-                                          s.serviceId === svc.id ? { ...s, notes } : s
+                                          s.serviceId === svc.id
+                                            ? { ...s, notes }
+                                            : s
                                         )
                                       );
                                     }}
@@ -934,7 +964,7 @@ export function FormSubmission({
       <div className="flex flex-col sm:flex-row gap-3 justify-end">
         <Button
           variant="outline"
-          className="w-full bg-black/10 text-black sm:w-auto"
+          className="w-full bg-blue-200 text-blue-900 border-0 sm:w-auto"
           onClick={handleSaveDraft}
           disabled={isDraft}
         >
@@ -949,7 +979,7 @@ export function FormSubmission({
         </Button>
 
         <Button
-          className="w-full bg-[#2E343E] text-white sm:w-auto"
+          className="w-full bg-[#0073e6] text-white sm:w-auto"
           onClick={handleSubmit}
           disabled={
             submitLoading ||

@@ -434,7 +434,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                 setFormTemplateIdLocal(undefined);
               }}
             >
-              <SelectTrigger className="w-[200px] md:w-[220px] bg-black/5 text-black border-0">
+              <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
               <SelectContent>
@@ -459,7 +459,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
               }}
               disabled={!projectId}
             >
-              <SelectTrigger className="w-[200px] md:w-[220px] bg-black/5 text-black border-0">
+              <SelectTrigger className="w-[220px] bg-blue-200/30   border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
                 <SelectValue placeholder="Subproject" />
               </SelectTrigger>
               <SelectContent>
@@ -483,8 +483,12 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                 setMetricLocal(v as MetricType);
               }}
             >
-              <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
-                <SelectValue placeholder="Metric" />
+              <SelectTrigger
+                className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+              >
+                <SelectValue placeholder="Beneficiary" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="submissions">Submissions</SelectItem>
@@ -507,7 +511,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                 setServiceIdLocal(id || undefined);
               }}
             >
-              <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
+              <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
                 <SelectValue placeholder="Service" />
               </SelectTrigger>
               <SelectContent>
@@ -532,7 +536,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                 setFormTemplateIdLocal(id || undefined);
               }}
             >
-              <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
+              <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
                 <SelectValue placeholder="Form Template" />
               </SelectTrigger>
               <SelectContent>
@@ -548,7 +552,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
           <div className="relative">
             <button
               onClick={() => setFiltersOpen((s) => !s)}
-              className="px-3 py-1.5 rounded-md text-sm bg-black/5 text-black hover:bg-black/20 flex items-center gap-2"
+              className="px-3 py-1.5 rounded-md text-sm bg-blue-200 text-blue-600 hover:bg-blue-200/30 flex items-center gap-2"
             >
               <span>
                 Granularity:{" "}
@@ -572,10 +576,10 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                           setFiltersOpen(false);
                         }}
                         className={[
-                          "w-full text-left px-3 py-2 text-sm rounded-md capitalize",
+                          "w-full text-left px-3 py-2 text-sm rounded-md capitalize transition-transform duration-200 ease-in-out",
                           granularity === g
-                            ? "bg-[#E5ECF6] text-gray-900"
-                            : "hover:bg-gray-50",
+                            ? "bg-[#E5ECF6] text-gray-900 scale-[1.02] -translate-y-[1px]"
+                            : "hover:bg-gray-50 hover:scale-[1.02] hover:-translate-y-[1px]",
                         ].join(" ")}
                       >
                         {g}

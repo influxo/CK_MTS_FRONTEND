@@ -158,7 +158,6 @@ interface ProjectsListProps {
 }
 
 export function ProjectsList({ projects }: ProjectsListProps) {
-
   const [searchQuery, setSearchQuery] = useState("");
   const [viewType, setViewType] = useState("grid");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -671,6 +670,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                     <td className="p-3">
                       <div className="flex gap-2">
                         <Button
+                          className="hover:bg-black/5 border-0"
                           size="sm"
                           variant="outline"
                           onClick={() => navigate(`/projects/${project.id}`)}
@@ -682,7 +682,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0"
+                              className="h-8 w-8 p-0 hover:bg-black/5 border-0"
                             >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>

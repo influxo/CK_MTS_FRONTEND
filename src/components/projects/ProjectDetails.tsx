@@ -1098,7 +1098,7 @@ export function ProjectDetails() {
                   onOpenChange={setIsAddDialogOpen}
                 >
                   <DialogTrigger asChild>
-                    <Button className="bg-[#2E343E] text-white">
+                    <Button className="bg-[#0073e6] text-white">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Beneficiary
                     </Button>
@@ -1118,9 +1118,19 @@ export function ProjectDetails() {
                         setAddBeneficiaryTab(v as "new" | "existing")
                       }
                     >
-                      <TabsList className="mb-4">
-                        <TabsTrigger value="new">Add New</TabsTrigger>
-                        <TabsTrigger value="existing">Add Existing</TabsTrigger>
+                      <TabsList className="mb-4 bg-blue-200 bg-opacity-10 items-center">
+                        <TabsTrigger
+                          value="new"
+                          className=" data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white  "
+                        >
+                          Add New
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="existing"
+                          className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
+                        >
+                          Add Existing
+                        </TabsTrigger>
                       </TabsList>
 
                       <TabsContent value="new" className="m-0 p-0">
@@ -1906,6 +1916,7 @@ export function ProjectDetails() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
+                          className="hover:bg-blue-200"
                           variant="outline"
                           size="sm"
                           onClick={() => navigate(`/beneficiaries/${r.id}`)}
