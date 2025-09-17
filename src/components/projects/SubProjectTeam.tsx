@@ -182,7 +182,7 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
                               </AvatarFallback>
                             </Avatar>
                             <span className="text-sm">{fullName}</span>
-                            <Badge variant="secondary" className="text-[10px]">
+                            <Badge variant="secondary" className="text-[10px] ">
                               {emp.email}
                             </Badge>
                           </div>

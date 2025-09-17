@@ -158,14 +158,14 @@ export function SubProjectSelection() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2>Data Entry</h2>
           <p className="text-muted-foreground">
             Select a project or subproject to begin
           </p>
         </div>
-      </div>
+      </div> */}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

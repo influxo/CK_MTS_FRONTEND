@@ -661,20 +661,12 @@ export function FormsList({
                   {/* <TableCell>{template.submissions}</TableCell> */}
                   <TableCell>
                     <div className="space-y-1 max-w-[150px]">
-                      {template.entityAssociations.map(
-                        (entityAssociation, index) => (
-                          <div key={index} className="text-sm truncate">
-                            {/* {entityAssociation.entityId} */}
-                            {entityAssociation.entityType && (
-                              <span className="text-xs text-muted-foreground block">
-                                {entityAssociation.entityName}
-                              </span>
-                            )}
-                          </div>
-                        )
-                      )}
+                      <div className="text-sm">
+                        {template.entityAssociations.length} Projects
+                      </div>
                     </div>
                   </TableCell>
+
                   <TableCell>
                     <div>
                       {template.updatedAt &&

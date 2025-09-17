@@ -32,15 +32,17 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  selectSeries,
-  setFilters,
-  selectMetricsFilters,
-} from "../../store/slices/serviceMetricsSlice";
-import type { TimeUnit } from "../../services/services/serviceMetricsModels";
-import { getAllServices, getEntityServices, selectAllServices, selectEntityServices } from "../../store/slices/serviceSlice";
-import { fetchForms, selectAllForms } from "../../store/slices/formsSlice";
+import type {
+  TimeUnit,
+  MetricType,
+} from "../../services/services/serviceMetricsModels";
+import serviceMetricsService from "../../services/services/serviceMetricsService";
+import servicesService from "../../services/services/serviceServices";
+import formService from "../../services/forms/formService";
+import subProjectService from "../../services/subprojects/subprojectService";
+import type { Project } from "../../services/projects/projectModels";
+import { useSelector } from "react-redux";
+import { selectMetricsFilters } from "../../store/slices/serviceMetricsSlice";
 
 type Granularity = TimeUnit; // 'day' | 'week' | 'month' | 'quarter' | 'year'
 
@@ -93,14 +95,46 @@ function defaultWindowFor(g: Granularity): { from: Date; to: Date } {
   return { from, to };
 }
 
-export function FormSubmissions() {
-  const dispatch: any = useDispatch();
-  const series = useSelector(selectSeries);
-  const { loading, items, granularity } = series;
-  const filters = useSelector(selectMetricsFilters);
-  const entityServices = useSelector(selectEntityServices);
-  const allServices = useSelector(selectAllServices);
-  const formsState = useSelector(selectAllForms);
+export function FormSubmissions({ projects }: { projects: Project[] }) {
+  // Local series state (isolated from global dashboard)
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const [items, setItems] = React.useState<
+    Array<{ periodStart: string; count: number }>
+  >([]);
+  const [granularity, setGranularity] = React.useState<Granularity>("week");
+  const [granularityLocal, setGranularityLocal] = React.useState<
+    Granularity | undefined
+  >(undefined);
+
+  // Local filters (isolated)
+  // Use undefined to indicate "inherit from global"
+  const [metricLocal, setMetricLocal] = React.useState<MetricType | undefined>(
+    undefined
+  );
+  const [serviceIdLocal, setServiceIdLocal] = React.useState<
+    string | undefined
+  >(undefined);
+  const [formTemplateIdLocal, setFormTemplateIdLocal] = React.useState<
+    string | undefined
+  >(undefined);
+  const [localStartDate, setLocalStartDate] = React.useState<
+    string | undefined
+  >(undefined);
+  const [localEndDate, setLocalEndDate] = React.useState<string | undefined>(
+    undefined
+  );
+
+  // Local project/subproject UI state
+  const [projectId, setProjectId] = React.useState<string>("");
+  const [subprojectId, setSubprojectId] = React.useState<string>("");
+
+  // Local options
+  const [servicesOptions, setServicesOptions] = React.useState<any[]>([]);
+  const [templatesOptions, setTemplatesOptions] = React.useState<any[]>([]);
+  const [subprojectsOptions, setSubprojectsOptions] = React.useState<any[]>([]);
+
+  // Global filters
+  const globalFilters = useSelector(selectMetricsFilters);
 
   // UI state for dropdown + custom range
   const [filtersOpen, setFiltersOpen] = React.useState(false);
@@ -173,14 +207,11 @@ export function FormSubmissions() {
         break;
     }
 
-    // Update global filters; Dashboard will fetch series/summary
-    dispatch(
-      setFilters({
-        groupBy: g,
-        startDate: start.toISOString(),
-        endDate: end.toISOString(),
-      })
-    );
+    // Update local granularity and window; a downstream effect will load series
+    setGranularity(g);
+    setGranularityLocal(g);
+    setLocalStartDate(start.toISOString());
+    setLocalEndDate(end.toISOString());
   };
 
   const onCustomApply = () => {
@@ -196,30 +227,157 @@ export function FormSubmissions() {
     setCustomOpen(false);
   };
 
+  // Initial load: inherit global filters for defaults
   React.useEffect(() => {
-    // initial load ensure we have a series window
-    if (!items?.length && !loading) {
-      applyQuery((granularity as Granularity) || "week");
-    }
+    // Load templates
+    (async () => {
+      const forms = await formService.getForms();
+      const templates = (forms?.data as any)?.templates || forms?.data || [];
+      setTemplatesOptions(templates || []);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch services depending on selected entity (project/subproject); fallback to all services
+  // Fetch subprojects when local project changes
   React.useEffect(() => {
-    if (filters.entityId && filters.entityType) {
-      dispatch(getEntityServices({
-        entityId: filters.entityId,
-        entityType: filters.entityType as any,
-      }));
-    } else {
-      dispatch(getAllServices({ page: 1, limit: 100 }));
+    if (!projectId) {
+      setSubprojectsOptions([]);
+      return;
     }
-  }, [dispatch, filters.entityId, filters.entityType]);
+    (async () => {
+      const res = await subProjectService.getSubProjectsByProjectId({
+        projectId,
+      });
+      if (res.success) setSubprojectsOptions(res.data);
+    })();
+  }, [projectId]);
 
-  // Fetch form templates once
+  // Inherit global project/subproject into local UI when no local override is set
   React.useEffect(() => {
-    dispatch(fetchForms());
-  }, [dispatch]);
+    if (projectId || subprojectId) return; // respect local override
+    const { entityId, entityType } = globalFilters as any;
+    if (!entityId || !entityType) return;
+    if (entityType === "project") {
+      setProjectId(entityId);
+    } else if (entityType === "subproject") {
+      (async () => {
+        const res = await subProjectService.getSubProjectById({ id: entityId });
+        if (res.success && (res.data as any)?.projectId) {
+          setProjectId((res.data as any).projectId);
+          setSubprojectId(entityId);
+        }
+      })();
+    }
+  }, [
+    globalFilters.entityId,
+    globalFilters.entityType,
+    projectId,
+    subprojectId,
+  ]);
+
+  // Fetch services when effective entity selection changes (local overrides take precedence, else global)
+  React.useEffect(() => {
+    (async () => {
+      const effectiveEntityType = subprojectId
+        ? "subproject"
+        : projectId
+        ? "project"
+        : (globalFilters.entityType as any) || undefined;
+      const effectiveEntityId =
+        subprojectId || projectId || globalFilters.entityId || undefined;
+      if (effectiveEntityType && effectiveEntityId) {
+        const res = await servicesService.getEntityServices({
+          entityId: effectiveEntityId,
+          entityType: effectiveEntityType,
+        });
+        if (res.success) setServicesOptions(res.items || []);
+      } else {
+        const res = await servicesService.getAllServices({
+          page: 1,
+          limit: 100,
+        });
+        if (res.success) setServicesOptions(res.items || []);
+      }
+    })();
+  }, [
+    projectId,
+    subprojectId,
+    globalFilters.entityId,
+    globalFilters.entityType,
+  ]);
+
+  // Build merged params from global + local overrides
+  function buildMergedParams() {
+    const effectiveGroupBy: any =
+      (granularityLocal as any) || globalFilters.groupBy || "month";
+    const startDate = localStartDate || globalFilters.startDate;
+    const endDate = localEndDate || globalFilters.endDate;
+    const effMetric = (metricLocal ||
+      globalFilters.metric ||
+      "submissions") as MetricType;
+    const effServiceId =
+      serviceIdLocal !== undefined
+        ? serviceIdLocal || undefined
+        : globalFilters.serviceId;
+    const effFormTemplateId =
+      formTemplateIdLocal !== undefined
+        ? formTemplateIdLocal || undefined
+        : globalFilters.formTemplateId;
+    const effEntityId = subprojectId || projectId || globalFilters.entityId;
+    const effEntityType = (
+      subprojectId
+        ? "subproject"
+        : projectId
+        ? "project"
+        : globalFilters.entityType
+    ) as any;
+    return {
+      groupBy: effectiveGroupBy,
+      startDate,
+      endDate,
+      metric: effMetric,
+      serviceId: effServiceId,
+      formTemplateId: effFormTemplateId,
+      entityId: effEntityId,
+      entityType: effEntityType,
+    } as any;
+  }
+
+  async function loadSeriesMerged() {
+    const params = buildMergedParams();
+    try {
+      setLoading(true);
+      const res = await serviceMetricsService.getDeliveriesSeries(params);
+      if (res.success) {
+        setItems(res.items || []);
+        setGranularity(
+          (res.granularity as Granularity) ||
+            (params.groupBy as Granularity) ||
+            granularity
+        );
+      } else {
+        setItems([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Re-fetch when global or local filters change (merged with locals)
+  React.useEffect(() => {
+    loadSeriesMerged();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    globalFilters,
+    projectId,
+    subprojectId,
+    metricLocal,
+    serviceIdLocal,
+    formTemplateIdLocal,
+    localStartDate,
+    localEndDate,
+    granularityLocal,
+  ]);
   const submissions = [
     {
       form: "Healthcare Assessment",
@@ -256,42 +414,109 @@ export function FormSubmissions() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>
-            {filters.metric === "serviceDeliveries"
+            {(metricLocal || globalFilters.metric) === "serviceDeliveries"
               ? "Service Deliveries Overview"
-              : filters.metric === "uniqueBeneficiaries"
+              : (metricLocal || globalFilters.metric) === "uniqueBeneficiaries"
               ? "Unique Beneficiaries Overview"
               : "Form Submissions Overview"}
           </CardTitle>
-          {/* Filters specific to Form Submissions: metric, service, and form template */}
+          {/* Local-only filters for Form Submissions: project/subproject + metric/service/template */}
           <div className=" flex flex-wrap items-center  gap-3">
-            {/* Metric */}
+            {/* Project (local override) */}
             <Select
-              value={String(filters.metric || "submissions")}
-              onValueChange={(v) => dispatch(setFilters({ metric: v as any }))}
+              value={projectId || "all"}
+              onValueChange={(v) => {
+                const id = v === "all" ? "" : v;
+                setProjectId(id);
+                setSubprojectId("");
+                // Clear dependent local filters when switching entity
+                setServiceIdLocal(undefined);
+                setFormTemplateIdLocal(undefined);
+              }}
             >
-              <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
-                <SelectValue placeholder="Metric" />
+              <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                <SelectValue placeholder="Project" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="submissions">Submissions</SelectItem>
-                <SelectItem value="serviceDeliveries">Service Deliveries</SelectItem>
-                <SelectItem value="uniqueBeneficiaries">Unique Beneficiaries</SelectItem>
+                <SelectItem value="all">All Projects</SelectItem>
+                {(projects || []).map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
-            {/* Service */}
+            {/* Subproject (local override) */}
             <Select
-              value={filters.serviceId || "all"}
-              onValueChange={(v) =>
-                dispatch(setFilters({ serviceId: v === "all" ? undefined : v }))
-              }
+              value={subprojectId || "all"}
+              onValueChange={(v) => {
+                const id = v === "all" ? "" : v;
+                setSubprojectId(id);
+                // Clear dependent local filters when switching entity
+                setServiceIdLocal(undefined);
+                setFormTemplateIdLocal(undefined);
+              }}
+              disabled={!projectId}
             >
-              <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
+              <SelectTrigger className="w-[220px] bg-blue-200/30   border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                <SelectValue placeholder="Subproject" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subprojects</SelectItem>
+                {subprojectsOptions
+                  .filter((sp) => sp.projectId === projectId)
+                  .map((sp) => (
+                    <SelectItem key={sp.id} value={sp.id}>
+                      {sp.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            {/* Metric (local override; inherits global if unset) */}
+            <Select
+              value={
+                (metricLocal || globalFilters.metric || "submissions") as string
+              }
+              onValueChange={(v) => {
+                setMetricLocal(v as MetricType);
+              }}
+            >
+              <SelectTrigger
+                className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+              >
+                <SelectValue placeholder="Beneficiary" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="submissions">Submissions</SelectItem>
+                <SelectItem value="serviceDeliveries">
+                  Service Deliveries
+                </SelectItem>
+                <SelectItem value="uniqueBeneficiaries">
+                  Unique Beneficiaries
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Service (local override; inherits global if unset) */}
+            <Select
+              value={
+                (serviceIdLocal ?? globalFilters.serviceId ?? "all") as string
+              }
+              onValueChange={(v) => {
+                const id = v === "all" ? "" : v;
+                setServiceIdLocal(id || undefined);
+              }}
+            >
+              <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
                 <SelectValue placeholder="Service" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Services</SelectItem>
-                {(filters.entityId ? entityServices : allServices).map((s: any) => (
+                {servicesOptions.map((s: any) => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.name}
                   </SelectItem>
@@ -299,21 +524,24 @@ export function FormSubmissions() {
               </SelectContent>
             </Select>
 
-            {/* Form Template */}
+            {/* Form Template (local override; inherits global if unset) */}
             <Select
-              value={filters.formTemplateId || "all"}
-              onValueChange={(v) =>
-                dispatch(
-                  setFilters({ formTemplateId: v === "all" ? undefined : v })
-                )
+              value={
+                (formTemplateIdLocal ??
+                  globalFilters.formTemplateId ??
+                  "all") as string
               }
+              onValueChange={(v) => {
+                const id = v === "all" ? "" : v;
+                setFormTemplateIdLocal(id || undefined);
+              }}
             >
-              <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
+              <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
                 <SelectValue placeholder="Form Template" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Templates</SelectItem>
-                {(formsState?.templates || []).map((t: any) => (
+                {templatesOptions.map((t: any) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}
                   </SelectItem>
@@ -324,7 +552,7 @@ export function FormSubmissions() {
           <div className="relative">
             <button
               onClick={() => setFiltersOpen((s) => !s)}
-              className="px-3 py-1.5 rounded-md text-sm bg-black/5 text-black hover:bg-black/20 flex items-center gap-2"
+              className="px-3 py-1.5 rounded-md text-sm bg-blue-200 text-blue-600 hover:bg-blue-200/30 flex items-center gap-2"
             >
               <span>
                 Granularity:{" "}
@@ -348,10 +576,10 @@ export function FormSubmissions() {
                           setFiltersOpen(false);
                         }}
                         className={[
-                          "w-full text-left px-3 py-2 text-sm rounded-md capitalize",
+                          "w-full text-left px-3 py-2 text-sm rounded-md capitalize transition-transform duration-200 ease-in-out",
                           granularity === g
-                            ? "bg-[#E5ECF6] text-gray-900"
-                            : "hover:bg-gray-50",
+                            ? "bg-[#E5ECF6] text-gray-900 scale-[1.02] -translate-y-[1px]"
+                            : "hover:bg-gray-50 hover:scale-[1.02] hover:-translate-y-[1px]",
                         ].join(" ")}
                       >
                         {g}
@@ -410,101 +638,73 @@ export function FormSubmissions() {
             )}
           </div>
         </div>
-        {/* Lightweight UI-only filters */}
-        {/* <div className="mt-3 flex flex-wrap items-center gap-3">
-          <Select>
-            <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
-              <SelectValue placeholder="Project" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Projects</SelectItem>
-              <SelectItem value="project-a">Project A</SelectItem>
-              <SelectItem value="project-b">Project B</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select>
-            <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
-              <SelectValue placeholder="Subproject" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Subprojects</SelectItem>
-              <SelectItem value="sp-1">Subproject 1</SelectItem>
-              <SelectItem value="sp-2">Subproject 2</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select>
-            <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
-              <SelectValue placeholder="Beneficiary" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Beneficiaries</SelectItem>
-              <SelectItem value="b-1">Beneficiary 1</SelectItem>
-              <SelectItem value="b-2">Beneficiary 2</SelectItem>
-            </SelectContent>
-          </Select>
-        </div> */}
+        {/* Chart */}
         <div className="h-64 mt-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart
-              data={chartData}
-              margin={{
-                top: 5,
-                right: 30,
-                left: 20,
-                bottom: 5,
-              }}
-            >
-              <defs>
-                <linearGradient
-                  id="submissionsFill"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis
-                dataKey="name"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "#6b7280" }}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "#6b7280" }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#fff",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "0.5rem",
-                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+          {loading ? (
+            <div className="h-full w-full flex items-center justify-center text-sm text-gray-600">
+              Loading…
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart
+                data={chartData}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
                 }}
-              />
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke="none"
-                fill="url(#submissionsFill)"
-                fillOpacity={1}
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 6, fill: "#3b82f6" }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
+              >
+                <defs>
+                  <linearGradient
+                    id="submissionsFill"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#6b7280" }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#6b7280" }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#fff",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "0.5rem",
+                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="none"
+                  fill="url(#submissionsFill)"
+                  fillOpacity={1}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 6, fill: "#3b82f6" }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </CardHeader>
 
