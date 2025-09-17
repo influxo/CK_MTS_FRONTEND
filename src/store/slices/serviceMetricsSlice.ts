@@ -133,6 +133,7 @@ const serviceMetricsSlice = createSlice({
       })
       .addCase(fetchDeliveriesSummary.fulfilled, (state, action) => {
         state.summary.loading = false;
+        state.summary.error = null; // clear any previous error on success
         state.summary.data = action.payload.data;
         // Record last request key for caching
         // @ts-ignore meta is available on action
@@ -150,6 +151,7 @@ const serviceMetricsSlice = createSlice({
       })
       .addCase(fetchDeliveriesSeries.fulfilled, (state, action) => {
         state.series.loading = false;
+        state.series.error = null; // clear any previous error on success
         state.series.items = action.payload.items;
         state.series.granularity = action.payload.granularity;
         state.series.groupedBy = action.payload.groupedBy;

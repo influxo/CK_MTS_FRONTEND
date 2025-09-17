@@ -10,12 +10,13 @@ import type {
 class ServiceMetricsService {
   private baseUrl = getApiUrl();
   private formsEndpoint = `${this.baseUrl}/forms`;
+  private servicesEndpoint = `${this.baseUrl}/services`;
 
   async getDeliveriesSummary(
     params: DeliveriesFilters = {}
   ): Promise<DeliveriesSummaryResponse> {
     try {
-      // Map legacy params to new dynamic metrics filters
+      // Map params
       const mapped: any = {
         // entity filters
         entityId: params.entityId,
@@ -28,12 +29,16 @@ class ServiceMetricsService {
         serviceIds: params.serviceIds,
         // beneficiary filter
         beneficiaryId: params.beneficiaryId,
+        // staff filter
+        staffUserId: params.staffUserId,
       };
 
-      const response = await axiosInstance.get(
-        `${this.formsEndpoint}/metrics/summary`,
-        { params: mapped }
-      );
+      // Use services metrics endpoint when filtering by staff (field operator view)
+      const endpoint = params.staffUserId
+        ? `${this.servicesEndpoint}/metrics/deliveries/summary`
+        : `${this.formsEndpoint}/metrics/summary`;
+
+      const response = await axiosInstance.get(endpoint, { params: mapped });
 
       const dyn = response.data as {
         success: boolean;
@@ -54,14 +59,21 @@ class ServiceMetricsService {
       }
 
       const d = dyn.data || {};
-      // Adapt dynamic summary -> deliveries summary model
+      // Adapt response. Prefer direct fields if available from /services endpoint
+      const totalDeliveries =
+        d.totalDeliveries ?? d.serviceDeliveries ?? d.total ?? 0;
+      const uniqueBeneficiaries =
+        d.uniqueBeneficiaries ?? d.uniqueBeneficiariesByDeliveries ?? 0;
+      const uniqueStaff = d.uniqueStaff ?? d.staffCount ?? 0;
+      const uniqueServices = d.uniqueServices ?? d.servicesUsed ?? 0;
+
       return {
         success: true,
         data: {
-          totalDeliveries: Number(d.serviceDeliveries || 0),
-          uniqueBeneficiaries: Number(d.uniqueBeneficiariesByDeliveries || 0),
-          uniqueStaff: 0, // not provided by dynamic summary (can be added later)
-          uniqueServices: Number(d.servicesUsed || 0),
+          totalDeliveries: Number(totalDeliveries || 0),
+          uniqueBeneficiaries: Number(uniqueBeneficiaries || 0),
+          uniqueStaff: Number(uniqueStaff || 0),
+          uniqueServices: Number(uniqueServices || 0),
         },
       };
     } catch (error: any) {
@@ -85,10 +97,15 @@ class ServiceMetricsService {
     params: DeliveriesSeriesParams = {}
   ): Promise<DeliveriesSeriesResponse> {
     try {
-      // Map to new dynamic series API (metric=submissions)
+      // Decide which endpoint to use
+      const useServices = !!params.staffUserId;
+
+      // Map to API params
       const mapped: any = {
-        metric: (params as any).metric || "submissions",
+        metric: (params as any).metric || (useServices ? "serviceDeliveries" : "submissions"),
         groupBy: params.groupBy,
+        // Some APIs expect 'granularity' instead of 'groupBy'
+        granularity: params.groupBy,
         entityId: params.entityId,
         entityType: params.entityType,
         fromDate: params.startDate,
@@ -98,23 +115,31 @@ class ServiceMetricsService {
         beneficiaryId: params.beneficiaryId,
         formTemplateId: params.formTemplateId,
         formTemplateIds: params.formTemplateIds,
+        staffUserId: params.staffUserId,
       };
 
-      const response = await axiosInstance.get(
-        `${this.formsEndpoint}/metrics/series`,
-        { params: mapped }
-      );
+      // Use services metrics endpoint when filtering by staff
+      const endpoint = useServices
+        ? `${this.servicesEndpoint}/metrics/deliveries/series`
+        : `${this.formsEndpoint}/metrics/series`;
+
+      const response = await axiosInstance.get(endpoint, { params: mapped });
 
       const dyn = response.data as {
         success: boolean;
+        // Some endpoints wrap in data, others return fields at top-level
         data?: {
-          metric: string;
-          granularity: any;
-          series: Array<{ periodStart: string; value: number }>;
+          metric?: string;
+          granularity?: any;
+          series?: Array<{ periodStart: string; value: number }>;
+          items?: Array<{ periodStart?: string; timestamp?: string; value?: number; count?: number }>;
         };
+        // Top-level fallbacks
+        items?: Array<{ periodStart?: string; timestamp?: string; value?: number; count?: number }>;
+        granularity?: any;
         message?: string;
       };
-      if (!dyn.success || !dyn.data) {
+      if (!dyn.success || (!dyn.data && !dyn.items)) {
         return {
           success: false,
           message: dyn.message || "Failed to fetch deliveries series",
@@ -125,18 +150,29 @@ class ServiceMetricsService {
       }
 
       // Adapt dynamic series -> deliveries series model
-      const items = (dyn.data.series || []).map((s) => ({
+      const rawSeries = (
+        (dyn.data && ((dyn.data as any).series || (dyn.data as any).items)) ||
+        dyn.items ||
+        []
+      ) as any[];
+      const items = rawSeries.map((s) => ({
         periodStart:
           typeof s.periodStart === "string"
             ? s.periodStart
-            : new Date(s.periodStart as any).toISOString(),
-        count: Number(s.value || 0),
+            : typeof s.timestamp === "string"
+            ? s.timestamp
+            : new Date((s.periodStart || s.timestamp) as any).toISOString(),
+        count: Number((s.value ?? s.count) || 0),
       }));
 
       return {
         success: true,
         items,
-        granularity: dyn.data.granularity,
+        granularity:
+          (dyn.data && (dyn.data as any).granularity) ||
+          (dyn as any).granularity ||
+          (params.groupBy as any) ||
+          "month",
         groupedBy: null,
       };
     } catch (error: any) {

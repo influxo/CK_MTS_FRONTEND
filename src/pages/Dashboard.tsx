@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { BeneficiaryDemographics } from "../components/dashboard/BeneficiaryDemographics";
 import { FilterControls } from "../components/dashboard/FilterControls";
@@ -17,26 +17,41 @@ import {
   fetchDeliveriesSummary,
   selectMetricsFilters,
 } from "../store/slices/serviceMetricsSlice";
-import {
-  fetchUserProjectsByUserId,
-  selectUserProjectsError,
-  selectUserProjectsLoading,
-  selectUserProjectsTree,
-} from "../store/slices/userProjectsSlice";
+import { fetchUserProjectsByUserId } from "../store/slices/userProjectsSlice";
 import { selectAllProjects } from "../store/slices/projectsSlice";
 
 export function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(selectCurrentUser);
-  // Artisi i ka bo qeto useSelectors, duhet me kqyr qka jan
-  const userProjects = useSelector(selectUserProjectsTree);
-  const userProjectsLoading = useSelector(selectUserProjectsLoading);
-  const userProjectsError = useSelector(selectUserProjectsError);
   const metricsFilters = useSelector(selectMetricsFilters);
 
   const projects = useSelector(selectAllProjects);
 
   console.log("projects from dashboard", projects);
+
+  // Determine role: field operator
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
+  const isFieldOperator = useMemo(() => {
+    return (
+      normalizedRoles.includes("field operator") ||
+      normalizedRoles.includes("field-operator") ||
+      normalizedRoles.includes("fieldoperator") ||
+      normalizedRoles.includes("field_op") ||
+      normalizedRoles.some((r: string) => r.includes("field") && r.includes("operator"))
+    );
+  }, [normalizedRoles]);
 
   useEffect(() => {
     if (user?.id) {
@@ -46,10 +61,28 @@ export function Dashboard() {
 
   // Load service delivery metrics (summary + series)
   useEffect(() => {
-    dispatch(fetchDeliveriesSummary(metricsFilters));
-    dispatch(fetchDeliveriesSeries(metricsFilters));
-  }, [dispatch, metricsFilters]);
+    if (!user) return; // wait until user profile is available to determine role filters
+    const base = metricsFilters || ({} as any);
+    const filters = isFieldOperator && user?.id
+      ? { ...base, staffUserId: String(user.id) }
+      : base;
+    dispatch(fetchDeliveriesSummary(filters));
+    dispatch(fetchDeliveriesSeries(filters));
+  }, [dispatch, metricsFilters, isFieldOperator, user?.id]);
 
+  if (isFieldOperator && !isSysOrSuperAdmin) {
+    // Simplified dashboard for Field Operator: only cards + graph, filtered by staffUserId
+    return (
+      <>
+        <SummaryMetrics />
+        <div className="grid grid-cols-1 lg:grid-cols-1 py-6 gap-6 mb-6">
+          <ServiceDelivery />
+        </div>
+      </>
+    );
+  }
+
+  // Default dashboard for other roles
   return (
     <>
       <FilterControls projects={projects} />
@@ -67,13 +100,13 @@ export function Dashboard() {
           <div className="lg:col-span-2 py-6">
             <BeneficiaryDemographics />
           </div>
-          <div className="lg:col-span-2">
+          {/* <div className="lg:col-span-2">
             <KpiHighlights />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-1 py-6 gap-6 mb-6">
             <ServiceDelivery />
-          </div>
+          </div> */}
         </div>
         <div className=" space-y-6">
           {/* <SyncStatus />

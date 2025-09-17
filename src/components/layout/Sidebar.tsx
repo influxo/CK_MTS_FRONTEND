@@ -50,7 +50,7 @@ export function Sidebar({
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { logout, user } = useAuth();
+  const { logout, user, isLoading: authLoading } = useAuth();
   const userProjectsTree = useSelector(selectUserProjectsTree);
   const userProjectsLoading = useSelector(selectUserProjectsLoading);
   const userProjectsError = useSelector(selectUserProjectsError);
@@ -133,9 +133,9 @@ export function Sidebar({
 
   const navItems = useMemo(() => {
     if (isFieldOperator && !isSysOrSuperAdmin) {
-      // Field operators should see Projects and Data Entry only
-      return fullNavItems.filter(
-        (i) => i.title === "Projects" || i.title === "Data Entry"
+      // Field operators should see Dashboard, Projects and Data Entry only
+      return fullNavItems.filter((i) =>
+        ["Dashboard", "Projects", "Data Entry"].includes(i.title)
       );
     }
     return fullNavItems;
@@ -219,98 +219,104 @@ export function Sidebar({
 
       <ScrollArea className="flex-1 py-4">
         <nav className="flex flex-col gap-1 px-2">
-          {navItems.map((item) =>
-            item.title === "Projects" ? (
-              <div key={item.to}>
-                <button
-                  onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
-                  className={cn(
-                    "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors w-full text-left",
-                    "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-[#0073e6] before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
-                    isProjectsExpanded
-                      ? "text-blue bg-blue-900 bg-opacity-5 before:scale-x-100"
-                      : "text-black hover:text-black hover:bg-blue-100 hover:bg-opacity-5 before:scale-x-0",
-                    collapsed && "justify-center px-2"
-                  )}
-                >
-                  <FolderKanban className="h-5 w-5" />
-                  {!collapsed && (
-                    <span className="ml-2 flex-1 text-left">Projects</span>
-                  )}
-                  {!collapsed && (
-                    <ChevronRight
-                      size={18}
+          {authLoading || !user ? (
+            <div className="px-2 py-2 text-xs text-gray-500">Loading menu…</div>
+          ) : (
+            <>
+              {navItems.map((item) =>
+                item.title === "Projects" ? (
+                  <div key={item.to}>
+                    <button
+                      onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
                       className={cn(
-                        "ml-auto transition-transform duration-300",
-                        isProjectsExpanded && "rotate-90"
+                        "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors w-full text-left",
+                        "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-[#0073e6] before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
+                        isProjectsExpanded
+                          ? "text-blue bg-blue-900 bg-opacity-5 before:scale-x-100"
+                          : "text-black hover:text-black hover:bg-blue-100 hover:bg-opacity-5 before:scale-x-0",
+                        collapsed && "justify-center px-2"
                       )}
-                    />
-                  )}
-                </button>
+                    >
+                      <FolderKanban className="h-5 w-5" />
+                      {!collapsed && (
+                        <span className="ml-2 flex-1 text-left">Projects</span>
+                      )}
+                      {!collapsed && (
+                        <ChevronRight
+                          size={18}
+                          className={cn(
+                            "ml-auto transition-transform duration-300",
+                            isProjectsExpanded && "rotate-90"
+                          )}
+                        />
+                      )}
+                    </button>
 
-                <Collapsible.Root
-                  open={isProjectsExpanded}
-                  onOpenChange={setIsProjectsExpanded}
-                >
-                  <Collapsible.Content
-                    className={cn(
-                      "data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden",
-                      !collapsed && "ml-8 mt-1"
-                    )}
+                    <Collapsible.Root
+                      open={isProjectsExpanded}
+                      onOpenChange={setIsProjectsExpanded}
+                    >
+                      <Collapsible.Content
+                        className={cn(
+                          "data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden",
+                          !collapsed && "ml-8 mt-1"
+                        )}
+                      >
+                        {isProjectsLoading && (
+                          <span className="text-xs text-gray-400">Loading...</span>
+                        )}
+                        {projectsErrMsg && (
+                          <span className="text-xs text-black">
+                            Error loading projects
+                          </span>
+                        )}
+                        {visibleProjects?.map((project) => {
+                          const isSelected = selectedProjectId === project.id;
+
+                          return (
+                            <div key={project.id} className="mb-1">
+                              <button
+                                onClick={() => {
+                                  navigate(`/projects/${project.id}`);
+                                  handleNavClick();
+                                }}
+                                className={cn(
+                                  "flex items-center capitalize w-full text-left rounded-md px-2 py-1 text-sm transition-colors",
+                                  isSelected
+                                    ? "bg-[#0073e6]   bg-opacity-5  text-black"
+                                    : "text-black hover:bg-[#0073e6] hover:bg-opacity-5 hover:text-black"
+                                )}
+                              >
+                                {project.name}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </Collapsible.Content>
+                    </Collapsible.Root>
+                  </div>
+                ) : (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      cn(
+                        "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-[#0073e6]   before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
+                        isActive
+                          ? "text-black bg-blue-900 bg-opacity-5 before:scale-x-100"
+                          : "text-black hover:text-black hover:bg-blue-200 hover:bg-opacity-5 before:scale-x-0",
+                        collapsed && "justify-center px-2"
+                      )
+                    }
+                    onClick={handleNavClick}
                   >
-                    {isProjectsLoading && (
-                      <span className="text-xs text-gray-400">Loading...</span>
-                    )}
-                    {projectsErrMsg && (
-                      <span className="text-xs text-black">
-                        Error loading projects
-                      </span>
-                    )}
-                    {visibleProjects?.map((project) => {
-                      const isSelected = selectedProjectId === project.id;
-
-                      return (
-                        <div key={project.id} className="mb-1">
-                          <button
-                            onClick={() => {
-                              navigate(`/projects/${project.id}`);
-                              handleNavClick();
-                            }}
-                            className={cn(
-                              "flex items-center capitalize w-full text-left rounded-md px-2 py-1 text-sm transition-colors",
-                              isSelected
-                                ? "bg-[#0073e6]   bg-opacity-5  text-black"
-                                : "text-black hover:bg-[#0073e6] hover:bg-opacity-5 hover:text-black"
-                            )}
-                          >
-                            {project.name}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </Collapsible.Content>
-                </Collapsible.Root>
-              </div>
-            ) : (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-[#0073e6]   before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
-                    isActive
-                      ? "text-black bg-blue-900 bg-opacity-5 before:scale-x-100"
-                      : "text-black hover:text-black hover:bg-blue-200 hover:bg-opacity-5 before:scale-x-0",
-                    collapsed && "justify-center px-2"
-                  )
-                }
-                onClick={handleNavClick}
-              >
-                {item.icon}
-                {!collapsed && <span className="ml-2">{item.title}</span>}
-              </NavLink>
-            )
+                    {item.icon}
+                    {!collapsed && <span className="ml-2">{item.title}</span>}
+                  </NavLink>
+                )
+              )}
+            </>
           )}
         </nav>
       </ScrollArea>
