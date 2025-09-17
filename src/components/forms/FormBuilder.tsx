@@ -1017,8 +1017,10 @@ export function FormBuilder({
               ))}
 
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline">Cancel</Button>
-                <Button>Submit Form</Button>
+                <Button variant="outline" className="bg-blue-200">
+                  Cancel
+                </Button>
+                <Button className="bg-[#0073e6] text-white">Submit Form</Button>
               </div>
             </div>
           </CardContent>

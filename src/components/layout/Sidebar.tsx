@@ -154,10 +154,10 @@ export function Sidebar({
                   onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
                   className={cn(
                     "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors w-full text-left",
-                    "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-black before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
+                    "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-[#0073e6] before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
                     isProjectsExpanded
                       ? "text-blue bg-blue-900 bg-opacity-5 before:scale-x-100"
-                      : "text-black hover:text-black hover:bg-black hover:bg-opacity-5 before:scale-x-0",
+                      : "text-black hover:text-black hover:bg-blue-100 hover:bg-opacity-5 before:scale-x-0",
                     collapsed && "justify-center px-2"
                   )}
                 >
@@ -207,8 +207,8 @@ export function Sidebar({
                             className={cn(
                               "flex items-center capitalize w-full text-left rounded-md px-2 py-1 text-sm transition-colors",
                               isSelected
-                                ? "bg-black bg-opacity-5  text-black"
-                                : "text-black hover:bg-black hover:bg-opacity-5 hover:text-black"
+                                ? "bg-[#0073e6]   bg-opacity-5  text-black"
+                                : "text-black hover:bg-[#0073e6] hover:bg-opacity-5 hover:text-black"
                             )}
                           >
                             {project.name}
@@ -226,10 +226,10 @@ export function Sidebar({
                 className={({ isActive }) =>
                   cn(
                     "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-black  before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
+                    "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-[#0073e6]   before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
                     isActive
-                      ? "text-black bg-black bg-opacity-5 before:scale-x-100"
-                      : "text-black hover:text-black hover:bg-black hover:bg-opacity-5 before:scale-x-0",
+                      ? "text-black bg-blue-900 bg-opacity-5 before:scale-x-100"
+                      : "text-black hover:text-black hover:bg-blue-200 hover:bg-opacity-5 before:scale-x-0",
                     collapsed && "justify-center px-2"
                   )
                 }

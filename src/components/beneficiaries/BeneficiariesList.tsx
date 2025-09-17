@@ -516,7 +516,9 @@ export function BeneficiariesList({
       ];
       const chronicConditionsFinal = [
         ...chronicConditions,
-        ...(chronicConditionsInput.trim() ? [chronicConditionsInput.trim()] : []),
+        ...(chronicConditionsInput.trim()
+          ? [chronicConditionsInput.trim()]
+          : []),
       ];
       const medicationsFinal = [
         ...medications,
@@ -584,7 +586,7 @@ export function BeneficiariesList({
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogTrigger asChild>
-          <Button className="bg-[#2E343E] text-white">
+          <Button className="bg-[#0073e6] text-white">
             <Plus className="h-4 w-4 mr-2" />
             Add Beneficiary
           </Button>
@@ -798,7 +800,9 @@ export function BeneficiariesList({
                           <button
                             type="button"
                             className="hover:text-red-600"
-                            onClick={() => removeItemAt(idx, allergies, setAllergies)}
+                            onClick={() =>
+                              removeItemAt(idx, allergies, setAllergies)
+                            }
                             aria-label={`Remove ${a}`}
                           >
                             <X className="h-3 w-3" />
@@ -823,7 +827,11 @@ export function BeneficiariesList({
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
-                          addItem(disabilitiesInput, disabilities, setDisabilities);
+                          addItem(
+                            disabilitiesInput,
+                            disabilities,
+                            setDisabilities
+                          );
                           setDisabilitiesInput("");
                         }
                       }}
@@ -832,7 +840,11 @@ export function BeneficiariesList({
                       type="button"
                       variant="outline"
                       onClick={() => {
-                        addItem(disabilitiesInput, disabilities, setDisabilities);
+                        addItem(
+                          disabilitiesInput,
+                          disabilities,
+                          setDisabilities
+                        );
                         setDisabilitiesInput("");
                       }}
                     >
@@ -850,7 +862,9 @@ export function BeneficiariesList({
                           <button
                             type="button"
                             className="hover:text-red-600"
-                            onClick={() => removeItemAt(idx, disabilities, setDisabilities)}
+                            onClick={() =>
+                              removeItemAt(idx, disabilities, setDisabilities)
+                            }
                             aria-label={`Remove ${d}`}
                           >
                             <X className="h-3 w-3" />
@@ -871,7 +885,9 @@ export function BeneficiariesList({
                       id="chronicConditions"
                       placeholder="Type and press Enter"
                       value={chronicConditionsInput}
-                      onChange={(e) => setChronicConditionsInput(e.target.value)}
+                      onChange={(e) =>
+                        setChronicConditionsInput(e.target.value)
+                      }
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
@@ -911,7 +927,11 @@ export function BeneficiariesList({
                             type="button"
                             className="hover:text-red-600"
                             onClick={() =>
-                              removeItemAt(idx, chronicConditions, setChronicConditions)
+                              removeItemAt(
+                                idx,
+                                chronicConditions,
+                                setChronicConditions
+                              )
                             }
                             aria-label={`Remove ${c}`}
                           >
@@ -937,7 +957,11 @@ export function BeneficiariesList({
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
-                          addItem(medicationsInput, medications, setMedications);
+                          addItem(
+                            medicationsInput,
+                            medications,
+                            setMedications
+                          );
                           setMedicationsInput("");
                         }
                       }}
@@ -964,7 +988,9 @@ export function BeneficiariesList({
                           <button
                             type="button"
                             className="hover:text-red-600"
-                            onClick={() => removeItemAt(idx, medications, setMedications)}
+                            onClick={() =>
+                              removeItemAt(idx, medications, setMedications)
+                            }
                             aria-label={`Remove ${m}`}
                           >
                             <X className="h-3 w-3" />
@@ -1000,7 +1026,8 @@ export function BeneficiariesList({
                 />
               </div>
               <div className="text-[11px] text-muted-foreground mt-2">
-                Add each item individually using the field above. Press Enter or click Add.
+                Add each item individually using the field above. Press Enter or
+                click Add.
               </div>
             </div>
 
