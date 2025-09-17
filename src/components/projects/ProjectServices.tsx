@@ -217,7 +217,12 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
         <div className="flex gap-2">
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#2E343E] text-white">
+              <Button
+                className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+              >
                 Create Service
               </Button>
             </DialogTrigger>

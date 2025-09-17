@@ -480,7 +480,7 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={handleBackToProject}>
+        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Project
         </Button>
