@@ -566,12 +566,12 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           open={isAssociateDialogOpen}
           onOpenChange={setIsAssociateDialogOpen}
         >
-          <DialogTrigger asChild>
+          {/* <DialogTrigger asChild>
             <Button variant="outline" className="bg-[#2E343E] text-white">
               <Link className="h-4 w-4 mr-2" />
               Associate
             </Button>
-          </DialogTrigger>
+          </DialogTrigger> */}
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
               <DialogTitle>Associate Beneficiary</DialogTitle>
@@ -662,12 +662,12 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           open={isAddServiceDialogOpen}
           onOpenChange={setIsAddServiceDialogOpen}
         >
-          <DialogTrigger asChild>
+          {/* <DialogTrigger asChild>
             <Button variant="outline" className="bg-[#2E343E] text-white">
               <Plus className="h-4 w-4 mr-2 " />
               Record Service
             </Button>
-          </DialogTrigger>
+          </DialogTrigger> */}
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
               <DialogTitle>Record New Service</DialogTitle>
