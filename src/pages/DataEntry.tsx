@@ -6,7 +6,12 @@ import { fetchProjects } from "../store/slices/projectsSlice";
 import { fetchAllSubProjects } from "../store/slices/subProjectSlice";
 import { selectAllProjects } from "../store/slices/projectsSlice";
 import { selectAllSubprojects } from "../store/slices/subProjectSlice";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../components/ui/navigation/tabs";
 import { Card, CardContent } from "../components/ui/data-display/card";
 import { SubmissionHistory } from "../components/data-entry/SubmissionHistory";
 import {
@@ -25,7 +30,9 @@ interface DataEntryModuleProps {}
 export function DataEntry({}: DataEntryModuleProps) {
   const dispatch = useDispatch<AppDispatch>();
   const [activeTab, setActiveTab] = useState<"entry" | "history">("entry");
-  const [entityType, setEntityType] = useState<"project" | "subproject">("project");
+  const [entityType, setEntityType] = useState<"project" | "subproject">(
+    "project"
+  );
   const [selectedEntityId, setSelectedEntityId] = useState<string>("");
 
   const projects = useSelector(selectAllProjects);
@@ -42,28 +49,26 @@ export function DataEntry({}: DataEntryModuleProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2>Data Entry</h2>
-          <p className="text-muted-foreground">Submit forms or view submission history</p>
+          <p className="text-muted-foreground">
+            Submit forms or view submission history
+          </p>
         </div>
-        <Tabs
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as any)}
-            className="w-[280px]"
-          >
-            <TabsList className="grid w-full grid-cols-2 bg-black/5">
-              <TabsTrigger
-                value="entry"
-                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
-              >
-                Data Entry
-              </TabsTrigger>
-              <TabsTrigger
-                value="history"
-                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
-              >
-                Submission History
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+          <TabsList className="bg-[#2E343E] bg-opacity-10 items-center ">
+            <TabsTrigger
+              value="entry"
+              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+            >
+              Data Entry
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+            >
+              Submission History
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
@@ -130,12 +135,16 @@ export function DataEntry({}: DataEntryModuleProps) {
                 <div className="mb-3 text-sm text-muted-foreground">
                   Showing submissions for
                   <Badge variant="outline" className="ml-2">
-                    {selectedEntityId ? `${entityType} • ${selectedEntityId}` : "All"}
+                    {selectedEntityId
+                      ? `${entityType} • ${selectedEntityId}`
+                      : "All"}
                   </Badge>
                 </div>
                 <SubmissionHistory
                   entityId={selectedEntityId || undefined}
-                  entityType={selectedEntityId ? (entityType as any) : undefined}
+                  entityType={
+                    selectedEntityId ? (entityType as any) : undefined
+                  }
                   onBack={() => setActiveTab("entry")}
                 />
               </div>

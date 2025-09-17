@@ -10,21 +10,44 @@ import {
 } from "../ui/form/select";
 import type { Project } from "../../services/projects/projectModels";
 import { useDispatch, useSelector } from "react-redux";
-import { setFilters } from "../../store/slices/serviceMetricsSlice";
+import {
+  setFilters,
+  selectMetricsFilters,
+} from "../../store/slices/serviceMetricsSlice";
 import {
   fetchSubProjectsByProjectId,
   selectAllSubprojects,
   selectSubprojectsLoading,
 } from "../../store/slices/subProjectSlice";
+import {
+  getAllServices,
+  getEntityServices,
+  selectAllServices,
+  selectEntityServices,
+} from "../../store/slices/serviceSlice";
+import { fetchForms, selectAllForms } from "../../store/slices/formsSlice";
 
 export function FilterControls({ projects }: { projects: Project[] }) {
   const dispatch: any = useDispatch();
   const subprojects = useSelector(selectAllSubprojects);
   const subprojectsLoading = useSelector(selectSubprojectsLoading);
+  const metricsFilters = useSelector(selectMetricsFilters);
+  const entityServices = useSelector(selectEntityServices);
+  const allServices = useSelector(selectAllServices);
+  const formsState = useSelector(selectAllForms);
 
   const [projectId, setProjectId] = React.useState<string>("");
   const [subprojectId, setSubprojectId] = React.useState<string>("");
   const [timePreset, setTimePreset] = React.useState<string>("last-30-days");
+  const [metric, setMetric] = React.useState<string>(
+    metricsFilters.metric || "submissions"
+  );
+  const [serviceId, setServiceId] = React.useState<string>(
+    metricsFilters.serviceId || ""
+  );
+  const [formTemplateId, setFormTemplateId] = React.useState<string>(
+    metricsFilters.formTemplateId || ""
+  );
 
   // Fetch subprojects when project changes
   React.useEffect(() => {
@@ -32,6 +55,26 @@ export function FilterControls({ projects }: { projects: Project[] }) {
       dispatch(fetchSubProjectsByProjectId({ projectId }));
     }
   }, [dispatch, projectId]);
+
+  // Fetch services globally depending on selected entity (project/subproject)
+  React.useEffect(() => {
+    if (subprojectId) {
+      dispatch(
+        getEntityServices({ entityId: subprojectId, entityType: "subproject" })
+      );
+    } else if (projectId) {
+      dispatch(
+        getEntityServices({ entityId: projectId, entityType: "project" })
+      );
+    } else {
+      dispatch(getAllServices({ page: 1, limit: 100 }));
+    }
+  }, [dispatch, projectId, subprojectId]);
+
+  // Fetch form templates once
+  React.useEffect(() => {
+    dispatch(fetchForms());
+  }, [dispatch]);
 
   // Handlers
   const onProjectChange = (value: string) => {
@@ -44,6 +87,10 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     setProjectId(value);
     setSubprojectId("");
     dispatch(setFilters({ entityId: value, entityType: "project" }));
+    // Clear dependent filters
+    setServiceId("");
+    setFormTemplateId("");
+    dispatch(setFilters({ serviceId: undefined, formTemplateId: undefined }));
   };
 
   const onSubprojectChange = (value: string) => {
@@ -58,6 +105,10 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     }
     setSubprojectId(value);
     dispatch(setFilters({ entityId: value, entityType: "subproject" }));
+    // Clear dependent filters
+    setServiceId("");
+    setFormTemplateId("");
+    dispatch(setFilters({ serviceId: undefined, formTemplateId: undefined }));
   };
 
   const onTimePresetChange = (value: string) => {
@@ -76,11 +127,18 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     );
   };
 
+  const servicesForSelect =
+    subprojectId || projectId ? entityServices : allServices;
+
   return (
     <div className="flex flex-col  bg-[#F7F9FB]   drop-shadow-sm shadow-gray-50 sm:flex-row gap-4 mb-6 p-4 bg-card rounded-lg ">
       <div className="flex flex-wrap gap-4 flex-1">
         <Select value={projectId || "all"} onValueChange={onProjectChange}>
-          <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
+          <SelectTrigger
+            className="w-[200px] bg-white p-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
             <SelectValue placeholder="Select Project" />
           </SelectTrigger>
           <SelectContent>
@@ -98,7 +156,11 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           onValueChange={onSubprojectChange}
           disabled={!projectId}
         >
-          <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
+          <SelectTrigger
+            className="w-[180px] bg-white border-0 border-gray-100 p-2 rounded-md 
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
             <SelectValue placeholder="Select Subproject" />
           </SelectTrigger>
           <SelectContent>
@@ -120,7 +182,11 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         </Select>
 
         <Select value={timePreset} onValueChange={onTimePresetChange}>
-          <SelectTrigger className="w-[180px] bg-black/5 text-black border-0">
+          <SelectTrigger
+            className="w-[200px] bg-white p-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
             <SelectValue placeholder="Time Period" />
           </SelectTrigger>
           <SelectContent>
@@ -131,25 +197,92 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           </SelectContent>
         </Select>
 
-        {/* <Select defaultValue="all-regions">
-          <SelectTrigger className="w-[150px] bg-black/5 text-black border-0">
-            <SelectValue placeholder="Region" />
+        {/* Global Metric */}
+        <Select
+          value={metric}
+          onValueChange={(v) => {
+            setMetric(v);
+            dispatch(setFilters({ metric: v as any }));
+          }}
+        >
+          <SelectTrigger
+            className="w-[200px] bg-white p-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
+            <SelectValue placeholder="Metric" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all-regions">All Regions</SelectItem>
-            <SelectItem value="north">North</SelectItem>
-            <SelectItem value="south">South</SelectItem>
-            <SelectItem value="east">East</SelectItem>
-            <SelectItem value="west">West</SelectItem>
+            <SelectItem value="submissions">Submissions</SelectItem>
+            <SelectItem value="serviceDeliveries">
+              Service Deliveries
+            </SelectItem>
+            <SelectItem value="uniqueBeneficiaries">
+              Unique Beneficiaries
+            </SelectItem>
           </SelectContent>
-        </Select> */}
+        </Select>
+
+        {/* Global Service */}
+        <Select
+          value={serviceId || "all"}
+          onValueChange={(v) => {
+            const id = v === "all" ? "" : v;
+            setServiceId(id);
+            dispatch(setFilters({ serviceId: id || undefined }));
+          }}
+        >
+          <SelectTrigger
+            className="w-[220px] bg-white p-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
+            <SelectValue placeholder="Service" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Services</SelectItem>
+            {servicesForSelect.map((s: any) => (
+              <SelectItem key={s.id} value={s.id}>
+                {s.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Global Form Template */}
+        <Select
+          value={formTemplateId || "all"}
+          onValueChange={(v) => {
+            const id = v === "all" ? "" : v;
+            setFormTemplateId(id);
+            dispatch(setFilters({ formTemplateId: id || undefined }));
+          }}
+        >
+          <SelectTrigger
+            className="w-[220px] bg-white p-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
+            <SelectValue placeholder="Form Template" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Templates</SelectItem>
+            {(formsState?.templates || []).map((t: any) => (
+              <SelectItem key={t.id} value={t.id}>
+                {t.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex gap-4">
         <Button
           variant="outline"
           size="sm"
-          className="bg-black/5 text-black border-0"
+          className="bg-[#E0F2FE] text-black border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px]"
         >
           <Filter className="h-4 w-4 mr-2" />
           More Filters
@@ -157,7 +290,9 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         <Button
           variant="outline"
           size="sm"
-          className="bg-[#2E343E] text-white  border-0"
+          className="bg-[#0073e6] text-white border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px]"
         >
           <Download className="h-4 w-4 mr-2" />
           Export

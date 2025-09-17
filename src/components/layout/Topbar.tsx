@@ -136,7 +136,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   return (
     // <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
     <header
-      style={{ boxShadow: "0 1px 10px rgba(0, 0, 0, 0.1)" }}
+      style={{ boxShadow: "0 1px 4px rgba(0, 0, 0, 0.05)" }}
       className="sticky top-0 z-40 flex h-16 items-center bg-white gap-4 px-4 sm:px-6"
     >
       <div className="flex flex-1 items-center gap-4">
@@ -154,10 +154,10 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         {title && <h1 className="font-medium hidden sm:block">{title}</h1>}
 
         {/* Search */}
-        <div className="relative hidden sm:block max-w-[400px] w-full">
+        {/* <div className="relative hidden sm:block max-w-[400px] w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search..." className="pl-9 w-full bg-gray-100" />
-        </div>
+        </div> */}
       </div>
 
       <div className="flex items-center gap-3">
@@ -181,8 +181,13 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         {/* Create Project */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#2E343E] text-white flex ">
-              <Plus className="h-4 w-4 mr-2 " />
+            <Button
+              className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+            >
+              <Plus className="h-4 w-4 mr-2" />
               Create Project
             </Button>
           </DialogTrigger>
@@ -202,7 +207,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                 <Input
                   id="title"
                   name="name"
-                  className={`col-span-3 ${
+                  className={`col-span-3 border-0 bg-blue-50 ${
                     formErrors.name ? "border-red-500" : ""
                   }`}
                   placeholder="Project title"
@@ -222,7 +227,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                 <Input
                   id="category"
                   name="category"
-                  className={`col-span-3 ${
+                  className={`col-span-3 border-0 bg-blue-50 ${
                     formErrors.category ? "border-red-500" : ""
                   }`}
                   placeholder="Project Category"
@@ -245,7 +250,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                   value={formData.status}
                   onValueChange={(value) => handleSelectField(value, "status")}
                 >
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger className="col-span-3 bg-blue-50 border-0">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -263,7 +268,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                 <Textarea
                   id="description"
                   name="description"
-                  className="col-span-3"
+                  className="col-span-3 bg-blue-50 border-0"
                   placeholder="Provide a description of the project"
                   rows={3}
                   value={formData.description}
@@ -273,12 +278,18 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
             </div>
             <DialogFooter>
               <Button
+                className="bg-blue-100 border-0"
                 variant="outline"
                 onClick={() => setIsCreateDialogOpen(false)}
               >
                 Cancel
               </Button>
-              <Button onClick={handleCreateProject}>Create Project</Button>
+              <Button
+                onClick={handleCreateProject}
+                className="bg-[#0073e6] border-0 text-white"
+              >
+                Create Project
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
