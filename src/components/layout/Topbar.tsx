@@ -133,8 +133,6 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
     }
   };
 
-  console.log("user from topbar", user);
-
   return (
     // <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
     <header

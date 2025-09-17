@@ -265,7 +265,7 @@ export function FormBuilder({
       entities: [
         {
           id: formData.subProject ? formData.subProject : formData.project,
-          type: "project",
+          type: formData.subProject ? "subproject" : "project",
         },
       ],
       schema: {
@@ -421,7 +421,7 @@ export function FormBuilder({
                       </>
                     )}
                   </div>
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <Label htmlFor="form-description">Description</Label>
                     <Textarea
                       id="form-description"
@@ -434,7 +434,7 @@ export function FormBuilder({
                       }
                       rows={2}
                     />
-                  </div>
+                  </div> */}
                 </div>
               </CardContent>
             </Card>
