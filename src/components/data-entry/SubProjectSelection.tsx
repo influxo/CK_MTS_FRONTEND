@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useSelector } from "react-redux";
+import { useMemo, useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -24,6 +24,12 @@ import {
 import { ScrollArea } from "../ui/layout/scroll-area";
 import { selectAllProjects } from "../../store/slices/projectsSlice";
 import { selectAllSubprojects } from "../../store/slices/subProjectSlice";
+import { useAuth } from "../../hooks/useAuth";
+import type { AppDispatch } from "../../store";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsTree,
+} from "../../store/slices/userProjectsSlice";
 
 import {
   Select,
@@ -44,33 +50,93 @@ type AggregatedItem = {
 
 export function SubProjectSelection() {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const projects = useSelector(selectAllProjects);
-  const subprojects = useSelector(selectAllSubprojects);
+  const allProjects = useSelector(selectAllProjects);
+  const allSubprojects = useSelector(selectAllSubprojects);
+  const userProjectsTree = useSelector(selectUserProjectsTree);
+
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
+
+  // Ensure user projects are loaded when needed
+  useEffect(() => {
+    if (!isSysOrSuperAdmin && user?.id) {
+      dispatch(fetchUserProjectsByUserId(String(user.id)));
+    }
+  }, [dispatch, isSysOrSuperAdmin, user?.id]);
+
+  // Compute allowed projects/subprojects based on role
+  const allowedProjects = useMemo(() => {
+    if (isSysOrSuperAdmin) return allProjects;
+    return (userProjectsTree || []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description as any,
+      status: p.status as any,
+    }));
+  }, [isSysOrSuperAdmin, allProjects, userProjectsTree]);
+
+  const allowedSubprojects = useMemo(() => {
+    if (isSysOrSuperAdmin) return allSubprojects;
+    const flat = [] as Array<{
+      id: string;
+      name: string;
+      description?: string;
+      status?: string;
+      projectId: string;
+    }>;
+    (userProjectsTree || []).forEach((p) => {
+      (p.subprojects || []).forEach((sp) => {
+        flat.push({
+          id: sp.id,
+          name: sp.name,
+          description: sp.description as any,
+          status: sp.status as any,
+          projectId: (sp as any).projectId || p.id,
+        });
+      });
+    });
+    return flat as any;
+  }, [isSysOrSuperAdmin, allSubprojects, userProjectsTree]);
 
   const aggregated: AggregatedItem[] = useMemo(() => {
-    const projectMap = new Map(projects.map((p) => [p.id, p]));
+    const projectMap = new Map(allowedProjects.map((p: any) => [p.id, p]));
 
-    const projectItems: AggregatedItem[] = projects.map((p) => ({
+    const projectItems: AggregatedItem[] = allowedProjects.map((p: any) => ({
       id: p.id,
       type: "project",
       name: p.name,
-      description: (p as any).description,
-      status: (p as any).status,
+      description: p.description,
+      status: p.status,
     }));
 
-    const subprojectItems: AggregatedItem[] = subprojects.map((sp) => ({
-      id: sp.id,
-      type: "subproject",
-      name: sp.name,
-      description: (sp as any).description,
-      status: (sp as any).status,
-      projectName: projectMap.get(sp.projectId)?.name,
-    }));
+    const subprojectItems: AggregatedItem[] = (allowedSubprojects as any[]).map(
+      (sp: any) => ({
+        id: sp.id,
+        type: "subproject",
+        name: sp.name,
+        description: sp.description,
+        status: sp.status,
+        projectName: projectMap.get(sp.projectId)?.name,
+      })
+    );
 
     return [...projectItems, ...subprojectItems];
-  }, [projects, subprojects]);
+  }, [allowedProjects, allowedSubprojects]);
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -176,7 +242,7 @@ export function SubProjectSelection() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Projects</SelectItem>
-            {projects.map((project) => (
+            {allowedProjects.map((project: any) => (
               <SelectItem key={project.id} value={project.id}>
                 {project.name}
               </SelectItem>

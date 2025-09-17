@@ -48,13 +48,46 @@ class UserService {
    */
   async getUserProjects(userId: string): Promise<GetUserProjectsResponse> {
     try {
-      const response = await axiosInstance.get<GetUserProjectsResponse>(
+      const response = await axiosInstance.get(
         `${this.authEndpoint}/${userId}/projects`
       );
-      return response.data;
+      const raw = response.data as any;
+      // Normalize backend shape: accept either { data: [...] } or { items: [...] }
+      if (Array.isArray(raw?.data)) {
+        return raw as GetUserProjectsResponse;
+      }
+      if (Array.isArray(raw?.items)) {
+        return {
+          success: !!raw.success,
+          message: raw.message,
+          data: raw.items,
+        } as GetUserProjectsResponse;
+      }
+      // Fallback safe shape
+      return {
+        success: !!raw?.success,
+        message: raw?.message ?? 'Unexpected response shape',
+        data: Array.isArray(raw) ? raw : [],
+      } as GetUserProjectsResponse;
     } catch (error: any) {
       if (error.response) {
-        return error.response.data as GetUserProjectsResponse;
+        const raw = error.response.data as any;
+        // Normalize error responses too
+        if (Array.isArray(raw?.data)) {
+          return raw as GetUserProjectsResponse;
+        }
+        if (Array.isArray(raw?.items)) {
+          return {
+            success: !!raw.success,
+            message: raw.message,
+            data: raw.items,
+          } as GetUserProjectsResponse;
+        }
+        return {
+          success: false,
+          message: raw?.message || 'Failed to fetch user projects',
+          data: [],
+        } as GetUserProjectsResponse;
       }
       return {
         success: false,

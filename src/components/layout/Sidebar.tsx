@@ -16,8 +16,16 @@ import { ScrollArea } from "../ui/layout/scroll-area";
 import { cn } from "../ui/utils/utils";
 import { useAuth } from "../../hooks/useAuth";
 import type { Project } from "../../services/projects/projectModels";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsError,
+  selectUserProjectsLoading,
+  selectUserProjectsTree,
+} from "../../store/slices/userProjectsSlice";
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -41,7 +49,11 @@ export function Sidebar({
 }: SidebarProps) {
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(false);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const dispatch = useDispatch<AppDispatch>();
+  const { logout, user } = useAuth();
+  const userProjectsTree = useSelector(selectUserProjectsTree);
+  const userProjectsLoading = useSelector(selectUserProjectsLoading);
+  const userProjectsError = useSelector(selectUserProjectsError);
 
   const location = useLocation();
   const matchProject = matchPath("/projects/:projectId", location.pathname);
@@ -51,43 +63,103 @@ export function Sidebar({
     if (onCloseMobile) onCloseMobile();
   };
 
-  const navItems = [
-    {
-      title: "Dashboard",
-      icon: <LayoutDashboard className="h-5 w-5" />,
-      to: "/dashboard",
-    },
-    {
-      title: "Projects",
-      icon: <FolderKanban className="h-5 w-5" />,
-      to: "/projects",
-    },
-    {
-      title: "Beneficiaries",
-      icon: <Users className="h-5 w-5" />,
-      to: "/beneficiaries",
-    },
-    {
-      title: "Forms",
-      icon: <ClipboardList className="h-5 w-5" />,
-      to: "/forms",
-    },
-    {
-      title: "Data Entry",
-      icon: <ClipboardList className="h-5 w-5" />,
-      to: "/data-entry",
-    },
-    {
-      title: "Reports",
-      icon: <BarChart3 className="h-5 w-5" />,
-      to: "/reports",
-    },
-    {
-      title: "Employees",
-      icon: <Users className="h-5 w-5" />,
-      to: "/employees",
-    },
-  ];
+  // Role helpers
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    // Accept a variety of backend-provided naming conventions
+    return normalizedRoles.some((r) =>
+      r === "sysadmin" ||
+      r === "superadmin" ||
+      r.includes("system admin") || // matches "system administrator", "system-admin"
+      r.includes("super admin") // matches "super administrator", "super-admin"
+    );
+  }, [normalizedRoles]);
+  const isFieldOperator = useMemo(() => {
+    // Match common variants
+    return (
+      normalizedRoles.includes("field operator") ||
+      normalizedRoles.includes("field-operator") ||
+      normalizedRoles.includes("fieldoperator") ||
+      normalizedRoles.includes("field_op") ||
+      // Fallback: contains "field" and "operator"
+      normalizedRoles.some((r) => r.includes("field") && r.includes("operator"))
+    );
+  }, [normalizedRoles]);
+
+  // Build navigation items based on role
+  const fullNavItems = useMemo(
+    () => [
+      {
+        title: "Dashboard",
+        icon: <LayoutDashboard className="h-5 w-5" />,
+        to: "/dashboard",
+      },
+      {
+        title: "Projects",
+        icon: <FolderKanban className="h-5 w-5" />,
+        to: "/projects",
+      },
+      {
+        title: "Beneficiaries",
+        icon: <Users className="h-5 w-5" />,
+        to: "/beneficiaries",
+      },
+      {
+        title: "Forms",
+        icon: <ClipboardList className="h-5 w-5" />,
+        to: "/forms",
+      },
+      {
+        title: "Data Entry",
+        icon: <ClipboardList className="h-5 w-5" />,
+        to: "/data-entry",
+      },
+      {
+        title: "Reports",
+        icon: <BarChart3 className="h-5 w-5" />,
+        to: "/reports",
+      },
+      {
+        title: "Employees",
+        icon: <Users className="h-5 w-5" />,
+        to: "/employees",
+      },
+    ],
+    []
+  );
+
+  const navItems = useMemo(() => {
+    if (isFieldOperator && !isSysOrSuperAdmin) {
+      // Field operators should see Projects and Data Entry only
+      return fullNavItems.filter(
+        (i) => i.title === "Projects" || i.title === "Data Entry"
+      );
+    }
+    return fullNavItems;
+  }, [fullNavItems, isFieldOperator, isSysOrSuperAdmin]);
+
+  // Load user's assigned projects if not admin
+  useEffect(() => {
+    if (!isSysOrSuperAdmin && user?.id) {
+      dispatch(fetchUserProjectsByUserId(String(user.id)));
+    }
+  }, [dispatch, isSysOrSuperAdmin, user?.id]);
+
+  type SimpleProject = { id: string; name: string };
+  const visibleProjects: SimpleProject[] = useMemo(() => {
+    if (isSysOrSuperAdmin) {
+      return (projects || []).map((p) => ({ id: p.id, name: p.name }));
+    }
+    return (userProjectsTree || []).map((p) => ({ id: p.id, name: p.name }));
+  }, [isSysOrSuperAdmin, projects, userProjectsTree]);
+
+  const isProjectsLoading = isSysOrSuperAdmin
+    ? !!projectsLoading
+    : !!userProjectsLoading;
+  const projectsErrMsg = isSysOrSuperAdmin ? projectsError : userProjectsError;
 
   return (
     <aside
@@ -183,15 +255,15 @@ export function Sidebar({
                       !collapsed && "ml-8 mt-1"
                     )}
                   >
-                    {projectsLoading && (
+                    {isProjectsLoading && (
                       <span className="text-xs text-gray-400">Loading...</span>
                     )}
-                    {projectsError && (
+                    {projectsErrMsg && (
                       <span className="text-xs text-black">
                         Error loading projects
                       </span>
                     )}
-                    {projects?.map((project) => {
+                    {visibleProjects?.map((project) => {
                       const isSelected = selectedProjectId === project.id;
 
                       return (
