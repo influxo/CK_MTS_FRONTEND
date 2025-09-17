@@ -106,7 +106,13 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
             onOpenChange={setIsAssignDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button size="sm" className="bg-[#2E343E] text-white">
+              <Button
+                size="sm"
+                className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Assign Member
               </Button>

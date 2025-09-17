@@ -541,7 +541,7 @@ export function ProjectDetails() {
           Error loading project
         </h2>
         <p className="mt-2 text-muted-foreground">{error}</p>
-        <Button className="mt-4" onClick={() => navigate("/projects")}>
+        <Button className="mt-4" onClick={() => navigate(-1)}>
           Back to Projects
         </Button>
       </div>
@@ -555,7 +555,7 @@ export function ProjectDetails() {
         <p className="mt-2 text-muted-foreground">
           The project you're looking for doesn't exist or has been removed.
         </p>
-        <Button className="mt-4" onClick={() => navigate("/projects")}>
+        <Button className="mt-4" onClick={() => navigate(-1)}>
           Back to Projects
         </Button>
       </div>
@@ -581,11 +581,7 @@ export function ProjectDetails() {
   return (
     <div className="space-y-6 ">
       <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate("/projects")}
-        >
+        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Projects
         </Button>
@@ -1098,7 +1094,12 @@ export function ProjectDetails() {
                   onOpenChange={setIsAddDialogOpen}
                 >
                   <DialogTrigger asChild>
-                    <Button className="bg-[#0073e6] text-white">
+                    <Button
+                      className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+                    >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Beneficiary
                     </Button>
@@ -1809,13 +1810,18 @@ export function ProjectDetails() {
                         Cancel
                       </Button>
                       {addBeneficiaryTab === "new" ? (
-                        <Button onClick={handleCreateSubmit} disabled={createLoading}>
+                        <Button
+                          onClick={handleCreateSubmit}
+                          disabled={createLoading}
+                        >
                           {createLoading ? "Saving..." : "Save"}
                         </Button>
                       ) : (
                         <Button
                           onClick={handleAssociateSubmit}
-                          disabled={associateLoading || !associateSelectedBeneficiaryId}
+                          disabled={
+                            associateLoading || !associateSelectedBeneficiaryId
+                          }
                         >
                           {associateLoading ? "Associating..." : "Associate"}
                         </Button>
