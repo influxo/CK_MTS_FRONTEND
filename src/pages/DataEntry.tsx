@@ -22,6 +22,11 @@ import {
   SelectValue,
 } from "../components/ui/form/select";
 import { Badge } from "../components/ui/data-display/badge";
+import { useAuth } from "../hooks/useAuth";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsTree,
+} from "../store/slices/userProjectsSlice";
 
 interface DataEntryModuleProps {}
 
@@ -35,14 +40,53 @@ export function DataEntry({}: DataEntryModuleProps) {
   );
   const [selectedEntityId, setSelectedEntityId] = useState<string>("");
 
+  const { user } = useAuth();
   const projects = useSelector(selectAllProjects);
   const subprojects = useSelector(selectAllSubprojects);
+  const userProjectsTree = useSelector(selectUserProjectsTree);
+
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
 
   useEffect(() => {
     // Load projects and subprojects for aggregation table
     dispatch(fetchProjects());
     dispatch(fetchAllSubProjects());
   }, [dispatch]);
+
+  // Ensure user projects loaded for non-admins
+  useEffect(() => {
+    if (!isSysOrSuperAdmin && user?.id) {
+      dispatch(fetchUserProjectsByUserId(String(user.id)));
+    }
+  }, [dispatch, isSysOrSuperAdmin, user?.id]);
+
+  const allowedProjects = useMemo(() => {
+    if (isSysOrSuperAdmin) return projects;
+    return (userProjectsTree || []).map((p) => ({ id: p.id, name: p.name }));
+  }, [isSysOrSuperAdmin, projects, userProjectsTree]);
+
+  const allowedSubprojects = useMemo(() => {
+    if (isSysOrSuperAdmin) return subprojects;
+    const flat: Array<{ id: string; name: string }> = [];
+    (userProjectsTree || []).forEach((p) => {
+      (p.subprojects || []).forEach((sp) => {
+        flat.push({ id: sp.id, name: sp.name });
+      });
+    });
+    return flat as any;
+  }, [isSysOrSuperAdmin, subprojects, userProjectsTree]);
 
   return (
     <div className="space-y-6">
@@ -105,7 +149,7 @@ export function DataEntry({}: DataEntryModuleProps) {
                       <SelectValue placeholder="Select a project" />
                     </SelectTrigger>
                     <SelectContent>
-                      {projects.map((p) => (
+                      {allowedProjects.map((p: any) => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.name}
                         </SelectItem>
@@ -121,7 +165,7 @@ export function DataEntry({}: DataEntryModuleProps) {
                       <SelectValue placeholder="Select a subproject" />
                     </SelectTrigger>
                     <SelectContent>
-                      {subprojects.map((sp) => (
+                      {allowedSubprojects.map((sp: any) => (
                         <SelectItem key={sp.id} value={sp.id}>
                           {sp.name}
                         </SelectItem>

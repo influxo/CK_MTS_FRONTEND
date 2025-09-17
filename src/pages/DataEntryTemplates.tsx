@@ -26,6 +26,11 @@ import {
 import { Alert, AlertDescription } from "../components/ui/feedback/alert";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { FormSubmission } from "../components/data-entry/FormSubmission";
+import { useAuth } from "../hooks/useAuth";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsTree,
+} from "../store/slices/userProjectsSlice";
 
 export function DataEntryTemplates() {
   const dispatch = useDispatch<AppDispatch>();
@@ -35,7 +40,53 @@ export function DataEntryTemplates() {
   const projectId = searchParams.get("projectId") ?? undefined;
   const subprojectId = searchParams.get("subprojectId") ?? undefined;
 
-  const isValid = !!projectId || !!subprojectId;
+  const { user } = useAuth();
+  const userProjectsTree = useSelector(selectUserProjectsTree);
+
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
+
+  // Load user projects if needed
+  useEffect(() => {
+    if (!isSysOrSuperAdmin && user?.id) {
+      dispatch(fetchUserProjectsByUserId(String(user.id)));
+    }
+  }, [dispatch, isSysOrSuperAdmin, user?.id]);
+
+  // Build allowed sets for non-admins
+  const allowedProjectIds = useMemo(() => {
+    if (isSysOrSuperAdmin) return null; // admins have access to all
+    return new Set((userProjectsTree || []).map((p) => p.id));
+  }, [isSysOrSuperAdmin, userProjectsTree]);
+
+  const allowedSubprojectIds = useMemo(() => {
+    if (isSysOrSuperAdmin) return null;
+    const ids: string[] = [];
+    (userProjectsTree || []).forEach((p) => {
+      (p.subprojects || []).forEach((sp) => ids.push(sp.id));
+    });
+    return new Set(ids);
+  }, [isSysOrSuperAdmin, userProjectsTree]);
+
+  const hasParam = !!projectId || !!subprojectId;
+  const hasAccess = useMemo(() => {
+    if (!hasParam) return false;
+    if (isSysOrSuperAdmin) return true;
+    if (projectId) return allowedProjectIds?.has(projectId) ?? false;
+    if (subprojectId) return allowedSubprojectIds?.has(subprojectId) ?? false;
+    return false;
+  }, [hasParam, isSysOrSuperAdmin, projectId, subprojectId, allowedProjectIds, allowedSubprojectIds]);
 
   const loading = useSelector(selectFormTemplatesLoading);
   const error = useSelector(selectFormTemplatesError);
@@ -49,7 +100,7 @@ export function DataEntryTemplates() {
   );
 
   useEffect(() => {
-    if (!isValid) return;
+    if (!hasAccess) return;
 
     const entityType = projectId ? "project" : "subproject";
     dispatch(
@@ -61,7 +112,7 @@ export function DataEntryTemplates() {
         limit: 50,
       })
     );
-  }, [dispatch, projectId, subprojectId, isValid]);
+  }, [dispatch, projectId, subprojectId, hasAccess]);
 
   // When a template is selected, fetch its full schema
   useEffect(() => {
@@ -76,7 +127,7 @@ export function DataEntryTemplates() {
     return "Templates";
   }, [projectId, subprojectId]);
 
-  if (!isValid) {
+  if (!hasParam) {
     return (
       <div className="space-y-4">
         <Button
@@ -91,6 +142,26 @@ export function DataEntryTemplates() {
           <AlertDescription>
             Missing required parameter. Provide either projectId or subprojectId
             in the URL.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <div className="space-y-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/data-entry")}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back to Data Entry
+        </Button>
+        <Alert variant="destructive">
+          <AlertDescription>
+            You do not have access to this selection.
           </AlertDescription>
         </Alert>
       </div>
