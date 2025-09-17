@@ -10,21 +10,35 @@ import {
 } from "../ui/form/select";
 import type { Project } from "../../services/projects/projectModels";
 import { useDispatch, useSelector } from "react-redux";
-import { setFilters } from "../../store/slices/serviceMetricsSlice";
+import { setFilters, selectMetricsFilters } from "../../store/slices/serviceMetricsSlice";
 import {
   fetchSubProjectsByProjectId,
   selectAllSubprojects,
   selectSubprojectsLoading,
 } from "../../store/slices/subProjectSlice";
+import {
+  getAllServices,
+  getEntityServices,
+  selectAllServices,
+  selectEntityServices,
+} from "../../store/slices/serviceSlice";
+import { fetchForms, selectAllForms } from "../../store/slices/formsSlice";
 
 export function FilterControls({ projects }: { projects: Project[] }) {
   const dispatch: any = useDispatch();
   const subprojects = useSelector(selectAllSubprojects);
   const subprojectsLoading = useSelector(selectSubprojectsLoading);
+  const metricsFilters = useSelector(selectMetricsFilters);
+  const entityServices = useSelector(selectEntityServices);
+  const allServices = useSelector(selectAllServices);
+  const formsState = useSelector(selectAllForms);
 
   const [projectId, setProjectId] = React.useState<string>("");
   const [subprojectId, setSubprojectId] = React.useState<string>("");
   const [timePreset, setTimePreset] = React.useState<string>("last-30-days");
+  const [metric, setMetric] = React.useState<string>(metricsFilters.metric || "submissions");
+  const [serviceId, setServiceId] = React.useState<string>(metricsFilters.serviceId || "");
+  const [formTemplateId, setFormTemplateId] = React.useState<string>(metricsFilters.formTemplateId || "");
 
   // Fetch subprojects when project changes
   React.useEffect(() => {
@@ -32,6 +46,22 @@ export function FilterControls({ projects }: { projects: Project[] }) {
       dispatch(fetchSubProjectsByProjectId({ projectId }));
     }
   }, [dispatch, projectId]);
+
+  // Fetch services globally depending on selected entity (project/subproject)
+  React.useEffect(() => {
+    if (subprojectId) {
+      dispatch(getEntityServices({ entityId: subprojectId, entityType: "subproject" }));
+    } else if (projectId) {
+      dispatch(getEntityServices({ entityId: projectId, entityType: "project" }));
+    } else {
+      dispatch(getAllServices({ page: 1, limit: 100 }));
+    }
+  }, [dispatch, projectId, subprojectId]);
+
+  // Fetch form templates once
+  React.useEffect(() => {
+    dispatch(fetchForms());
+  }, [dispatch]);
 
   // Handlers
   const onProjectChange = (value: string) => {
@@ -44,6 +74,10 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     setProjectId(value);
     setSubprojectId("");
     dispatch(setFilters({ entityId: value, entityType: "project" }));
+    // Clear dependent filters
+    setServiceId("");
+    setFormTemplateId("");
+    dispatch(setFilters({ serviceId: undefined, formTemplateId: undefined }));
   };
 
   const onSubprojectChange = (value: string) => {
@@ -58,6 +92,10 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     }
     setSubprojectId(value);
     dispatch(setFilters({ entityId: value, entityType: "subproject" }));
+    // Clear dependent filters
+    setServiceId("");
+    setFormTemplateId("");
+    dispatch(setFilters({ serviceId: undefined, formTemplateId: undefined }));
   };
 
   const onTimePresetChange = (value: string) => {
@@ -75,6 +113,8 @@ export function FilterControls({ projects }: { projects: Project[] }) {
       setFilters({ startDate: start.toISOString(), endDate: end.toISOString() })
     );
   };
+
+  const servicesForSelect = (subprojectId || projectId) ? entityServices : allServices;
 
   return (
     <div className="flex flex-col  bg-[#F7F9FB]   drop-shadow-sm shadow-gray-50 sm:flex-row gap-4 mb-6 p-4 bg-card rounded-lg ">
@@ -131,18 +171,68 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           </SelectContent>
         </Select>
 
-        {/* <Select defaultValue="all-regions">
-          <SelectTrigger className="w-[150px] bg-black/5 text-black border-0">
-            <SelectValue placeholder="Region" />
+        {/* Global Metric */}
+        <Select
+          value={metric}
+          onValueChange={(v) => {
+            setMetric(v);
+            dispatch(setFilters({ metric: v as any }));
+          }}
+        >
+          <SelectTrigger className="w-[200px] bg-black/5 text-black border-0">
+            <SelectValue placeholder="Metric" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all-regions">All Regions</SelectItem>
-            <SelectItem value="north">North</SelectItem>
-            <SelectItem value="south">South</SelectItem>
-            <SelectItem value="east">East</SelectItem>
-            <SelectItem value="west">West</SelectItem>
+            <SelectItem value="submissions">Submissions</SelectItem>
+            <SelectItem value="serviceDeliveries">Service Deliveries</SelectItem>
+            <SelectItem value="uniqueBeneficiaries">Unique Beneficiaries</SelectItem>
           </SelectContent>
-        </Select> */}
+        </Select>
+
+        {/* Global Service */}
+        <Select
+          value={serviceId || "all"}
+          onValueChange={(v) => {
+            const id = v === "all" ? "" : v;
+            setServiceId(id);
+            dispatch(setFilters({ serviceId: id || undefined }));
+          }}
+        >
+          <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
+            <SelectValue placeholder="Service" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Services</SelectItem>
+            {servicesForSelect.map((s: any) => (
+              <SelectItem key={s.id} value={s.id}>
+                {s.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Global Form Template */}
+        <Select
+          value={formTemplateId || "all"}
+          onValueChange={(v) => {
+            const id = v === "all" ? "" : v;
+            setFormTemplateId(id);
+            dispatch(setFilters({ formTemplateId: id || undefined }));
+          }}
+        >
+          <SelectTrigger className="w-[220px] bg-black/5 text-black border-0">
+            <SelectValue placeholder="Form Template" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Templates</SelectItem>
+            {(formsState?.templates || []).map((t: any) => (
+              <SelectItem key={t.id} value={t.id}>
+                {t.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
       </div>
 
       <div className="flex gap-4">
