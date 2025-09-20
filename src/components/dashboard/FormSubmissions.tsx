@@ -127,6 +127,12 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
   // Local project/subproject UI state
   const [projectId, setProjectId] = React.useState<string>("");
   const [subprojectId, setSubprojectId] = React.useState<string>("");
+  const [hasLocalEntityOverride, setHasLocalEntityOverride] =
+    React.useState<boolean>(false);
+
+  // Derived project ID when a global subproject is selected
+  const [globalDerivedProjectId, setGlobalDerivedProjectId] =
+    React.useState<string>("");
 
   // Local options
   const [servicesOptions, setServicesOptions] = React.useState<any[]>([]);
@@ -238,53 +244,80 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch subprojects when local project changes
+  // Resolve projectId from global subproject when needed
   React.useEffect(() => {
-    if (!projectId) {
+    const { entityId, entityType } = globalFilters as any;
+    if (entityType === "subproject" && entityId) {
+      (async () => {
+        const res = await subProjectService.getSubProjectById({ id: entityId });
+        if (res.success && (res.data as any)?.projectId) {
+          setGlobalDerivedProjectId((res.data as any).projectId as string);
+        } else {
+          setGlobalDerivedProjectId("");
+        }
+      })();
+    } else if (entityType === "project") {
+      setGlobalDerivedProjectId("");
+    } else {
+      setGlobalDerivedProjectId("");
+    }
+  }, [globalFilters]);
+
+  // Effective entity IDs for display and data fetching
+  const globalEntityType = globalFilters.entityType as any;
+  const globalProjectId =
+    globalEntityType === "project"
+      ? ((globalFilters.entityId as string) || "")
+      : globalDerivedProjectId || "";
+  const globalSubprojectId =
+    globalEntityType === "subproject"
+      ? ((globalFilters.entityId as string) || "")
+      : "";
+
+  const effectiveProjectId = hasLocalEntityOverride
+    ? projectId
+    : globalProjectId;
+  const effectiveSubprojectId = hasLocalEntityOverride
+    ? subprojectId
+    : globalSubprojectId;
+
+  // Fetch subprojects when effective project changes
+  React.useEffect(() => {
+    if (!effectiveProjectId) {
       setSubprojectsOptions([]);
       return;
     }
     (async () => {
       const res = await subProjectService.getSubProjectsByProjectId({
-        projectId,
+        projectId: effectiveProjectId,
       });
       if (res.success) setSubprojectsOptions(res.data);
     })();
-  }, [projectId]);
+  }, [effectiveProjectId]);
 
-  // Inherit global project/subproject into local UI when no local override is set
+  // Reset local overrides whenever global filters change so globals take precedence again
   React.useEffect(() => {
-    if (projectId || subprojectId) return; // respect local override
-    const { entityId, entityType } = globalFilters as any;
-    if (!entityId || !entityType) return;
-    if (entityType === "project") {
-      setProjectId(entityId);
-    } else if (entityType === "subproject") {
-      (async () => {
-        const res = await subProjectService.getSubProjectById({ id: entityId });
-        if (res.success && (res.data as any)?.projectId) {
-          setProjectId((res.data as any).projectId);
-          setSubprojectId(entityId);
-        }
-      })();
-    }
-  }, [
-    globalFilters.entityId,
-    globalFilters.entityType,
-    projectId,
-    subprojectId,
-  ]);
+    setHasLocalEntityOverride(false);
+    setProjectId("");
+    setSubprojectId("");
+    setMetricLocal(undefined);
+    setServiceIdLocal(undefined);
+    setFormTemplateIdLocal(undefined);
+    setLocalStartDate(undefined);
+    setLocalEndDate(undefined);
+    setGranularityLocal(undefined);
+  }, [globalFilters]);
 
   // Fetch services when effective entity selection changes (local overrides take precedence, else global)
   React.useEffect(() => {
     (async () => {
-      const effectiveEntityType = subprojectId
+      const effectiveEntityType = effectiveSubprojectId
         ? "subproject"
-        : projectId
+        : effectiveProjectId
         ? "project"
         : (globalFilters.entityType as any) || undefined;
       const effectiveEntityId =
-        subprojectId || projectId || globalFilters.entityId || undefined;
+        effectiveSubprojectId || effectiveProjectId || globalFilters.entityId || undefined;
       if (effectiveEntityType && effectiveEntityId) {
         const res = await servicesService.getEntityServices({
           entityId: effectiveEntityId,
@@ -300,8 +333,8 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
       }
     })();
   }, [
-    projectId,
-    subprojectId,
+    effectiveProjectId,
+    effectiveSubprojectId,
     globalFilters.entityId,
     globalFilters.entityType,
   ]);
@@ -424,11 +457,16 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
           <div className=" flex flex-wrap items-center  gap-3">
             {/* Project (local override) */}
             <Select
-              value={projectId || "all"}
+              value={
+                hasLocalEntityOverride
+                  ? projectId || "all"
+                  : globalProjectId || "all"
+              }
               onValueChange={(v) => {
                 const id = v === "all" ? "" : v;
                 setProjectId(id);
                 setSubprojectId("");
+                setHasLocalEntityOverride(id !== "");
                 // Clear dependent local filters when switching entity
                 setServiceIdLocal(undefined);
                 setFormTemplateIdLocal(undefined);
@@ -449,15 +487,20 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
 
             {/* Subproject (local override) */}
             <Select
-              value={subprojectId || "all"}
+              value={
+                hasLocalEntityOverride
+                  ? subprojectId || "all"
+                  : globalSubprojectId || "all"
+              }
               onValueChange={(v) => {
                 const id = v === "all" ? "" : v;
                 setSubprojectId(id);
+                setHasLocalEntityOverride(id !== "" || projectId !== "");
                 // Clear dependent local filters when switching entity
                 setServiceIdLocal(undefined);
                 setFormTemplateIdLocal(undefined);
               }}
-              disabled={!projectId}
+              disabled={!effectiveProjectId}
             >
               <SelectTrigger className="w-[220px] bg-blue-200/30   border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
                 <SelectValue placeholder="Subproject" />
@@ -465,7 +508,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
               <SelectContent>
                 <SelectItem value="all">All Subprojects</SelectItem>
                 {subprojectsOptions
-                  .filter((sp) => sp.projectId === projectId)
+                  .filter((sp) => sp.projectId === effectiveProjectId)
                   .map((sp) => (
                     <SelectItem key={sp.id} value={sp.id}>
                       {sp.name}
@@ -474,32 +517,30 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
               </SelectContent>
             </Select>
 
-            {/* Metric (local override; inherits global if unset) */}
-            <Select
-              value={
-                (metricLocal || globalFilters.metric || "submissions") as string
-              }
-              onValueChange={(v) => {
-                setMetricLocal(v as MetricType);
-              }}
+          {/* Metric (local override; inherits global if unset) */}
+          <Select
+            value={
+              (metricLocal || globalFilters.metric || "submissions") as string
+            }
+            onValueChange={(v) => {
+              setMetricLocal(v as MetricType);
+            }}
+          >
+            <SelectTrigger
+              className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]"
             >
-              <SelectTrigger
-                className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0
-             transition-transform duration-200 ease-in-out
-             hover:scale-[1.02] hover:-translate-y-[1px]"
-              >
-                <SelectValue placeholder="Beneficiary" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="submissions">Submissions</SelectItem>
-                <SelectItem value="serviceDeliveries">
-                  Service Deliveries
-                </SelectItem>
-                <SelectItem value="uniqueBeneficiaries">
-                  Unique Beneficiaries
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              <SelectValue placeholder="Beneficiary" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="submissions">Submissions</SelectItem>
+              <SelectItem value="serviceDeliveries">
+                Service Deliveries
+              </SelectItem>
+              <SelectItem value="uniqueBeneficiaries">
+                Unique Beneficiaries
+              </SelectItem>
+            </SelectContent>
+          </Select>
 
             {/* Service (local override; inherits global if unset) */}
             <Select

@@ -49,7 +49,9 @@ export function Dashboard() {
       normalizedRoles.includes("field-operator") ||
       normalizedRoles.includes("fieldoperator") ||
       normalizedRoles.includes("field_op") ||
-      normalizedRoles.some((r: string) => r.includes("field") && r.includes("operator"))
+      normalizedRoles.some(
+        (r: string) => r.includes("field") && r.includes("operator")
+      )
     );
   }, [normalizedRoles]);
 
@@ -63,9 +65,10 @@ export function Dashboard() {
   useEffect(() => {
     if (!user) return; // wait until user profile is available to determine role filters
     const base = metricsFilters || ({} as any);
-    const filters = isFieldOperator && user?.id
-      ? { ...base, staffUserId: String(user.id) }
-      : base;
+    const filters =
+      isFieldOperator && user?.id
+        ? { ...base, staffUserId: String(user.id) }
+        : base;
     dispatch(fetchDeliveriesSummary(filters));
     dispatch(fetchDeliveriesSeries(filters));
   }, [dispatch, metricsFilters, isFieldOperator, user?.id]);
@@ -94,19 +97,19 @@ export function Dashboard() {
 
       <FormSubmissions projects={projects} />
 
+      <div className="lg:col-span-2 py-6">
+        <BeneficiaryDemographics />
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2">
           <KpiHighlights />
-          <div className="lg:col-span-2 py-6">
-            <BeneficiaryDemographics />
-          </div>
           {/* <div className="lg:col-span-2">
             <KpiHighlights />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-1 py-6 gap-6 mb-6">
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-1 py-6 gap-6 mb-6">
             <ServiceDelivery />
-          </div> */}
+            </div> */}
         </div>
         <div className=" space-y-6">
           {/* <SyncStatus />
