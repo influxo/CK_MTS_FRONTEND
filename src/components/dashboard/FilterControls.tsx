@@ -48,6 +48,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   const [formTemplateId, setFormTemplateId] = React.useState<string>(
     metricsFilters.formTemplateId || ""
   );
+  const [showMore, setShowMore] = React.useState<boolean>(false);
 
   // Fetch subprojects when project changes
   React.useEffect(() => {
@@ -131,8 +132,8 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     subprojectId || projectId ? entityServices : allServices;
 
   return (
-    <div className="flex flex-col  bg-[#F7F9FB]   drop-shadow-sm shadow-gray-50 sm:flex-row gap-4 mb-6 p-4 bg-card rounded-lg ">
-      <div className="flex flex-wrap gap-4 flex-1">
+    <div className="flex flex-col  bg-[#F7F9FB]   drop-shadow-sm shadow-gray-50 gap-4 mb-6 p-4 bg-card rounded-lg ">
+      <div className="flex flex-wrap gap-4 items-center">
         <Select value={projectId || "all"} onValueChange={onProjectChange}>
           <SelectTrigger
             className="w-[200px] bg-white p-2 rounded-md border-0
@@ -181,112 +182,120 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           </SelectContent>
         </Select>
 
-        <Select value={timePreset} onValueChange={onTimePresetChange}>
-          <SelectTrigger
-            className="w-[200px] bg-white p-2 rounded-md border-0
-             transition-transform duration-200 ease-in-out
-             hover:scale-[1.02] hover:-translate-y-[1px] "
-          >
-            <SelectValue placeholder="Time Period" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="last-7-days">Last 7 days</SelectItem>
-            <SelectItem value="last-30-days">Last 30 days</SelectItem>
-            <SelectItem value="last-90-days">Last 90 days</SelectItem>
-            <SelectItem value="custom">Custom range</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Global Metric */}
-        <Select
-          value={metric}
-          onValueChange={(v) => {
-            setMetric(v);
-            dispatch(setFilters({ metric: v as any }));
-          }}
-        >
-          <SelectTrigger
-            className="w-[200px] bg-white p-2 rounded-md border-0
-             transition-transform duration-200 ease-in-out
-             hover:scale-[1.02] hover:-translate-y-[1px] "
-          >
-            <SelectValue placeholder="Metric" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="submissions">Submissions</SelectItem>
-            <SelectItem value="serviceDeliveries">
-              Service Deliveries
-            </SelectItem>
-            <SelectItem value="uniqueBeneficiaries">
-              Unique Beneficiaries
-            </SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Global Service */}
-        <Select
-          value={serviceId || "all"}
-          onValueChange={(v) => {
-            const id = v === "all" ? "" : v;
-            setServiceId(id);
-            dispatch(setFilters({ serviceId: id || undefined }));
-          }}
-        >
-          <SelectTrigger
-            className="w-[220px] bg-white p-2 rounded-md border-0
-             transition-transform duration-200 ease-in-out
-             hover:scale-[1.02] hover:-translate-y-[1px] "
-          >
-            <SelectValue placeholder="Service" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Services</SelectItem>
-            {servicesForSelect.map((s: any) => (
-              <SelectItem key={s.id} value={s.id}>
-                {s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Global Form Template */}
-        <Select
-          value={formTemplateId || "all"}
-          onValueChange={(v) => {
-            const id = v === "all" ? "" : v;
-            setFormTemplateId(id);
-            dispatch(setFilters({ formTemplateId: id || undefined }));
-          }}
-        >
-          <SelectTrigger
-            className="w-[220px] bg-white p-2 rounded-md border-0
-             transition-transform duration-200 ease-in-out
-             hover:scale-[1.02] hover:-translate-y-[1px] "
-          >
-            <SelectValue placeholder="Form Template" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Templates</SelectItem>
-            {(formsState?.templates || []).map((t: any) => (
-              <SelectItem key={t.id} value={t.id}>
-                {t.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex gap-4">
         <Button
           variant="outline"
           size="sm"
-          className="bg-[#E0F2FE] text-black border-0 
+          onClick={() => setShowMore((s) => !s)}
+          className="ml-auto bg-[#E0F2FE] text-black border-0 
              transition-transform duration-200 ease-in-out 
              hover:scale-105 hover:-translate-y-[1px]"
         >
           <Filter className="h-4 w-4 mr-2" />
-          More Filters
+          {showMore ? "Hide Filters" : "More Filters"}
         </Button>
+
+      </div>
+      {showMore && (
+        <div className="mt-2 p-3 rounded-md bg-white/60 border border-gray-100">
+          <div className="flex flex-wrap gap-4 items-center">
+            <Select value={timePreset} onValueChange={onTimePresetChange}>
+              <SelectTrigger
+                className="w-[200px] bg-white p-2 rounded-md border-0
+                 transition-transform duration-200 ease-in-out
+                 hover:scale-[1.02] hover:-translate-y-[1px] "
+              >
+                <SelectValue placeholder="Time Period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="last-7-days">Last 7 days</SelectItem>
+                <SelectItem value="last-30-days">Last 30 days</SelectItem>
+                <SelectItem value="last-90-days">Last 90 days</SelectItem>
+                <SelectItem value="custom">Custom range</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Global Metric */}
+            <Select
+              value={metric}
+              onValueChange={(v) => {
+                setMetric(v);
+                dispatch(setFilters({ metric: v as any }));
+              }}
+            >
+              <SelectTrigger
+                className="w-[200px] bg-white p-2 rounded-md border-0
+                 transition-transform duration-200 ease-in-out
+                 hover:scale-[1.02] hover:-translate-y-[1px] "
+              >
+                <SelectValue placeholder="Metric" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="submissions">Submissions</SelectItem>
+                <SelectItem value="serviceDeliveries">
+                  Service Deliveries
+                </SelectItem>
+                <SelectItem value="uniqueBeneficiaries">
+                  Unique Beneficiaries
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Global Service */}
+            <Select
+              value={serviceId || "all"}
+              onValueChange={(v) => {
+                const id = v === "all" ? "" : v;
+                setServiceId(id);
+                dispatch(setFilters({ serviceId: id || undefined }));
+              }}
+            >
+              <SelectTrigger
+                className="w-[220px] bg-white p-2 rounded-md border-0
+                 transition-transform duration-200 ease-in-out
+                 hover:scale-[1.02] hover:-translate-y-[1px] "
+              >
+                <SelectValue placeholder="Service" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Services</SelectItem>
+                {servicesForSelect.map((s: any) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Global Form Template */}
+            <Select
+              value={formTemplateId || "all"}
+              onValueChange={(v) => {
+                const id = v === "all" ? "" : v;
+                setFormTemplateId(id);
+                dispatch(setFilters({ formTemplateId: id || undefined }));
+              }}
+            >
+              <SelectTrigger
+                className="w-[220px] bg-white p-2 rounded-md border-0
+                 transition-transform duration-200 ease-in-out
+                 hover:scale-[1.02] hover:-translate-y-[1px] "
+              >
+                <SelectValue placeholder="Form Template" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Templates</SelectItem>
+                {(formsState?.templates || []).map((t: any) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-4 justify-end">
         <Button
           variant="outline"
           size="sm"
