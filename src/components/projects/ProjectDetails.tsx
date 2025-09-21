@@ -7,6 +7,12 @@ import {
   Users,
   Plus,
   X,
+  TrendingUp,
+  TrendingDown,
+  FolderKanban,
+  ClipboardList,
+  BarChart3,
+  Filter,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -14,7 +20,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from "sonner";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent } from "../ui/data-display/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +56,10 @@ import { ProjectServices } from "./ProjectServices";
 import {
   selectAllProjects,
   selectProjectsLoading,
+  selectProjectMetricsSummary,
+  selectProjectMetricsSeries,
+  fetchProjectDeliveriesSummary,
+  fetchProjectDeliveriesSeries,
 } from "../../store/slices/projectsSlice";
 import type { AppDispatch } from "../../store";
 import projectService from "../../services/projects/projectService";
@@ -90,6 +100,20 @@ import {
 import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Checkbox } from "../ui/form/checkbox";
+import servicesService from "../../services/services/serviceServices";
+import formService from "../../services/forms/formService";
+import {
+  ComposedChart,
+  Line,
+  Area,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import type { TimeUnit } from "../../services/services/serviceMetricsModels";
 import {
   Table,
   TableBody,
@@ -132,14 +156,32 @@ export function ProjectDetails() {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [project, setProject] = useState<Project | null>(null);
+  // Project-scoped metrics state
+  const summaryState = useSelector(selectProjectMetricsSummary);
+  const seriesState = useSelector(selectProjectMetricsSeries);
+  const [chartType, setChartType] = useState<"line" | "bar">("line");
+  const [granularity, setGranularity] = useState<TimeUnit>("week");
+  const [startDate, setStartDate] = useState<string | undefined>(undefined);
+  const [endDate, setEndDate] = useState<string | undefined>(undefined);
+  const [showMoreLocal, setShowMoreLocal] = useState<boolean>(false);
+  const [metricLocal, setMetricLocal] = useState<
+    "submissions" | "serviceDeliveries" | "uniqueBeneficiaries"
+  >("submissions");
+  const [serviceIdLocal, setServiceIdLocal] = useState<string | undefined>(
+    undefined
+  );
+  const [formTemplateIdLocal, setFormTemplateIdLocal] = useState<
+    string | undefined
+  >(undefined);
+  const [servicesOptions, setServicesOptions] = useState<any[]>([]);
+  const [templatesOptions, setTemplatesOptions] = useState<any[]>([]);
+
   const employees = useSelector(selectAllEmployees);
   const isEmployeeLoading = useSelector(selectEmployeesLoading);
   const employeeError = useSelector(selectEmployeesError);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedSubProjectId, setSelectedSubProjectId] = useState<
-    string | null
-  >(null);
+  const [selectedSubProjectId, setSelectedSubProjectId] = useState<string>("")
 
   // Create Beneficiary dialog state and form
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -325,24 +367,203 @@ export function ProjectDetails() {
     );
   };
 
+  // --- Helpers for overview metrics ---
+  const startOfWeek = (d: Date) => {
+    const x = new Date(d);
+    const day = (x.getDay() + 6) % 7; // Monday=0
+    x.setDate(x.getDate() - day);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  };
+  const startOfMonth = (d: Date) => {
+    const x = new Date(d.getFullYear(), d.getMonth(), 1);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  };
+  const startOfQuarter = (d: Date) => {
+    const q = Math.floor(d.getMonth() / 3) * 3;
+    const x = new Date(d.getFullYear(), q, 1);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  };
+  const startOfYear = (d: Date) => {
+    const x = new Date(d.getFullYear(), 0, 1);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  };
+  const defaultWindowFor = (g: TimeUnit): { from: Date; to: Date } => {
+    const to = new Date();
+    const from = new Date(to);
+    switch (g) {
+      case "day":
+        from.setDate(to.getDate() - 7);
+        break;
+      case "week":
+        from.setDate(to.getDate() - 56);
+        break;
+      case "month":
+        from.setMonth(to.getMonth() - 12);
+        break;
+      case "quarter":
+        from.setMonth(to.getMonth() - 24);
+        break;
+      case "year":
+        from.setFullYear(to.getFullYear() - 5);
+        break;
+    }
+    from.setHours(0, 0, 0, 0);
+    to.setHours(23, 59, 59, 999);
+    return { from, to };
+  };
+
+  const dayFmt = new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+  const monthFmt = new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    year: "2-digit",
+  });
+  const formatLabel = (iso: string) => {
+    const d = new Date(iso);
+    switch (granularity) {
+      case "day":
+        return dayFmt.format(d);
+      case "week": {
+        const monday = startOfWeek(d);
+        const startYear = new Date(d.getFullYear(), 0, 1);
+        const diffDays = Math.floor(
+          (monday.getTime() - startYear.getTime()) / 86400000
+        );
+        const week = Math.floor(diffDays / 7) + 1;
+        return `W${week} ${d.getFullYear()}`;
+      }
+      case "month":
+        return monthFmt.format(d);
+      case "quarter":
+        return `Q${Math.floor(d.getMonth() / 3) + 1} ${d.getFullYear()}`;
+      case "year":
+        return String(d.getFullYear());
+      default:
+        return monthFmt.format(d);
+    }
+  };
+
+  // Granularity and Custom Range controls (Project Overview)
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  // Time Period (Dashboard-like): All Period, Last 7/30/90 days
+  const [timePreset, setTimePreset] = useState<string>("all-period");
+
+  const applyGranularity = (g: TimeUnit) => {
+    // Change grouping only; dates are controlled by the Time Period preset
+    setGranularity(g);
+  };
+
+  const onTimePresetChange = (value: string) => {
+    setTimePreset(value);
+    const now = new Date();
+    const end = new Date(now);
+    const start = new Date(now);
+    if (value === "all-period") {
+      setStartDate(undefined);
+      setEndDate(undefined);
+      return;
+    } else if (value === "last-7-days") start.setDate(now.getDate() - 7);
+    else if (value === "last-30-days") start.setDate(now.getDate() - 30);
+    else if (value === "last-90-days") start.setDate(now.getDate() - 90);
+    else {
+      return;
+    }
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    setStartDate(start.toISOString());
+    setEndDate(end.toISOString());
+  };
+
+  // Load templates once
   useEffect(() => {
-    if (activeTab === "beneficiaries" && id) {
-      dispatch(
-        fetchBeneficiariesByEntity({
-          entityId: id,
-          entityType: "project",
-          page: 1,
-          limit: 20,
-        })
-      );
-      // Also load subprojects for association selection
+    (async () => {
+      const forms = await formService.getForms();
+      const templates = (forms?.data as any)?.templates || forms?.data || [];
+      setTemplatesOptions(templates || []);
+    })();
+  }, []);
+
+  // Load subprojects for this project for filter dropdown (independent of Beneficiaries tab)
+  useEffect(() => {
+    if (id) {
       dispatch(
         fetchSubProjectsByProjectId({
           projectId: id,
         })
       );
     }
-  }, [activeTab, id, dispatch]);
+  }, [dispatch, id]);
+
+  // Load services assigned to the effective entity (project or subproject)
+  useEffect(() => {
+    (async () => {
+      if (!id) return;
+      const effectiveEntityType = selectedSubProjectId ? "subproject" : "project";
+      const effectiveEntityId = selectedSubProjectId || id;
+      const res = await servicesService.getEntityServices({
+        entityId: effectiveEntityId,
+        entityType: effectiveEntityType as any,
+      });
+      if (res && res.success) {
+        setServicesOptions(res.items || []);
+      } else {
+        setServicesOptions([]);
+      }
+    })();
+  }, [id, selectedSubProjectId]);
+
+  // Fetch project metrics whenever Overview is active and filters change
+  useEffect(() => {
+    if (activeTab !== "overview") return;
+    if (!id) return;
+    const effectiveEntityType = selectedSubProjectId ? "subproject" : "project";
+    const effectiveEntityId = selectedSubProjectId || id;
+
+    const commonFilters = {
+      entityId: effectiveEntityId,
+      entityType: effectiveEntityType as any,
+      serviceId: serviceIdLocal,
+      formTemplateId: formTemplateIdLocal,
+    } as any;
+
+    // Summary
+    dispatch(
+      fetchProjectDeliveriesSummary({
+        ...commonFilters,
+        startDate,
+        endDate,
+      }) as any
+    );
+
+    // Series with granularity + metric
+    dispatch(
+      fetchProjectDeliveriesSeries({
+        ...commonFilters,
+        // Dates are controlled by Time Period; All Period keeps these undefined
+        startDate,
+        endDate,
+        groupBy: granularity,
+        metric: metricLocal,
+      }) as any
+    );
+  }, [
+    dispatch,
+    id,
+    activeTab,
+    selectedSubProjectId,
+    startDate,
+    endDate,
+    granularity,
+    metricLocal,
+    serviceIdLocal,
+    formTemplateIdLocal,
+  ]);
 
   // After successful create (+ association if any), close dialog, reset form, refresh list
   useEffect(() => {
@@ -1017,6 +1238,330 @@ export function ProjectDetails() {
         <TabsContent value="overview" className="pt-6">
           <div className="grid grid-cols-2 gap-6">
             <div className="col-span-2 space-y-6">
+              {/* Overview Filters */}
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Subproject selector */}
+                  <Select
+                    value={selectedSubProjectId || "all"}
+                    onValueChange={(v) => {
+                      const idVal = v === "all" ? "" : v;
+                      setSelectedSubProjectId(idVal);
+                      // clear dependent local filters when switching entity
+                      setServiceIdLocal(undefined);
+                      setFormTemplateIdLocal(undefined);
+                    }}
+                  >
+                    <SelectTrigger className="w-[220px] bg-white border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                      <SelectValue placeholder="Subproject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Subprojects</SelectItem>
+                      {(subprojects || [])
+                        .filter((sp: any) => sp.projectId === id)
+                        .map((sp: any) => (
+                          <SelectItem key={sp.id} value={sp.id}>
+                            {sp.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Time Period (controls startDate/endDate like Dashboard) */}
+                  <Select value={timePreset} onValueChange={onTimePresetChange}>
+                    <SelectTrigger className="w-[200px] bg-white p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                      <SelectValue placeholder="Time Period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all-period">All Period</SelectItem>
+                      <SelectItem value="last-7-days">Last 7 days</SelectItem>
+                      <SelectItem value="last-30-days">Last 30 days</SelectItem>
+                      <SelectItem value="last-90-days">Last 90 days</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowMoreLocal((s) => !s)}
+                    className="bg-[#E0F2FE] text-black border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    {showMoreLocal ? "Hide Filters" : "More Filters"}
+                  </Button>
+                </div>
+
+                {showMoreLocal && (
+                  <div className="mt-1 p-3 rounded-md bg-white/60 border border-gray-100">
+                    <div className="flex flex-wrap items-center gap-3">
+                      {/* Metric */}
+                      <Select
+                        value={metricLocal}
+                        onValueChange={(v) => setMetricLocal(v as any)}
+                      >
+                        <SelectTrigger className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                          <SelectValue placeholder="Metric" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="submissions">Submissions</SelectItem>
+                          <SelectItem value="serviceDeliveries">Service Deliveries</SelectItem>
+                          <SelectItem value="uniqueBeneficiaries">Unique Beneficiaries</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      {/* Service */}
+                      <Select
+                        value={(serviceIdLocal ?? "all") as string}
+                        onValueChange={(v) => {
+                          const id = v === "all" ? "" : v;
+                          setServiceIdLocal(id || undefined);
+                        }}
+                      >
+                        <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                          <SelectValue placeholder="Service" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Services</SelectItem>
+                          {(servicesOptions || []).map((s: any) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Form Template */}
+                      <Select
+                        value={(formTemplateIdLocal ?? "all") as string}
+                        onValueChange={(v) => {
+                          const id = v === "all" ? "" : v;
+                          setFormTemplateIdLocal(id || undefined);
+                        }}
+                      >
+                        <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                          <SelectValue placeholder="Form Template" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Templates</SelectItem>
+                          {(templatesOptions || []).map((t: any) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Granularity dropdown */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setFiltersOpen((s) => !s)}
+                          className="px-3 py-1.5 rounded-md text-sm bg-blue-200 text-blue-600 hover:bg-blue-200/30 flex items-center gap-2"
+                        >
+                          <span>
+                            Granularity: {" "}
+                            <span className="capitalize font-medium">{granularity}</span>
+                          </span>
+                          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.086l3.71-3.854a.75.75 0 111.08 1.04l-4.24 4.4a.75.75 0 01-1.08 0l-4.24-4.4a.75.75 0 01.02-1.06z" clipRule="evenodd"/></svg>
+                        </button>
+                        {filtersOpen && (
+                          <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-10">
+                            <ul className="py-1">
+                              {["day","week","month","quarter","year"].map((g) => (
+                                <li key={g}>
+                                  <button
+                                    onClick={() => {
+                                      applyGranularity(g as TimeUnit);
+                                      setFiltersOpen(false);
+                                    }}
+                                    className={["w-full text-left px-3 py-2 text-sm rounded-md capitalize transition-transform duration-200 ease-in-out",
+                                      granularity === (g as TimeUnit)
+                                        ? "bg-[#E5ECF6] text-gray-900 scale-[1.02] -translate-y-[1px]"
+                                        : "hover:bg-gray-50 hover:scale-[1.02] hover:-translate-y-[1px]",
+                                    ].join(" ")}
+                                  >
+                                    {g}
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Key Statistics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card className="bg-[#E3F5FF] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm">Service Deliveries</CardTitle>
+                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-2xl">
+                          {summaryState.loading
+                            ? "…"
+                            : (summaryState.data?.totalDeliveries ?? 0).toLocaleString()}
+                        </div>
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                          Snapshot
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="text-black">Live</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm">Unique Beneficiaries</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-2xl">
+                          {summaryState.loading
+                            ? "…"
+                            : (summaryState.data?.uniqueBeneficiaries ?? 0).toLocaleString()}
+                        </div>
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                          Snapshot
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="text-black">Live</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-[#E3F5FF] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm">Unique Staff</CardTitle>
+                    <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-2xl">
+                          {summaryState.loading
+                            ? "…"
+                            : (summaryState.data?.uniqueStaff ?? 0).toLocaleString()}
+                        </div>
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
+                          Snapshot
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="text-black">Live</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm">Unique Services</CardTitle>
+                    <FolderKanban className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-2xl">
+                          {summaryState.loading
+                            ? "…"
+                            : (summaryState.data?.uniqueServices ?? 0).toLocaleString()}
+                        </div>
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                          Snapshot
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="text-black">Live</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Series Chart */}
+              <Card className="bg-[#F7F9FB] drop-shadow-md shadow-gray-50 border-0">
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <CardTitle>Project Activity Overview</CardTitle>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant={chartType === "line" ? "default" : "outline"}
+                        onClick={() => setChartType("line")}
+                        className="px-2"
+                      >
+                        Line
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={chartType === "bar" ? "default" : "outline"}
+                        onClick={() => setChartType("bar")}
+                        className="px-2"
+                      >
+                        Bar
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent>
+                  <div className="h-64 mt-2">
+                    {seriesState.loading ? (
+                      <div className="h-full w-full flex items-center justify-center text-sm text-gray-600">
+                        Loading…
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart
+                          data={(seriesState.items || []).map((it) => ({
+                            name: formatLabel(it.periodStart),
+                            value: it.count,
+                          }))}
+                          barCategoryGap="25%"
+                          barGap={2}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <defs>
+                            <linearGradient id="projAreaFill" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
+                              <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="projBarFill" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.95} />
+                              <stop offset="60%" stopColor="#3b82f6" stopOpacity={0.68} />
+                              <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.26} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#6b7280" }} />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fill: "#6b7280" }} />
+                          <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "0.5rem" }} />
+                          {chartType === "line" ? (
+                            <>
+                              <Area type="monotone" dataKey="value" stroke="none" fill="url(#projAreaFill)" fillOpacity={1} />
+                              <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={false} activeDot={{ r: 6, fill: "#3b82f6" }} />
+                            </>
+                          ) : (
+                            <Bar dataKey="value" fill="url(#projBarFill)" barSize={100} radius={[6, 6, 0, 0]} />
+                          )}
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
               <ProjectStats projectId={enhancedProject.id} />
               {/* <ProjectActivity projectId={enhancedProject.id} /> */}
             </div>

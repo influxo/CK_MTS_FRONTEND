@@ -9,6 +9,11 @@ import {
   ArrowLeft,
   Plus,
   X,
+  TrendingUp,
+  TrendingDown,
+  BarChart3,
+  Filter,
+  FolderKanban,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Badge } from "../ui/data-display/badge";
@@ -89,14 +94,31 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
+import servicesService from "../../services/services/serviceServices";
+import formService from "../../services/forms/formService";
+import type { TimeUnit } from "../../services/services/serviceMetricsModels";
+import {
+  ComposedChart,
+  Line,
+  Area,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  fetchSubProjectDeliveriesSummary,
+  fetchSubProjectDeliveriesSeries,
+  selectSubProjectMetricsSummary,
+  selectSubProjectMetricsSeries,
+} from "../../store/slices/subProjectSlice";
 
 // We don't need to import the SubProject type directly as it's already used in Redux selectors
 
 // TODO: remove this mockSubProjectEnhancement, it's just for testing since we dont have that data yet
 //  we fetch the subproject data from the API and enhance it with this data
-interface SubProjectDetailsProps {
-  onBack?: () => void;
-}
 
 // Mock enhancement data for subprojects to provide UI-specific properties that aren't in the API model
 const mockSubProjectEnhancement = {
@@ -125,7 +147,7 @@ const mockSubProjectEnhancement = {
   ],
 };
 
-export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
+export function SubProjectDetails() {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -166,6 +188,98 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
   const listItems = useSelector(selectBeneficiaries);
   const listLoading = useSelector(selectBeneficiariesLoading);
   const listError = useSelector(selectBeneficiariesError);
+
+  // Subproject-scoped metrics state (typed with RootState)
+  const summaryState = useSelector((state: RootState) =>
+    selectSubProjectMetricsSummary(state)
+  );
+  const seriesState = useSelector((state: RootState) =>
+    selectSubProjectMetricsSeries(state)
+  );
+
+  // Overview local filter state (mirroring ProjectDetails)
+  const [chartType, setChartType] = useState<"line" | "bar">("line");
+  const [granularity, setGranularity] = useState<TimeUnit>("week");
+  const [startDate, setStartDate] = useState<string | undefined>(undefined);
+  const [endDate, setEndDate] = useState<string | undefined>(undefined);
+  const [showMoreLocal, setShowMoreLocal] = useState<boolean>(false);
+  const [metricLocal, setMetricLocal] = useState<
+    "submissions" | "serviceDeliveries" | "uniqueBeneficiaries"
+  >("submissions");
+  const [serviceIdLocal, setServiceIdLocal] = useState<string | undefined>(
+    undefined
+  );
+  const [formTemplateIdLocal, setFormTemplateIdLocal] = useState<
+    string | undefined
+  >(undefined);
+  const [servicesOptions, setServicesOptions] = useState<any[]>([]);
+  const [templatesOptions, setTemplatesOptions] = useState<any[]>([]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [timePreset, setTimePreset] = useState<string>("all-period");
+
+  const onTimePresetChange = (value: string) => {
+    setTimePreset(value);
+    const now = new Date();
+    const end = new Date(now);
+    const start = new Date(now);
+    if (value === "all-period") {
+      setStartDate(undefined);
+      setEndDate(undefined);
+      return;
+    } else if (value === "last-7-days") start.setDate(now.getDate() - 7);
+    else if (value === "last-30-days") start.setDate(now.getDate() - 30);
+    else if (value === "last-90-days") start.setDate(now.getDate() - 90);
+    else {
+      return;
+    }
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    setStartDate(start.toISOString());
+    setEndDate(end.toISOString());
+  };
+
+  const applyGranularity = (g: TimeUnit) => setGranularity(g);
+
+  // Label formatting helpers
+  const dayFmt = new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+  const monthFmt = new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    year: "2-digit",
+  });
+  const startOfWeek = (d: Date) => {
+    const x = new Date(d);
+    const day = (x.getDay() + 6) % 7;
+    x.setDate(x.getDate() - day);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  };
+  const formatLabel = (iso: string) => {
+    const d = new Date(iso);
+    switch (granularity) {
+      case "day":
+        return dayFmt.format(d);
+      case "week": {
+        const monday = startOfWeek(d);
+        const startYear = new Date(d.getFullYear(), 0, 1);
+        const diffDays = Math.floor(
+          (monday.getTime() - startYear.getTime()) / 86400000
+        );
+        const week = Math.floor(diffDays / 7) + 1;
+        return `W${week} ${d.getFullYear()}`;
+      }
+      case "month":
+        return monthFmt.format(d);
+      case "quarter":
+        return `Q${Math.floor(d.getMonth() / 3) + 1} ${d.getFullYear()}`;
+      case "year":
+        return String(d.getFullYear());
+      default:
+        return monthFmt.format(d);
+    }
+  };
 
   // Build view model similar to BeneficiariesList
   const tableRows = subBeneficiaries.map((b) => {
@@ -321,6 +435,68 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
     }
   }, [isAddDialogOpen, addBeneficiaryTab, dispatch]);
 
+  // Load services and templates for filters
+  useEffect(() => {
+    (async () => {
+      if (!subprojectId) return;
+      const res = await servicesService.getEntityServices({
+        entityId: subprojectId,
+        entityType: "subproject" as any,
+      });
+      if (res && res.success) setServicesOptions(res.items || []);
+      else setServicesOptions([]);
+    })();
+  }, [subprojectId]);
+
+  useEffect(() => {
+    (async () => {
+      const forms = await formService.getForms();
+      const templates = (forms?.data as any)?.templates || forms?.data || [];
+      setTemplatesOptions(templates || []);
+    })();
+  }, []);
+
+  // Fetch subproject metrics whenever Overview is active and filters change
+  useEffect(() => {
+    if (activeTab !== "overview") return;
+    if (!subprojectId) return;
+
+    const commonFilters = {
+      entityId: subprojectId,
+      entityType: "subproject" as any,
+      serviceId: serviceIdLocal,
+      formTemplateId: formTemplateIdLocal,
+    } as any;
+
+    dispatch(
+      fetchSubProjectDeliveriesSummary({
+        ...commonFilters,
+        startDate,
+        endDate,
+      }) as any
+    );
+
+    dispatch(
+      fetchSubProjectDeliveriesSeries({
+        ...commonFilters,
+        startDate,
+        endDate,
+        groupBy: granularity,
+        metric: metricLocal,
+      }) as any
+    );
+  }, [
+    dispatch,
+    subprojectId,
+    activeTab,
+    startDate,
+    endDate,
+    granularity,
+    metricLocal,
+    serviceIdLocal,
+    formTemplateIdLocal,
+  ]);
+
   // After successful create (+ association), close dialog, reset form, refresh list
   useEffect(() => {
     if (createSuccess && !associateLoading && subprojectId) {
@@ -337,16 +513,6 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
       dispatch(clearBeneficiaryMessages());
     }
   }, [createSuccess, associateLoading, subprojectId, dispatch]);
-
-  const handleBackToProject = () => {
-    if (onBack) {
-      onBack();
-    } else if (projectId) {
-      navigate(`/projects/${projectId}`);
-    } else {
-      navigate("/projects");
-    }
-  };
 
   const resetForm = () => {
     setForm({
@@ -791,56 +957,369 @@ export function SubProjectDetails({ onBack }: SubProjectDetailsProps) {
 
         <TabsContent value="overview" className="pt-6">
           <div className="space-y-6">
-            <Card className="flex   border-0   drop-shadow-sm shadow-gray-50 ">
-              <CardContent className="p-6 ">
-                <h3 className="mb-4">Key Metrics</h3>
+            {/* Overview Filters */}
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Time Period */}
+                <Select value={timePreset} onValueChange={onTimePresetChange}>
+                  <SelectTrigger className="w-[200px] bg-white p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                    <SelectValue placeholder="Time Period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all-period">All Period</SelectItem>
+                    <SelectItem value="last-7-days">Last 7 days</SelectItem>
+                    <SelectItem value="last-30-days">Last 30 days</SelectItem>
+                    <SelectItem value="last-90-days">Last 90 days</SelectItem>
+                  </SelectContent>
+                </Select>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-                  <div className="space-y-1 bg-[#B1E3FF] p-4 rounded-lg h-28">
-                    <div className="text-muted-foreground text-sm">
-                      Activities
-                    </div>
-                    <div className="text-2xl font-medium">
-                      {enhancedSubProject.activities}
-                    </div>
-                    <div className="text-muted-foreground text-sm">
-                      Total activities
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowMoreLocal((s) => !s)}
+                  className="bg-[#E0F2FE] text-black border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  {showMoreLocal ? "Hide Filters" : "More Filters"}
+                </Button>
+              </div>
+
+              {showMoreLocal && (
+                <div className="mt-1 p-3 rounded-md bg-white/60 border border-gray-100">
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Metric */}
+                    <Select
+                      value={metricLocal}
+                      onValueChange={(v) => setMetricLocal(v as any)}
+                    >
+                      <SelectTrigger className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                        <SelectValue placeholder="Metric" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="submissions">Submissions</SelectItem>
+                        <SelectItem value="serviceDeliveries">
+                          Service Deliveries
+                        </SelectItem>
+                        <SelectItem value="uniqueBeneficiaries">
+                          Unique Beneficiaries
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {/* Service */}
+                    <Select
+                      value={(serviceIdLocal ?? "all") as string}
+                      onValueChange={(v) => {
+                        const id = v === "all" ? "" : v;
+                        setServiceIdLocal(id || undefined);
+                      }}
+                    >
+                      <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                        <SelectValue placeholder="Service" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Services</SelectItem>
+                        {(servicesOptions || []).map((s: any) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Form Template */}
+                    <Select
+                      value={(formTemplateIdLocal ?? "all") as string}
+                      onValueChange={(v) => {
+                        const id = v === "all" ? "" : v;
+                        setFormTemplateIdLocal(id || undefined);
+                      }}
+                    >
+                      <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                        <SelectValue placeholder="Form Template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Templates</SelectItem>
+                        {(templatesOptions || []).map((t: any) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Granularity dropdown */}
+                    <div className="relative">
+                      <button
+                        onClick={() => setFiltersOpen((s) => !s)}
+                        className="px-3 py-1.5 rounded-md text-sm bg-blue-200 text-blue-600 hover:bg-blue-200/30 flex items-center gap-2"
+                      >
+                        <span>
+                          Granularity:{" "}
+                          <span className="capitalize font-medium">
+                            {granularity}
+                          </span>
+                        </span>
+                        <svg
+                          className="h-4 w-4"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5.23 7.21a.75.75 0 011.06.02L10 11.086l3.71-3.854a.75.75 0 111.08 1.04l-4.24 4.4a.75.75 0 01-1.08 0l-4.24-4.4a.75.75 0 01.02-1.06z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                      {filtersOpen && (
+                        <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-10">
+                          <ul className="py-1">
+                            {["day", "week", "month", "quarter", "year"].map(
+                              (g) => (
+                                <li key={g}>
+                                  <button
+                                    onClick={() => {
+                                      applyGranularity(g as TimeUnit);
+                                      setFiltersOpen(false);
+                                    }}
+                                    className={[
+                                      "w-full text-left px-3 py-2 text-sm rounded-md capitalize transition-transform duration-200 ease-in-out",
+                                      granularity === (g as TimeUnit)
+                                        ? "bg-[#E5ECF6] text-gray-900 scale-[1.02] -translate-y-[1px]"
+                                        : "hover:bg-gray-50 hover:scale-[1.02] hover:-translate-y-[1px]",
+                                    ].join(" ")}
+                                  >
+                                    {g}
+                                  </button>
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   </div>
+                </div>
+              )}
+            </div>
 
-                  <div className="space-y-1 bg-[#B1E3FF] p-4 rounded-lg h-28">
-                    <div className="text-muted-foreground text-sm">
-                      Beneficiaries
+            {/* Dynamic Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-[#E3F5FF] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm">Service Deliveries</div>
+                    <div className="text-2xl">
+                      {summaryState.loading
+                        ? "…"
+                        : (
+                            summaryState.data?.totalDeliveries ?? 0
+                          ).toLocaleString()}
                     </div>
-                    <div className="text-2xl font-medium">
-                      {enhancedSubProject.beneficiaries}
-                    </div>
-                    <div className="text-muted-foreground text-sm">
-                      Registered individuals
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <TrendingUp className="h-3 w-3 mr-1 text-green-500" />{" "}
+                      Snapshot
                     </div>
                   </div>
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </div>
 
-                  <div className="space-y-1 bg-[#B1E3FF] p-4 rounded-lg h-28">
-                    <div className="text-muted-foreground text-sm">Forms</div>
-                    <div className="text-2xl font-medium">
-                      {enhancedSubProject.forms}
+              <div className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm">Unique Beneficiaries</div>
+                    <div className="text-2xl">
+                      {summaryState.loading
+                        ? "…"
+                        : (
+                            summaryState.data?.uniqueBeneficiaries ?? 0
+                          ).toLocaleString()}
                     </div>
-                    <div className="text-muted-foreground text-sm">
-                      Submissions collected
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <TrendingUp className="h-3 w-3 mr-1 text-green-500" />{" "}
+                      Snapshot
                     </div>
                   </div>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </div>
 
-                  <div className="space-y-1 bg-[#B1E3FF] p-4 rounded-lg h-28">
-                    <div className="text-muted-foreground text-sm">
-                      Services
+              <div className="bg-[#E3F5FF] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm">Unique Staff</div>
+                    <div className="text-2xl">
+                      {summaryState.loading
+                        ? "…"
+                        : (
+                            summaryState.data?.uniqueStaff ?? 0
+                          ).toLocaleString()}
                     </div>
-                    <div className="text-2xl font-medium">
-                      {enhancedSubProject.services}
-                    </div>
-                    <div className="text-muted-foreground text-sm">
-                      Services delivered
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <TrendingDown className="h-3 w-3 mr-1 text-red-500" />{" "}
+                      Snapshot
                     </div>
                   </div>
+                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </div>
+
+              <div className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm">Unique Services</div>
+                    <div className="text-2xl">
+                      {summaryState.loading
+                        ? "…"
+                        : (
+                            summaryState.data?.uniqueServices ?? 0
+                          ).toLocaleString()}
+                    </div>
+                    <div className="flex items-center text-xs text-muted-foreground">
+                      <TrendingUp className="h-3 w-3 mr-1 text-green-500" />{" "}
+                      Snapshot
+                    </div>
+                  </div>
+                  <FolderKanban className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </div>
+            </div>
+
+            {/* Series Chart */}
+            <Card className="bg-[#F7F9FB] drop-shadow-md shadow-gray-50 border-0">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    <h4>Subproject Activity Overview</h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant={chartType === "line" ? "default" : "outline"}
+                      onClick={() => setChartType("line")}
+                      className="px-2"
+                    >
+                      Line
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={chartType === "bar" ? "default" : "outline"}
+                      onClick={() => setChartType("bar")}
+                      className="px-2"
+                    >
+                      Bar
+                    </Button>
+                  </div>
+                </div>
+                <div className="h-64 mt-4">
+                  {seriesState.loading ? (
+                    <div className="h-full w-full flex items-center justify-center text-sm text-gray-600">
+                      Loading…
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart
+                        data={(seriesState.items || []).map((it: any) => ({
+                          name: formatLabel(it.periodStart),
+                          value: it.count,
+                        }))}
+                        barCategoryGap="25%"
+                        barGap={2}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <defs>
+                          <linearGradient
+                            id="subprojAreaFill"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="#3b82f6"
+                              stopOpacity={0.25}
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor="#3b82f6"
+                              stopOpacity={0}
+                            />
+                          </linearGradient>
+                          <linearGradient
+                            id="subprojBarFill"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="#3b82f6"
+                              stopOpacity={0.95}
+                            />
+                            <stop
+                              offset="60%"
+                              stopColor="#3b82f6"
+                              stopOpacity={0.68}
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor="#3b82f6"
+                              stopOpacity={0.26}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis
+                          dataKey="name"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: "#6b7280" }}
+                        />
+                        <YAxis
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: "#6b7280" }}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "#fff",
+                            border: "1px solid #e5e7eb",
+                            borderRadius: "0.5rem",
+                          }}
+                        />
+                        {chartType === "line" ? (
+                          <>
+                            <Area
+                              type="monotone"
+                              dataKey="value"
+                              stroke="none"
+                              fill="url(#subprojAreaFill)"
+                              fillOpacity={1}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="value"
+                              stroke="#3b82f6"
+                              strokeWidth={2}
+                              dot={false}
+                              activeDot={{ r: 6, fill: "#3b82f6" }}
+                            />
+                          </>
+                        ) : (
+                          <Bar
+                            dataKey="value"
+                            fill="url(#subprojBarFill)"
+                            barSize={100}
+                            radius={[6, 6, 0, 0]}
+                          />
+                        )}
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
               </CardContent>
             </Card>

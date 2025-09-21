@@ -117,7 +117,11 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     const now = new Date();
     const end = new Date(now);
     const start = new Date(now);
-    if (value === "last-7-days") start.setDate(now.getDate() - 7);
+    if (value === "all-period") {
+      // Clear dates entirely so queries omit fromDate/toDate
+      dispatch(setFilters({ startDate: undefined, endDate: undefined }));
+      return;
+    } else if (value === "last-7-days") start.setDate(now.getDate() - 7);
     else if (value === "last-30-days") start.setDate(now.getDate() - 30);
     else if (value === "last-90-days") start.setDate(now.getDate() - 90);
     else return; // ignore custom here; handled elsewhere if needed
@@ -207,6 +211,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                 <SelectValue placeholder="Time Period" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all-period">All Period</SelectItem>
                 <SelectItem value="last-7-days">Last 7 days</SelectItem>
                 <SelectItem value="last-30-days">Last 30 days</SelectItem>
                 <SelectItem value="last-90-days">Last 90 days</SelectItem>
