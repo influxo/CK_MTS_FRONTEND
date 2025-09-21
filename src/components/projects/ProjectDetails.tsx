@@ -515,6 +515,26 @@ export function ProjectDetails() {
     setEndDate(end.toISOString());
   };
 
+  // Reset local filters when navigating to a different project
+  useEffect(() => {
+    // Clear entity selection overrides
+    setSelectedSubProjectId("");
+    // Reset filter values to their defaults
+    setServiceIdLocal(undefined);
+    setFormTemplateIdLocal(undefined);
+    setMetricLocal("submissions");
+    setGranularity("week");
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setTimePreset("all-period");
+    // Close filter UIs and clear custom range inputs
+    setFiltersOpen(false);
+    setCustomOpen(false);
+    setCustomFrom("");
+    setCustomTo("");
+    setShowMoreLocal(false);
+  }, [id]);
+
   // Load templates once
   useEffect(() => {
     (async () => {

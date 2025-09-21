@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { BeneficiaryDemographics } from "../components/dashboard/BeneficiaryDemographics";
 import { FilterControls } from "../components/dashboard/FilterControls";
@@ -15,6 +15,7 @@ import { selectCurrentUser } from "../store/slices/authSlice";
 import {
   fetchDeliveriesSeries,
   fetchDeliveriesSummary,
+  resetFilters,
   selectMetricsFilters,
 } from "../store/slices/serviceMetricsSlice";
 import { fetchUserProjectsByUserId } from "../store/slices/userProjectsSlice";
@@ -24,6 +25,7 @@ export function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(selectCurrentUser);
   const metricsFilters = useSelector(selectMetricsFilters);
+  const didResetRef = useRef(false);
 
   const projects = useSelector(selectAllProjects);
 
@@ -63,6 +65,12 @@ export function Dashboard() {
 
   // Load service delivery metrics (summary + series)
   useEffect(() => {
+    // On first run after mount, reset filters and skip fetching to avoid sending stale params
+    if (!didResetRef.current) {
+      didResetRef.current = true;
+      dispatch(resetFilters());
+      return;
+    }
     if (!user) return; // wait until user profile is available to determine role filters
     const base = metricsFilters || ({} as any);
     const filters =
