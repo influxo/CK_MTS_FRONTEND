@@ -20,7 +20,12 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from "sonner";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -181,7 +186,7 @@ export function ProjectDetails() {
   const employeeError = useSelector(selectEmployeesError);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedSubProjectId, setSelectedSubProjectId] = useState<string>("")
+  const [selectedSubProjectId, setSelectedSubProjectId] = useState<string>("");
 
   // Create Beneficiary dialog state and form
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -312,6 +317,20 @@ export function ProjectDetails() {
   const byEntityLoading = useSelector(selectBeneficiariesByEntityLoading);
   const byEntityError = useSelector(selectBeneficiariesByEntityError);
   const byEntityMeta = useSelector(selectBeneficiariesByEntityPagination);
+
+  // Ensure beneficiaries are fetched when the Beneficiaries tab is activated
+  useEffect(() => {
+    if (id) {
+      dispatch(
+        fetchBeneficiariesByEntity({
+          entityId: id,
+          entityType: "project",
+          page: 1,
+          limit: 20,
+        })
+      );
+    }
+  }, [id, dispatch]);
 
   // Create/associate selectors
   const createLoading = useSelector(selectBeneficiaryIsLoading);
@@ -499,12 +518,15 @@ export function ProjectDetails() {
       );
     }
   }, [dispatch, id]);
+  console.log("subprojects", subprojects.length);
 
   // Load services assigned to the effective entity (project or subproject)
   useEffect(() => {
     (async () => {
       if (!id) return;
-      const effectiveEntityType = selectedSubProjectId ? "subproject" : "project";
+      const effectiveEntityType = selectedSubProjectId
+        ? "subproject"
+        : "project";
       const effectiveEntityId = selectedSubProjectId || id;
       const res = await servicesService.getEntityServices({
         entityId: effectiveEntityId,
@@ -1158,7 +1180,7 @@ export function ProjectDetails() {
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                    <span>{enhancedProject.subProjects} Sub-projects</span>
+                    <span>{subprojects.length} Sub-projects</span>
                   </div>
                 </div>
 
@@ -1168,7 +1190,10 @@ export function ProjectDetails() {
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>{enhancedProject.beneficiaries} Beneficiaries</span>
+                    <span>
+                      {(byEntityMeta.totalItems ?? 0).toLocaleString()}{" "}
+                      Beneficiaries
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1303,9 +1328,15 @@ export function ProjectDetails() {
                           <SelectValue placeholder="Metric" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="submissions">Submissions</SelectItem>
-                          <SelectItem value="serviceDeliveries">Service Deliveries</SelectItem>
-                          <SelectItem value="uniqueBeneficiaries">Unique Beneficiaries</SelectItem>
+                          <SelectItem value="submissions">
+                            Submissions
+                          </SelectItem>
+                          <SelectItem value="serviceDeliveries">
+                            Service Deliveries
+                          </SelectItem>
+                          <SelectItem value="uniqueBeneficiaries">
+                            Unique Beneficiaries
+                          </SelectItem>
                         </SelectContent>
                       </Select>
 
@@ -1358,31 +1389,46 @@ export function ProjectDetails() {
                           className="px-3 py-1.5 rounded-md text-sm bg-blue-200 text-blue-600 hover:bg-blue-200/30 flex items-center gap-2"
                         >
                           <span>
-                            Granularity: {" "}
-                            <span className="capitalize font-medium">{granularity}</span>
+                            Granularity:{" "}
+                            <span className="capitalize font-medium">
+                              {granularity}
+                            </span>
                           </span>
-                          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.086l3.71-3.854a.75.75 0 111.08 1.04l-4.24 4.4a.75.75 0 01-1.08 0l-4.24-4.4a.75.75 0 01.02-1.06z" clipRule="evenodd"/></svg>
+                          <svg
+                            className="h-4 w-4"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M5.23 7.21a.75.75 0 011.06.02L10 11.086l3.71-3.854a.75.75 0 111.08 1.04l-4.24 4.4a.75.75 0 01-1.08 0l-4.24-4.4a.75.75 0 01.02-1.06z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
                         </button>
                         {filtersOpen && (
                           <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-10">
                             <ul className="py-1">
-                              {["day","week","month","quarter","year"].map((g) => (
-                                <li key={g}>
-                                  <button
-                                    onClick={() => {
-                                      applyGranularity(g as TimeUnit);
-                                      setFiltersOpen(false);
-                                    }}
-                                    className={["w-full text-left px-3 py-2 text-sm rounded-md capitalize transition-transform duration-200 ease-in-out",
-                                      granularity === (g as TimeUnit)
-                                        ? "bg-[#E5ECF6] text-gray-900 scale-[1.02] -translate-y-[1px]"
-                                        : "hover:bg-gray-50 hover:scale-[1.02] hover:-translate-y-[1px]",
-                                    ].join(" ")}
-                                  >
-                                    {g}
-                                  </button>
-                                </li>
-                              ))}
+                              {["day", "week", "month", "quarter", "year"].map(
+                                (g) => (
+                                  <li key={g}>
+                                    <button
+                                      onClick={() => {
+                                        applyGranularity(g as TimeUnit);
+                                        setFiltersOpen(false);
+                                      }}
+                                      className={[
+                                        "w-full text-left px-3 py-2 text-sm rounded-md capitalize transition-transform duration-200 ease-in-out",
+                                        granularity === (g as TimeUnit)
+                                          ? "bg-[#E5ECF6] text-gray-900 scale-[1.02] -translate-y-[1px]"
+                                          : "hover:bg-gray-50 hover:scale-[1.02] hover:-translate-y-[1px]",
+                                      ].join(" ")}
+                                    >
+                                      {g}
+                                    </button>
+                                  </li>
+                                )
+                              )}
                             </ul>
                           </div>
                         )}
@@ -1396,7 +1442,9 @@ export function ProjectDetails() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Card className="bg-[#E3F5FF] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm">Service Deliveries</CardTitle>
+                    <CardTitle className="text-sm">
+                      Service Deliveries
+                    </CardTitle>
                     <BarChart3 className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
@@ -1405,37 +1453,45 @@ export function ProjectDetails() {
                         <div className="text-2xl">
                           {summaryState.loading
                             ? "…"
-                            : (summaryState.data?.totalDeliveries ?? 0).toLocaleString()}
+                            : (
+                                summaryState.data?.totalDeliveries ?? 0
+                              ).toLocaleString()}
                         </div>
                         <div className="flex items-center text-xs text-muted-foreground">
                           <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
                           Snapshot
                         </div>
                       </div>
-                      <Badge variant="secondary" className="text-black">Live</Badge>
+                      <Badge variant="secondary" className="text-black">
+                        Live
+                      </Badge>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm">Unique Beneficiaries</CardTitle>
+                    <CardTitle className="text-sm">
+                      Unique Beneficiaries
+                    </CardTitle>
                     <Users className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-2xl">
-                          {summaryState.loading
+                          {byEntityLoading
                             ? "…"
-                            : (summaryState.data?.uniqueBeneficiaries ?? 0).toLocaleString()}
+                            : (byEntityMeta.totalItems ?? 0).toLocaleString()}
                         </div>
                         <div className="flex items-center text-xs text-muted-foreground">
                           <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
                           Snapshot
                         </div>
                       </div>
-                      <Badge variant="secondary" className="text-black">Live</Badge>
+                      <Badge variant="secondary" className="text-black">
+                        Live
+                      </Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -1451,14 +1507,18 @@ export function ProjectDetails() {
                         <div className="text-2xl">
                           {summaryState.loading
                             ? "…"
-                            : (summaryState.data?.uniqueStaff ?? 0).toLocaleString()}
+                            : (
+                                summaryState.data?.uniqueStaff ?? 0
+                              ).toLocaleString()}
                         </div>
                         <div className="flex items-center text-xs text-muted-foreground">
                           <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
                           Snapshot
                         </div>
                       </div>
-                      <Badge variant="secondary" className="text-black">Live</Badge>
+                      <Badge variant="secondary" className="text-black">
+                        Live
+                      </Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -1474,14 +1534,18 @@ export function ProjectDetails() {
                         <div className="text-2xl">
                           {summaryState.loading
                             ? "…"
-                            : (summaryState.data?.uniqueServices ?? 0).toLocaleString()}
+                            : (
+                                summaryState.data?.uniqueServices ?? 0
+                              ).toLocaleString()}
                         </div>
                         <div className="flex items-center text-xs text-muted-foreground">
                           <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
                           Snapshot
                         </div>
                       </div>
-                      <Badge variant="secondary" className="text-black">Live</Badge>
+                      <Badge variant="secondary" className="text-black">
+                        Live
+                      </Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -1533,27 +1597,95 @@ export function ProjectDetails() {
                           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                         >
                           <defs>
-                            <linearGradient id="projAreaFill" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
-                              <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                            <linearGradient
+                              id="projAreaFill"
+                              x1="0"
+                              y1="0"
+                              x2="0"
+                              y2="1"
+                            >
+                              <stop
+                                offset="0%"
+                                stopColor="#3b82f6"
+                                stopOpacity={0.25}
+                              />
+                              <stop
+                                offset="100%"
+                                stopColor="#3b82f6"
+                                stopOpacity={0}
+                              />
                             </linearGradient>
-                            <linearGradient id="projBarFill" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.95} />
-                              <stop offset="60%" stopColor="#3b82f6" stopOpacity={0.68} />
-                              <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.26} />
+                            <linearGradient
+                              id="projBarFill"
+                              x1="0"
+                              y1="0"
+                              x2="0"
+                              y2="1"
+                            >
+                              <stop
+                                offset="0%"
+                                stopColor="#3b82f6"
+                                stopOpacity={0.95}
+                              />
+                              <stop
+                                offset="60%"
+                                stopColor="#3b82f6"
+                                stopOpacity={0.68}
+                              />
+                              <stop
+                                offset="100%"
+                                stopColor="#3b82f6"
+                                stopOpacity={0.26}
+                              />
                             </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#6b7280" }} />
-                          <YAxis axisLine={false} tickLine={false} tick={{ fill: "#6b7280" }} />
-                          <Tooltip contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "0.5rem" }} />
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+                          <XAxis
+                            dataKey="name"
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: "#6b7280" }}
+                          />
+                          <YAxis
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: "#6b7280" }}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "#fff",
+                              border: "1px solid #e5e7eb",
+                              borderRadius: "0.5rem",
+                            }}
+                          />
                           {chartType === "line" ? (
                             <>
-                              <Area type="monotone" dataKey="value" stroke="none" fill="url(#projAreaFill)" fillOpacity={1} />
-                              <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={false} activeDot={{ r: 6, fill: "#3b82f6" }} />
+                              <Area
+                                type="monotone"
+                                dataKey="value"
+                                stroke="none"
+                                fill="url(#projAreaFill)"
+                                fillOpacity={1}
+                              />
+                              <Line
+                                type="monotone"
+                                dataKey="value"
+                                stroke="#3b82f6"
+                                strokeWidth={2}
+                                dot={false}
+                                activeDot={{ r: 6, fill: "#3b82f6" }}
+                              />
                             </>
                           ) : (
-                            <Bar dataKey="value" fill="url(#projBarFill)" barSize={100} radius={[6, 6, 0, 0]} />
+                            <Bar
+                              dataKey="value"
+                              fill="url(#projBarFill)"
+                              barSize={100}
+                              radius={[6, 6, 0, 0]}
+                            />
                           )}
                         </ComposedChart>
                       </ResponsiveContainer>

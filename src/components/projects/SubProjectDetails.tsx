@@ -416,7 +416,7 @@ export function SubProjectDetails() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (activeTab === "beneficiaries" && subprojectId) {
+    if (subprojectId) {
       dispatch(
         fetchBeneficiariesByEntity({
           entityId: subprojectId,
@@ -426,7 +426,7 @@ export function SubProjectDetails() {
         })
       );
     }
-  }, [activeTab, subprojectId, dispatch]);
+  }, [subprojectId, dispatch]);
 
   // Fetch beneficiaries list when Add dialog is open and tab is "existing"
   useEffect(() => {
@@ -879,7 +879,8 @@ export function SubProjectDetails() {
                   <div className="flex items-center gap-1 mt-1">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {enhancedSubProject.beneficiaries} Beneficiaries
+                      {(subBeneficiariesMeta.totalItems ?? 0).toLocaleString()}{" "}
+                      Beneficiaries
                     </span>
                   </div>
                 </div>
