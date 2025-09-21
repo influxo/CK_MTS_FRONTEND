@@ -17,7 +17,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store";
 import {
@@ -32,6 +32,12 @@ import {
   clearBeneficiaryMessages,
   associateBeneficiaryToEntities,
   selectBeneficiaryAssociateLoading,
+  fetchBeneficiariesByEntity,
+  selectBeneficiariesByEntity,
+  selectBeneficiariesByEntityLoading,
+  selectBeneficiariesByEntityError,
+  selectBeneficiariesPagination,
+  selectBeneficiariesByEntityPagination,
 } from "../../store/slices/beneficiarySlice";
 import { fetchProjects } from "../../store/slices/projectsSlice";
 import { fetchAllSubProjects } from "../../store/slices/subProjectSlice";
@@ -243,42 +249,22 @@ const mockBeneficiaries = [
   },
 ];
 
-// Mock data for projects
-const mockProjects = [
-  {
-    id: "proj-001",
-    title: "Rural Healthcare Initiative",
-    subProjects: [
-      { id: "sub-001", title: "Maternal Health Services" },
-      { id: "sub-002", title: "Child Vaccination Campaign" },
-      { id: "sub-004", title: "Nutrition Support" },
-    ],
-  },
-  {
-    id: "proj-002",
-    title: "Community Development",
-    subProjects: [
-      { id: "sub-003", title: "Water Access Program" },
-      { id: "sub-005", title: "Food Security Initiative" },
-    ],
-  },
-  {
-    id: "proj-003",
-    title: "Youth Empowerment Program",
-    subProjects: [
-      { id: "sub-006", title: "Education Support" },
-      { id: "sub-007", title: "Skills Training" },
-    ],
-  },
-];
+// (Removed unused mockProjects in favor of real projects from Redux)
 
 export function BeneficiariesList({
   onBeneficiarySelect,
 }: BeneficiariesListProps) {
   const dispatch = useDispatch<AppDispatch>();
-  const beneficiaries = useSelector(selectBeneficiaries);
-  const listLoading = useSelector(selectBeneficiariesLoading);
-  const listError = useSelector(selectBeneficiariesError);
+  // Global list selectors
+  const allBeneficiaries = useSelector(selectBeneficiaries);
+  const allListLoading = useSelector(selectBeneficiariesLoading);
+  const allListError = useSelector(selectBeneficiariesError);
+  const allPagination = useSelector(selectBeneficiariesPagination);
+  // By-entity list selectors
+  const byEntityBeneficiaries = useSelector(selectBeneficiariesByEntity);
+  const byEntityListLoading = useSelector(selectBeneficiariesByEntityLoading);
+  const byEntityListError = useSelector(selectBeneficiariesByEntityError);
+  const byEntityPagination = useSelector(selectBeneficiariesByEntityPagination);
   // create state
   const createLoading = useSelector(selectBeneficiaryIsLoading);
   const createError = useSelector(selectBeneficiaryError);
@@ -287,8 +273,12 @@ export function BeneficiariesList({
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [projectFilter, setProjectFilter] = useState("all");
+  const [filterProjectId, setFilterProjectId] = useState("all");
+  const [filterSubProjectId, setFilterSubProjectId] = useState("all");
   const [tagFilter, setTagFilter] = useState("all");
+  // pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedBeneficiaries, setSelectedBeneficiaries] = useState<string[]>(
     []
@@ -331,6 +321,14 @@ export function BeneficiariesList({
     }
     return map;
   }, [subprojects]);
+
+  const subprojectsForSelectedProject = useMemo(
+    () =>
+      filterProjectId !== "all"
+        ? subprojectsByProjectId[filterProjectId] || []
+        : [],
+    [filterProjectId, subprojectsByProjectId]
+  );
 
   // Form state for creating a beneficiary
   const [form, setForm] = useState<CreateBeneficiaryRequest>({
@@ -405,10 +403,62 @@ export function BeneficiariesList({
     setSelectedSubProjects([]);
   };
 
-  // Kick off loading of beneficiaries
+  // Decide which source is active
+  const isEntityMode =
+    filterSubProjectId !== "all" || filterProjectId !== "all";
+  const activePagination = isEntityMode ? byEntityPagination : allPagination;
+  const listLoading = isEntityMode ? byEntityListLoading : allListLoading;
+  const listError = isEntityMode ? byEntityListError : allListError;
+
+  // Loader based on filters and pagination
+  const loadBeneficiaries = useCallback(() => {
+    const statusParam =
+      statusFilter === "all"
+        ? undefined
+        : (statusFilter as "active" | "inactive");
+    if (filterSubProjectId !== "all") {
+      dispatch(
+        fetchBeneficiariesByEntity({
+          entityId: filterSubProjectId,
+          entityType: "subproject",
+          status: statusParam,
+          page,
+          limit,
+        })
+      );
+      return;
+    }
+    if (filterProjectId !== "all") {
+      dispatch(
+        fetchBeneficiariesByEntity({
+          entityId: filterProjectId,
+          entityType: "project",
+          status: statusParam,
+          page,
+          limit,
+        })
+      );
+      return;
+    }
+    dispatch(
+      fetchBeneficiaries({
+        status: statusParam,
+        page,
+        limit,
+      })
+    );
+  }, [
+    dispatch,
+    filterProjectId,
+    filterSubProjectId,
+    statusFilter,
+    page,
+    limit,
+  ]);
+
   useEffect(() => {
-    dispatch(fetchBeneficiaries(undefined));
-  }, [dispatch]);
+    loadBeneficiaries();
+  }, [loadBeneficiaries]);
 
   // Load projects & subprojects for association selection
   useEffect(() => {
@@ -422,14 +472,15 @@ export function BeneficiariesList({
       setIsAddDialogOpen(false);
       resetForm();
       // refresh list and clear messages
-      dispatch(fetchBeneficiaries(undefined));
+      loadBeneficiaries();
       dispatch(clearBeneficiaryMessages());
     }
-  }, [createSuccess, associateLoading, dispatch]);
+  }, [createSuccess, associateLoading, dispatch, loadBeneficiaries]);
 
   // Build a simple view model from API data for table rendering
+  const rawList = isEntityMode ? byEntityBeneficiaries : allBeneficiaries;
   const list = useMemo(() => {
-    return beneficiaries.map((b) => {
+    return rawList.map((b) => {
       const pii = (b as any).pii || ({} as any);
       const firstName: string = pii.firstName || "";
       const lastName: string = pii.lastName || "";
@@ -454,7 +505,7 @@ export function BeneficiariesList({
         address: pii.address || "",
       };
     });
-  }, [beneficiaries]);
+  }, [rawList]);
 
   // Filter list by search/status (project/tag filters are placeholders)
   const filteredBeneficiaries = useMemo(() => {
@@ -470,11 +521,29 @@ export function BeneficiariesList({
         b.email.toLowerCase().includes(q);
 
       const matchesStatus = statusFilter === "all" || b.status === statusFilter;
-      const matchesProject = projectFilter === "all"; // no-op for now
-      const matchesTag = tagFilter === "all"; // no-op for now
-      return matchesSearch && matchesStatus && matchesProject && matchesTag;
+      const matchesTag = tagFilter === "all"; // placeholder
+      return matchesSearch && matchesStatus && matchesTag;
     });
-  }, [list, searchQuery, statusFilter, projectFilter, tagFilter]);
+  }, [list, searchQuery, statusFilter, tagFilter]);
+
+  // Numbered pagination builder (compact with ellipsis)
+  const pageTokens = useMemo(() => {
+    const total = Math.max(activePagination.totalPages || 1, 1);
+    const current = Math.min(Math.max(activePagination.page || 1, 1), total);
+    const tokens: Array<number | string> = [];
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) tokens.push(i);
+      return tokens;
+    }
+    const left = Math.max(2, current - 1);
+    const right = Math.min(total - 1, current + 1);
+    tokens.push(1);
+    if (left > 2) tokens.push("left-ellipsis");
+    for (let i = left; i <= right; i++) tokens.push(i);
+    if (right < total - 1) tokens.push("right-ellipsis");
+    tokens.push(total);
+    return tokens;
+  }, [activePagination]);
 
   // Unique tags for advanced filter mock (using mockBeneficiaries)
   const uniqueTags = Array.from(
@@ -1189,7 +1258,13 @@ export function BeneficiariesList({
             />
           </div>
           <div className="flex gap-3">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={(val) => {
+                setStatusFilter(val);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[130px] bg-black/5 border-0 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
@@ -1200,20 +1275,65 @@ export function BeneficiariesList({
                 <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={projectFilter} onValueChange={setProjectFilter}>
-              <SelectTrigger className="w-[180px] bg-black/5 border-0 text-black">
+            <Select
+              value={filterProjectId}
+              onValueChange={(val) => {
+                setFilterProjectId(val);
+                // Reset subproject when project changes
+                setFilterSubProjectId("all");
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[220px] bg-black/5 border-0 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Projects</SelectItem>
-                {mockProjects.map((project) => (
-                  <SelectItem key={project.id} value={project.title}>
-                    {project.title}
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+
+            <Select
+              value={filterSubProjectId}
+              onValueChange={(val) => {
+                setFilterSubProjectId(val);
+                setPage(1);
+              }}
+              disabled={filterProjectId === "all"}
+            >
+              <SelectTrigger className="w-[240px] bg-black/5 border-0 text-black">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Subproject" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subprojects</SelectItem>
+                {subprojectsForSelectedProject.map((sp) => (
+                  <SelectItem key={sp.id} value={sp.id}>
+                    {sp.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="bg-black/5 border-0 text-black"
+              onClick={() => setShowAdvancedFilters((v) => !v)}
+              title={
+                showAdvancedFilters
+                  ? "Hide advanced filters"
+                  : "Show advanced filters"
+              }
+            >
+              <SlidersHorizontal className="h-4 w-4 mr-2" />
+              {showAdvancedFilters ? "Advanced Off" : "Advanced"}
+            </Button>
           </div>
         </div>
         <div className="flex gap-3 rounded-[-15px] bg-[rgba(255,0,0,0)]">
@@ -1477,11 +1597,90 @@ export function BeneficiariesList({
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        {/* <div className="text-sm text-muted-foreground">
-          Showing {filteredBeneficiaries.length} of {beneficiaries.length}{" "}
-          beneficiaries
-        </div> */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>
+            Page {activePagination.page} of{" "}
+            {Math.max(activePagination.totalPages || 1, 1)}
+          </span>
+          <span className="hidden sm:inline">
+            • Total {activePagination.totalItems} records
+          </span>
+          <div className="flex items-center gap-2 ml-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={listLoading || activePagination.page <= 1}
+              className="bg-white"
+            >
+              Prev
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={
+                listLoading ||
+                activePagination.totalPages === 0 ||
+                activePagination.page >= activePagination.totalPages
+              }
+              className="bg-white"
+            >
+              Next
+            </Button>
+            <div className="flex items-center gap-1 ml-2">
+              {pageTokens.map((tok, idx) =>
+                typeof tok === "number" ? (
+                  <Button
+                    key={`p-${tok}`}
+                    variant="outline"
+                    size="sm"
+                    className={
+                      tok === activePagination.page
+                        ? "bg-[#2E343E] text-white border-0"
+                        : "bg-white"
+                    }
+                    onClick={() =>
+                      tok !== activePagination.page && setPage(tok)
+                    }
+                    disabled={listLoading}
+                    aria-current={
+                      tok === activePagination.page ? "page" : undefined
+                    }
+                  >
+                    {tok}
+                  </Button>
+                ) : (
+                  <span
+                    key={`${tok}-${idx}`}
+                    className="px-1 text-muted-foreground"
+                  >
+                    …
+                  </span>
+                )
+              )}
+            </div>
+            <Select
+              value={String(limit)}
+              onValueChange={(val) => {
+                const newLimit = parseInt(val, 10) || 20;
+                setLimit(newLimit);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[120px] bg-black/5 border-0 text-black">
+                <SelectValue placeholder="Rows" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10 / page</SelectItem>
+                <SelectItem value="20">20 / page</SelectItem>
+                <SelectItem value="50">50 / page</SelectItem>
+                <SelectItem value="100">100 / page</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         <div className="space-x-2">
           <Button
             variant="outline"
