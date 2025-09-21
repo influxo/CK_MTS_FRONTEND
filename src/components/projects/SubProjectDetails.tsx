@@ -216,6 +216,10 @@ export function SubProjectDetails() {
   const [templatesOptions, setTemplatesOptions] = useState<any[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [timePreset, setTimePreset] = useState<string>("all-period");
+  // Custom range controls (mirroring FormSubmissions)
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
 
   const onTimePresetChange = (value: string) => {
     setTimePreset(value);
@@ -239,6 +243,18 @@ export function SubProjectDetails() {
   };
 
   const applyGranularity = (g: TimeUnit) => setGranularity(g);
+
+  const onCustomApply = () => {
+    if (!customFrom || !customTo) return;
+    const from = new Date(customFrom);
+    const to = new Date(customTo);
+    from.setHours(0, 0, 0, 0);
+    to.setHours(23, 59, 59, 999);
+    setStartDate(from.toISOString());
+    setEndDate(to.toISOString());
+    setFiltersOpen(false);
+    setCustomOpen(false);
+  };
 
   // Label formatting helpers
   const dayFmt = new Intl.DateTimeFormat(undefined, {
@@ -1083,6 +1099,7 @@ export function SubProjectDetails() {
                                     onClick={() => {
                                       applyGranularity(g as TimeUnit);
                                       setFiltersOpen(false);
+                                      setCustomOpen(false);
                                     }}
                                     className={[
                                       "w-full text-left px-3 py-2 text-sm rounded-md capitalize transition-transform duration-200 ease-in-out",
@@ -1096,6 +1113,53 @@ export function SubProjectDetails() {
                                 </li>
                               )
                             )}
+                            <li className="my-1 border-t border-gray-100" />
+                            <li>
+                              <button
+                                onClick={() => setCustomOpen((s) => !s)}
+                                className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-50"
+                              >
+                                Custom range…
+                              </button>
+                              {customOpen && (
+                                <div className="px-3 pb-2">
+                                  <div className="grid grid-cols-1 gap-2">
+                                    <label className="text-xs text-gray-600">
+                                      From
+                                      <input
+                                        type="date"
+                                        className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                                        value={customFrom}
+                                        onChange={(e) => setCustomFrom(e.target.value)}
+                                      />
+                                    </label>
+                                    <label className="text-xs text-gray-600">
+                                      To
+                                      <input
+                                        type="date"
+                                        className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                                        value={customTo}
+                                        onChange={(e) => setCustomTo(e.target.value)}
+                                      />
+                                    </label>
+                                    <div className="flex justify-end gap-2 pt-1">
+                                      <button
+                                        onClick={() => setCustomOpen(false)}
+                                        className="px-3 py-1.5 rounded-md text-sm border border-gray-200"
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        onClick={onCustomApply}
+                                        className="px-3 py-1.5 rounded-md text-sm bg-black text-white"
+                                      >
+                                        Apply
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </li>
                           </ul>
                         </div>
                       )}
