@@ -46,6 +46,7 @@ type AggregatedItem = {
   description?: string;
   status?: string;
   projectName?: string; // for subprojects
+  projectId?: string; // for subprojects (to filter by parent project)
 };
 
 export function SubProjectSelection() {
@@ -53,6 +54,12 @@ export function SubProjectSelection() {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  // New: scope selector for showing All, Projects, or Subprojects
+  const [filterEntityType, setFilterEntityType] = useState<
+    "all" | "project" | "subproject"
+  >("all");
+  const [filterProjectId, setFilterProjectId] = useState<string>("all");
+  const [filterSubprojectId, setFilterSubprojectId] = useState<string>("all");
 
   const allProjects = useSelector(selectAllProjects);
   const allSubprojects = useSelector(selectAllSubprojects);
@@ -132,6 +139,7 @@ export function SubProjectSelection() {
         description: sp.description,
         status: sp.status,
         projectName: projectMap.get(sp.projectId)?.name,
+        projectId: sp.projectId,
       })
     );
 
@@ -140,13 +148,45 @@ export function SubProjectSelection() {
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return aggregated;
-    return aggregated.filter((item) =>
+    let list = aggregated;
+    // Apply entity filter first
+    if (filterEntityType === "project") {
+      if (filterProjectId === "all") {
+        // show only projects
+        list = list.filter((item) => item.type === "project");
+      } else {
+        // show the selected project and its subprojects
+        list = list.filter(
+          (item) =>
+            (item.type === "project" && item.id === filterProjectId) ||
+            (item.type === "subproject" && item.projectId === filterProjectId)
+        );
+      }
+    } else if (filterEntityType === "subproject") {
+      if (filterSubprojectId === "all") {
+        // show only subprojects
+        list = list.filter((item) => item.type === "subproject");
+      } else {
+        // show only the selected subproject
+        list = list.filter(
+          (item) => item.type === "subproject" && item.id === filterSubprojectId
+        );
+      }
+    }
+
+    if (!q) return list;
+    return list.filter((item) =>
       [item.name, item.description, item.projectName]
         .filter(Boolean)
         .some((v) => (v as string).toLowerCase().includes(q))
     );
-  }, [aggregated, searchQuery]);
+  }, [
+    aggregated,
+    searchQuery,
+    filterEntityType,
+    filterProjectId,
+    filterSubprojectId,
+  ]);
 
   const handleSelect = (item: AggregatedItem) => {
     if (item.type === "project") {
@@ -235,34 +275,62 @@ export function SubProjectSelection() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        {/* <Select value={projectFilter} onValueChange={setProjectFilter}> */}
-        <Select>
-          <SelectTrigger className="w-full sm:w-[200px] bg-black/5 border-0">
-            <SelectValue placeholder="Filter by project" />
+        {/* Show scope: All | Projects | Subprojects */}
+        <Select
+          value={filterEntityType}
+          onValueChange={(v) => {
+            setFilterEntityType(v as any);
+            // Reset the other selection when switching type
+            setFilterProjectId("all");
+            setFilterSubprojectId("all");
+          }}
+        >
+          <SelectTrigger className="w-full sm:w-[180px] bg-black/5 border-0">
+            <SelectValue placeholder="Show" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Projects</SelectItem>
-            {allowedProjects.map((project: any) => (
-              <SelectItem key={project.id} value={project.id}>
-                {project.name}
-              </SelectItem>
-            ))}
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="project">Project</SelectItem>
+            <SelectItem value="subproject">Subproject</SelectItem>
           </SelectContent>
         </Select>
-        {/* <Select value={locationFilter} onValueChange={setLocationFilter}> */}
-        <Select>
-          <SelectTrigger className="w-full sm:w-[150px] bg-black/5 border-0">
-            <SelectValue placeholder="Location" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Locations</SelectItem>
-            {/* {locations.map((location) => (
-              <SelectItem key={location} value={location}>
-                {location}
-              </SelectItem>
-            ))} */}
-          </SelectContent>
-        </Select>
+
+        {/* Project/Subproject picker */}
+        {filterEntityType === "project" ? (
+          <Select
+            value={filterProjectId}
+            onValueChange={(v) => setFilterProjectId(v)}
+          >
+            <SelectTrigger className="w-full sm:w-[220px] bg-black/5 border-0">
+              <SelectValue placeholder="Select project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
+              {allowedProjects.map((project: any) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : filterEntityType === "subproject" ? (
+          <Select
+            value={filterSubprojectId}
+            onValueChange={(v) => setFilterSubprojectId(v)}
+          >
+            <SelectTrigger className="w-full sm:w-[260px] bg-black/5 border-0">
+              <SelectValue placeholder="Select subproject" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Subprojects</SelectItem>
+              {(allowedSubprojects as any[]).map((sp: any) => (
+                <SelectItem key={sp.id} value={sp.id}>
+                  {sp.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
       </div>
 
       {/* Aggregated Table */}
