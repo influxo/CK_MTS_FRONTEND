@@ -34,7 +34,7 @@ import type {
 } from "../../services/services/serviceMetricsModels";
 import serviceMetricsService from "../../services/services/serviceMetricsService";
 import servicesService from "../../services/services/serviceServices";
-import formService from "../../services/forms/formService";
+import formTemplatesApi from "../../services/forms/formServices";
 import subProjectService from "../../services/subprojects/subprojectService";
 import type { Project } from "../../services/projects/projectModels";
 import { useSelector } from "react-redux";
@@ -154,6 +154,15 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
   const [customTo, setCustomTo] = React.useState<string>("");
   const [showMoreLocal, setShowMoreLocal] = React.useState<boolean>(false);
   const [chartType, setChartType] = React.useState<"line" | "bar">("line");
+  // Keep dropdowns open when paginating inside them
+  const [openServicesSelect, setOpenServicesSelect] = React.useState(false);
+  const [openTemplatesSelect, setOpenTemplatesSelect] = React.useState(false);
+  // Local pagination state for options
+  const [servicesPage, setServicesPage] = React.useState<number>(1);
+  const [servicesTotalPages, setServicesTotalPages] = React.useState<number>(1);
+  const [templatesPage, setTemplatesPage] = React.useState<number>(1);
+  const [templatesTotalPages, setTemplatesTotalPages] =
+    React.useState<number>(1);
 
   const dayFmt = new Intl.DateTimeFormat(undefined, {
     month: "short",
@@ -240,17 +249,6 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     setCustomOpen(false);
   };
 
-  // Initial load: inherit global filters for defaults
-  React.useEffect(() => {
-    // Load templates
-    (async () => {
-      const forms = await formService.getForms();
-      const templates = (forms?.data as any)?.templates || forms?.data || [];
-      setTemplatesOptions(templates || []);
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Resolve projectId from global subproject when needed
   React.useEffect(() => {
     const { entityId, entityType } = globalFilters as any;
@@ -288,6 +286,34 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     ? subprojectId
     : globalSubprojectId;
 
+  // Reset services pagination when scope changes (global vs project/subproject)
+  React.useEffect(() => {
+    setServicesPage(1);
+  }, [effectiveProjectId, effectiveSubprojectId]);
+
+  // Load templates with pagination based on effective entity context (scoped when applicable)
+  React.useEffect(() => {
+    (async () => {
+      const params: any = { page: templatesPage, limit: 100 };
+      if (effectiveSubprojectId) {
+        params.subprojectId = effectiveSubprojectId;
+        params.entityType = "subproject";
+      } else if (effectiveProjectId) {
+        params.projectId = effectiveProjectId;
+        params.entityType = "project";
+      }
+      const res = await formTemplatesApi.getFormTemplates(params);
+      if (res.success) {
+        const data: any = res.data || {};
+        setTemplatesOptions(data.templates || []);
+        setTemplatesTotalPages(Number(data.pagination?.totalPages || 1));
+      } else {
+        setTemplatesOptions([]);
+        setTemplatesTotalPages(1);
+      }
+    })();
+  }, [effectiveProjectId, effectiveSubprojectId, templatesPage]);
+
   // Fetch subprojects when effective project changes
   React.useEffect(() => {
     if (!effectiveProjectId) {
@@ -315,7 +341,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     setGranularityLocal(undefined);
   }, [globalFilters]);
 
-  // Fetch services when effective entity selection changes (local overrides take precedence, else global)
+  // Fetch services when effective entity selection changes (local overrides take precedence, else global) with pagination
   React.useEffect(() => {
     (async () => {
       const effectiveEntityType = effectiveSubprojectId
@@ -333,13 +359,19 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
           entityId: effectiveEntityId,
           entityType: effectiveEntityType,
         });
-        if (res.success) setServicesOptions(res.items || []);
+        if (res.success) {
+          setServicesOptions(res.items || []);
+          setServicesTotalPages(1);
+        }
       } else {
         const res = await servicesService.getAllServices({
-          page: 1,
+          page: servicesPage,
           limit: 100,
         });
-        if (res.success) setServicesOptions(res.items || []);
+        if (res.success) {
+          setServicesOptions(res.items || []);
+          setServicesTotalPages(Number((res as any).totalPages || 1));
+        }
       }
     })();
   }, [
@@ -347,6 +379,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     effectiveSubprojectId,
     globalFilters.entityId,
     globalFilters.entityType,
+    servicesPage,
   ]);
 
   // Build merged params from global + local overrides
@@ -620,12 +653,28 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
 
                   {/* Service (local override; inherits global if unset) */}
                   <Select
+                    open={openServicesSelect}
+                    onOpenChange={setOpenServicesSelect}
                     value={
                       (serviceIdLocal ??
                         globalFilters.serviceId ??
                         "all") as string
                     }
                     onValueChange={(v) => {
+                      if (v === "__svc_prev__" || v === "__svc_next__") {
+                        if (!effectiveProjectId && !effectiveSubprojectId) {
+                          const nextPage =
+                            v === "__svc_prev__"
+                              ? Math.max(1, servicesPage - 1)
+                              : Math.min(
+                                  servicesTotalPages || 1,
+                                  servicesPage + 1
+                                );
+                          setServicesPage(nextPage);
+                          setOpenServicesSelect(true);
+                        }
+                        return;
+                      }
                       const id = v === "all" ? "" : v;
                       setServiceIdLocal(id || undefined);
                     }}
@@ -640,17 +689,51 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                           {s.name}
                         </SelectItem>
                       ))}
+                      {/* Pagination controls for services when not scoped to entity */}
+                      {!effectiveProjectId && !effectiveSubprojectId && (
+                        <>
+                          <SelectItem
+                            value="__svc_prev__"
+                            disabled={servicesPage <= 1}
+                          >
+                            ◀ Prev Page
+                          </SelectItem>
+                          <SelectItem value="__svc_info__" disabled>
+                            Page {servicesPage} of {servicesTotalPages || 1}
+                          </SelectItem>
+                          <SelectItem
+                            value="__svc_next__"
+                            disabled={servicesPage >= (servicesTotalPages || 1)}
+                          >
+                            Next Page ▶
+                          </SelectItem>
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
 
                   {/* Form Template (local override; inherits global if unset) */}
                   <Select
+                    open={openTemplatesSelect}
+                    onOpenChange={setOpenTemplatesSelect}
                     value={
                       (formTemplateIdLocal ??
                         globalFilters.formTemplateId ??
                         "all") as string
                     }
                     onValueChange={(v) => {
+                      if (v === "__tpl_prev__" || v === "__tpl_next__") {
+                        const nextPage =
+                          v === "__tpl_prev__"
+                            ? Math.max(1, templatesPage - 1)
+                            : Math.min(
+                                templatesTotalPages || 1,
+                                templatesPage + 1
+                              );
+                        setTemplatesPage(nextPage);
+                        setOpenTemplatesSelect(true);
+                        return;
+                      }
                       const id = v === "all" ? "" : v;
                       setFormTemplateIdLocal(id || undefined);
                     }}
@@ -665,6 +748,22 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                           {t.name}
                         </SelectItem>
                       ))}
+                      {/* Pagination controls for templates */}
+                      <SelectItem
+                        value="__tpl_prev__"
+                        disabled={templatesPage <= 1}
+                      >
+                        ◀ Prev Page
+                      </SelectItem>
+                      <SelectItem value="__tpl_info__" disabled>
+                        Page {templatesPage} of {templatesTotalPages || 1}
+                      </SelectItem>
+                      <SelectItem
+                        value="__tpl_next__"
+                        disabled={templatesPage >= (templatesTotalPages || 1)}
+                      >
+                        Next Page ▶
+                      </SelectItem>
                     </SelectContent>
                   </Select>
 

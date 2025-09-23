@@ -24,8 +24,11 @@ import {
   getEntityServices,
   selectAllServices,
   selectEntityServices,
+  selectServicesTotalPages,
+  selectServicesCurrentPage,
 } from "../../store/slices/serviceSlice";
 import { fetchForms, selectAllForms } from "../../store/slices/formsSlice";
+import formTemplatesApi from "../../services/forms/formServices";
 
 export function FilterControls({ projects }: { projects: Project[] }) {
   const dispatch: any = useDispatch();
@@ -35,6 +38,8 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   const entityServices = useSelector(selectEntityServices);
   const allServices = useSelector(selectAllServices);
   const formsState = useSelector(selectAllForms);
+  const servicesTotalPages = useSelector(selectServicesTotalPages);
+  const servicesCurrentPage = useSelector(selectServicesCurrentPage);
 
   const [projectId, setProjectId] = React.useState<string>("");
   const [subprojectId, setSubprojectId] = React.useState<string>("");
@@ -49,6 +54,13 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     metricsFilters.formTemplateId || ""
   );
   const [showMore, setShowMore] = React.useState<boolean>(false);
+  // Control dropdown open state so pagination actions keep the menu open
+  const [openServicesSelect, setOpenServicesSelect] = React.useState(false);
+  const [openTemplatesSelect, setOpenTemplatesSelect] = React.useState(false);
+  // Local paginated templates state (do not change global forms slice)
+  const [templatesOptions, setTemplatesOptions] = React.useState<any[]>([]);
+  const [templatesPage, setTemplatesPage] = React.useState<number>(1);
+  const [templatesTotalPages, setTemplatesTotalPages] = React.useState<number>(1);
 
   // Fetch subprojects when project changes
   React.useEffect(() => {
@@ -76,6 +88,42 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   React.useEffect(() => {
     dispatch(fetchForms());
   }, [dispatch]);
+
+  // Load paginated templates locally based on entity context and templatesPage
+  React.useEffect(() => {
+    const load = async () => {
+      try {
+        const params: any = { page: templatesPage, limit: 100 };
+        if (subprojectId) {
+          params.subprojectId = subprojectId;
+          params.entityType = "subproject";
+        } else if (projectId) {
+          params.projectId = projectId;
+          params.entityType = "project";
+        }
+        const res = await formTemplatesApi.getFormTemplates(params);
+        if (res.success) {
+          const data: any = res.data || {};
+          setTemplatesOptions(data.templates || []);
+          setTemplatesTotalPages(Number(data.pagination?.totalPages || 1));
+        } else {
+          // Fallback to redux state
+          setTemplatesOptions((formsState as any)?.templates || (formsState as any) || []);
+          setTemplatesTotalPages(1);
+        }
+      } catch (e) {
+        setTemplatesOptions((formsState as any)?.templates || (formsState as any) || []);
+        setTemplatesTotalPages(1);
+      }
+    };
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templatesPage, projectId, subprojectId]);
+
+  // Reset templates page when entity scope changes
+  React.useEffect(() => {
+    setTemplatesPage(1);
+  }, [projectId, subprojectId]);
 
   // Handlers
   const onProjectChange = (value: string) => {
@@ -247,8 +295,25 @@ export function FilterControls({ projects }: { projects: Project[] }) {
 
             {/* Global Service */}
             <Select
+              open={openServicesSelect}
+              onOpenChange={setOpenServicesSelect}
               value={serviceId || "all"}
               onValueChange={(v) => {
+                if (v === "__svc_prev__" || v === "__svc_next__") {
+                  // Only paginate when not scoped to an entity
+                  if (!projectId && !subprojectId) {
+                    const nextPage =
+                      v === "__svc_prev__"
+                        ? Math.max(1, (servicesCurrentPage || 1) - 1)
+                        : Math.min(
+                            servicesTotalPages || 1,
+                            (servicesCurrentPage || 1) + 1
+                          );
+                    dispatch(getAllServices({ page: nextPage, limit: 100 }));
+                    setOpenServicesSelect(true);
+                  }
+                  return;
+                }
                 const id = v === "all" ? "" : v;
                 setServiceId(id);
                 dispatch(setFilters({ serviceId: id || undefined }));
@@ -268,13 +333,41 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                     {s.name}
                   </SelectItem>
                 ))}
+                {/* Pagination controls for global services (not when scoped to entity) */}
+                {!projectId && !subprojectId && (
+                  <>
+                    <SelectItem value="__svc_prev__" disabled={(servicesCurrentPage || 1) <= 1}>
+                      ◀ Prev Page
+                    </SelectItem>
+                    <SelectItem value="__svc_info__" disabled>
+                      Page {servicesCurrentPage || 1} of {servicesTotalPages || 1}
+                    </SelectItem>
+                    <SelectItem
+                      value="__svc_next__"
+                      disabled={(servicesCurrentPage || 1) >= (servicesTotalPages || 1)}
+                    >
+                      Next Page ▶
+                    </SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
 
             {/* Global Form Template */}
             <Select
+              open={openTemplatesSelect}
+              onOpenChange={setOpenTemplatesSelect}
               value={formTemplateId || "all"}
               onValueChange={(v) => {
+                if (v === "__tpl_prev__" || v === "__tpl_next__") {
+                  const nextPage =
+                    v === "__tpl_prev__"
+                      ? Math.max(1, templatesPage - 1)
+                      : Math.min(templatesTotalPages || 1, templatesPage + 1);
+                  setTemplatesPage(nextPage);
+                  setOpenTemplatesSelect(true);
+                  return;
+                }
                 const id = v === "all" ? "" : v;
                 setFormTemplateId(id);
                 dispatch(setFilters({ formTemplateId: id || undefined }));
@@ -289,11 +382,21 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Templates</SelectItem>
-                {(formsState?.templates || []).map((t: any) => (
+                {(templatesOptions || []).map((t: any) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}
                   </SelectItem>
                 ))}
+                {/* Pagination controls for templates */}
+                <SelectItem value="__tpl_prev__" disabled={templatesPage <= 1}>
+                  ◀ Prev Page
+                </SelectItem>
+                <SelectItem value="__tpl_info__" disabled>
+                  Page {templatesPage} of {templatesTotalPages || 1}
+                </SelectItem>
+                <SelectItem value="__tpl_next__" disabled={templatesPage >= (templatesTotalPages || 1)}>
+                  Next Page ▶
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
