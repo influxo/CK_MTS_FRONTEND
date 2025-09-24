@@ -199,6 +199,10 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
                   Cancel
                 </Button>
                 <Button
+                  className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
                   disabled={!selectedMemberId}
                   onClick={handleAssignMember}
                 >

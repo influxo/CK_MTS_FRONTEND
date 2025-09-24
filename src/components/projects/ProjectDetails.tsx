@@ -182,8 +182,8 @@ export function ProjectDetails() {
   const [templatesOptions, setTemplatesOptions] = useState<any[]>([]);
 
   const employees = useSelector(selectAllEmployees);
-  const isEmployeeLoading = useSelector(selectEmployeesLoading);
-  const employeeError = useSelector(selectEmployeesError);
+  // const isEmployeeLoading = useSelector(selectEmployeesLoading);
+  // const employeeError = useSelector(selectEmployeesError);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedSubProjectId, setSelectedSubProjectId] = useState<string>("");
@@ -394,46 +394,46 @@ export function ProjectDetails() {
     x.setHours(0, 0, 0, 0);
     return x;
   };
-  const startOfMonth = (d: Date) => {
-    const x = new Date(d.getFullYear(), d.getMonth(), 1);
-    x.setHours(0, 0, 0, 0);
-    return x;
-  };
-  const startOfQuarter = (d: Date) => {
-    const q = Math.floor(d.getMonth() / 3) * 3;
-    const x = new Date(d.getFullYear(), q, 1);
-    x.setHours(0, 0, 0, 0);
-    return x;
-  };
-  const startOfYear = (d: Date) => {
-    const x = new Date(d.getFullYear(), 0, 1);
-    x.setHours(0, 0, 0, 0);
-    return x;
-  };
-  const defaultWindowFor = (g: TimeUnit): { from: Date; to: Date } => {
-    const to = new Date();
-    const from = new Date(to);
-    switch (g) {
-      case "day":
-        from.setDate(to.getDate() - 7);
-        break;
-      case "week":
-        from.setDate(to.getDate() - 56);
-        break;
-      case "month":
-        from.setMonth(to.getMonth() - 12);
-        break;
-      case "quarter":
-        from.setMonth(to.getMonth() - 24);
-        break;
-      case "year":
-        from.setFullYear(to.getFullYear() - 5);
-        break;
-    }
-    from.setHours(0, 0, 0, 0);
-    to.setHours(23, 59, 59, 999);
-    return { from, to };
-  };
+  // const startOfMonth = (d: Date) => {
+  //   const x = new Date(d.getFullYear(), d.getMonth(), 1);
+  //   x.setHours(0, 0, 0, 0);
+  //   return x;
+  // };
+  // const startOfQuarter = (d: Date) => {
+  //   const q = Math.floor(d.getMonth() / 3) * 3;
+  //   const x = new Date(d.getFullYear(), q, 1);
+  //   x.setHours(0, 0, 0, 0);
+  //   return x;
+  // };
+  // const startOfYear = (d: Date) => {
+  //   const x = new Date(d.getFullYear(), 0, 1);
+  //   x.setHours(0, 0, 0, 0);
+  //   return x;
+  // };
+  // const defaultWindowFor = (g: TimeUnit): { from: Date; to: Date } => {
+  //   const to = new Date();
+  //   const from = new Date(to);
+  //   switch (g) {
+  //     case "day":
+  //       from.setDate(to.getDate() - 7);
+  //       break;
+  //     case "week":
+  //       from.setDate(to.getDate() - 56);
+  //       break;
+  //     case "month":
+  //       from.setMonth(to.getMonth() - 12);
+  //       break;
+  //     case "quarter":
+  //       from.setMonth(to.getMonth() - 24);
+  //       break;
+  //     case "year":
+  //       from.setFullYear(to.getFullYear() - 5);
+  //       break;
+  //   }
+  //   from.setHours(0, 0, 0, 0);
+  //   to.setHours(23, 59, 59, 999);
+  //   return { from, to };
+  // };
 
   const dayFmt = new Intl.DateTimeFormat(undefined, {
     month: "short",
@@ -670,7 +670,13 @@ export function ProjectDetails() {
           links,
         })
       ).unwrap();
-      toast.success("Beneficiary associated successfully");
+      toast.success("Përfituesi u shtua me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
       setIsAddDialogOpen(false);
       resetAssociateForm();
       // refresh table
@@ -683,7 +689,13 @@ export function ProjectDetails() {
         })
       );
     } catch (_) {
-      toast.error("Failed to associate beneficiary. Please try again.");
+      toast.error("Diçka shkoi gabim.", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
     }
   };
 
@@ -799,8 +811,10 @@ export function ProjectDetails() {
         }
       }
       // success effect will close/reset/refresh
+      toast.success("Përfituesi u krijua me sukses");
     } catch (_) {
       // errors surfaced via createError
+      toast.error("Diçka shkoi gabim. ");
     }
   };
 
@@ -2576,6 +2590,10 @@ export function ProjectDetails() {
                       </Button>
                       {addBeneficiaryTab === "new" ? (
                         <Button
+                          className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
                           onClick={handleCreateSubmit}
                           disabled={createLoading}
                         >
@@ -2583,6 +2601,10 @@ export function ProjectDetails() {
                         </Button>
                       ) : (
                         <Button
+                          className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
                           onClick={handleAssociateSubmit}
                           disabled={
                             associateLoading || !associateSelectedBeneficiaryId

@@ -47,6 +47,7 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import { Textarea } from "../ui/form/textarea";
+import { toast } from "sonner";
 
 interface ProjectServicesProps {
   projectId: string;
@@ -167,6 +168,27 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
         setCategory("");
         setStatus("active");
       }
+
+      if (
+        createService.fulfilled.match(res) ||
+        assignServiceToEntity.fulfilled.match(res)
+      ) {
+        toast.success("Shërbimi u shtua me sukses!", {
+          style: {
+            backgroundColor: "#d1fae5",
+            color: "#065f46",
+            border: "1px solid #10b981",
+          },
+        });
+      } else {
+        toast.error("Diçka dështoi gjate shtimit te shërbimit", {
+          style: {
+            backgroundColor: "#fee2e2",
+            color: "#991b1b",
+            border: "1px solid #ef4444",
+          },
+        });
+      }
     } catch (e) {
       // errors handled by slice; keep here to stop spinner
     } finally {
@@ -185,12 +207,22 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
     setAssigning(true);
     try {
       if (selectedIds.length === 1) {
-        await dispatch(
+        const res = await dispatch(
           assignServiceToEntity({
             id: selectedIds[0],
             data: { entityId: projectId, entityType: "project" },
           })
         ).unwrap();
+
+        if (assignServiceToEntity.fulfilled.match(res)) {
+          toast.success("Shërbimi u shtua me sukses!", {
+            style: {
+              backgroundColor: "#d1fae5",
+              color: "#065f46",
+              border: "1px solid #10b981",
+            },
+          });
+        }
       } else {
         await dispatch(
           assignServicesBatch({
@@ -294,6 +326,10 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                   Cancel
                 </Button>
                 <Button
+                  className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
                   onClick={handleCreateAndAssign}
                   disabled={creating || !name.trim() || !category.trim()}
                 >
@@ -410,6 +446,10 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                   Cancel
                 </Button>
                 <Button
+                  className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
                   onClick={handleAssignSelected}
                   disabled={assigning || selectedIds.length === 0}
                 >

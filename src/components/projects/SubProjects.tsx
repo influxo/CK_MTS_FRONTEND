@@ -71,6 +71,7 @@ import {
   selectSubprojectsLoading,
 } from "../../store/slices/subProjectSlice";
 import { selectCreateSuccessMessage } from "../../store/slices/projectsSlice";
+import { toast } from "sonner";
 
 interface SubProjectsProps {
   projectId?: string;
@@ -154,7 +155,26 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
       projectId,
     };
 
-    await dispatch(createSubProject(payload));
+    const result = await dispatch(createSubProject(payload));
+
+    if (createSubProject.fulfilled.match(result)) {
+      toast.success("Nënprojekti u shtua me sukses!", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
+      setIsCreateDialogOpen(false);
+    } else {
+      toast.error("Diçka dështoi gjate shtimit te nënprojektit", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
+    }
   };
 
   const filteredSubProjects = subprojects.filter((sp: SubProject) => {
@@ -263,14 +283,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
                 />
               </div>
             </div>
-            {error && (
-              <div className="text-destructive text-sm mb-2">{error}</div>
-            )}
-            {createSuccessMessage && (
-              <div className="text-green-600 text-sm mb-2">
-                {createSuccessMessage}
-              </div>
-            )}
+
             <DialogFooter>
               <Button
                 variant="outline"
@@ -282,6 +295,10 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
                 Cancel
               </Button>
               <Button
+                className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
                 onClick={handleCreateSubmit}
                 disabled={isLoading || !name.trim() || !category.trim()}
               >
