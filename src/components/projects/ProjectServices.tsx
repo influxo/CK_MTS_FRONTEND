@@ -143,8 +143,10 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
   const handleCreateAndAssign = async () => {
     if (!projectId) return;
     if (!name.trim() || !category.trim() || !status) return;
+
     setCreating(true);
     try {
+      // Create service
       const res = await dispatch(
         createService({
           name: name.trim(),
@@ -153,26 +155,27 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
           status,
         })
       ).unwrap();
+
       const created = res.data;
+
       if (created?.id) {
+        // Assign service to project
         await dispatch(
           assignServiceToEntity({
             id: created.id,
             data: { entityId: projectId, entityType: "project" },
           })
         ).unwrap();
+
+        // Refresh UI + reset fields
         refresh();
         setIsCreateOpen(false);
         setName("");
         setDescription("");
         setCategory("");
         setStatus("active");
-      }
 
-      if (
-        createService.fulfilled.match(res) ||
-        assignServiceToEntity.fulfilled.match(res)
-      ) {
+        //  Success toast
         toast.success("Shërbimi u shtua me sukses!", {
           style: {
             backgroundColor: "#d1fae5",
@@ -180,17 +183,16 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
             border: "1px solid #10b981",
           },
         });
-      } else {
-        toast.error("Diçka dështoi gjate shtimit te shërbimit", {
-          style: {
-            backgroundColor: "#fee2e2",
-            color: "#991b1b",
-            border: "1px solid #ef4444",
-          },
-        });
       }
     } catch (e) {
-      // errors handled by slice; keep here to stop spinner
+      //  Any failure (create or assign) ends up here
+      toast.error("Diçka dështoi gjate shtimit te shërbimit", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
     } finally {
       setCreating(false);
     }

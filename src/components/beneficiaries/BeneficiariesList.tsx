@@ -80,6 +80,7 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
+import { toast } from "sonner";
 
 interface BeneficiariesListProps {
   onBeneficiarySelect: (beneficiaryId: string) => void;
@@ -644,6 +645,13 @@ export function BeneficiariesList({
         }
       }
       // createSuccess effect will handle closing/reset
+      toast.success("Përfituesi u krijua me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
     } catch (_) {
       // errors are surfaced via createError
     }

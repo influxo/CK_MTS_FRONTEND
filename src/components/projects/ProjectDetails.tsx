@@ -689,13 +689,13 @@ export function ProjectDetails() {
         })
       );
     } catch (_) {
-      toast.error("Diçka shkoi gabim.", {
-        style: {
-          backgroundColor: "#fee2e2",
-          color: "#991b1b",
-          border: "1px solid #ef4444",
-        },
-      });
+      // toast.error("Diçka shkoi gabim.", {
+      //   style: {
+      //     backgroundColor: "#fee2e2",
+      //     color: "#991b1b",
+      //     border: "1px solid #ef4444",
+      //   },
+      // });
     }
   };
 
@@ -811,10 +811,22 @@ export function ProjectDetails() {
         }
       }
       // success effect will close/reset/refresh
-      toast.success("Përfituesi u krijua me sukses");
+      toast.success("Përfituesi u krijua me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
     } catch (_) {
       // errors surfaced via createError
-      toast.error("Diçka shkoi gabim. ");
+      // toast.error("Diçka shkoi gabim. ", {
+      //   style: {
+      //     backgroundColor: "#fee2e2",
+      //     color: "#991b1b",
+      //     border: "1px solid #ef4444",
+      //   },
+      // });
     }
   };
 
@@ -1059,148 +1071,6 @@ export function ProjectDetails() {
             </div>
 
             <div>
-              {/* <Dialog
-                open={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="bg-[#2B2B2B] text-white">
-                    <FileEdit className="h-4 w-4 mr-2" />
-                    Edit Project
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[550px]">
-                  <DialogHeader>
-                    <DialogTitle>Edit Project</DialogTitle>
-                    <DialogDescription>
-                      Update the details for this project. All fields marked
-                      with * are required.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="title" className="text-right">
-                        Title *
-                      </Label>
-                      <Input
-                        id="title"
-                        className="col-span-3"
-                        defaultValue={enhancedProject.title}
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="category" className="text-right">
-                        Category *
-                      </Label>
-                      <Select
-                        defaultValue={enhancedProject.category.toLowerCase()}
-                      >
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="healthcare">Healthcare</SelectItem>
-                          <SelectItem value="education">Education</SelectItem>
-                          <SelectItem value="infrastructure">
-                            Infrastructure
-                          </SelectItem>
-                          <SelectItem value="nutrition">Nutrition</SelectItem>
-                          <SelectItem value="economic development">
-                            Economic Development
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="type" className="text-right">
-                        Type *
-                      </Label>
-                      <Select
-                        defaultValue={enhancedProject.type
-                          .toLowerCase()
-                          .replace(" ", "-")}
-                      >
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="service-delivery">
-                            Service Delivery
-                          </SelectItem>
-                          <SelectItem value="training">Training</SelectItem>
-                          <SelectItem value="construction">
-                            Construction
-                          </SelectItem>
-                          <SelectItem value="distribution">
-                            Distribution
-                          </SelectItem>
-                          <SelectItem value="research">Research</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="status" className="text-right">
-                        Status
-                      </Label>
-                      <Select defaultValue={enhancedProject.status}>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="inactive">Inactive</SelectItem>
-                          <SelectItem value="planning">Planning</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="start-date" className="text-right">
-                        Start Date *
-                      </Label>
-                      <Input
-                        id="start-date"
-                        type="date"
-                        className="col-span-3"
-                        defaultValue={enhancedProject.startDate.split("T")[0]}
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="end-date" className="text-right">
-                        End Date *
-                      </Label>
-                      <Input
-                        id="end-date"
-                        type="date"
-                        className="col-span-3"
-                        defaultValue={enhancedProject.endDate.split("T")[0]}
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-start gap-4">
-                      <Label htmlFor="description" className="text-right pt-2">
-                        Description
-                      </Label>
-                      <Textarea
-                        id="description"
-                        className="col-span-3"
-                        defaultValue={enhancedProject.description}
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsEditDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button onClick={() => setIsEditDialogOpen(false)}>
-                      Save Changes
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog> */}
-
               {/* 2x2 grid of project summary cards */}
               <div className=" grid grid-cols-1 sm:grid-cols-2  gap-4">
                 <div className=" bg-[#E5ECF6] rounded-xl p-4">

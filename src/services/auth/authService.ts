@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import getApiUrl from "../apiUrl";
 import axiosInstance from "../axiosInstance";
 import type {
@@ -95,7 +96,13 @@ class AuthService {
         `${this.authEndpoint}/change-password`,
         passwordData
       );
-
+      toast.success("Fjalëkalimi u modifikua me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
       return response.data;
     } catch (error: any) {
       // Handle error response from server
@@ -129,10 +136,23 @@ class AuthService {
         localStorage.setItem("token", response.data.data.token);
         this.setAuthHeader(response.data.data.token);
       }
-
+      toast.success("Email u verifikua me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
       return response.data;
     } catch (error: any) {
       // Handle error response from server
+      toast.error("Diçka shkoi gabim", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
       if (error.response) {
         return error.response.data as LoginResponse;
       }

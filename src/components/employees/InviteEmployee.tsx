@@ -261,9 +261,6 @@ export function InviteEmployee({
       // Set submitted state
       setIsSubmitted(true);
 
-      // Show success message
-      toast.success("User invited successfully");
-
       // Call the parent component's handler
       onInviteCreated(inviteDataObj);
     } catch (err: any) {

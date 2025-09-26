@@ -9,6 +9,7 @@ import type {
   UpdateFormResponse,
   DeleteFormResponse,
 } from "./formModels";
+import { toast } from "sonner";
 
 class FormService {
   private baseUrl = getApiUrl();
@@ -55,8 +56,22 @@ class FormService {
         this.formsEndpoint,
         formData
       );
+      toast.success("Forma u krijua me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
       return response.data;
     } catch (error: any) {
+      toast.error("Diçka shkoi gabim. ", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
       if (error.response) {
         return error.response.data as CreateFormResponse;
       }
@@ -76,8 +91,22 @@ class FormService {
         `${this.formsEndpoint}/${formId}`,
         formData
       );
+      toast.success("Forma u modifikua me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
       return response.data;
     } catch (error: any) {
+      toast.error("Diçka shkoi gabim. ", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
       if (error.response) {
         return error.response.data as UpdateFormResponse;
       }
@@ -92,11 +121,24 @@ class FormService {
     try {
       const response = await axiosInstance.patch<UpdateFormResponse>(
         `${this.formsEndpoint}/${formId}/inactivate`,
-        { status: 'inactive' }
+        { status: "inactive" }
       );
-      
+      toast.success("Forma u deaktivua me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
       return response.data;
     } catch (error: any) {
+      toast.error("Diçka shkoi gabim. ", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
       if (error.response) {
         return error.response.data as UpdateFormResponse;
       }
@@ -112,8 +154,22 @@ class FormService {
       const response = await axiosInstance.delete<DeleteFormResponse>(
         `${this.formsEndpoint}/${formId}`
       );
+      toast.success("Forma u fshi me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
       return response.data;
     } catch (error: any) {
+      toast.error("Diçka shkoi gabim. ", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
       if (error.response) {
         return error.response.data as DeleteFormResponse;
       }

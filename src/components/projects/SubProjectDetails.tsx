@@ -335,6 +335,13 @@ export function SubProjectDetails() {
         })
       ).unwrap();
       setIsAddDialogOpen(false);
+      toast.success("Përfituesi u shtua me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
       setAssociateSelectedBeneficiaryId("");
       // refresh current subproject beneficiaries list
       dispatch(
@@ -631,6 +638,13 @@ export function SubProjectDetails() {
           // association errors handled via slice
         }
       }
+      toast.success("Përfituesi u krijua me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
       // success effect will close/reset/refresh
     } catch (_) {
       // errors surfaced via createError
@@ -1130,7 +1144,9 @@ export function SubProjectDetails() {
                                         type="date"
                                         className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
                                         value={customFrom}
-                                        onChange={(e) => setCustomFrom(e.target.value)}
+                                        onChange={(e) =>
+                                          setCustomFrom(e.target.value)
+                                        }
                                       />
                                     </label>
                                     <label className="text-xs text-gray-600">
@@ -1139,7 +1155,9 @@ export function SubProjectDetails() {
                                         type="date"
                                         className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
                                         value={customTo}
-                                        onChange={(e) => setCustomTo(e.target.value)}
+                                        onChange={(e) =>
+                                          setCustomTo(e.target.value)
+                                        }
                                       />
                                     </label>
                                     <div className="flex justify-end gap-2 pt-1">
@@ -1579,7 +1597,12 @@ export function SubProjectDetails() {
                   onOpenChange={setIsAddDialogOpen}
                 >
                   <DialogTrigger asChild>
-                    <Button className="bg-[#2E343E] text-white">
+                    <Button
+                      className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+                    >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Beneficiary
                     </Button>
