@@ -14,7 +14,7 @@ import {
   BarChart3,
   Filter,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "sonner";
@@ -127,6 +127,7 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
+import { selectCurrentUser } from "../../store/slices/authSlice";
 
 // Mock project data for enhanced details
 const mockProjectDetails = {
@@ -181,7 +182,47 @@ export function ProjectDetails() {
   const [servicesOptions, setServicesOptions] = useState<any[]>([]);
   const [templatesOptions, setTemplatesOptions] = useState<any[]>([]);
 
-  const employees = useSelector(selectAllEmployees);
+  const user = useSelector(selectCurrentUser);
+
+  // Determine role
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
+
+  const isProgramManager = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) => r === "program manager" || r.includes("program manager")
+    );
+  }, [normalizedRoles]);
+
+  // New role: Sub-Project Manager (limited access)
+  const isSubProjectManager = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sub-project manager" ||
+        r === "sub project manager" ||
+        r.includes("sub-project manager") ||
+        r.includes("sub project manager")
+    );
+  }, [normalizedRoles]);
+
+  // Full access roles only: System Admin, Super Admin, Program Manager
+  const hasFullAccess = useMemo(
+    () => isSysOrSuperAdmin || isProgramManager,
+    [isSysOrSuperAdmin, isProgramManager]
+  );
+
+  // const employees = useSelector(selectAllEmployees);
   // const isEmployeeLoading = useSelector(selectEmployeesLoading);
   // const employeeError = useSelector(selectEmployeesError);
   const [isLoading, setIsLoading] = useState(false);
@@ -307,10 +348,13 @@ export function ProjectDetails() {
     fetchProjectDetails();
   }, [id, allProjects, navigate]);
 
-  useEffect(() => {
-    dispatch(fetchEmployees());
-  }, [dispatch]);
-  console.log("employees", employees);
+  // useEffect(() => {
+  //   // Sub-Project Manager should not fetch members
+  //   if (!isSubProjectManager) {
+  //     dispatch(fetchEmployees());
+  //   }
+  // }, [dispatch, isSubProjectManager]);
+  // console.log("employees", employees);
 
   // Load beneficiaries for this project when the Beneficiaries tab is active
   const byEntityItems = useSelector(selectBeneficiariesByEntity);
@@ -394,46 +438,6 @@ export function ProjectDetails() {
     x.setHours(0, 0, 0, 0);
     return x;
   };
-  // const startOfMonth = (d: Date) => {
-  //   const x = new Date(d.getFullYear(), d.getMonth(), 1);
-  //   x.setHours(0, 0, 0, 0);
-  //   return x;
-  // };
-  // const startOfQuarter = (d: Date) => {
-  //   const q = Math.floor(d.getMonth() / 3) * 3;
-  //   const x = new Date(d.getFullYear(), q, 1);
-  //   x.setHours(0, 0, 0, 0);
-  //   return x;
-  // };
-  // const startOfYear = (d: Date) => {
-  //   const x = new Date(d.getFullYear(), 0, 1);
-  //   x.setHours(0, 0, 0, 0);
-  //   return x;
-  // };
-  // const defaultWindowFor = (g: TimeUnit): { from: Date; to: Date } => {
-  //   const to = new Date();
-  //   const from = new Date(to);
-  //   switch (g) {
-  //     case "day":
-  //       from.setDate(to.getDate() - 7);
-  //       break;
-  //     case "week":
-  //       from.setDate(to.getDate() - 56);
-  //       break;
-  //     case "month":
-  //       from.setMonth(to.getMonth() - 12);
-  //       break;
-  //     case "quarter":
-  //       from.setMonth(to.getMonth() - 24);
-  //       break;
-  //     case "year":
-  //       from.setFullYear(to.getFullYear() - 5);
-  //       break;
-  //   }
-  //   from.setHours(0, 0, 0, 0);
-  //   to.setHours(23, 59, 59, 999);
-  //   return { from, to };
-  // };
 
   const dayFmt = new Intl.DateTimeFormat(undefined, {
     month: "short",
@@ -535,14 +539,18 @@ export function ProjectDetails() {
     setShowMoreLocal(false);
   }, [id]);
 
-  // Load templates once
+  // Load templates once (skip for Sub-Project Manager)
   useEffect(() => {
     (async () => {
+      if (!hasFullAccess) {
+        setTemplatesOptions([]);
+        return;
+      }
       const forms = await formService.getForms();
       const templates = (forms?.data as any)?.templates || forms?.data || [];
       setTemplatesOptions(templates || []);
     })();
-  }, []);
+  }, [hasFullAccess]);
 
   // Load subprojects for this project for filter dropdown (independent of Beneficiaries tab)
   useEffect(() => {
@@ -560,26 +568,33 @@ export function ProjectDetails() {
   useEffect(() => {
     (async () => {
       if (!id) return;
+
+      if (!hasFullAccess) {
+        console.log("Skipping fetch because user does not have full access");
+        setServicesOptions([]);
+        return;
+      }
+
       const effectiveEntityType = selectedSubProjectId
         ? "subproject"
         : "project";
       const effectiveEntityId = selectedSubProjectId || id;
+
       const res = await servicesService.getEntityServices({
         entityId: effectiveEntityId,
         entityType: effectiveEntityType as any,
       });
-      if (res && res.success) {
-        setServicesOptions(res.items || []);
-      } else {
-        setServicesOptions([]);
-      }
+
+      setServicesOptions(res && res.success ? res.items || [] : []);
     })();
-  }, [id, selectedSubProjectId]);
+  }, [id, selectedSubProjectId, hasFullAccess]);
 
   // Fetch project metrics whenever Overview is active and filters change
   useEffect(() => {
     if (activeTab !== "overview") return;
     if (!id) return;
+    // Sub-Project Manager should not fetch overview metrics
+    if (!hasFullAccess) return;
     const effectiveEntityType = selectedSubProjectId ? "subproject" : "project";
     const effectiveEntityId = selectedSubProjectId || id;
 
@@ -621,6 +636,7 @@ export function ProjectDetails() {
     metricLocal,
     serviceIdLocal,
     formTemplateIdLocal,
+    hasFullAccess,
   ]);
 
   // After successful create (+ association if any), close dialog, reset form, refresh list
@@ -894,141 +910,143 @@ export function ProjectDetails() {
           {enhancedProject.title}
         </h2>
 
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              className="ml-auto bg-[#0073e6] border-0 text-white"
-            >
-              <FileEdit className="h-4 w-4 mr-2" />
-              Edit Project
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]">
-            <DialogHeader>
-              <DialogTitle>Edit Project</DialogTitle>
-              <DialogDescription>
-                Update the details for this project. All fields marked with *
-                are required.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="title" className="text-right">
-                  Title *
-                </Label>
-                <Input
-                  id="title"
-                  className="col-span-3"
-                  defaultValue={enhancedProject.title}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="category" className="text-right">
-                  Category *
-                </Label>
-                <Select defaultValue={enhancedProject.category.toLowerCase()}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="healthcare">Healthcare</SelectItem>
-                    <SelectItem value="education">Education</SelectItem>
-                    <SelectItem value="infrastructure">
-                      Infrastructure
-                    </SelectItem>
-                    <SelectItem value="nutrition">Nutrition</SelectItem>
-                    <SelectItem value="economic development">
-                      Economic Development
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="type" className="text-right">
-                  Type *
-                </Label>
-                <Select
-                  defaultValue={enhancedProject.type
-                    .toLowerCase()
-                    .replace(" ", "-")}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="service-delivery">
-                      Service Delivery
-                    </SelectItem>
-                    <SelectItem value="training">Training</SelectItem>
-                    <SelectItem value="construction">Construction</SelectItem>
-                    <SelectItem value="distribution">Distribution</SelectItem>
-                    <SelectItem value="research">Research</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">
-                  Status
-                </Label>
-                <Select defaultValue={enhancedProject.status}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="start-date" className="text-right">
-                  Start Date *
-                </Label>
-                <Input
-                  id="start-date"
-                  type="date"
-                  className="col-span-3"
-                  defaultValue={enhancedProject.startDate.split("T")[0]}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="end-date" className="text-right">
-                  End Date *
-                </Label>
-                <Input
-                  id="end-date"
-                  type="date"
-                  className="col-span-3"
-                  defaultValue={enhancedProject.endDate.split("T")[0]}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="description" className="text-right pt-2">
-                  Description
-                </Label>
-                <Textarea
-                  id="description"
-                  className="col-span-3"
-                  defaultValue={enhancedProject.description}
-                  rows={3}
-                />
-              </div>
-            </div>
-            <DialogFooter>
+        {(isSysOrSuperAdmin || isProgramManager) && (
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogTrigger asChild>
               <Button
                 variant="outline"
-                onClick={() => setIsEditDialogOpen(false)}
+                className="ml-auto bg-[#0073e6] border-0 text-white"
               >
-                Cancel
+                <FileEdit className="h-4 w-4 mr-2" />
+                Edit Project
               </Button>
-              <Button onClick={() => setIsEditDialogOpen(false)}>
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[550px]">
+              <DialogHeader>
+                <DialogTitle>Edit Project</DialogTitle>
+                <DialogDescription>
+                  Update the details for this project. All fields marked with *
+                  are required.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">
+                    Title *
+                  </Label>
+                  <Input
+                    id="title"
+                    className="col-span-3"
+                    defaultValue={enhancedProject.title}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="category" className="text-right">
+                    Category *
+                  </Label>
+                  <Select defaultValue={enhancedProject.category.toLowerCase()}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="healthcare">Healthcare</SelectItem>
+                      <SelectItem value="education">Education</SelectItem>
+                      <SelectItem value="infrastructure">
+                        Infrastructure
+                      </SelectItem>
+                      <SelectItem value="nutrition">Nutrition</SelectItem>
+                      <SelectItem value="economic development">
+                        Economic Development
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="type" className="text-right">
+                    Type *
+                  </Label>
+                  <Select
+                    defaultValue={enhancedProject.type
+                      .toLowerCase()
+                      .replace(" ", "-")}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="service-delivery">
+                        Service Delivery
+                      </SelectItem>
+                      <SelectItem value="training">Training</SelectItem>
+                      <SelectItem value="construction">Construction</SelectItem>
+                      <SelectItem value="distribution">Distribution</SelectItem>
+                      <SelectItem value="research">Research</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">
+                    Status
+                  </Label>
+                  <Select defaultValue={enhancedProject.status}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="start-date" className="text-right">
+                    Start Date *
+                  </Label>
+                  <Input
+                    id="start-date"
+                    type="date"
+                    className="col-span-3"
+                    defaultValue={enhancedProject.startDate.split("T")[0]}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="end-date" className="text-right">
+                    End Date *
+                  </Label>
+                  <Input
+                    id="end-date"
+                    type="date"
+                    className="col-span-3"
+                    defaultValue={enhancedProject.endDate.split("T")[0]}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label htmlFor="description" className="text-right pt-2">
+                    Description
+                  </Label>
+                  <Textarea
+                    id="description"
+                    className="col-span-3"
+                    defaultValue={enhancedProject.description}
+                    rows={3}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={() => setIsEditDialogOpen(false)}>
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <Card className="flex  bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50 ">
@@ -1181,156 +1199,173 @@ export function ProjectDetails() {
         </TabsList>
 
         <TabsContent value="overview" className="pt-6">
-          <div className="grid grid-cols-2 gap-6">
-            <div className="col-span-2 space-y-6">
-              {/* Overview Filters */}
-              <div className="flex flex-col gap-2">
-                <div className="flex flex-wrap items-center gap-3">
-                  {/* Subproject selector */}
-                  <Select
-                    value={selectedSubProjectId || "all"}
-                    onValueChange={(v) => {
-                      const idVal = v === "all" ? "" : v;
-                      setSelectedSubProjectId(idVal);
-                      // clear dependent local filters when switching entity
-                      setServiceIdLocal(undefined);
-                      setFormTemplateIdLocal(undefined);
-                    }}
-                  >
-                    <SelectTrigger className="w-[220px] bg-white border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
-                      <SelectValue placeholder="Subproject" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Subprojects</SelectItem>
-                      {(subprojects || [])
-                        .filter((sp: any) => sp.projectId === id)
-                        .map((sp: any) => (
-                          <SelectItem key={sp.id} value={sp.id}>
-                            {sp.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Time Period (controls startDate/endDate like Dashboard) */}
-                  <Select value={timePreset} onValueChange={onTimePresetChange}>
-                    <SelectTrigger className="w-[200px] bg-white p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
-                      <SelectValue placeholder="Time Period" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all-period">All Period</SelectItem>
-                      <SelectItem value="last-7-days">Last 7 days</SelectItem>
-                      <SelectItem value="last-30-days">Last 30 days</SelectItem>
-                      <SelectItem value="last-90-days">Last 90 days</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowMoreLocal((s) => !s)}
-                    className="bg-[#E0F2FE] text-black border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
-                  >
-                    <Filter className="h-4 w-4 mr-2" />
-                    {showMoreLocal ? "Hide Filters" : "More Filters"}
-                  </Button>
-                </div>
-
-                {showMoreLocal && (
-                  <div className="mt-1 p-3 rounded-md bg-white/60 border border-gray-100">
-                    <div className="flex flex-wrap items-center gap-3">
-                      {/* Metric */}
-                      <Select
-                        value={metricLocal}
-                        onValueChange={(v) => setMetricLocal(v as any)}
-                      >
-                        <SelectTrigger className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
-                          <SelectValue placeholder="Metric" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="submissions">
-                            Submissions
-                          </SelectItem>
-                          <SelectItem value="serviceDeliveries">
-                            Service Deliveries
-                          </SelectItem>
-                          <SelectItem value="uniqueBeneficiaries">
-                            Unique Beneficiaries
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      {/* Service */}
-                      <Select
-                        value={(serviceIdLocal ?? "all") as string}
-                        onValueChange={(v) => {
-                          const id = v === "all" ? "" : v;
-                          setServiceIdLocal(id || undefined);
-                        }}
-                      >
-                        <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
-                          <SelectValue placeholder="Service" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Services</SelectItem>
-                          {(servicesOptions || []).map((s: any) => (
-                            <SelectItem key={s.id} value={s.id}>
-                              {s.name}
+          {isSubProjectManager ? (
+            <div className="p-6 text-center text-muted-foreground">
+              You have no access to see detailed info.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-6">
+              <div className="col-span-2 space-y-6">
+                {/* Overview Filters */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Subproject selector */}
+                    <Select
+                      value={selectedSubProjectId || "all"}
+                      onValueChange={(v) => {
+                        const idVal = v === "all" ? "" : v;
+                        setSelectedSubProjectId(idVal);
+                        // clear dependent local filters when switching entity
+                        setServiceIdLocal(undefined);
+                        setFormTemplateIdLocal(undefined);
+                      }}
+                    >
+                      <SelectTrigger className="w-[220px] bg-white border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                        <SelectValue placeholder="Subproject" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Subprojects</SelectItem>
+                        {(subprojects || [])
+                          .filter((sp: any) => sp.projectId === id)
+                          .map((sp: any) => (
+                            <SelectItem key={sp.id} value={sp.id}>
+                              {sp.name}
                             </SelectItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                      </SelectContent>
+                    </Select>
 
-                      {/* Form Template */}
-                      <Select
-                        value={(formTemplateIdLocal ?? "all") as string}
-                        onValueChange={(v) => {
-                          const id = v === "all" ? "" : v;
-                          setFormTemplateIdLocal(id || undefined);
-                        }}
-                      >
-                        <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
-                          <SelectValue placeholder="Form Template" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Templates</SelectItem>
-                          {(templatesOptions || []).map((t: any) => (
-                            <SelectItem key={t.id} value={t.id}>
-                              {t.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    {/* Time Period (controls startDate/endDate like Dashboard) */}
+                    <Select
+                      value={timePreset}
+                      onValueChange={onTimePresetChange}
+                    >
+                      <SelectTrigger className="w-[200px] bg-white p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                        <SelectValue placeholder="Time Period" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all-period">All Period</SelectItem>
+                        <SelectItem value="last-7-days">Last 7 days</SelectItem>
+                        <SelectItem value="last-30-days">
+                          Last 30 days
+                        </SelectItem>
+                        <SelectItem value="last-90-days">
+                          Last 90 days
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                      {/* Granularity dropdown */}
-                      <div className="relative">
-                        <button
-                          onClick={() => setFiltersOpen((s) => !s)}
-                          className="px-3 py-1.5 rounded-md text-sm bg-blue-200 text-blue-600 hover:bg-blue-200/30 flex items-center gap-2"
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowMoreLocal((s) => !s)}
+                      className="bg-[#E0F2FE] text-black border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+                    >
+                      <Filter className="h-4 w-4 mr-2" />
+                      {showMoreLocal ? "Hide Filters" : "More Filters"}
+                    </Button>
+                  </div>
+
+                  {showMoreLocal && (
+                    <div className="mt-1 p-3 rounded-md bg-white/60 border border-gray-100">
+                      <div className="flex flex-wrap items-center gap-3">
+                        {/* Metric */}
+                        <Select
+                          value={metricLocal}
+                          onValueChange={(v) => setMetricLocal(v as any)}
                         >
-                          <span>
-                            Granularity:{" "}
-                            <span className="capitalize font-medium">
-                              {granularity}
-                            </span>
-                          </span>
-                          <svg
-                            className="h-4 w-4"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
+                          <SelectTrigger className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                            <SelectValue placeholder="Metric" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="submissions">
+                              Submissions
+                            </SelectItem>
+                            <SelectItem value="serviceDeliveries">
+                              Service Deliveries
+                            </SelectItem>
+                            <SelectItem value="uniqueBeneficiaries">
+                              Unique Beneficiaries
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {/* Service */}
+                        <Select
+                          value={(serviceIdLocal ?? "all") as string}
+                          onValueChange={(v) => {
+                            const id = v === "all" ? "" : v;
+                            setServiceIdLocal(id || undefined);
+                          }}
+                        >
+                          <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                            <SelectValue placeholder="Service" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Services</SelectItem>
+                            {(servicesOptions || []).map((s: any) => (
+                              <SelectItem key={s.id} value={s.id}>
+                                {s.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {/* Form Template */}
+                        <Select
+                          value={(formTemplateIdLocal ?? "all") as string}
+                          onValueChange={(v) => {
+                            const id = v === "all" ? "" : v;
+                            setFormTemplateIdLocal(id || undefined);
+                          }}
+                        >
+                          <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                            <SelectValue placeholder="Form Template" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Templates</SelectItem>
+                            {(templatesOptions || []).map((t: any) => (
+                              <SelectItem key={t.id} value={t.id}>
+                                {t.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {/* Granularity dropdown */}
+                        <div className="relative">
+                          <button
+                            onClick={() => setFiltersOpen((s) => !s)}
+                            className="px-3 py-1.5 rounded-md text-sm bg-blue-200 text-blue-600 hover:bg-blue-200/30 flex items-center gap-2"
                           >
-                            <path
-                              fillRule="evenodd"
-                              d="M5.23 7.21a.75.75 0 011.06.02L10 11.086l3.71-3.854a.75.75 0 111.08 1.04l-4.24 4.4a.75.75 0 01-1.08 0l-4.24-4.4a.75.75 0 01.02-1.06z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </button>
-                        {filtersOpen && (
-                          <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-10">
-                            <ul className="py-1">
-                              {["day", "week", "month", "quarter", "year"].map(
-                                (g) => (
+                            <span>
+                              Granularity:{" "}
+                              <span className="capitalize font-medium">
+                                {granularity}
+                              </span>
+                            </span>
+                            <svg
+                              className="h-4 w-4"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M5.23 7.21a.75.75 0 011.06.02L10 11.086l3.71-3.854a.75.75 0 111.08 1.04l-4.24 4.4a.75.75 0 01-1.08 0l-4.24-4.4a.75.75 0 01.02-1.06z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                          {filtersOpen && (
+                            <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-10">
+                              <ul className="py-1">
+                                {[
+                                  "day",
+                                  "week",
+                                  "month",
+                                  "quarter",
+                                  "year",
+                                ].map((g) => (
                                   <li key={g}>
                                     <button
                                       onClick={() => {
@@ -1348,361 +1383,331 @@ export function ProjectDetails() {
                                       {g}
                                     </button>
                                   </li>
-                                )
-                              )}
-                              <li className="my-1 border-t border-gray-100" />
-                              <li>
-                                <button
-                                  onClick={() => setCustomOpen((s) => !s)}
-                                  className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-50"
-                                >
-                                  Custom range…
-                                </button>
-                                {customOpen && (
-                                  <div className="px-3 pb-2">
-                                    <div className="grid grid-cols-1 gap-2">
-                                      <label className="text-xs text-gray-600">
-                                        From
-                                        <input
-                                          type="date"
-                                          className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
-                                          value={customFrom}
-                                          onChange={(e) =>
-                                            setCustomFrom(e.target.value)
-                                          }
-                                        />
-                                      </label>
-                                      <label className="text-xs text-gray-600">
-                                        To
-                                        <input
-                                          type="date"
-                                          className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
-                                          value={customTo}
-                                          onChange={(e) =>
-                                            setCustomTo(e.target.value)
-                                          }
-                                        />
-                                      </label>
-                                      <div className="flex justify-end gap-2 pt-1">
-                                        <button
-                                          onClick={() => setCustomOpen(false)}
-                                          className="px-3 py-1.5 rounded-md text-sm border border-gray-200"
-                                        >
-                                          Cancel
-                                        </button>
-                                        <button
-                                          onClick={onCustomApply}
-                                          className="px-3 py-1.5 rounded-md text-sm bg-black text-white"
-                                        >
-                                          Apply
-                                        </button>
+                                ))}
+                                <li className="my-1 border-t border-gray-100" />
+                                <li>
+                                  <button
+                                    onClick={() => setCustomOpen((s) => !s)}
+                                    className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-50"
+                                  >
+                                    Custom range…
+                                  </button>
+                                  {customOpen && (
+                                    <div className="px-3 pb-2">
+                                      <div className="grid grid-cols-1 gap-2">
+                                        <label className="text-xs text-gray-600">
+                                          From
+                                          <input
+                                            type="date"
+                                            className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                                            value={customFrom}
+                                            onChange={(e) =>
+                                              setCustomFrom(e.target.value)
+                                            }
+                                          />
+                                        </label>
+                                        <label className="text-xs text-gray-600">
+                                          To
+                                          <input
+                                            type="date"
+                                            className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                                            value={customTo}
+                                            onChange={(e) =>
+                                              setCustomTo(e.target.value)
+                                            }
+                                          />
+                                        </label>
+                                        <div className="flex justify-end gap-2 pt-1">
+                                          <button
+                                            onClick={() => setCustomOpen(false)}
+                                            className="px-3 py-1.5 rounded-md text-sm border border-gray-200"
+                                          >
+                                            Cancel
+                                          </button>
+                                          <button
+                                            onClick={onCustomApply}
+                                            className="px-3 py-1.5 rounded-md text-sm bg-black text-white"
+                                          >
+                                            Apply
+                                          </button>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                )}
-                              </li>
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Key Statistics */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="bg-[#E3F5FF] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm">
-                      Service Deliveries
-                    </CardTitle>
-                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-2xl">
-                          {summaryState.loading
-                            ? "…"
-                            : (
-                                summaryState.data?.totalDeliveries ?? 0
-                              ).toLocaleString()}
-                        </div>
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                          Snapshot
-                        </div>
-                      </div>
-                      <Badge variant="secondary" className="text-black">
-                        Live
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm">
-                      Unique Beneficiaries
-                    </CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-2xl">
-                          {byEntityLoading
-                            ? "…"
-                            : (byEntityMeta.totalItems ?? 0).toLocaleString()}
-                        </div>
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                          Snapshot
-                        </div>
-                      </div>
-                      <Badge variant="secondary" className="text-black">
-                        Live
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-[#E3F5FF] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm">Unique Staff</CardTitle>
-                    <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-2xl">
-                          {summaryState.loading
-                            ? "…"
-                            : (
-                                summaryState.data?.uniqueStaff ?? 0
-                              ).toLocaleString()}
-                        </div>
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
-                          Snapshot
-                        </div>
-                      </div>
-                      <Badge variant="secondary" className="text-black">
-                        Live
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm">Unique Services</CardTitle>
-                    <FolderKanban className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-2xl">
-                          {summaryState.loading
-                            ? "…"
-                            : (
-                                summaryState.data?.uniqueServices ?? 0
-                              ).toLocaleString()}
-                        </div>
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                          Snapshot
-                        </div>
-                      </div>
-                      <Badge variant="secondary" className="text-black">
-                        Live
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Series Chart */}
-              <Card className="bg-[#F7F9FB] drop-shadow-md shadow-gray-50 border-0">
-                <CardHeader>
-                  <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <div className="flex items-center gap-3">
-                      <CardTitle>Project Activity Overview</CardTitle>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant={chartType === "line" ? "default" : "outline"}
-                        onClick={() => setChartType("line")}
-                        className="px-2"
-                      >
-                        Line
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={chartType === "bar" ? "default" : "outline"}
-                        onClick={() => setChartType("bar")}
-                        className="px-2"
-                      >
-                        Bar
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent>
-                  <div className="h-64 mt-2">
-                    {seriesState.loading ? (
-                      <div className="h-full w-full flex items-center justify-center text-sm text-gray-600">
-                        Loading…
-                      </div>
-                    ) : (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart
-                          data={(seriesState.items || []).map((it) => ({
-                            name: formatLabel(it.periodStart),
-                            value: it.count,
-                          }))}
-                          barCategoryGap="25%"
-                          barGap={2}
-                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                        >
-                          <defs>
-                            <linearGradient
-                              id="projAreaFill"
-                              x1="0"
-                              y1="0"
-                              x2="0"
-                              y2="1"
-                            >
-                              <stop
-                                offset="0%"
-                                stopColor="#3b82f6"
-                                stopOpacity={0.25}
-                              />
-                              <stop
-                                offset="100%"
-                                stopColor="#3b82f6"
-                                stopOpacity={0}
-                              />
-                            </linearGradient>
-                            <linearGradient
-                              id="projBarFill"
-                              x1="0"
-                              y1="0"
-                              x2="0"
-                              y2="1"
-                            >
-                              <stop
-                                offset="0%"
-                                stopColor="#3b82f6"
-                                stopOpacity={0.95}
-                              />
-                              <stop
-                                offset="60%"
-                                stopColor="#3b82f6"
-                                stopOpacity={0.68}
-                              />
-                              <stop
-                                offset="100%"
-                                stopColor="#3b82f6"
-                                stopOpacity={0.26}
-                              />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid
-                            strokeDasharray="3 3"
-                            vertical={false}
-                          />
-                          <XAxis
-                            dataKey="name"
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fill: "#6b7280" }}
-                          />
-                          <YAxis
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fill: "#6b7280" }}
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: "#fff",
-                              border: "1px solid #e5e7eb",
-                              borderRadius: "0.5rem",
-                            }}
-                          />
-                          {chartType === "line" ? (
-                            <>
-                              <Area
-                                type="monotone"
-                                dataKey="value"
-                                stroke="none"
-                                fill="url(#projAreaFill)"
-                                fillOpacity={1}
-                              />
-                              <Line
-                                type="monotone"
-                                dataKey="value"
-                                stroke="#3b82f6"
-                                strokeWidth={2}
-                                dot={false}
-                                activeDot={{ r: 6, fill: "#3b82f6" }}
-                              />
-                            </>
-                          ) : (
-                            <Bar
-                              dataKey="value"
-                              fill="url(#projBarFill)"
-                              barSize={100}
-                              radius={[6, 6, 0, 0]}
-                            />
+                                  )}
+                                </li>
+                              </ul>
+                            </div>
                           )}
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <ProjectStats projectId={enhancedProject.id} />
-              {/* <ProjectActivity projectId={enhancedProject.id} /> */}
-            </div>
-            <div className="space-y-6">
-              {/* <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
-                <CardContent className="p-6">
-                  <h3 className="mb-3">Project Objectives</h3>
-                  <ul className="space-y-2">
-                    {enhancedProject.objectives.map((objective, index) => (
-                      <li key={index} className="flex items-baseline gap-2">
-                        <CheckCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                        <span className="text-sm">{objective}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="mt-4 pt-4 border-t">
-                    <div className="mb-2">
-                      <span className="text-sm text-muted-foreground">
-                        Budget
-                      </span>
-                      <div className="text-xl font-medium">
-                        ${enhancedProject.budget.toLocaleString()}
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <span className="text-sm text-muted-foreground">
-                        Funding Source
-                      </span>
-                      <div>{enhancedProject.fundingSource}</div>
+                  )}
+                </div>
+
+                {/* Key Statistics */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <Card className="bg-[#E3F5FF] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm">
+                        Service Deliveries
+                      </CardTitle>
+                      <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-2xl">
+                            {summaryState.loading
+                              ? "…"
+                              : (
+                                  summaryState.data?.totalDeliveries ?? 0
+                                ).toLocaleString()}
+                          </div>
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                            Snapshot
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="text-black">
+                          Live
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm">
+                        Unique Beneficiaries
+                      </CardTitle>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-2xl">
+                            {byEntityLoading
+                              ? "…"
+                              : (byEntityMeta.totalItems ?? 0).toLocaleString()}
+                          </div>
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                            Snapshot
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="text-black">
+                          Live
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-[#E3F5FF] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm">Unique Staff</CardTitle>
+                      <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-2xl">
+                            {summaryState.loading
+                              ? "…"
+                              : (
+                                  summaryState.data?.uniqueStaff ?? 0
+                                ).toLocaleString()}
+                          </div>
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
+                            Snapshot
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="text-black">
+                          Live
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm">Unique Services</CardTitle>
+                      <FolderKanban className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-2xl">
+                            {summaryState.loading
+                              ? "…"
+                              : (
+                                  summaryState.data?.uniqueServices ?? 0
+                                ).toLocaleString()}
+                          </div>
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                            Snapshot
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="text-black">
+                          Live
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Series Chart */}
+                <Card className="bg-[#F7F9FB] drop-shadow-md shadow-gray-50 border-0">
+                  <CardHeader>
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div className="flex items-center gap-3">
+                        <CardTitle>Project Activity Overview</CardTitle>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant={chartType === "line" ? "default" : "outline"}
+                          onClick={() => setChartType("line")}
+                          className="px-2"
+                        >
+                          Line
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={chartType === "bar" ? "default" : "outline"}
+                          onClick={() => setChartType("bar")}
+                          className="px-2"
+                        >
+                          Bar
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card> */}
-              <ProjectActivity projectId={enhancedProject.id} />
+                  </CardHeader>
+
+                  <CardContent>
+                    <div className="h-64 mt-2">
+                      {seriesState.loading ? (
+                        <div className="h-full w-full flex items-center justify-center text-sm text-gray-600">
+                          Loading…
+                        </div>
+                      ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <ComposedChart
+                            data={(seriesState.items || []).map((it) => ({
+                              name: formatLabel(it.periodStart),
+                              value: it.count,
+                            }))}
+                            barCategoryGap="25%"
+                            barGap={2}
+                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                          >
+                            <defs>
+                              <linearGradient
+                                id="projAreaFill"
+                                x1="0"
+                                y1="0"
+                                x2="0"
+                                y2="1"
+                              >
+                                <stop
+                                  offset="0%"
+                                  stopColor="#3b82f6"
+                                  stopOpacity={0.25}
+                                />
+                                <stop
+                                  offset="100%"
+                                  stopColor="#3b82f6"
+                                  stopOpacity={0}
+                                />
+                              </linearGradient>
+                              <linearGradient
+                                id="projBarFill"
+                                x1="0"
+                                y1="0"
+                                x2="0"
+                                y2="1"
+                              >
+                                <stop
+                                  offset="0%"
+                                  stopColor="#3b82f6"
+                                  stopOpacity={0.95}
+                                />
+                                <stop
+                                  offset="60%"
+                                  stopColor="#3b82f6"
+                                  stopOpacity={0.68}
+                                />
+                                <stop
+                                  offset="100%"
+                                  stopColor="#3b82f6"
+                                  stopOpacity={0.26}
+                                />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              vertical={false}
+                            />
+                            <XAxis
+                              dataKey="name"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: "#6b7280" }}
+                            />
+                            <YAxis
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: "#6b7280" }}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: "#fff",
+                                border: "1px solid #e5e7eb",
+                                borderRadius: "0.5rem",
+                              }}
+                            />
+                            {chartType === "line" ? (
+                              <>
+                                <Area
+                                  type="monotone"
+                                  dataKey="value"
+                                  stroke="none"
+                                  fill="url(#projAreaFill)"
+                                  fillOpacity={1}
+                                />
+                                <Line
+                                  type="monotone"
+                                  dataKey="value"
+                                  stroke="#3b82f6"
+                                  strokeWidth={2}
+                                  dot={false}
+                                  activeDot={{ r: 6, fill: "#3b82f6" }}
+                                />
+                              </>
+                            ) : (
+                              <Bar
+                                dataKey="value"
+                                fill="url(#projBarFill)"
+                                barSize={100}
+                                radius={[6, 6, 0, 0]}
+                              />
+                            )}
+                          </ComposedChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <ProjectStats projectId={enhancedProject.id} />
+                {/* <ProjectActivity projectId={enhancedProject.id} /> */}
+              </div>
+              <div className="space-y-6">
+                <ProjectActivity projectId={enhancedProject.id} />
+              </div>
             </div>
-          </div>
+          )}
         </TabsContent>
 
         {/* IMPORTANT: */}
@@ -1710,16 +1715,37 @@ export function ProjectDetails() {
 
         <TabsContent value="subprojects" className="mt-6">
           {/* <SubProjects projectId={enhancedProject.id}" /> */}
-          <SubProjects projectId={enhancedProject.id} />
+          <SubProjects
+            projectId={enhancedProject.id}
+            isSysOrSuperAdmin={isSysOrSuperAdmin}
+            isProgramManager={isProgramManager}
+          />
         </TabsContent>
 
         <TabsContent value="services" className="pt-6">
-          <ProjectServices projectId={enhancedProject.id} />
+          {hasFullAccess ? (
+            <ProjectServices projectId={enhancedProject.id} />
+          ) : (
+            <div className="p-6 text-center text-muted-foreground">
+              You have no access
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="team" className="pt-6">
           {/* <ProjectTeam projectId={enhancedProject.id} /> */}
-          <ProjectTeam projectId={enhancedProject.id} />
+          {hasFullAccess ? (
+            <ProjectTeam
+              projectId={enhancedProject.id}
+              isSysOrSuperAdmin={isSysOrSuperAdmin}
+              isProgramManager={isProgramManager}
+              hasFullAccess={hasFullAccess}
+            />
+          ) : (
+            <div className="p-6 text-center text-muted-foreground">
+              You have no access
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="beneficiaries" className="pt-6">
