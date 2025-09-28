@@ -459,9 +459,10 @@ export function SubProjectDetails() {
   }, [subprojectId, projectId, dispatch, navigate]);
 
   useEffect(() => {
+    if (user?.roles == null || user.roles.length === 0) return;
     if (!hasFullAccess) return;
     dispatch(fetchEmployees());
-  }, [dispatch, hasFullAccess]);
+  }, [dispatch, hasFullAccess, user?.roles]);
 
   useEffect(() => {
     if (!subprojectId) return;

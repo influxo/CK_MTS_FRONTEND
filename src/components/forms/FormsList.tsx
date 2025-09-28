@@ -18,7 +18,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch } from "../../store";
 import {
@@ -86,6 +86,7 @@ import {
 } from "../ui/overlay/alert-dialog";
 import { useNavigate } from "react-router-dom";
 import { FormPreview } from "./FormPreview";
+import { selectCurrentUser } from "../../store/slices/authSlice";
 
 // Interface for component props
 interface FormsListProps {
@@ -124,6 +125,29 @@ export function FormsList({
   const [formToDelete, setFormToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentForm, setCurrentForm] = useState<FormTemplate | null>(null);
+
+  const user = useSelector(selectCurrentUser);
+  // Determine role
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+
+  const hasFullAccess = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r === "program manager" ||
+        r === "subproject manager" ||
+        r === "sub-project manager" ||
+        r.includes("system admin") ||
+        r.includes("super admin") ||
+        r.includes("program manager") ||
+        r.includes("sub project manager") ||
+        r.includes("sub-project manager")
+    );
+  }, [normalizedRoles]);
 
   // Handle form creation
   const handleCreateForm = () => {
@@ -189,126 +213,131 @@ export function FormsList({
             Advanced Filters
           </Button>
 
-          <Dialog open={isCreateFormOpen} onOpenChange={setIsCreateFormOpen}>
-            <Button
-              onClick={() => handleCreateClick()}
-              className="bg-black text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Form
-            </Button>
+          {hasFullAccess && (
+            <Dialog open={isCreateFormOpen} onOpenChange={setIsCreateFormOpen}>
+              <Button
+                onClick={() => handleCreateClick()}
+                className="bg-black text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Form
+              </Button>
 
-            <DialogContent className="sm:max-w-[550px]">
-              <DialogHeader>
-                <DialogTitle>Create New Form</DialogTitle>
-                <DialogDescription>
-                  Create a new data collection form template. You'll be able to
-                  add fields in the form builder.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="form-name">Form Name *</Label>
-                  <Input
-                    id="form-name"
-                    placeholder="Enter form name"
-                    value={newFormName}
-                    onChange={(e) => setNewFormName(e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="form-description">Description</Label>
-                  <Textarea
-                    id="form-description"
-                    placeholder="Enter form description"
-                    rows={3}
-                    value={newFormDescription}
-                    onChange={(e) => setNewFormDescription(e.target.value)}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="form-category">Category *</Label>
-                  <Select
-                    value={newFormCategory}
-                    onValueChange={setNewFormCategory}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="health">Health</SelectItem>
-                      <SelectItem value="agriculture">Agriculture</SelectItem>
-                      <SelectItem value="wash">Water & Sanitation</SelectItem>
-                      <SelectItem value="education">Education</SelectItem>
-                      <SelectItem value="training">Training</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="form-project">Associate with Project</Label>
-                  <Select
-                    value={newFormProject}
-                    onValueChange={setNewFormProject}
-                    disabled={isLoadingProjects}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          isLoadingProjects
-                            ? "Loading projects..."
-                            : "Select a project"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {projects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {newFormProject && (
+              <DialogContent className="sm:max-w-[550px]">
+                <DialogHeader>
+                  <DialogTitle>Create New Form</DialogTitle>
+                  <DialogDescription>
+                    Create a new data collection form template. You'll be able
+                    to add fields in the form builder.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="form-subproject">
-                      Associate with Sub-Project
-                    </Label>
+                    <Label htmlFor="form-name">Form Name *</Label>
+                    <Input
+                      id="form-name"
+                      placeholder="Enter form name"
+                      value={newFormName}
+                      onChange={(e) => setNewFormName(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="form-description">Description</Label>
+                    <Textarea
+                      id="form-description"
+                      placeholder="Enter form description"
+                      rows={3}
+                      value={newFormDescription}
+                      onChange={(e) => setNewFormDescription(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="form-category">Category *</Label>
                     <Select
-                      value={newFormSubProject}
-                      onValueChange={setNewFormSubProject}
+                      value={newFormCategory}
+                      onValueChange={setNewFormCategory}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a sub-project" />
+                        <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {projects.map((subProject) => (
-                          <SelectItem key={subProject.id} value={subProject.id}>
-                            {subProject.name}
+                        <SelectItem value="health">Health</SelectItem>
+                        <SelectItem value="agriculture">Agriculture</SelectItem>
+                        <SelectItem value="wash">Water & Sanitation</SelectItem>
+                        <SelectItem value="education">Education</SelectItem>
+                        <SelectItem value="training">Training</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="form-project">Associate with Project</Label>
+                    <Select
+                      value={newFormProject}
+                      onValueChange={setNewFormProject}
+                      disabled={isLoadingProjects}
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            isLoadingProjects
+                              ? "Loading projects..."
+                              : "Select a project"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                )}
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCreateFormOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleCreateForm}
-                  disabled={!newFormName || !newFormCategory}
-                >
-                  Create & Open Builder
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                  {newFormProject && (
+                    <div className="grid gap-2">
+                      <Label htmlFor="form-subproject">
+                        Associate with Sub-Project
+                      </Label>
+                      <Select
+                        value={newFormSubProject}
+                        onValueChange={setNewFormSubProject}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a sub-project" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {projects.map((subProject) => (
+                            <SelectItem
+                              key={subProject.id}
+                              value={subProject.id}
+                            >
+                              {subProject.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCreateFormOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCreateForm}
+                    disabled={!newFormName || !newFormCategory}
+                  >
+                    Create & Open Builder
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
 
           <Dialog open={isPreviewMode} onOpenChange={setIsPreviewMode}>
             <DialogContent className="min-w-[600px]">
@@ -340,56 +369,17 @@ export function FormsList({
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex gap-3">
-            {/* Comment for now */}
-            {/* <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[150px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select> */}
-            {/* <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select> */}
-          </div>
+          <div className="flex gap-3">{/* Comment for now */}</div>
         </div>
         <div className="flex gap-3">
           <Button variant="outline">
             <FileDown className="h-4 w-4 mr-2" />
             Export
           </Button>
-          {/* <Tabs
-            value={viewType}
-            onValueChange={setViewType}
-            className="w-[180px]"
-          >
-            <TabsList className="grid w-full grid-cols-2 bg-gray-200 rounded-full">
-              <TabsTrigger value="grid" className="rounded-full bg-white">
-                Grid View
-              </TabsTrigger>
-              <TabsTrigger value="list">List View</TabsTrigger>
-            </TabsList>
-          </Tabs> */}
         </div>
       </div>
 
+      {/* TODO: remove this filter | me shume gjasa nuk na duhet hiq */}
       {projectFilter !== "all" && (
         <Card className="mb-6">
           <CardContent className="py-4">
@@ -476,25 +466,29 @@ export function FormsList({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => handleEditClick(formTes.id)}
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Form
-                      </DropdownMenuItem>
+                      {hasFullAccess && (
+                        <DropdownMenuItem
+                          onClick={() => handleEditClick(formTes.id)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Form
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         onClick={() => handlePreviewClick(formTes)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Preview
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => handleDeleteClick(formTes.id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
+                      {hasFullAccess && (
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => handleDeleteClick(formTes.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

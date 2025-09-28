@@ -1,25 +1,77 @@
 import {
   ArrowLeft,
+  BarChart3,
   Calendar,
   CheckCircle,
+  ClipboardList,
   FileEdit,
+  Filter,
+  FolderKanban,
+  Plus,
+  TrendingDown,
+  TrendingUp,
   User,
   Users,
-  Plus,
   X,
-  TrendingUp,
-  TrendingDown,
-  FolderKanban,
-  ClipboardList,
-  BarChart3,
-  Filter,
 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  Area,
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { toast } from "sonner";
-import { Badge } from "../ui/data-display/badge";
+import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
+import formService from "../../services/forms/formService";
+import type { Project } from "../../services/projects/projectModels";
+import projectService from "../../services/projects/projectService";
+import type { TimeUnit } from "../../services/services/serviceMetricsModels";
+import servicesService from "../../services/services/serviceServices";
+import type { AppDispatch } from "../../store";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import {
+  associateBeneficiaryToEntities,
+  clearBeneficiaryMessages,
+  createBeneficiary,
+  fetchBeneficiaries,
+  fetchBeneficiariesByEntity,
+  selectBeneficiaries,
+  selectBeneficiariesByEntity,
+  selectBeneficiariesByEntityError,
+  selectBeneficiariesByEntityLoading,
+  selectBeneficiariesByEntityPagination,
+  selectBeneficiariesError,
+  selectBeneficiariesLoading,
+  selectBeneficiaryAssociateLoading,
+  selectBeneficiaryCreateSuccessMessage,
+  selectBeneficiaryError,
+  selectBeneficiaryIsLoading,
+} from "../../store/slices/beneficiarySlice";
+import {
+  fetchProjectDeliveriesSeries,
+  fetchProjectDeliveriesSummary,
+  selectAllProjects,
+  selectProjectMetricsSeries,
+  selectProjectMetricsSummary,
+  selectProjectsLoading,
+} from "../../store/slices/projectsSlice";
+import {
+  fetchSubProjectsByProjectId,
+  selectAllSubprojects,
+  selectSubprojectsError,
+  selectSubprojectsLoading,
+} from "../../store/slices/subProjectSlice";
 import { Button } from "../ui/button/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
+import { Badge } from "../ui/data-display/badge";
 import {
   Card,
   CardContent,
@@ -27,14 +79,14 @@ import {
   CardTitle,
 } from "../ui/data-display/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/overlay/dialog";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
+import { Checkbox } from "../ui/form/checkbox";
 import { Input } from "../ui/form/input";
 import { Label } from "../ui/form/label";
 import { RadioGroup, RadioGroupItem } from "../ui/form/radio-group";
@@ -45,89 +97,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/form/select";
+import { Textarea } from "../ui/form/textarea";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "../ui/navigation/tabs";
-import { Textarea } from "../ui/form/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/overlay/dialog";
 import { ProjectActivity } from "./ProjectActivity";
 import { ProjectExport } from "./ProjectExport";
+import { ProjectServices } from "./ProjectServices";
 import { ProjectStats } from "./ProjectStats";
 import { ProjectTeam } from "./ProjectTeam";
 import { SubProjects } from "./SubProjects";
-import { ProjectServices } from "./ProjectServices";
-import {
-  selectAllProjects,
-  selectProjectsLoading,
-  selectProjectMetricsSummary,
-  selectProjectMetricsSeries,
-  fetchProjectDeliveriesSummary,
-  fetchProjectDeliveriesSeries,
-} from "../../store/slices/projectsSlice";
-import type { AppDispatch } from "../../store";
-import projectService from "../../services/projects/projectService";
-import type { Project } from "../../services/projects/projectModels";
-import { Progress } from "../ui/feedback/progress";
-import {
-  fetchEmployees,
-  selectAllEmployees,
-  selectEmployeesError,
-  selectEmployeesLoading,
-} from "../../store/slices/employeesSlice";
-import {
-  fetchSubProjectsByProjectId,
-  selectAllSubprojects,
-  selectSubprojectsLoading,
-  selectSubprojectsError,
-} from "../../store/slices/subProjectSlice";
-import {
-  fetchBeneficiariesByEntity,
-  selectBeneficiariesByEntity,
-  selectBeneficiariesByEntityError,
-  selectBeneficiariesByEntityLoading,
-  selectBeneficiariesByEntityPagination,
-} from "../../store/slices/beneficiarySlice";
-import {
-  createBeneficiary,
-  associateBeneficiaryToEntities,
-  clearBeneficiaryMessages,
-  selectBeneficiaryIsLoading,
-  selectBeneficiaryError,
-  selectBeneficiaryCreateSuccessMessage,
-  selectBeneficiaryAssociateLoading,
-  fetchBeneficiaries,
-  selectBeneficiaries,
-  selectBeneficiariesLoading,
-  selectBeneficiariesError,
-} from "../../store/slices/beneficiarySlice";
-import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
-import { Checkbox } from "../ui/form/checkbox";
-import servicesService from "../../services/services/serviceServices";
-import formService from "../../services/forms/formService";
-import {
-  ComposedChart,
-  Line,
-  Area,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import type { TimeUnit } from "../../services/services/serviceMetricsModels";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/data-display/table";
-import { selectCurrentUser } from "../../store/slices/authSlice";
 
 // Mock project data for enhanced details
 const mockProjectDetails = {
@@ -542,6 +533,7 @@ export function ProjectDetails() {
   // Load templates once (skip for Sub-Project Manager)
   useEffect(() => {
     (async () => {
+      if (user?.roles == null || user.roles.length === 0) return;
       if (!hasFullAccess) {
         setTemplatesOptions([]);
         return;
@@ -550,7 +542,7 @@ export function ProjectDetails() {
       const templates = (forms?.data as any)?.templates || forms?.data || [];
       setTemplatesOptions(templates || []);
     })();
-  }, [hasFullAccess]);
+  }, [hasFullAccess, user?.roles]);
 
   // Load subprojects for this project for filter dropdown (independent of Beneficiaries tab)
   useEffect(() => {
@@ -568,7 +560,7 @@ export function ProjectDetails() {
   useEffect(() => {
     (async () => {
       if (!id) return;
-
+      if (user?.roles == null || user.roles.length === 0) return;
       if (!hasFullAccess) {
         console.log("Skipping fetch because user does not have full access");
         setServicesOptions([]);
@@ -587,13 +579,14 @@ export function ProjectDetails() {
 
       setServicesOptions(res && res.success ? res.items || [] : []);
     })();
-  }, [id, selectedSubProjectId, hasFullAccess]);
+  }, [id, selectedSubProjectId, hasFullAccess, user?.roles]);
 
   // Fetch project metrics whenever Overview is active and filters change
   useEffect(() => {
     if (activeTab !== "overview") return;
     if (!id) return;
     // Sub-Project Manager should not fetch overview metrics
+    if (user?.roles == null || user.roles.length === 0) return;
     if (!hasFullAccess) return;
     const effectiveEntityType = selectedSubProjectId ? "subproject" : "project";
     const effectiveEntityId = selectedSubProjectId || id;
@@ -637,6 +630,7 @@ export function ProjectDetails() {
     serviceIdLocal,
     formTemplateIdLocal,
     hasFullAccess,
+    user?.roles,
   ]);
 
   // After successful create (+ association if any), close dialog, reset form, refresh list

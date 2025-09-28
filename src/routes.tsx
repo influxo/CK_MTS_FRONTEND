@@ -1,28 +1,27 @@
 import { Navigate } from "react-router-dom";
-import { Dashboard } from "./pages/Dashboard";
-import { Projects } from "./pages/Projects";
-import { Beneficiaries } from "./pages/Beneficiaries";
-import { Forms } from "./pages/Forms";
-import { Reports } from "./pages/Reports";
-import { Employees } from "./pages/Employees";
-import Login from "./pages/auth/Login";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-import { ProjectDetails } from "./components/projects/ProjectDetails";
 import { BeneficiaryDetails } from "./components/beneficiaries/BeneficiaryDetails";
 import BeneficiarySingleSubmission from "./components/beneficiaries/BeneficiarySingleSubmission";
+import { ProjectDetails } from "./components/projects/ProjectDetails";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import Login from "./pages/auth/Login";
+import ResetPassword from "./pages/auth/ResetPassword";
+import { Beneficiaries } from "./pages/Beneficiaries";
+import { Dashboard } from "./pages/Dashboard";
+import { Employees } from "./pages/Employees";
+import { Forms } from "./pages/Forms";
+import { Projects } from "./pages/Projects";
+import { Reports } from "./pages/Reports";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import AppLayout from "./components/layout/AppLayout";
-import { SubProjectDetails } from "./components/projects/SubProjectDetails";
-import DataEntry from "./pages/DataEntry";
-import DataEntryTemplates from "./pages/DataEntryTemplates";
 import { EmployeeDetails } from "./components/employees/EmployeeDetails";
-import AcceptInvitation from "./pages/auth/AcceptInvitation";
-import { Profile } from "./pages/Profile";
-import { FormDetails } from "./components/forms/FormDetails";
 import { FormCreate } from "./components/forms/FormCreate";
 import { FormEdit } from "./components/forms/FormEdit";
+import AppLayout from "./components/layout/AppLayout";
+import { SubProjectDetails } from "./components/projects/SubProjectDetails";
+import AcceptInvitation from "./pages/auth/AcceptInvitation";
+import DataEntry from "./pages/DataEntry";
+import DataEntryTemplates from "./pages/DataEntryTemplates";
+import { Profile } from "./pages/Profile";
 
 const routes = [
   {
