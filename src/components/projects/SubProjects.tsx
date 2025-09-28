@@ -77,12 +77,14 @@ interface SubProjectsProps {
   projectId?: string;
   isSysOrSuperAdmin?: boolean;
   isProgramManager?: boolean;
+  hasFullAccess?: boolean;
 }
 
 export function SubProjects({
   projectId: propProjectId,
   isSysOrSuperAdmin,
   isProgramManager,
+  hasFullAccess,
 }: SubProjectsProps) {
   const navigate = useNavigate();
   const { projectId: paramProjectId } = useParams<{ projectId: string }>();
@@ -199,7 +201,7 @@ export function SubProjects({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3>Sub-Projects</h3>
-        {(isSysOrSuperAdmin || isProgramManager) && (
+        {hasFullAccess && (
           <Dialog
             open={isCreateDialogOpen}
             onOpenChange={setIsCreateDialogOpen}
@@ -356,31 +358,6 @@ export function SubProjects({
             </Select>
           </div>
         </div>
-
-        {/* 
-                  KJo o per me ndryshu list ose grid view
-                */}
-
-        {/* <Tabs
-          value={viewType}
-          onValueChange={setViewType}
-          className="w-full sm:w-auto"
-        >
-          <TabsList className="grid w-full sm:w-[180px] grid-cols-2 border items-center">
-            <TabsTrigger
-              value="grid"
-              className="data-[state=active]:bg-[#FF5E3A] data-[state=active]:text-white "
-            >
-              Grid View
-            </TabsTrigger>
-            <TabsTrigger
-              value="list"
-              className="data-[state=active]:bg-[#FF5E3A] data-[state=active]:text-white"
-            >
-              List View
-            </TabsTrigger>
-          </TabsList>
-        </Tabs> */}
       </div>
 
       {viewType === "grid" ? (
