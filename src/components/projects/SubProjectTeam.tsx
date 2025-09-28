@@ -49,12 +49,16 @@ import { selectAllEmployees } from "../../store/slices/employeesSlice";
 
 interface SubProjectTeamProps {
   subProjectId: string;
+  hasFullAccess: boolean;
 }
 
 // Team members are fetched from Redux via fetchSubProjectUsers
 
 // Assignment uses employees list from Redux (see selectAllEmployees)
-export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
+export function SubProjectTeam({
+  subProjectId,
+  hasFullAccess,
+}: SubProjectTeamProps) {
   const [activeTab, setActiveTab] = useState("team-members");
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -81,10 +85,10 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
   };
 
   useEffect(() => {
-    if (subProjectId) {
+    if (subProjectId && hasFullAccess) {
       dispatch(fetchSubProjectUsers({ subProjectId }));
     }
-  }, [subProjectId, dispatch]);
+  }, [subProjectId, dispatch, hasFullAccess]);
 
   const handleAssignMember = async () => {
     if (!selectedMemberId) return;
