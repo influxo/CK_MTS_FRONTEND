@@ -41,6 +41,11 @@ import {
 } from "../../store/slices/beneficiarySlice";
 import { fetchProjects } from "../../store/slices/projectsSlice";
 import { fetchAllSubProjects } from "../../store/slices/subProjectSlice";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsTree,
+} from "../../store/slices/userProjectsSlice";
 import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
@@ -307,6 +312,43 @@ export function BeneficiariesList({
     (state: RootState) => state.subprojects.error
   );
 
+  // Role + assigned projects tree
+  const user = useSelector(selectCurrentUser);
+  const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
+  const isSubProjectManager = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sub-project manager" ||
+        r === "sub project manager" ||
+        r.includes("sub-project manager") ||
+        r.includes("sub project manager")
+    );
+  }, [normalizedRoles]);
+  const isFieldOperator = useMemo(() => {
+    return (
+      normalizedRoles.includes("field operator") ||
+      normalizedRoles.includes("field-operator") ||
+      normalizedRoles.includes("fieldoperator") ||
+      normalizedRoles.includes("field_op") ||
+      normalizedRoles.some(
+        (r: string) => r.includes("field") && r.includes("operator")
+      )
+    );
+  }, [normalizedRoles]);
+
   const subprojectsByProjectId = useMemo(() => {
     const map: Record<
       string,
@@ -323,13 +365,66 @@ export function BeneficiariesList({
     return map;
   }, [subprojects]);
 
-  const subprojectsForSelectedProject = useMemo(
-    () =>
-      filterProjectId !== "all"
-        ? subprojectsByProjectId[filterProjectId] || []
-        : [],
-    [filterProjectId, subprojectsByProjectId]
-  );
+  const subprojectsForSelectedProject = useMemo(() => {
+    if (filterProjectId === "all")
+      return [] as { id: string; name: string; projectId: string }[];
+    if (isSysOrSuperAdmin) {
+      return subprojectsByProjectId[filterProjectId] || [];
+    }
+    // Non-admins: build from userProjectsTree
+    const proj = (userProjectsTree || []).find(
+      (p: any) => p.id === filterProjectId
+    );
+    return ((proj?.subprojects || []) as any[]).map((sp: any) => ({
+      id: sp.id,
+      name: sp.name,
+      projectId: filterProjectId,
+    }));
+  }, [
+    filterProjectId,
+    subprojectsByProjectId,
+    isSysOrSuperAdmin,
+    userProjectsTree,
+  ]);
+
+  // Build project options based on role
+  const projectsForSelect = useMemo(() => {
+    if (isSysOrSuperAdmin) return projects;
+    const assigned = (userProjectsTree || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+    }));
+    return assigned as Array<{ id: string; name: string }> as any;
+  }, [isSysOrSuperAdmin, projects, userProjectsTree]);
+
+  // Allowed subprojects for current project (for subproject managers and field operators)
+  const allowedSubprojectIds = useMemo(() => {
+    try {
+      if (filterProjectId === "all") return new Set<string>();
+      const proj = (userProjectsTree || []).find(
+        (p: any) => p.id === filterProjectId
+      );
+      const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
+      return new Set<string>(ids);
+    } catch {
+      return new Set<string>();
+    }
+  }, [userProjectsTree, filterProjectId]);
+
+  const subprojectsForSelect = useMemo(() => {
+    const base = subprojectsForSelectedProject;
+    if (isSysOrSuperAdmin) return base;
+    if (isSubProjectManager || isFieldOperator) {
+      return base.filter((sp) => allowedSubprojectIds.has(sp.id));
+    }
+    return base;
+  }, [
+    subprojectsForSelectedProject,
+    isSysOrSuperAdmin,
+    isSubProjectManager,
+    isFieldOperator,
+    allowedSubprojectIds,
+  ]);
 
   // Form state for creating a beneficiary
   const [form, setForm] = useState<CreateBeneficiaryRequest>({
@@ -463,9 +558,13 @@ export function BeneficiariesList({
 
   // Load projects & subprojects for association selection
   useEffect(() => {
-    dispatch(fetchProjects());
-    dispatch(fetchAllSubProjects());
-  }, [dispatch]);
+    if (isSysOrSuperAdmin) {
+      dispatch(fetchProjects());
+      dispatch(fetchAllSubProjects());
+    } else if ((userProjectsTree || []).length === 0 && user?.id) {
+      dispatch(fetchUserProjectsByUserId(String(user.id)) as any);
+    }
+  }, [dispatch, isSysOrSuperAdmin, user?.id, userProjectsTree?.length]);
 
   // Close dialog and refresh list on successful create
   useEffect(() => {
@@ -1298,7 +1397,7 @@ export function BeneficiariesList({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Projects</SelectItem>
-                {projects.map((project) => (
+                {projectsForSelect.map((project: any) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
                   </SelectItem>
@@ -1320,7 +1419,7 @@ export function BeneficiariesList({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Subprojects</SelectItem>
-                {subprojectsForSelectedProject.map((sp) => (
+                {subprojectsForSelect.map((sp) => (
                   <SelectItem key={sp.id} value={sp.id}>
                     {sp.name}
                   </SelectItem>
