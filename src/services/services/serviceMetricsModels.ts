@@ -44,10 +44,24 @@ export interface DeliveriesSeriesItem {
   beneficiaryId?: string;
 }
 
+// Optional extra data some APIs may return alongside the series
+export interface MostFrequentService {
+  serviceId: string;
+  name: string;
+  count: number;
+}
+
 export interface DeliveriesSeriesResponse {
   success: boolean;
   message?: string;
   items: DeliveriesSeriesItem[];
   granularity: TimeUnit;
   groupedBy: GroupedByKey;
+  // Optional extras if provided by the API
+  summary?: {
+    totalSubmissions?: number;
+    totalServiceDeliveries?: number;
+    totalUniqueBeneficiaries?: number;
+  };
+  mostFrequentServices?: MostFrequentService[];
 }

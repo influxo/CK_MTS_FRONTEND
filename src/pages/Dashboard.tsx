@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { BeneficiaryDemographics } from "../components/dashboard/BeneficiaryDemographics";
 import { FilterControls } from "../components/dashboard/FilterControls";
@@ -15,17 +15,26 @@ import { selectCurrentUser } from "../store/slices/authSlice";
 import {
   fetchDeliveriesSeries,
   fetchDeliveriesSummary,
+  resetFilters,
   selectMetricsFilters,
 } from "../store/slices/serviceMetricsSlice";
-import { fetchUserProjectsByUserId } from "../store/slices/userProjectsSlice";
-import { selectAllProjects } from "../store/slices/projectsSlice";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsTree,
+} from "../store/slices/userProjectsSlice";
+import {
+  selectAllProjects,
+  fetchProjects,
+} from "../store/slices/projectsSlice";
 
 export function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(selectCurrentUser);
   const metricsFilters = useSelector(selectMetricsFilters);
+  const didResetRef = useRef(false);
 
   const projects = useSelector(selectAllProjects);
+  const userProjectsTree = useSelector(selectUserProjectsTree);
 
   console.log("projects from dashboard", projects);
 
@@ -49,23 +58,50 @@ export function Dashboard() {
       normalizedRoles.includes("field-operator") ||
       normalizedRoles.includes("fieldoperator") ||
       normalizedRoles.includes("field_op") ||
-      normalizedRoles.some((r: string) => r.includes("field") && r.includes("operator"))
+      normalizedRoles.some(
+        (r: string) => r.includes("field") && r.includes("operator")
+      )
     );
   }, [normalizedRoles]);
 
   useEffect(() => {
-    if (user?.id) {
+    if (!user?.id) return;
+    if (isSysOrSuperAdmin) {
+      dispatch(fetchProjects());
+    } else {
       dispatch(fetchUserProjectsByUserId(String(user.id)));
     }
-  }, [dispatch, user?.id]);
+  }, [dispatch, user?.id, isSysOrSuperAdmin]);
+
+  // Choose which projects list to expose to UI based on role
+  const projectsForUi = useMemo(() => {
+    if (isSysOrSuperAdmin) return projects;
+    // Map userProjectsTree to Project[] shape
+    return (userProjectsTree || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description || "",
+      category: p.category || "",
+      status: "active" as const,
+      createdAt: p.createdAt || "",
+      updatedAt: p.updatedAt || "",
+    }));
+  }, [isSysOrSuperAdmin, projects, userProjectsTree]);
 
   // Load service delivery metrics (summary + series)
   useEffect(() => {
+    // On first run after mount, reset filters and skip fetching to avoid sending stale params
+    if (!didResetRef.current) {
+      didResetRef.current = true;
+      dispatch(resetFilters());
+      return;
+    }
     if (!user) return; // wait until user profile is available to determine role filters
     const base = metricsFilters || ({} as any);
-    const filters = isFieldOperator && user?.id
-      ? { ...base, staffUserId: String(user.id) }
-      : base;
+    const filters =
+      isFieldOperator && user?.id
+        ? { ...base, staffUserId: String(user.id) }
+        : base;
     dispatch(fetchDeliveriesSummary(filters));
     dispatch(fetchDeliveriesSeries(filters));
   }, [dispatch, metricsFilters, isFieldOperator, user?.id]);
@@ -85,28 +121,28 @@ export function Dashboard() {
   // Default dashboard for other roles
   return (
     <>
-      <FilterControls projects={projects} />
+      <FilterControls projects={projectsForUi} />
       <div className="flex justify-end mb-4">
         {/* Create Project Dialog */}
         {/* TODO: make this a component */}
       </div>
       <SummaryMetrics />
 
-      <FormSubmissions projects={projects} />
+      <FormSubmissions projects={projectsForUi} />
 
+      <div className="lg:col-span-2 py-6">
+        <BeneficiaryDemographics />
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2">
           <KpiHighlights />
-          <div className="lg:col-span-2 py-6">
-            <BeneficiaryDemographics />
-          </div>
           {/* <div className="lg:col-span-2">
             <KpiHighlights />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-1 py-6 gap-6 mb-6">
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-1 py-6 gap-6 mb-6">
             <ServiceDelivery />
-          </div> */}
+            </div> */}
         </div>
         <div className=" space-y-6">
           {/* <SyncStatus />

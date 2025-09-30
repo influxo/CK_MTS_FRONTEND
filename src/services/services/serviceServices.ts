@@ -17,6 +17,7 @@ import type {
   UnassignServiceFromEntityRequest,
   UnassignServiceFromEntityResponse,
 } from "./serviceModels";
+import { toast } from "sonner";
 
 class ServicesService {
   private baseUrl = getApiUrl();
@@ -136,8 +137,22 @@ class ServicesService {
         `${this.servicesEndpoint}/assignments/batch`,
         req
       );
+      toast.success("Shërbimet u shtuan me sukses!", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
       return response.data;
     } catch (error: any) {
+      toast.error("Diçka dështoi gjate shtimit të shërbimeve", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
       if (error?.response) {
         return error.response.data as AssignServicesBatchResponse;
       }
@@ -174,12 +189,27 @@ class ServicesService {
     req: UnassignServiceFromEntityRequest
   ): Promise<UnassignServiceFromEntityResponse> {
     try {
-      const response = await axiosInstance.post<UnassignServiceFromEntityResponse>(
-        `${this.servicesEndpoint}/${encodeURIComponent(id)}/unassign`,
-        req
-      );
+      const response =
+        await axiosInstance.post<UnassignServiceFromEntityResponse>(
+          `${this.servicesEndpoint}/${encodeURIComponent(id)}/unassign`,
+          req
+        );
+      toast.success("Shërbimi u largua me sukses!", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
       return response.data;
     } catch (error: any) {
+      toast.error("Diçka dështoi gjate largimit të shërbimit", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
       if (error?.response) {
         return error.response.data as UnassignServiceFromEntityResponse;
       }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
@@ -10,17 +10,12 @@ import {
   selectProjectsLoading,
 } from "../../store/slices/projectsSlice";
 import type { AppDispatch } from "../../store";
+import { selectCurrentUser } from "../../store/slices/authSlice";
 
 const AppLayout = () => {
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
-    null
-  );
-  const [selectedSubProjectId, setSelectedSubProjectId] = useState<
-    string | null
-  >(null);
-  const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState<
-    string | null
-  >(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedSubProjectId, setSelectedSubProjectId] = useState<string | null>(null);
+  const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [_isMobile, setIsMobile] = useState(false);
@@ -57,12 +52,28 @@ const AppLayout = () => {
   const projects = useSelector(selectAllProjects);
   const isLoading = useSelector(selectProjectsLoading);
   const error = useSelector(selectProjectsError);
+  const user = useSelector(selectCurrentUser);
+
+  // Role helpers to determine whether to load all projects
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
 
   useEffect(() => {
-    if (projects.length === 0) {
+    if (isSysOrSuperAdmin && projects.length === 0) {
       dispatch(fetchProjects());
     }
-  }, [dispatch, projects.length]);
+  }, [dispatch, projects.length, isSysOrSuperAdmin]);
 
   return (
     <div className="flex h-screen bg-white">

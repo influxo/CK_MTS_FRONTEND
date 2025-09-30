@@ -47,6 +47,7 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import { Textarea } from "../ui/form/textarea";
+import { toast } from "sonner";
 
 interface SubProjectServicesProps {
   subProjectId: string;
@@ -145,6 +146,13 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
         setCategory("");
         setStatus("active");
       }
+      toast.success("Shërbimi u shtua me sukses!", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
     } catch (e) {
       // errors handled by slice; keep here to stop spinner
     } finally {
@@ -169,6 +177,15 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
             data: { entityId: subProjectId, entityType: "subproject" },
           })
         ).unwrap();
+
+        //  If we got here, it's successful
+        toast.success("Shërbimi u shtua me sukses!", {
+          style: {
+            backgroundColor: "#d1fae5",
+            color: "#065f46",
+            border: "1px solid #10b981",
+          },
+        });
       } else {
         await dispatch(
           assignServicesBatch({
@@ -422,15 +439,6 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          <Button
-            variant="outline"
-            className="bg-black/5 text-black border-0"
-            onClick={refresh}
-            disabled={isLoading}
-          >
-            {isLoading ? "Refreshing..." : "Refresh"}
-          </Button>
         </div>
       </div>
 

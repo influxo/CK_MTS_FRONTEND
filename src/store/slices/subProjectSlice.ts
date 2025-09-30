@@ -22,6 +22,15 @@ import type {
   UpdateSubProjectResponse,
 } from "../../services/subprojects/subprojectModels";
 import subProjectService from "../../services/subprojects/subprojectService";
+import serviceMetricsService from "../../services/services/serviceMetricsService";
+import type {
+  DeliveriesFilters,
+  DeliveriesSeriesParams,
+  DeliveriesSeriesResponse,
+  DeliveriesSummaryData,
+  DeliveriesSummaryResponse,
+  TimeUnit,
+} from "../../services/services/serviceMetricsModels";
 
 interface SubProjectsState {
   subprojects: SubProject[];
@@ -37,6 +46,23 @@ interface SubProjectsState {
   assignedUsers: AssignedSubProjectUser[];
   assignedUsersLoading: boolean;
   assignedUsersError: string | null;
+  // Subproject-scoped metrics (Overview tab)
+  metrics: {
+    summary: {
+      loading: boolean;
+      error: string | null;
+      data: DeliveriesSummaryData | null;
+      lastKey?: string | null;
+    };
+    series: {
+      loading: boolean;
+      error: string | null;
+      items: DeliveriesSeriesResponse["items"];
+      granularity: TimeUnit;
+      groupedBy: DeliveriesSeriesResponse["groupedBy"];
+      lastKey?: string | null;
+    };
+  };
 }
 
 const initialState: SubProjectsState = {
@@ -52,6 +78,22 @@ const initialState: SubProjectsState = {
   assignedUsers: [],
   assignedUsersLoading: false,
   assignedUsersError: null,
+  metrics: {
+    summary: {
+      loading: false,
+      error: null,
+      data: null,
+      lastKey: null,
+    },
+    series: {
+      loading: false,
+      error: null,
+      items: [],
+      granularity: "month",
+      groupedBy: null,
+      lastKey: null,
+    },
+  },
 };
 
 // Thunks
@@ -172,6 +214,71 @@ export const removeUserFromSubProject = createAsyncThunk<
   }
   return response;
 });
+
+// Subproject-scoped metrics thunks (always enforce entityType: 'subproject')
+export const fetchSubProjectDeliveriesSummary = createAsyncThunk<
+  DeliveriesSummaryResponse,
+  { entityId: string } & Partial<DeliveriesFilters>,
+  { state: any; rejectValue: string }
+>(
+  "subprojects/fetchSubProjectDeliveriesSummary",
+  async (args, { rejectWithValue }) => {
+    const response = await serviceMetricsService.getDeliveriesSummary({
+      ...args,
+      entityType: (args as any).entityType || "subproject",
+      entityId: args.entityId,
+    });
+    if (!response.success) {
+      return rejectWithValue(
+        response.message || "Failed to fetch subproject deliveries summary"
+      );
+    }
+    return response;
+  },
+  {
+    condition: (args, { getState }) => {
+      const st = getState() as any;
+      const prevKey = st.subprojects.metrics.summary.lastKey;
+      const key = JSON.stringify({
+        ...args,
+        entityType: (args as any).entityType || "subproject",
+      });
+      return prevKey !== key && !st.subprojects.metrics.summary.loading;
+    },
+  }
+);
+
+export const fetchSubProjectDeliveriesSeries = createAsyncThunk<
+  DeliveriesSeriesResponse,
+  { entityId: string } & Partial<DeliveriesSeriesParams>,
+  { state: any; rejectValue: string }
+>(
+  "subprojects/fetchSubProjectDeliveriesSeries",
+  async (args, { rejectWithValue }) => {
+    const response = await serviceMetricsService.getDeliveriesSeries({
+      ...args,
+      entityType: (args as any).entityType || "subproject",
+      entityId: args.entityId,
+    });
+    if (!response.success) {
+      return rejectWithValue(
+        response.message || "Failed to fetch subproject deliveries series"
+      );
+    }
+    return response;
+  },
+  {
+    condition: (args, { getState }) => {
+      const st = getState() as any;
+      const prevKey = st.subprojects.metrics.series.lastKey;
+      const key = JSON.stringify({
+        ...args,
+        entityType: (args as any).entityType || "subproject",
+      });
+      return prevKey !== key && !st.subprojects.metrics.series.loading;
+    },
+  }
+);
 
 const subprojectsSlice = createSlice({
   name: "subprojects",
@@ -344,6 +451,54 @@ const subprojectsSlice = createSlice({
       .addCase(removeUserFromSubProject.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload ?? "Failed to remove user";
+      })
+      // subproject metrics: summary
+      .addCase(fetchSubProjectDeliveriesSummary.pending, (state) => {
+        state.metrics.summary.loading = true;
+        state.metrics.summary.error = null;
+      })
+      .addCase(fetchSubProjectDeliveriesSummary.fulfilled, (state, action) => {
+        state.metrics.summary.loading = false;
+        state.metrics.summary.error = null;
+        state.metrics.summary.data = action.payload.data;
+        // @ts-ignore meta is available on action
+        const key = JSON.stringify({
+          ...(action.meta.arg || {}),
+          entityType:
+            ((action.meta as any).arg && (action.meta as any).arg.entityType) ||
+            "subproject",
+        });
+        state.metrics.summary.lastKey = key;
+      })
+      .addCase(fetchSubProjectDeliveriesSummary.rejected, (state, action) => {
+        state.metrics.summary.loading = false;
+        state.metrics.summary.error = action.payload ||
+          "Failed to fetch subproject deliveries summary";
+      })
+      // subproject metrics: series
+      .addCase(fetchSubProjectDeliveriesSeries.pending, (state) => {
+        state.metrics.series.loading = true;
+        state.metrics.series.error = null;
+      })
+      .addCase(fetchSubProjectDeliveriesSeries.fulfilled, (state, action) => {
+        state.metrics.series.loading = false;
+        state.metrics.series.error = null;
+        state.metrics.series.items = action.payload.items;
+        state.metrics.series.granularity = action.payload.granularity;
+        state.metrics.series.groupedBy = action.payload.groupedBy;
+        // @ts-ignore meta is available on action
+        const key = JSON.stringify({
+          ...(action.meta.arg || {}),
+          entityType:
+            ((action.meta as any).arg && (action.meta as any).arg.entityType) ||
+            "subproject",
+        });
+        state.metrics.series.lastKey = key;
+      })
+      .addCase(fetchSubProjectDeliveriesSeries.rejected, (state, action) => {
+        state.metrics.series.loading = false;
+        state.metrics.series.error = action.payload ||
+          "Failed to fetch subproject deliveries series";
       });
   },
 });
@@ -390,5 +545,13 @@ export const selectAssignedSubProjectUsersLoading = (state: {
 export const selectAssignedSubProjectUsersError = (state: {
   subprojects: SubProjectsState;
 }) => state.subprojects.assignedUsersError;
+
+// Subproject metrics selectors
+export const selectSubProjectMetricsSummary = (state: {
+  subprojects: SubProjectsState;
+}) => state.subprojects.metrics.summary;
+export const selectSubProjectMetricsSeries = (state: {
+  subprojects: SubProjectsState;
+}) => state.subprojects.metrics.series;
 
 export default subprojectsSlice.reducer;

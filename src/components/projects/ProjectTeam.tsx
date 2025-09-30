@@ -48,11 +48,19 @@ import { selectAllEmployees } from "../../store/slices/employeesSlice";
 
 interface ProjectTeamProps {
   projectId: string;
+  isSysOrSuperAdmin?: boolean;
+  isProgramManager?: boolean;
+  hasFullAccess?: boolean;
 }
 
 // Removed mock team data; now using API data from Redux
 
-export function ProjectTeam({ projectId }: ProjectTeamProps) {
+export function ProjectTeam({
+  projectId,
+  isSysOrSuperAdmin,
+  isProgramManager,
+  hasFullAccess,
+}: ProjectTeamProps) {
   const dispatch = useDispatch<AppDispatch>();
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState("");
@@ -64,10 +72,10 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
   // Optionally track assigning state via projects slice loading, but we'll keep UI simple
 
   useEffect(() => {
-    if (projectId) {
+    if (projectId && hasFullAccess) {
       dispatch(fetchProjectUsers(projectId));
     }
-  }, [dispatch, projectId]);
+  }, [dispatch, projectId, hasFullAccess]);
 
   const handleAssignMember = async () => {
     if (!selectedMemberId) return;
@@ -101,112 +109,99 @@ export function ProjectTeam({ projectId }: ProjectTeamProps) {
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <CardTitle className="text-base">Project Team</CardTitle>
-          <Dialog
-            open={isAssignDialogOpen}
-            onOpenChange={setIsAssignDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button
-                size="sm"
-                className="bg-[#0073e6] text-white flex items-center
+          {(isSysOrSuperAdmin || isProgramManager) && (
+            <Dialog
+              open={isAssignDialogOpen}
+              onOpenChange={setIsAssignDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  size="sm"
+                  className="bg-[#0073e6] text-white flex items-center
              px-4 py-2 rounded-md border-0
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Assign Member
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Assign Member to Project</DialogTitle>
-                <DialogDescription>
-                  Select a team member and role for this project.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="member" className="text-right">
-                    Member
-                  </Label>
-                  <Select
-                    value={selectedMemberId}
-                    onValueChange={(v) => setSelectedMemberId(v)}
-                  >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a member" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {employees.map((emp) => {
-                        const fullName =
-                          `${emp.firstName ?? ""} ${
-                            emp.lastName ?? ""
-                          }`.trim() || "N/A";
-                        const initials = fullName
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .slice(0, 2)
-                          .toUpperCase();
-                        return (
-                          <SelectItem key={emp.id} value={emp.id}>
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-6 w-6">
-                                <AvatarImage src="" alt={fullName} />
-                                <AvatarFallback className="text-[10px]">
-                                  {initials}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-sm">{fullName}</span>
-                              <Badge
-                                variant="secondary"
-                                className="text-[10px]"
-                              >
-                                {emp.email}
-                              </Badge>
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {/* 
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="role" className="text-right">
-                    Role
-                  </Label>
-                  <Select value={selectedRole} onValueChange={setSelectedRole}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableRoles.map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {role}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                */}
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsAssignDialogOpen(false)}
                 >
-                  Cancel
-                </Button>
-                <Button
-                  disabled={!selectedMemberId}
-                  onClick={handleAssignMember}
-                >
+                  <Plus className="h-4 w-4 mr-2" />
                   Assign Member
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Assign Member to Project</DialogTitle>
+                  <DialogDescription>
+                    Select a team member and role for this project.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="member" className="text-right">
+                      Member
+                    </Label>
+                    <Select
+                      value={selectedMemberId}
+                      onValueChange={(v) => setSelectedMemberId(v)}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a member" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {employees.map((emp) => {
+                          const fullName =
+                            `${emp.firstName ?? ""} ${
+                              emp.lastName ?? ""
+                            }`.trim() || "N/A";
+                          const initials = fullName
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)
+                            .toUpperCase();
+                          return (
+                            <SelectItem key={emp.id} value={emp.id}>
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage src="" alt={fullName} />
+                                  <AvatarFallback className="text-[10px]">
+                                    {initials}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-sm">{fullName}</span>
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px]"
+                                >
+                                  {emp.email}
+                                </Badge>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsAssignDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+                    disabled={!selectedMemberId}
+                    onClick={handleAssignMember}
+                  >
+                    Assign Member
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </CardHeader>
       <CardContent>

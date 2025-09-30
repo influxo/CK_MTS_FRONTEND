@@ -9,7 +9,7 @@ import {
   Trash,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store";
@@ -71,12 +71,23 @@ import {
   selectSubprojectsLoading,
 } from "../../store/slices/subProjectSlice";
 import { selectCreateSuccessMessage } from "../../store/slices/projectsSlice";
+import { toast } from "sonner";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
 
 interface SubProjectsProps {
   projectId?: string;
+  isSysOrSuperAdmin?: boolean;
+  isProgramManager?: boolean;
+  hasFullAccess?: boolean;
 }
 
-export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
+export function SubProjects({
+  projectId: propProjectId,
+  isSysOrSuperAdmin,
+  isProgramManager,
+  hasFullAccess,
+}: SubProjectsProps) {
   const navigate = useNavigate();
   const { projectId: paramProjectId } = useParams<{ projectId: string }>();
   const projectId = paramProjectId || propProjectId || "";
@@ -95,6 +106,34 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
     selectCreateSuccessMessage(state)
   );
 
+  // Role + user-assigned subprojects (from cache)
+  const user = useSelector(selectCurrentUser);
+  const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSubProjectManager = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sub-project manager" ||
+        r === "sub project manager" ||
+        r.includes("sub-project manager") ||
+        r.includes("sub project manager")
+    );
+  }, [normalizedRoles]);
+  const allowedSubprojectIds = useMemo(() => {
+    try {
+      const proj = (userProjectsTree || []).find(
+        (p: any) => p.id === projectId
+      );
+      const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
+      return new Set<string>(ids);
+    } catch {
+      return new Set<string>();
+    }
+  }, [userProjectsTree, projectId]);
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [viewType, setViewType] = useState("list");
   const [searchQuery, setSearchQuery] = useState("");
@@ -111,9 +150,14 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
 
   useEffect(() => {
     if (projectId) {
+      if (user?.roles == null || user.roles.length === 0) return;
+      if (isSubProjectManager) {
+        console.log("Skipping fetch subproject mng");
+        return;
+      }
       dispatch(fetchSubProjectsByProjectId({ projectId: projectId }));
     }
-  }, [projectId, dispatch]);
+  }, [projectId, dispatch, isSubProjectManager, user?.roles]);
 
   useEffect(() => {
     if (isCreateDialogOpen) {
@@ -154,7 +198,26 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
       projectId,
     };
 
-    await dispatch(createSubProject(payload));
+    const result = await dispatch(createSubProject(payload));
+
+    if (createSubProject.fulfilled.match(result)) {
+      toast.success("Nënprojekti u shtua me sukses!", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
+      setIsCreateDialogOpen(false);
+    } else {
+      toast.error("Diçka dështoi gjate shtimit te nënprojektit", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
+    }
   };
 
   const filteredSubProjects = subprojects.filter((sp: SubProject) => {
@@ -166,130 +229,142 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
     const matchesCategory =
       categoryFilter === "all" ||
       sp.category.toLowerCase() === categoryFilter.toLowerCase();
-    return matchesProject && matchesSearch && matchesStatus && matchesCategory;
+    const matchesAssignment =
+      hasFullAccess || !isSubProjectManager
+        ? true
+        : allowedSubprojectIds.has(sp.id);
+    return (
+      matchesProject &&
+      matchesSearch &&
+      matchesStatus &&
+      matchesCategory &&
+      matchesAssignment
+    );
   });
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3>Sub-Projects</h3>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              className="bg-[#0073e6] text-white flex items-center
+        {hasFullAccess && (
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button
+                className="bg-[#0073e6] text-white flex items-center
              px-4 py-2 rounded-md border-0
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Sub-Project
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]">
-            <DialogHeader>
-              <DialogTitle>Create New Sub-Project</DialogTitle>
-              <DialogDescription>
-                Add a new sub-project to this project. All fields marked with *
-                are required.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="title" className="text-right">
-                  Title *
-                </Label>
-                <Input
-                  id="title"
-                  className="col-span-3"
-                  placeholder="Sub-project title"
-                  value={name}
-                  onChange={(e) => setName(e.currentTarget.value)}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="category" className="text-right">
-                  Category *
-                </Label>
-                <Select
-                  value={category}
-                  onValueChange={(val) => setCategory(val as string)}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Healthcare">Healthcare</SelectItem>
-                    <SelectItem value="Education">Education</SelectItem>
-                    <SelectItem value="Infrastructure">
-                      Infrastructure
-                    </SelectItem>
-                    <SelectItem value="Training">Training</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">
-                  Status
-                </Label>
-                <Select
-                  value={status}
-                  onValueChange={(val) =>
-                    setStatus(val as "active" | "inactive" | "pending")
-                  }
-                  defaultValue="active"
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="description" className="text-right pt-2">
-                  Description
-                </Label>
-                <Textarea
-                  id="description"
-                  className="col-span-3"
-                  placeholder="Provide a description of the sub-project"
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.currentTarget.value)}
-                />
-              </div>
-            </div>
-            {error && (
-              <div className="text-destructive text-sm mb-2">{error}</div>
-            )}
-            {createSuccessMessage && (
-              <div className="text-green-600 text-sm mb-2">
-                {createSuccessMessage}
-              </div>
-            )}
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsCreateDialogOpen(false);
-                  dispatch(clearSubprojectMessages());
-                }}
               >
-                Cancel
+                <Plus className="h-4 w-4 mr-2" />
+                Create Sub-Project
               </Button>
-              <Button
-                onClick={handleCreateSubmit}
-                disabled={isLoading || !name.trim() || !category.trim()}
-              >
-                {isLoading ? "Creating..." : "Create Sub-Project"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[550px]">
+              <DialogHeader>
+                <DialogTitle>Create New Sub-Project</DialogTitle>
+                <DialogDescription>
+                  Add a new sub-project to this project. All fields marked with
+                  * are required.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">
+                    Title *
+                  </Label>
+                  <Input
+                    id="title"
+                    className="col-span-3"
+                    placeholder="Sub-project title"
+                    value={name}
+                    onChange={(e) => setName(e.currentTarget.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="category" className="text-right">
+                    Category *
+                  </Label>
+                  <Select
+                    value={category}
+                    onValueChange={(val) => setCategory(val as string)}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Healthcare">Healthcare</SelectItem>
+                      <SelectItem value="Education">Education</SelectItem>
+                      <SelectItem value="Infrastructure">
+                        Infrastructure
+                      </SelectItem>
+                      <SelectItem value="Training">Training</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">
+                    Status
+                  </Label>
+                  <Select
+                    value={status}
+                    onValueChange={(val) =>
+                      setStatus(val as "active" | "inactive" | "pending")
+                    }
+                    defaultValue="active"
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label htmlFor="description" className="text-right pt-2">
+                    Description
+                  </Label>
+                  <Textarea
+                    id="description"
+                    className="col-span-3"
+                    placeholder="Provide a description of the sub-project"
+                    rows={3}
+                    value={description}
+                    onChange={(e) => setDescription(e.currentTarget.value)}
+                  />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsCreateDialogOpen(false);
+                    dispatch(clearSubprojectMessages());
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+                  onClick={handleCreateSubmit}
+                  disabled={isLoading || !name.trim() || !category.trim()}
+                >
+                  {isLoading ? "Creating..." : "Create Sub-Project"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
@@ -328,31 +403,6 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
             </Select>
           </div>
         </div>
-
-        {/* 
-                  KJo o per me ndryshu list ose grid view
-                */}
-
-        {/* <Tabs
-          value={viewType}
-          onValueChange={setViewType}
-          className="w-full sm:w-auto"
-        >
-          <TabsList className="grid w-full sm:w-[180px] grid-cols-2 border items-center">
-            <TabsTrigger
-              value="grid"
-              className="data-[state=active]:bg-[#FF5E3A] data-[state=active]:text-white "
-            >
-              Grid View
-            </TabsTrigger>
-            <TabsTrigger
-              value="list"
-              className="data-[state=active]:bg-[#FF5E3A] data-[state=active]:text-white"
-            >
-              List View
-            </TabsTrigger>
-          </TabsList>
-        </Tabs> */}
       </div>
 
       {viewType === "grid" ? (

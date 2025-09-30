@@ -9,7 +9,7 @@ import {
   Settings,
   User,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -60,6 +60,21 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(selectCurrentUser);
+
+  // Determine role
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
 
   const [formData, setFormData] = useState<CreateProjectRequest>({
     name: "",
@@ -179,120 +194,127 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         {/* No theme toggle - light mode only */}
 
         {/* Create Project */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              className="bg-[#0073e6] text-white flex items-center
+        {isSysOrSuperAdmin && (
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button
+                className="bg-[#0073e6] text-white flex items-center
              px-4 py-2 rounded-md border-0
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Project
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]">
-            <DialogHeader>
-              <DialogTitle>Create New Project</DialogTitle>
-              <DialogDescription>
-                Enter the details for your new project. All fields marked with *
-                are required.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="title" className="text-right">
-                  Title *
-                </Label>
-                <Input
-                  id="title"
-                  name="name"
-                  className={`col-span-3 border-0 bg-blue-50 ${
-                    formErrors.name ? "border-red-500" : ""
-                  }`}
-                  placeholder="Project title"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                />
-                {formErrors.name && (
-                  <p className="text-red-500 text-sm col-span-3 col-start-2">
-                    {formErrors.name}
-                  </p>
-                )}
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="category" className="text-right">
-                  Category *
-                </Label>
-                <Input
-                  id="category"
-                  name="category"
-                  className={`col-span-3 border-0 bg-blue-50 ${
-                    formErrors.category ? "border-red-500" : ""
-                  }`}
-                  placeholder="Project Category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                />
-                {formErrors.category && (
-                  <p className="text-red-500 text-sm col-span-3 col-start-2">
-                    {formErrors.category}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">
-                  Status
-                </Label>
-                <Select
-                  defaultValue="active"
-                  value={formData.status}
-                  onValueChange={(value) => handleSelectField(value, "status")}
-                >
-                  <SelectTrigger className="col-span-3 bg-blue-50 border-0">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="description" className="text-right pt-2">
-                  Description
-                </Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  className="col-span-3 bg-blue-50 border-0"
-                  placeholder="Provide a description of the project"
-                  rows={3}
-                  value={formData.description}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                className="bg-blue-100 border-0"
-                variant="outline"
-                onClick={() => setIsCreateDialogOpen(false)}
               >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateProject}
-                className="bg-[#0073e6] border-0 text-white"
-              >
+                <Plus className="h-4 w-4 mr-2" />
                 Create Project
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[550px]">
+              <DialogHeader>
+                <DialogTitle>Create New Project</DialogTitle>
+                <DialogDescription>
+                  Enter the details for your new project. All fields marked with
+                  * are required.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">
+                    Title *
+                  </Label>
+                  <Input
+                    id="title"
+                    name="name"
+                    className={`col-span-3 border-0 bg-blue-50 ${
+                      formErrors.name ? "border-red-500" : ""
+                    }`}
+                    placeholder="Project title"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                  />
+                  {formErrors.name && (
+                    <p className="text-red-500 text-sm col-span-3 col-start-2">
+                      {formErrors.name}
+                    </p>
+                  )}
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="category" className="text-right">
+                    Category *
+                  </Label>
+                  <Input
+                    id="category"
+                    name="category"
+                    className={`col-span-3 border-0 bg-blue-50 ${
+                      formErrors.category ? "border-red-500" : ""
+                    }`}
+                    placeholder="Project Category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                  />
+                  {formErrors.category && (
+                    <p className="text-red-500 text-sm col-span-3 col-start-2">
+                      {formErrors.category}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">
+                    Status
+                  </Label>
+                  <Select
+                    defaultValue="active"
+                    value={formData.status}
+                    onValueChange={(value) =>
+                      handleSelectField(value, "status")
+                    }
+                  >
+                    <SelectTrigger className="col-span-3 bg-blue-50 border-0">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label htmlFor="description" className="text-right pt-2">
+                    Description
+                  </Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    className="col-span-3 bg-blue-50 border-0"
+                    placeholder="Provide a description of the project"
+                    rows={3}
+                    value={formData.description}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  className="bg-blue-100 border-0"
+                  variant="outline"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateProject}
+                  className="bg-[#0073e6] border-0 text-white"
+                >
+                  Create Project
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
 
         {/* Notifications */}
         <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
