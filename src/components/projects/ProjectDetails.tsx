@@ -1715,7 +1715,7 @@ export function ProjectDetails() {
 
         <TabsContent value="subprojects" className="mt-6">
           {/* <SubProjects projectId={enhancedProject.id}" /> */}
-          {hasFullAccess ? (
+          {hasFullAccess || isSubProjectManager ? (
             <SubProjects
               projectId={enhancedProject.id}
               isSysOrSuperAdmin={isSysOrSuperAdmin}

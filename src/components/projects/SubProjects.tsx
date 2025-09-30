@@ -9,7 +9,7 @@ import {
   Trash,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store";
@@ -72,6 +72,8 @@ import {
 } from "../../store/slices/subProjectSlice";
 import { selectCreateSuccessMessage } from "../../store/slices/projectsSlice";
 import { toast } from "sonner";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
 
 interface SubProjectsProps {
   projectId?: string;
@@ -104,6 +106,34 @@ export function SubProjects({
     selectCreateSuccessMessage(state)
   );
 
+  // Role + user-assigned subprojects (from cache)
+  const user = useSelector(selectCurrentUser);
+  const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSubProjectManager = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sub-project manager" ||
+        r === "sub project manager" ||
+        r.includes("sub-project manager") ||
+        r.includes("sub project manager")
+    );
+  }, [normalizedRoles]);
+  const allowedSubprojectIds = useMemo(() => {
+    try {
+      const proj = (userProjectsTree || []).find(
+        (p: any) => p.id === projectId
+      );
+      const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
+      return new Set<string>(ids);
+    } catch {
+      return new Set<string>();
+    }
+  }, [userProjectsTree, projectId]);
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [viewType, setViewType] = useState("list");
   const [searchQuery, setSearchQuery] = useState("");
@@ -120,9 +150,14 @@ export function SubProjects({
 
   useEffect(() => {
     if (projectId) {
+      if (user?.roles == null || user.roles.length === 0) return;
+      if (isSubProjectManager) {
+        console.log("Skipping fetch subproject mng");
+        return;
+      }
       dispatch(fetchSubProjectsByProjectId({ projectId: projectId }));
     }
-  }, [projectId, dispatch]);
+  }, [projectId, dispatch, isSubProjectManager, user?.roles]);
 
   useEffect(() => {
     if (isCreateDialogOpen) {
@@ -194,7 +229,17 @@ export function SubProjects({
     const matchesCategory =
       categoryFilter === "all" ||
       sp.category.toLowerCase() === categoryFilter.toLowerCase();
-    return matchesProject && matchesSearch && matchesStatus && matchesCategory;
+    const matchesAssignment =
+      hasFullAccess || !isSubProjectManager
+        ? true
+        : allowedSubprojectIds.has(sp.id);
+    return (
+      matchesProject &&
+      matchesSearch &&
+      matchesStatus &&
+      matchesCategory &&
+      matchesAssignment
+    );
   });
 
   return (

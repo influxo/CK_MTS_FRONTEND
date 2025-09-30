@@ -18,8 +18,14 @@ import {
   resetFilters,
   selectMetricsFilters,
 } from "../store/slices/serviceMetricsSlice";
-import { fetchUserProjectsByUserId } from "../store/slices/userProjectsSlice";
-import { selectAllProjects } from "../store/slices/projectsSlice";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsTree,
+} from "../store/slices/userProjectsSlice";
+import {
+  selectAllProjects,
+  fetchProjects,
+} from "../store/slices/projectsSlice";
 
 export function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -28,6 +34,7 @@ export function Dashboard() {
   const didResetRef = useRef(false);
 
   const projects = useSelector(selectAllProjects);
+  const userProjectsTree = useSelector(selectUserProjectsTree);
 
   console.log("projects from dashboard", projects);
 
@@ -58,10 +65,28 @@ export function Dashboard() {
   }, [normalizedRoles]);
 
   useEffect(() => {
-    if (user?.id) {
+    if (!user?.id) return;
+    if (isSysOrSuperAdmin) {
+      dispatch(fetchProjects());
+    } else {
       dispatch(fetchUserProjectsByUserId(String(user.id)));
     }
-  }, [dispatch, user?.id]);
+  }, [dispatch, user?.id, isSysOrSuperAdmin]);
+
+  // Choose which projects list to expose to UI based on role
+  const projectsForUi = useMemo(() => {
+    if (isSysOrSuperAdmin) return projects;
+    // Map userProjectsTree to Project[] shape
+    return (userProjectsTree || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description || "",
+      category: p.category || "",
+      status: "active" as const,
+      createdAt: p.createdAt || "",
+      updatedAt: p.updatedAt || "",
+    }));
+  }, [isSysOrSuperAdmin, projects, userProjectsTree]);
 
   // Load service delivery metrics (summary + series)
   useEffect(() => {
@@ -96,14 +121,14 @@ export function Dashboard() {
   // Default dashboard for other roles
   return (
     <>
-      <FilterControls projects={projects} />
+      <FilterControls projects={projectsForUi} />
       <div className="flex justify-end mb-4">
         {/* Create Project Dialog */}
         {/* TODO: make this a component */}
       </div>
       <SummaryMetrics />
 
-      <FormSubmissions projects={projects} />
+      <FormSubmissions projects={projectsForUi} />
 
       <div className="lg:col-span-2 py-6">
         <BeneficiaryDemographics />

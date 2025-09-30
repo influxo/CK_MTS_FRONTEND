@@ -39,6 +39,8 @@ import subProjectService from "../../services/subprojects/subprojectService";
 import type { Project } from "../../services/projects/projectModels";
 import { useSelector } from "react-redux";
 import { selectMetricsFilters } from "../../store/slices/serviceMetricsSlice";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
 
 type Granularity = TimeUnit; // 'day' | 'week' | 'month' | 'quarter' | 'year'
 
@@ -146,6 +148,21 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
 
   // Global filters
   const globalFilters = useSelector(selectMetricsFilters);
+  const user = useSelector(selectCurrentUser);
+  const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
+  const normalizedRoles = React.useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSubProjectManager = React.useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sub-project manager" ||
+        r === "sub project manager" ||
+        r.includes("sub-project manager") ||
+        r.includes("sub project manager")
+    );
+  }, [normalizedRoles]);
 
   // UI state for dropdown + custom range
   const [filtersOpen, setFiltersOpen] = React.useState(false);
@@ -324,9 +341,23 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
       const res = await subProjectService.getSubProjectsByProjectId({
         projectId: effectiveProjectId,
       });
-      if (res.success) setSubprojectsOptions(res.data);
+      if (res.success) {
+        let options = res.data as any[];
+        if (isSubProjectManager) {
+          try {
+            const proj = (userProjectsTree || []).find(
+              (p: any) => p.id === effectiveProjectId
+            );
+            const allowed = new Set<string>(
+              (proj?.subprojects || []).map((sp: any) => sp.id)
+            );
+            options = options.filter((sp: any) => allowed.has(sp.id));
+          } catch {}
+        }
+        setSubprojectsOptions(options);
+      }
     })();
-  }, [effectiveProjectId]);
+  }, [effectiveProjectId, isSubProjectManager, userProjectsTree]);
 
   // Reset local overrides whenever global filters change so globals take precedence again
   React.useEffect(() => {

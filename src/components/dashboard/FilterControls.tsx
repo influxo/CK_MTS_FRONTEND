@@ -29,6 +29,8 @@ import {
 } from "../../store/slices/serviceSlice";
 import { fetchForms, selectAllForms } from "../../store/slices/formsSlice";
 import formTemplatesApi from "../../services/forms/formServices";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
 
 export function FilterControls({ projects }: { projects: Project[] }) {
   const dispatch: any = useDispatch();
@@ -61,6 +63,32 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   const [templatesOptions, setTemplatesOptions] = React.useState<any[]>([]);
   const [templatesPage, setTemplatesPage] = React.useState<number>(1);
   const [templatesTotalPages, setTemplatesTotalPages] = React.useState<number>(1);
+
+  // Role-aware: Sub-Project Manager only sees assigned subprojects for selected project
+  const user = useSelector(selectCurrentUser);
+  const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
+  const normalizedRoles = React.useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSubProjectManager = React.useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sub-project manager" ||
+        r === "sub project manager" ||
+        r.includes("sub-project manager") ||
+        r.includes("sub project manager")
+    );
+  }, [normalizedRoles]);
+  const allowedSubprojectIds = React.useMemo(() => {
+    try {
+      const proj = (userProjectsTree || []).find((p: any) => p.id === projectId);
+      const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
+      return new Set<string>(ids);
+    } catch {
+      return new Set<string>();
+    }
+  }, [userProjectsTree, projectId]);
 
   // Fetch subprojects when project changes
   React.useEffect(() => {
@@ -225,6 +253,9 @@ export function FilterControls({ projects }: { projects: Project[] }) {
             ) : (
               subprojects
                 .filter((sp) => sp.projectId === projectId)
+                .filter((sp) =>
+                  !isSubProjectManager ? true : allowedSubprojectIds.has(sp.id)
+                )
                 .map((sp) => (
                   <SelectItem key={sp.id} value={sp.id}>
                     {sp.name}
