@@ -66,6 +66,14 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "../ui/navigation/pagination";
 import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 import type { FormTemplate } from "../../services/forms/formModels";
@@ -73,6 +81,11 @@ import {
   deleteForm,
   updateFormToInactive,
 } from "../../store/slices/formsSlice";
+import {
+  fetchFormTemplates,
+  selectFormTemplates,
+  selectFormTemplatesPagination,
+} from "../../store/slices/formSlice";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -125,6 +138,36 @@ export function FormsList({
   const [formToDelete, setFormToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentForm, setCurrentForm] = useState<FormTemplate | null>(null);
+
+  // Pagination state (backend-driven via formSlice)
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+
+  // Paginated data from formSlice (used for table view)
+  const templatesFromStore = useSelector(selectFormTemplates);
+  const pagination = useSelector(selectFormTemplatesPagination);
+
+  // Fetch paginated templates when page/limit change
+  useEffect(() => {
+    dispatch(fetchFormTemplates({ page, limit }));
+  }, [dispatch, page, limit]);
+
+  // Decide which templates to show in the table: prefer store (paginated) else props
+  const displayedTemplates =
+    (templatesFromStore && templatesFromStore.length > 0)
+      ? templatesFromStore
+      : formTemplates;
+
+  const totalPages =
+    pagination?.totalPages || Math.max(1, Math.ceil((formTemplates?.length || 0) / limit));
+  const totalCount = pagination?.totalCount ?? (formTemplates?.length || 0);
+
+  const goToPage = (p: number) => {
+    if (p < 1) return;
+    const max = totalPages;
+    if (p > max) return;
+    setPage(p);
+  };
 
   const user = useSelector(selectCurrentUser);
   // Determine role
@@ -622,7 +665,7 @@ export function FormsList({
               </TableRow>
             </TableHeader>
             <TableBody className="bg-[#F7F9FB]">
-              {formTemplates.map((template) => (
+              {displayedTemplates.map((template) => (
                 <TableRow key={template.id}>
                   <TableCell>
                     <div>
@@ -710,6 +753,37 @@ export function FormsList({
               ))}
             </TableBody>
           </Table>
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </div>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => goToPage(page - 1)}
+                    className={page <= 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink
+                    isActive
+                    size="default"
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => goToPage(page + 1)}
+                    className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
           <Dialog open={isPreviewMode} onOpenChange={setIsPreviewMode}>
             <DialogContent className="min-w-[600px]">
               <DialogHeader>
@@ -741,7 +815,7 @@ export function FormsList({
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          Showing {formTemplates.length} of {formTemplates.length} forms
+          Showing {displayedTemplates.length} of {totalCount} forms
         </div>
         <div className="space-x-2">
           <Button variant="outline" size="sm">

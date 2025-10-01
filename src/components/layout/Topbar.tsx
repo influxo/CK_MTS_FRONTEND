@@ -159,7 +159,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden"
+          className="lg:hidden"
           onClick={toggleMobileSidebar}
         >
           <Menu className="h-5 w-5" />
