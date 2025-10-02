@@ -66,15 +66,8 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "../ui/navigation/pagination";
-import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+// Removed Pagination components in favor of Beneficiaries-style Button pagination
+// Tabs components were unused in this component
 import { Textarea } from "../ui/form/textarea";
 import type { FormTemplate } from "../../services/forms/formModels";
 import {
@@ -141,7 +134,7 @@ export function FormsList({
 
   // Pagination state (backend-driven via formSlice)
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
+  const [limit, setLimit] = useState(20);
 
   // Paginated data from formSlice (used for table view)
   const templatesFromStore = useSelector(selectFormTemplates);
@@ -161,6 +154,25 @@ export function FormsList({
   const totalPages =
     pagination?.totalPages || Math.max(1, Math.ceil((formTemplates?.length || 0) / limit));
   const totalCount = pagination?.totalCount ?? (formTemplates?.length || 0);
+
+  // Numbered pagination builder (compact with ellipsis) – match BeneficiariesList design
+  const pageTokens = useMemo(() => {
+    const total = Math.max(totalPages || 1, 1);
+    const current = Math.min(Math.max(page || 1, 1), total);
+    const tokens: Array<number | string> = [];
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) tokens.push(i);
+      return tokens;
+    }
+    const left = Math.max(2, current - 1);
+    const right = Math.min(total - 1, current + 1);
+    tokens.push(1);
+    if (left > 2) tokens.push("left-ellipsis");
+    for (let i = left; i <= right; i++) tokens.push(i);
+    if (right < total - 1) tokens.push("right-ellipsis");
+    tokens.push(total);
+    return tokens;
+  }, [page, totalPages]);
 
   const goToPage = (p: number) => {
     if (p < 1) return;
@@ -753,36 +765,72 @@ export function FormsList({
               ))}
             </TableBody>
           </Table>
-          {/* Pagination Controls */}
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="text-sm text-muted-foreground">
-              Page {page} of {totalPages}
+          {/* Pagination Controls - mirrored from BeneficiariesList */}
+          <div className="flex items-center justify-between flex-wrap gap-3 px-4 py-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>
+                Page {page} of {Math.max(totalPages || 1, 1)}
+              </span>
+              <span className="hidden sm:inline">• Total {totalCount} records</span>
+              <div className="flex items-center gap-2 ml-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(page - 1)}
+                  disabled={page <= 1}
+                  className="bg-white"
+                >
+                  Prev
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(page + 1)}
+                  disabled={totalPages === 0 || page >= totalPages}
+                  className="bg-white"
+                >
+                  Next
+                </Button>
+                <div className="flex items-center gap-1 ml-2">
+                  {pageTokens.map((tok, idx) =>
+                    typeof tok === "number" ? (
+                      <Button
+                        key={`p-${tok}`}
+                        variant="outline"
+                        size="sm"
+                        className={tok === page ? "bg-[#2E343E] text-white border-0" : "bg-white"}
+                        onClick={() => tok !== page && goToPage(tok)}
+                        aria-current={tok === page ? "page" : undefined}
+                      >
+                        {tok}
+                      </Button>
+                    ) : (
+                      <span key={`${tok}-${idx}`} className="px-1 text-muted-foreground">
+                        …
+                      </span>
+                    )
+                  )}
+                </div>
+                <Select
+                  value={String(limit)}
+                  onValueChange={(val) => {
+                    const newLimit = parseInt(val, 10) || 20;
+                    setLimit(newLimit);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[120px] bg-black/5 border-0 text-black">
+                    <SelectValue placeholder="Rows" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10 / page</SelectItem>
+                    <SelectItem value="20">20 / page</SelectItem>
+                    <SelectItem value="50">50 / page</SelectItem>
+                    <SelectItem value="100">100 / page</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => goToPage(page - 1)}
-                    className={page <= 1 ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink
-                    isActive
-                    size="default"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => goToPage(page + 1)}
-                    className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
           </div>
           <Dialog open={isPreviewMode} onOpenChange={setIsPreviewMode}>
             <DialogContent className="min-w-[600px]">
