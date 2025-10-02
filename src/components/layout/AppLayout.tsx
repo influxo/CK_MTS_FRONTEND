@@ -87,7 +87,12 @@ const AppLayout = () => {
         projectsError={error}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div
+        className={
+          "flex-1 flex flex-col overflow-hidden " +
+          (mobileSidebarOpen ? "hidden lg:flex" : "")
+        }
+      >
         <Topbar
           title={getPageTitle()}
           toggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}

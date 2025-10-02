@@ -63,6 +63,9 @@ export function Sidebar({
     if (onCloseMobile) onCloseMobile();
   };
 
+  // Treat sidebar as collapsed only on small screens and when not in mobile-open overlay
+  const isCollapsed = collapsed && !mobileOpen;
+
   // Role helpers
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r) => r.name?.toLowerCase?.() || ""),
@@ -169,7 +172,9 @@ export function Sidebar({
       }}
       className={cn(
         "flex flex-col  bg-sidebar bg-[#F5F5F5] bg-opacity-20 shadow-lg text-sidebar-foreground transition-all duration-300 ease-in-out",
-        collapsed ? "w-[70px]" : "w-[240px]",
+        // Width behavior: full width overlay on small screens when mobileOpen; otherwise 70px/240px. Always 240px on lg.
+        mobileOpen ? "w-screen" : isCollapsed ? "w-[70px]" : "w-[240px]",
+        "lg:w-[240px]",
         "lg:relative fixed inset-y-0 left-0 z-50 lg:z-auto transform",
         mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         "lg:shadow-none",
@@ -179,20 +184,25 @@ export function Sidebar({
       <div
         className={cn(
           "flex h-16 items-center  px-4",
-          collapsed ? "justify-center" : "justify-between"
+          isCollapsed ? "justify-center" : "justify-between"
         )}
       >
-        {!collapsed && (
-          <NavLink to="/dashboard" className="flex items-center gap-2">
-            <img
-              src="/images/logo.jpg"
-              alt="Caritas Mother Teresa"
-              className=" w-auto object-center h-20"
-            />
-          </NavLink>
-        )}
-        {collapsed && !mobileOpen && (
-          <PieChart className="h-6 w-6 text-sidebar-primary" />
+        <NavLink
+          to="/dashboard"
+          className={cn(
+            "flex items-center gap-2",
+            // Hide brand on small screens when collapsed, but always show on lg
+            isCollapsed ? "hidden lg:flex" : "flex"
+          )}
+        >
+          <img
+            src="/images/logo.jpg"
+            alt="Caritas Mother Teresa"
+            className=" w-auto object-center h-20"
+          />
+        </NavLink>
+        {isCollapsed && !mobileOpen && (
+          <PieChart className="h-6 w-6 text-sidebar-primary lg:hidden" />
         )}
         {!mobileOpen ? (
           <Button
@@ -200,8 +210,8 @@ export function Sidebar({
             size="icon"
             onClick={onToggleCollapse}
             className={cn(
-              "text-sidebar-foreground/60 hover:text-sidebar-foreground",
-              collapsed && "hidden"
+              "text-sidebar-foreground/60 hover:text-sidebar-foreground lg:hidden",
+              isCollapsed && "hidden"
             )}
           >
             <ChevronLeft className="h-5 w-5" />
@@ -211,7 +221,7 @@ export function Sidebar({
             variant="ghost"
             size="icon"
             onClick={onCloseMobile}
-            className="text-sidebar-foreground/60 hover:text-sidebar-foreground"
+            className="text-sidebar-foreground/60 hover:text-sidebar-foreground lg:hidden"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -235,22 +245,28 @@ export function Sidebar({
                         isProjectsExpanded
                           ? "text-blue bg-blue-900 bg-opacity-5 before:scale-x-100"
                           : "text-black hover:text-black hover:bg-blue-100 hover:bg-opacity-5 before:scale-x-0",
-                        collapsed && "justify-center px-2"
+                        isCollapsed && "justify-center px-2"
                       )}
                     >
                       <FolderKanban className="h-5 w-5" />
-                      {!collapsed && (
-                        <span className="ml-2 flex-1 text-left">Projects</span>
-                      )}
-                      {!collapsed && (
-                        <ChevronRight
-                          size={18}
-                          className={cn(
-                            "ml-auto transition-transform duration-300",
-                            isProjectsExpanded && "rotate-90"
-                          )}
-                        />
-                      )}
+                      <span
+                        className={cn(
+                          "ml-2 flex-1 text-left",
+                          isCollapsed && !mobileOpen ? "hidden" : "inline",
+                          "lg:inline"
+                        )}
+                      >
+                        Projects
+                      </span>
+                      <ChevronRight
+                        size={18}
+                        className={cn(
+                          "ml-auto transition-transform duration-300",
+                          isProjectsExpanded && "rotate-90",
+                          isCollapsed && !mobileOpen ? "hidden" : "inline",
+                          "lg:inline"
+                        )}
+                      />
                     </button>
 
                     <Collapsible.Root
@@ -260,7 +276,7 @@ export function Sidebar({
                       <Collapsible.Content
                         className={cn(
                           "data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden",
-                          !collapsed && "ml-8 mt-1"
+                          !isCollapsed && "ml-8 mt-1"
                         )}
                       >
                         {isProjectsLoading && (
@@ -309,13 +325,21 @@ export function Sidebar({
                         isActive
                           ? "text-black bg-blue-900 bg-opacity-5 before:scale-x-100"
                           : "text-black hover:text-black hover:bg-blue-200 hover:bg-opacity-5 before:scale-x-0",
-                        collapsed && "justify-center px-2"
+                        isCollapsed && "justify-center px-2"
                       )
                     }
                     onClick={handleNavClick}
                   >
                     {item.icon}
-                    {!collapsed && <span className="ml-2">{item.title}</span>}
+                    <span
+                      className={cn(
+                        "ml-2",
+                        isCollapsed && !mobileOpen ? "hidden" : "inline",
+                        "lg:inline"
+                      )}
+                    >
+                      {item.title}
+                    </span>
                   </NavLink>
                 )
               )}
@@ -325,41 +349,62 @@ export function Sidebar({
       </ScrollArea>
 
       <div className="mt-auto border-t p-4">
-        {!collapsed && (
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-2 w-2 rounded-full bg-green-500"></div>
-            <span className="text-xs text-sidebar-foreground/60">
-              System Online
-            </span>
-          </div>
-        )}
+        <div
+          className={cn(
+            "flex items-center gap-2 mb-2",
+            isCollapsed && !mobileOpen ? "hidden" : "flex",
+            "lg:flex"
+          )}
+        >
+          <div className="h-2 w-2 rounded-full bg-green-500"></div>
+          <span className="text-xs text-sidebar-foreground/60">System Online</span>
+        </div>
 
         <Button
           variant="ghost"
           className={cn(
             "w-full justify-start font-normal text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-red-100 mb-2",
-            collapsed && "justify-center px-2"
+            isCollapsed && "justify-center px-2"
           )}
           onClick={logout}
         >
-          <LogOut className={cn("h-5 w-5", !collapsed && "mr-2")} />
-          {!collapsed && <span>Logout</span>}
+          <LogOut
+            className={cn(
+              "h-5 w-5",
+              (!isCollapsed || mobileOpen) && "mr-2",
+              "lg:mr-2"
+            )}
+          />
+          <span
+            className={cn(
+              isCollapsed && !mobileOpen ? "hidden" : "inline",
+              "lg:inline"
+            )}
+          >
+            Logout
+          </span>
         </Button>
 
         <Button
           variant="ghost"
           className={cn(
-            "w-full justify-start font-normal text-sidebar-foreground/60 hover:text-sidebar-foreground",
-            collapsed && "justify-center px-2"
+            "w-full justify-start font-normal text-sidebar-foreground/60 hover:text-sidebar-foreground lg:hidden",
+            isCollapsed && "justify-center px-2"
           )}
           onClick={onToggleCollapse}
         >
-          {collapsed ? (
+          {isCollapsed ? (
             <ChevronRight className="h-5 w-5" />
           ) : (
             <ChevronLeft className="h-5 w-5 mr-2" />
           )}
-          {!collapsed && <span>Collapse</span>}
+          <span
+            className={cn(
+              isCollapsed && !mobileOpen ? "hidden" : "inline"
+            )}
+          >
+            Collapse
+          </span>
         </Button>
       </div>
     </aside>
