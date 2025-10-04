@@ -397,6 +397,13 @@ export function BeneficiariesList({
     return assigned as Array<{ id: string; name: string }> as any;
   }, [isSysOrSuperAdmin, projects, userProjectsTree]);
 
+  // Role-based projects shown in the Add Beneficiary modal (same logic as Dashboard)
+  const projectsForModal = useMemo(() => {
+    if (isSysOrSuperAdmin) return projects;
+    const assigned = (userProjectsTree || []).map((p: any) => ({ id: p.id, name: p.name }));
+    return assigned as Array<{ id: string; name: string }> as any;
+  }, [isSysOrSuperAdmin, projects, userProjectsTree]);
+
   // Allowed subprojects for current project (for subproject managers and field operators)
   const allowedSubprojectIds = useMemo(() => {
     try {
@@ -425,6 +432,29 @@ export function BeneficiariesList({
     isFieldOperator,
     allowedSubprojectIds,
   ]);
+
+  // Subprojects per project for the modal, filtered by role (SP Manager sees only assigned subprojects)
+  const subprojectsForModalByProjectId = useMemo(() => {
+    const result: Record<string, { id: string; name: string; projectId: string }[]> = {};
+    (projectsForModal || []).forEach((p: any) => {
+      const base = subprojectsByProjectId[p.id] || [];
+      if (isSysOrSuperAdmin) {
+        result[p.id] = base;
+      } else if (isSubProjectManager) {
+        try {
+          const proj = (userProjectsTree || []).find((xp: any) => xp.id === p.id);
+          const allowed = new Set<string>((proj?.subprojects || []).map((sp: any) => sp.id));
+          result[p.id] = base.filter((sp) => allowed.has(sp.id));
+        } catch {
+          result[p.id] = [];
+        }
+      } else {
+        // Program Manager or other non-admin roles: show all subprojects for assigned projects
+        result[p.id] = base;
+      }
+    });
+    return result;
+  }, [projectsForModal, subprojectsByProjectId, isSysOrSuperAdmin, isSubProjectManager, userProjectsTree]);
 
   // Form state for creating a beneficiary
   const [form, setForm] = useState<CreateBeneficiaryRequest>({
@@ -1224,8 +1254,8 @@ export function BeneficiariesList({
                     <div className="text-sm text-red-500 px-1">
                       {projectsError || subprojectsError}
                     </div>
-                  ) : projects && projects.length > 0 ? (
-                    projects.map((project) => (
+                  ) : projectsForModal && projectsForModal.length > 0 ? (
+                    projectsForModal.map((project: any) => (
                       <div key={project.id} className="border rounded-md p-4">
                         <div className="flex items-center space-x-2 mb-4">
                           <Checkbox
@@ -1235,7 +1265,7 @@ export function BeneficiariesList({
                               setSelectedProjects((prev) => {
                                 if (prev.includes(project.id)) {
                                   const subProjectsForProject =
-                                    subprojectsByProjectId[project.id] || [];
+                                    subprojectsForModalByProjectId[project.id] || [];
                                   const subIds = subProjectsForProject.map(
                                     (sp) => sp.id
                                   );
@@ -1260,7 +1290,7 @@ export function BeneficiariesList({
                         </div>
 
                         <div className="pl-6 border-l ml-2 space-y-2">
-                          {(subprojectsByProjectId[project.id] || []).map(
+                          {(subprojectsForModalByProjectId[project.id] || []).map(
                             (subProject) => (
                               <div
                                 key={subProject.id}

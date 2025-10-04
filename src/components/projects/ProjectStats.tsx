@@ -16,16 +16,14 @@ import { Progress } from "../ui/feedback/progress";
 
 interface ProjectStatsProps {
   projectId: string;
+  summary?: {
+    totalSubmissions?: number;
+    totalServiceDeliveries?: number;
+    totalUniqueBeneficiaries?: number;
+  } | null;
 }
 
-// Mock stats data
-const mockServiceStats = [
-  { name: "Health Checkups", value: 450 },
-  { name: "Vaccinations", value: 385 },
-  { name: "Consultations", value: 210 },
-  { name: "Training Sessions", value: 28 },
-  { name: "Distribution Events", value: 15 },
-];
+// (removed unused mockServiceStats)
 
 // Mock monthly activity data
 const mockMonthlyData = [
@@ -36,7 +34,7 @@ const mockMonthlyData = [
   { month: "May", activities: 40, beneficiaries: 410 },
 ];
 
-export function ProjectStats({ projectId }: ProjectStatsProps) {
+export function ProjectStats({ projectId, summary }: ProjectStatsProps) {
   console.log("projectId, veq sa me i ik unused declaration", projectId);
 
   return (
@@ -46,35 +44,23 @@ export function ProjectStats({ projectId }: ProjectStatsProps) {
         <h1 className="text-base sm:text-lg font-semibold md:col-span-1">
           Key Statistics
         </h1>
-        <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="bg-[#B1E3FF] drop-shadow-sm shadow-gray-50 border-0">
             <CardContent className="p-6">
-              <div className="text-sm text-muted-foreground">Activities</div>
-              <div className="text-3xl font-medium mt-1">128</div>
+              <div className="text-sm text-muted-foreground">Total Submissions</div>
+              <div className="text-3xl font-medium mt-1">{Number(summary?.totalSubmissions || 0).toLocaleString()}</div>
             </CardContent>
           </Card>
           <Card className="bg-[#B1E3FF] drop-shadow-sm shadow-gray-50 border-0">
             <CardContent className="p-6">
-              <div className="text-sm text-muted-foreground">
-                Services Delivered
-              </div>
-              <div className="text-3xl font-medium mt-1">1,088</div>
+              <div className="text-sm text-muted-foreground">Total Service Deliveries</div>
+              <div className="text-3xl font-medium mt-1">{Number(summary?.totalServiceDeliveries || 0).toLocaleString()}</div>
             </CardContent>
           </Card>
           <Card className="bg-[#B1E3FF] drop-shadow-sm shadow-gray-50 border-0">
             <CardContent className="p-6">
-              <div className="text-sm text-muted-foreground">
-                Forms Submitted
-              </div>
-              <div className="text-3xl font-medium mt-1">287</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-[#B1E3FF] drop-shadow-sm shadow-gray-50 border-0">
-            <CardContent className="p-6">
-              <div className="text-sm text-muted-foreground">
-                Active Beneficiaries
-              </div>
-              <div className="text-3xl font-medium mt-1">1,245</div>
+              <div className="text-sm text-muted-foreground">Total Unique Beneficiaries</div>
+              <div className="text-3xl font-medium mt-1">{Number(summary?.totalUniqueBeneficiaries || 0).toLocaleString()}</div>
             </CardContent>
           </Card>
         </div>
