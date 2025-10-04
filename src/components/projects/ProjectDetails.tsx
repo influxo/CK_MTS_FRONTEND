@@ -1755,8 +1755,7 @@ export function ProjectDetails() {
           )}
         </TabsContent>
 
-        {hasFullAccess ||
-          (isSubProjectManager && (
+        {hasFullAccess && (
             <TabsContent value="beneficiaries" className="pt-6">
               {byEntityLoading && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -2691,7 +2690,7 @@ export function ProjectDetails() {
                 </div>
               )}
             </TabsContent>
-          ))}
+          )}
 
         <TabsContent value="reports" className="pt-6">
           {/* <ProjectExport projectId={enhancedProject.id} /> */}

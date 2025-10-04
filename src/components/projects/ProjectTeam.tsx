@@ -1,5 +1,5 @@
 import { Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
@@ -44,7 +44,7 @@ import {
   selectAssignedUsersLoading,
   removeUserFromProject,
 } from "../../store/slices/projectsSlice";
-import { selectAllEmployees } from "../../store/slices/employeesSlice";
+import { fetchEmployees, selectAllEmployees } from "../../store/slices/employeesSlice";
 
 interface ProjectTeamProps {
   projectId: string;
@@ -76,6 +76,23 @@ export function ProjectTeam({
       dispatch(fetchProjectUsers(projectId));
     }
   }, [dispatch, projectId, hasFullAccess]);
+
+  // Ensure employees list is available when opening assignment dialog
+  useEffect(() => {
+    if (isAssignDialogOpen) {
+      dispatch(fetchEmployees());
+    }
+  }, [dispatch, isAssignDialogOpen]);
+
+  // Exclude already assigned members from modal options
+  const assignedIds = useMemo(
+    () => new Set((assignedUsers || []).map((u) => u.id)),
+    [assignedUsers]
+  );
+  const employeesForSelect = useMemo(
+    () => (employees || []).filter((emp) => !assignedIds.has(emp.id)),
+    [employees, assignedIds]
+  );
 
   const handleAssignMember = async () => {
     if (!selectedMemberId) return;
@@ -146,7 +163,7 @@ export function ProjectTeam({
                         <SelectValue placeholder="Select a member" />
                       </SelectTrigger>
                       <SelectContent>
-                        {employees.map((emp) => {
+                        {employeesForSelect.map((emp) => {
                           const fullName =
                             `${emp.firstName ?? ""} ${
                               emp.lastName ?? ""

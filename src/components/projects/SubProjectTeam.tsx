@@ -1,5 +1,5 @@
 import { MoreHorizontal, Plus, Search, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
@@ -45,7 +45,7 @@ import {
   removeUserFromSubProject,
   assignUserToSubProject,
 } from "../../store/slices/subProjectSlice";
-import { selectAllEmployees } from "../../store/slices/employeesSlice";
+import { fetchEmployees, selectAllEmployees } from "../../store/slices/employeesSlice";
 
 interface SubProjectTeamProps {
   subProjectId: string;
@@ -89,6 +89,23 @@ export function SubProjectTeam({
       dispatch(fetchSubProjectUsers({ subProjectId }));
     }
   }, [subProjectId, dispatch, hasFullAccess]);
+
+  // Ensure employees list is available when opening assignment dialog
+  useEffect(() => {
+    if (isAssignDialogOpen) {
+      dispatch(fetchEmployees());
+    }
+  }, [dispatch, isAssignDialogOpen]);
+
+  // Exclude already assigned members from modal options
+  const assignedIds = useMemo(
+    () => new Set((users || []).map((u) => u.id)),
+    [users]
+  );
+  const employeesForSelect = useMemo(
+    () => (employees || []).filter((emp) => !assignedIds.has(emp.id)),
+    [employees, assignedIds]
+  );
 
   const handleAssignMember = async () => {
     if (!selectedMemberId) return;
@@ -166,7 +183,7 @@ export function SubProjectTeam({
                     <SelectValue placeholder="Select team member" />
                   </SelectTrigger>
                   <SelectContent>
-                    {employees.map((emp) => {
+                    {employeesForSelect.map((emp) => {
                       const fullName =
                         `${emp.firstName ?? ""} ${emp.lastName ?? ""}`.trim() ||
                         "N/A";
