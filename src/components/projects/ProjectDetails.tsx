@@ -35,6 +35,7 @@ import type { Project } from "../../services/projects/projectModels";
 import projectService from "../../services/projects/projectService";
 import type { TimeUnit } from "../../services/services/serviceMetricsModels";
 import servicesService from "../../services/services/serviceServices";
+import serviceMetricsService from "../../services/services/serviceMetricsService";
 import type { AppDispatch } from "../../store";
 import { selectCurrentUser } from "../../store/slices/authSlice";
 import {
@@ -172,6 +173,14 @@ export function ProjectDetails() {
   >(undefined);
   const [servicesOptions, setServicesOptions] = useState<any[]>([]);
   const [templatesOptions, setTemplatesOptions] = useState<any[]>([]);
+  const [seriesSummary, setSeriesSummary] = useState<
+    | {
+        totalSubmissions?: number;
+        totalServiceDeliveries?: number;
+        totalUniqueBeneficiaries?: number;
+      }
+    | null
+  >(null);
 
   const user = useSelector(selectCurrentUser);
 
@@ -381,6 +390,16 @@ export function ProjectDetails() {
   const listItems = useSelector(selectBeneficiaries);
   const listLoading = useSelector(selectBeneficiariesLoading);
   const listError = useSelector(selectBeneficiariesError);
+
+  // Exclude beneficiaries already assigned to this project from the 'Add Existing' select
+  const assignedBeneficiaryIds = useMemo(
+    () => new Set((byEntityItems || []).map((b) => b.id)),
+    [byEntityItems]
+  );
+  const unassignedListItems = useMemo(
+    () => (listItems || []).filter((b) => !assignedBeneficiaryIds.has(b.id)),
+    [listItems, assignedBeneficiaryIds]
+  );
 
   // Subprojects of this project
   const subprojects = useSelector(selectAllSubprojects);
@@ -638,6 +657,54 @@ export function ProjectDetails() {
     hasFullAccess,
     user?.roles,
   ]);
+
+  // Fetch series summary for Key Statistics cards (exactly like FormSubmissions)
+  useEffect(() => {
+    (async () => {
+      if (activeTab !== "overview") return;
+      if (!id) return;
+      if (user?.roles == null || user.roles.length === 0) return;
+      if (!hasFullAccess) {
+        setSeriesSummary(null);
+        return;
+      }
+      const effectiveEntityType = selectedSubProjectId ? "subproject" : "project";
+      const effectiveEntityId = selectedSubProjectId || id;
+      try {
+        const res = await serviceMetricsService.getDeliveriesSeries({
+          entityId: effectiveEntityId,
+          entityType: effectiveEntityType as any,
+          groupBy: granularity,
+          // metric can be anything; summary block is aggregate across metrics
+          metric: "submissions",
+          startDate,
+          endDate,
+          serviceId: serviceIdLocal,
+          formTemplateId: formTemplateIdLocal,
+        } as any);
+        if (res && res.success) {
+          setSeriesSummary((res as any).summary || null);
+        } else {
+          setSeriesSummary(null);
+        }
+      } catch {
+        setSeriesSummary(null);
+      }
+    })();
+  }, [
+    activeTab,
+    id,
+    selectedSubProjectId,
+    granularity,
+    startDate,
+    endDate,
+    serviceIdLocal,
+    formTemplateIdLocal,
+    hasFullAccess,
+    user?.roles,
+  ]);
+  // Use the series summary directly for the cards, mirroring FormSubmissions
+  const summaryForCards = useMemo(() => seriesSummary, [seriesSummary]);
 
   // After successful create (+ association if any), close dialog, reset form, refresh list
   useEffect(() => {
@@ -1700,7 +1767,7 @@ export function ProjectDetails() {
                   </CardContent>
                 </Card>
 
-                <ProjectStats projectId={enhancedProject.id} />
+                <ProjectStats projectId={enhancedProject.id} summary={summaryForCards} />
                 {/* <ProjectActivity projectId={enhancedProject.id} /> */}
               </div>
               <div className="space-y-6">
@@ -2448,7 +2515,7 @@ export function ProjectDetails() {
                                         <SelectValue placeholder="Select beneficiary" />
                                       </SelectTrigger>
                                       <SelectContent className="max-h-64 overflow-y-auto">
-                                        {listItems.map((b) => {
+                                        {unassignedListItems.map((b) => {
                                           const pii: any = (b as any).pii || {};
                                           const fullName =
                                             `${pii.firstName || ""} ${

@@ -97,6 +97,7 @@ import {
 import servicesService from "../../services/services/serviceServices";
 import formService from "../../services/forms/formService";
 import type { TimeUnit } from "../../services/services/serviceMetricsModels";
+import serviceMetricsService from "../../services/services/serviceMetricsService";
 import {
   ComposedChart,
   Line,
@@ -221,6 +222,14 @@ export function SubProjectDetails() {
   const [customOpen, setCustomOpen] = useState(false);
   const [customFrom, setCustomFrom] = useState<string>("");
   const [customTo, setCustomTo] = useState<string>("");
+  const [seriesSummary, setSeriesSummary] = useState<
+    | {
+        totalSubmissions?: number;
+        totalServiceDeliveries?: number;
+        totalUniqueBeneficiaries?: number;
+      }
+    | null
+  >(null);
 
   const user = useSelector(selectCurrentUser);
   // Determine role
@@ -580,6 +589,48 @@ export function SubProjectDetails() {
     endDate,
     granularity,
     metricLocal,
+    serviceIdLocal,
+    formTemplateIdLocal,
+    hasFullAccess,
+    user?.roles,
+  ]);
+
+  // Fetch series summary exactly as in FormSubmissions for subproject scope
+  useEffect(() => {
+    (async () => {
+      if (activeTab !== "overview") return;
+      if (!subprojectId) return;
+      if (user?.roles == null || user.roles.length === 0) return;
+      if (!hasFullAccess) {
+        setSeriesSummary(null);
+        return;
+      }
+      try {
+        const res = await serviceMetricsService.getDeliveriesSeries({
+          entityId: subprojectId,
+          entityType: "subproject" as any,
+          groupBy: granularity,
+          metric: "submissions",
+          startDate,
+          endDate,
+          serviceId: serviceIdLocal,
+          formTemplateId: formTemplateIdLocal,
+        } as any);
+        if (res && res.success) {
+          setSeriesSummary((res as any).summary || null);
+        } else {
+          setSeriesSummary(null);
+        }
+      } catch {
+        setSeriesSummary(null);
+      }
+    })();
+  }, [
+    activeTab,
+    subprojectId,
+    granularity,
+    startDate,
+    endDate,
     serviceIdLocal,
     formTemplateIdLocal,
     hasFullAccess,
@@ -1480,6 +1531,60 @@ export function SubProjectDetails() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Series Summary Cards (below chart) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="bg-[#E3F5FF] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm">Total Submissions</div>
+                      <div className="text-2xl">
+                        {seriesState.loading
+                          ? "…"
+                          : Number(seriesSummary?.totalSubmissions || 0).toLocaleString()}
+                      </div>
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        <TrendingUp className="h-3 w-3 mr-1 text-green-500" /> Snapshot
+                      </div>
+                    </div>
+                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+
+                <div className="bg-[#E5ECF6] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm">Total Service Deliveries</div>
+                      <div className="text-2xl">
+                        {seriesState.loading
+                          ? "…"
+                          : Number(seriesSummary?.totalServiceDeliveries || 0).toLocaleString()}
+                      </div>
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        <TrendingUp className="h-3 w-3 mr-1 text-green-500" /> Snapshot
+                      </div>
+                    </div>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+
+                <div className="bg-[#E3F5FF] drop-shadow-sm shadow-gray-50 border-0 hover:-translate-y-1 hover:shadow-md transition rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm">Total Unique Beneficiaries</div>
+                      <div className="text-2xl">
+                        {seriesState.loading
+                          ? "…"
+                          : Number(seriesSummary?.totalUniqueBeneficiaries || 0).toLocaleString()}
+                      </div>
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        <TrendingDown className="h-3 w-3 mr-1 text-red-500" /> Snapshot
+                      </div>
+                    </div>
+                    <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card className="flex bg-[#E5ECF6] border-0 drop-shadow-sm shadow-gray-50">
