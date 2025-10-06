@@ -31,6 +31,11 @@ import {
   fetchSubProjectsByProjectId,
   selectAllSubprojects,
 } from "../../store/slices/subProjectSlice";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsTree,
+} from "../../store/slices/userProjectsSlice";
 import { Button } from "../ui/button/button";
 import { Badge } from "../ui/data-display/badge";
 import {
@@ -66,6 +71,7 @@ import {
   DialogTrigger,
 } from "../ui/overlay/dialog";
 import { FormField } from "./FormField";
+import subProjectService from "../../services/subprojects/subprojectService";
 
 // Field types available for forms
 const fieldTypes = [
@@ -138,6 +144,20 @@ export function FormBuilder({
   const subProjects = useSelector(selectAllSubprojects);
   const formToEdit = useSelector(selectCurrentForm);
   const isEditing = !!formId;
+  const user = useSelector(selectCurrentUser);
+  const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
+
+  // Normalize roles and detect sys/super admin
+  const normalizedRoles = (user?.roles || []).map(
+    (r: any) => r.name?.toLowerCase?.() || ""
+  );
+  const isSysOrSuperAdmin = normalizedRoles.some(
+    (r: string) =>
+      r === "sysadmin" ||
+      r === "superadmin" ||
+      r.includes("system admin") ||
+      r.includes("super admin")
+  );
 
   const [formData, setFormData] = useState<FormData>({
     id: "",
@@ -149,11 +169,15 @@ export function FormBuilder({
     fields: [],
   });
 
+  // Role-aware: fetch either all projects (admin) or assigned projects (others)
   useEffect(() => {
-    if (formId) {
+    if (!user?.id) return;
+    if (isSysOrSuperAdmin) {
       dispatch(fetchProjects());
+    } else {
+      dispatch(fetchUserProjectsByUserId(String(user.id)));
     }
-  }, [dispatch, formId]);
+  }, [dispatch, user?.id, isSysOrSuperAdmin]);
 
   useEffect(() => {
     if (formId) {
@@ -163,7 +187,11 @@ export function FormBuilder({
 
   useEffect(() => {
     if (formToEdit && formId) {
-      const projectId = formToEdit.entityAssociations[0].entityId;
+      const assoc = (formToEdit as any).entityAssociations?.[0] as
+        | { entityId: string; entityType?: string }
+        | undefined;
+      const assocEntityId = assoc?.entityId || "";
+      const assocEntityType = (assoc?.entityType || "project").toLowerCase();
 
       const fields = formToEdit.schema.fields.map((field, index) => ({
         id: `field-${Date.now()}-${index}`,
@@ -178,16 +206,46 @@ export function FormBuilder({
           field.options?.map((opt) => ({ value: opt, label: opt })) || [],
       }));
 
-      setFormData({
-        id: formToEdit.id,
-        name: formToEdit.name,
-        description: formToEdit.description || "",
-        category: formToEdit.category || "",
-        status: formToEdit.status || "draft",
-        version: formToEdit.version || "0.1",
-        fields: fields,
-        project: projectId,
-      });
+      if (assocEntityType === "subproject" && assocEntityId) {
+        (async () => {
+          try {
+            const res = await subProjectService.getSubProjectById({ id: assocEntityId });
+            const projectId = (res.success && (res.data as any)?.projectId) || "";
+            setFormData({
+              id: formToEdit.id,
+              name: formToEdit.name,
+              description: formToEdit.description || "",
+              category: formToEdit.category || "",
+              status: formToEdit.status || "draft",
+              version: formToEdit.version || "0.1",
+              fields: fields,
+              project: projectId,
+              subProject: assocEntityId,
+            });
+            if (projectId) {
+              dispatch(fetchSubProjectsByProjectId({ projectId }));
+            }
+          } catch {
+            // Fallback: set only subproject
+            setFormData((prev) => ({ ...prev, subProject: assocEntityId }));
+          }
+        })();
+      } else {
+        const projectId = assocEntityId;
+        setFormData({
+          id: formToEdit.id,
+          name: formToEdit.name,
+          description: formToEdit.description || "",
+          category: formToEdit.category || "",
+          status: formToEdit.status || "draft",
+          version: formToEdit.version || "0.1",
+          fields: fields,
+          project: projectId,
+        });
+        if (projectId) {
+          dispatch(fetchSubProjectsByProjectId({ projectId }));
+        }
+      }
     }
   }, [formToEdit, formId]);
 
@@ -196,6 +254,31 @@ export function FormBuilder({
   const [showFormJson, setShowFormJson] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const [includeBeneficiaries, setIncludeBeneficiaries] = useState(true);
+
+  // Build projects list for UI based on role
+  const projectsForUi = isSysOrSuperAdmin
+    ? projects
+    : (userProjectsTree || []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description || "",
+        category: p.category || "",
+        status: "active" as const,
+        createdAt: p.createdAt || "",
+        updatedAt: p.updatedAt || "",
+      }));
+
+  // Allowed subproject IDs for non-admin users under the selected project
+  const allowedSubprojectIds = (() => {
+    if (isSysOrSuperAdmin) return new Set<string>();
+    try {
+      const proj = (userProjectsTree || []).find((p: any) => p.id === formData.project);
+      const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
+      return new Set<string>(ids);
+    } catch {
+      return new Set<string>();
+    }
+  })();
 
   // Handle form field selection
   const handleFieldSelect = (fieldId: string) => {
@@ -393,7 +476,7 @@ export function FormBuilder({
                           <SelectValue placeholder="Select a project" />
                         </SelectTrigger>
                         <SelectContent>
-                          {projects.map((project) => (
+                          {projectsForUi.map((project) => (
                             <SelectItem key={project.id} value={project.id}>
                               {project.name}
                             </SelectItem>
@@ -416,14 +499,23 @@ export function FormBuilder({
                               <SelectValue placeholder="Select a subproject" />
                             </SelectTrigger>
                             <SelectContent>
-                              {subProjects.map((subProject) => (
-                                <SelectItem
-                                  key={subProject.id}
-                                  value={subProject.id}
-                                >
-                                  {subProject.name}
-                                </SelectItem>
-                              ))}
+                              {subProjects
+                                .filter((sp) => sp.projectId === formData.project)
+                                .filter((sp) =>
+                                  isSysOrSuperAdmin
+                                    ? true
+                                    : allowedSubprojectIds.size === 0
+                                    ? false
+                                    : allowedSubprojectIds.has(sp.id)
+                                )
+                                .map((subProject) => (
+                                  <SelectItem
+                                    key={subProject.id}
+                                    value={subProject.id}
+                                  >
+                                    {subProject.name}
+                                  </SelectItem>
+                                ))}
                             </SelectContent>
                           </Select>
                         </div>
