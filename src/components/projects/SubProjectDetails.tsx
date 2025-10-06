@@ -222,14 +222,11 @@ export function SubProjectDetails() {
   const [customOpen, setCustomOpen] = useState(false);
   const [customFrom, setCustomFrom] = useState<string>("");
   const [customTo, setCustomTo] = useState<string>("");
-  const [seriesSummary, setSeriesSummary] = useState<
-    | {
-        totalSubmissions?: number;
-        totalServiceDeliveries?: number;
-        totalUniqueBeneficiaries?: number;
-      }
-    | null
-  >(null);
+  const [seriesSummary, setSeriesSummary] = useState<{
+    totalSubmissions?: number;
+    totalServiceDeliveries?: number;
+    totalUniqueBeneficiaries?: number;
+  } | null>(null);
 
   const user = useSelector(selectCurrentUser);
   // Determine role
@@ -431,6 +428,9 @@ export function SubProjectDetails() {
   const [medicationsInput, setMedicationsInput] = useState("");
   const [bloodTypeInput, setBloodTypeInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
+  const [ethnicity, setEthnicity] = useState("");
+  const [isUrban, setIsUrban] = useState<boolean>(false);
+  const [householdMembers, setHouseholdMembers] = useState<string>("");
 
   // Helpers for chip lists (match ProjectDetails.tsx behavior)
   const addItem = (
@@ -678,6 +678,9 @@ export function SubProjectDetails() {
     setDisabilities([]);
     setChronicConditions([]);
     setMedications([]);
+    setEthnicity("");
+    setIsUrban(false);
+    setHouseholdMembers("");
   };
 
   const handleCreateSubmit = async () => {
@@ -1541,10 +1544,13 @@ export function SubProjectDetails() {
                       <div className="text-2xl">
                         {seriesState.loading
                           ? "…"
-                          : Number(seriesSummary?.totalSubmissions || 0).toLocaleString()}
+                          : Number(
+                              seriesSummary?.totalSubmissions || 0
+                            ).toLocaleString()}
                       </div>
                       <div className="flex items-center text-xs text-muted-foreground">
-                        <TrendingUp className="h-3 w-3 mr-1 text-green-500" /> Snapshot
+                        <TrendingUp className="h-3 w-3 mr-1 text-green-500" />{" "}
+                        Snapshot
                       </div>
                     </div>
                     <BarChart3 className="h-4 w-4 text-muted-foreground" />
@@ -1558,10 +1564,13 @@ export function SubProjectDetails() {
                       <div className="text-2xl">
                         {seriesState.loading
                           ? "…"
-                          : Number(seriesSummary?.totalServiceDeliveries || 0).toLocaleString()}
+                          : Number(
+                              seriesSummary?.totalServiceDeliveries || 0
+                            ).toLocaleString()}
                       </div>
                       <div className="flex items-center text-xs text-muted-foreground">
-                        <TrendingUp className="h-3 w-3 mr-1 text-green-500" /> Snapshot
+                        <TrendingUp className="h-3 w-3 mr-1 text-green-500" />{" "}
+                        Snapshot
                       </div>
                     </div>
                     <Users className="h-4 w-4 text-muted-foreground" />
@@ -1575,10 +1584,13 @@ export function SubProjectDetails() {
                       <div className="text-2xl">
                         {seriesState.loading
                           ? "…"
-                          : Number(seriesSummary?.totalUniqueBeneficiaries || 0).toLocaleString()}
+                          : Number(
+                              seriesSummary?.totalUniqueBeneficiaries || 0
+                            ).toLocaleString()}
                       </div>
                       <div className="flex items-center text-xs text-muted-foreground">
-                        <TrendingDown className="h-3 w-3 mr-1 text-red-500" /> Snapshot
+                        <TrendingDown className="h-3 w-3 mr-1 text-red-500" />{" "}
+                        Snapshot
                       </div>
                     </div>
                     <CheckCircle className="h-4 w-4 text-muted-foreground" />
@@ -1972,23 +1984,53 @@ export function SubProjectDetails() {
                               />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                              <Label
-                                htmlFor="nationality"
-                                className="text-right"
+                              <Label htmlFor="ethnicity" className="text-right">
+                                Ethnicity
+                              </Label>
+                              <Select value={ethnicity} onValueChange={setEthnicity}>
+                                <SelectTrigger className="col-span-3">
+                                  <SelectValue placeholder="Select ethnicity" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Shqiptar">Shqiptar</SelectItem>
+                                  <SelectItem value="Serb">Serb</SelectItem>
+                                  <SelectItem value="Boshnjak">Boshnjak</SelectItem>
+                                  <SelectItem value="Turk">Turk</SelectItem>
+                                  <SelectItem value="Ashkali">Ashkali</SelectItem>
+                                  <SelectItem value="Rom">Rom</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label className="text-right">Residence</Label>
+                              <RadioGroup
+                                className="col-span-3 flex gap-6"
+                                value={isUrban ? "urban" : "rural"}
+                                onValueChange={(val) => setIsUrban(val === "urban")}
                               >
-                                Nationality
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="rural" id="residence-rural" />
+                                  <Label htmlFor="residence-rural">Rural</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="urban" id="residence-urban" />
+                                  <Label htmlFor="residence-urban">Urban</Label>
+                                </div>
+                              </RadioGroup>
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label htmlFor="householdMembers" className="text-right">
+                                Household Members
                               </Label>
                               <Input
-                                id="nationality"
+                                id="householdMembers"
+                                type="number"
+                                min={0}
+                                step={1}
                                 className="col-span-3"
-                                placeholder="Enter nationality"
-                                value={form.nationality}
-                                onChange={(e) =>
-                                  setForm({
-                                    ...form,
-                                    nationality: e.target.value,
-                                  })
-                                }
+                                placeholder="Enter number of household members"
+                                value={householdMembers}
+                                onChange={(e) => setHouseholdMembers(e.target.value)}
                               />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
@@ -2006,9 +2048,7 @@ export function SubProjectDetails() {
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="active">Active</SelectItem>
-                                  <SelectItem value="inactive">
-                                    Inactive
-                                  </SelectItem>
+                                  <SelectItem value="inactive">Inactive</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>

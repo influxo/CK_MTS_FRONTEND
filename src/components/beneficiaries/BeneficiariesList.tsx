@@ -78,15 +78,14 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/data-display/table";
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+  } from "../ui/data-display/table";
 import { toast } from "sonner";
-
 interface BeneficiariesListProps {
   onBeneficiarySelect: (beneficiaryId: string) => void;
 }
@@ -400,7 +399,10 @@ export function BeneficiariesList({
   // Role-based projects shown in the Add Beneficiary modal (same logic as Dashboard)
   const projectsForModal = useMemo(() => {
     if (isSysOrSuperAdmin) return projects;
-    const assigned = (userProjectsTree || []).map((p: any) => ({ id: p.id, name: p.name }));
+    const assigned = (userProjectsTree || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+    }));
     return assigned as Array<{ id: string; name: string }> as any;
   }, [isSysOrSuperAdmin, projects, userProjectsTree]);
 
@@ -435,15 +437,22 @@ export function BeneficiariesList({
 
   // Subprojects per project for the modal, filtered by role (SP Manager sees only assigned subprojects)
   const subprojectsForModalByProjectId = useMemo(() => {
-    const result: Record<string, { id: string; name: string; projectId: string }[]> = {};
+    const result: Record<
+      string,
+      { id: string; name: string; projectId: string }[]
+    > = {};
     (projectsForModal || []).forEach((p: any) => {
       const base = subprojectsByProjectId[p.id] || [];
       if (isSysOrSuperAdmin) {
         result[p.id] = base;
       } else if (isSubProjectManager) {
         try {
-          const proj = (userProjectsTree || []).find((xp: any) => xp.id === p.id);
-          const allowed = new Set<string>((proj?.subprojects || []).map((sp: any) => sp.id));
+          const proj = (userProjectsTree || []).find(
+            (xp: any) => xp.id === p.id
+          );
+          const allowed = new Set<string>(
+            (proj?.subprojects || []).map((sp: any) => sp.id)
+          );
           result[p.id] = base.filter((sp) => allowed.has(sp.id));
         } catch {
           result[p.id] = [];
@@ -454,7 +463,13 @@ export function BeneficiariesList({
       }
     });
     return result;
-  }, [projectsForModal, subprojectsByProjectId, isSysOrSuperAdmin, isSubProjectManager, userProjectsTree]);
+  }, [
+    projectsForModal,
+    subprojectsByProjectId,
+    isSysOrSuperAdmin,
+    isSubProjectManager,
+    userProjectsTree,
+  ]);
 
   // Form state for creating a beneficiary
   const [form, setForm] = useState<CreateBeneficiaryRequest>({
@@ -481,6 +496,9 @@ export function BeneficiariesList({
   const [medicationsInput, setMedicationsInput] = useState("");
   const [bloodTypeInput, setBloodTypeInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
+  const [ethnicity, setEthnicity] = useState("");
+  const [isUrban, setIsUrban] = useState<boolean>(false);
+  const [householdMembers, setHouseholdMembers] = useState<string>("");
 
   const addItem = (
     value: string,
@@ -527,6 +545,9 @@ export function BeneficiariesList({
     setMedications([]);
     setSelectedProjects([]);
     setSelectedSubProjects([]);
+    setEthnicity("");
+    setIsUrban(false);
+    setHouseholdMembers("");
   };
 
   // Decide which source is active
@@ -945,6 +966,56 @@ export function BeneficiariesList({
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="ethnicity" className="text-right">
+                Ethnicity
+              </Label>
+              <Select value={ethnicity} onValueChange={setEthnicity}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select ethnicity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Shqiptar">Shqiptar</SelectItem>
+                  <SelectItem value="Serb">Serb</SelectItem>
+                  <SelectItem value="Boshnjak">Boshnjak</SelectItem>
+                  <SelectItem value="Turk">Turk</SelectItem>
+                  <SelectItem value="Ashkali">Ashkali</SelectItem>
+                  <SelectItem value="Rom">Rom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Residence</Label>
+              <RadioGroup
+                className="col-span-3 flex gap-6"
+                value={isUrban ? "urban" : "rural"}
+                onValueChange={(val) => setIsUrban(val === "urban")}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="rural" id="residence-rural" />
+                  <Label htmlFor="residence-rural">Rural</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="urban" id="residence-urban" />
+                  <Label htmlFor="residence-urban">Urban</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="householdMembers" className="text-right">
+                Household Members
+              </Label>
+              <Input
+                id="householdMembers"
+                type="number"
+                min={0}
+                step={1}
+                className="col-span-3"
+                placeholder="Enter number of household members"
+                value={householdMembers}
+                onChange={(e) => setHouseholdMembers(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="status" className="text-right">
                 Status *
               </Label>
@@ -1265,7 +1336,9 @@ export function BeneficiariesList({
                               setSelectedProjects((prev) => {
                                 if (prev.includes(project.id)) {
                                   const subProjectsForProject =
-                                    subprojectsForModalByProjectId[project.id] || [];
+                                    subprojectsForModalByProjectId[
+                                      project.id
+                                    ] || [];
                                   const subIds = subProjectsForProject.map(
                                     (sp) => sp.id
                                   );
@@ -1290,51 +1363,49 @@ export function BeneficiariesList({
                         </div>
 
                         <div className="pl-6 border-l ml-2 space-y-2">
-                          {(subprojectsForModalByProjectId[project.id] || []).map(
-                            (subProject) => (
-                              <div
-                                key={subProject.id}
-                                className="flex items-center space-x-2"
-                              >
-                                <Checkbox
-                                  id={`sub-${subProject.id}`}
-                                  checked={selectedSubProjects.includes(
-                                    subProject.id
-                                  )}
-                                  onCheckedChange={() => {
-                                    setSelectedSubProjects((prev) => {
-                                      if (prev.includes(subProject.id)) {
-                                        return prev.filter(
-                                          (sp) => sp !== subProject.id
-                                        );
-                                      } else {
-                                        if (
-                                          !selectedProjects.includes(project.id)
-                                        ) {
-                                          setSelectedProjects(
-                                            (prevProjects) => [
-                                              ...prevProjects,
-                                              project.id,
-                                            ]
-                                          );
-                                        }
-                                        return [...prev, subProject.id];
+                          {(
+                            subprojectsForModalByProjectId[project.id] || []
+                          ).map((subProject) => (
+                            <div
+                              key={subProject.id}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                id={`sub-${subProject.id}`}
+                                checked={selectedSubProjects.includes(
+                                  subProject.id
+                                )}
+                                onCheckedChange={() => {
+                                  setSelectedSubProjects((prev) => {
+                                    if (prev.includes(subProject.id)) {
+                                      return prev.filter(
+                                        (sp) => sp !== subProject.id
+                                      );
+                                    } else {
+                                      if (
+                                        !selectedProjects.includes(project.id)
+                                      ) {
+                                        setSelectedProjects((prevProjects) => [
+                                          ...prevProjects,
+                                          project.id,
+                                        ]);
                                       }
-                                    });
-                                  }}
-                                  disabled={
-                                    !selectedProjects.includes(project.id)
-                                  }
-                                />
-                                <Label
-                                  htmlFor={`sub-${subProject.id}`}
-                                  className="font-normal"
-                                >
-                                  {subProject.name}
-                                </Label>
-                              </div>
-                            )
-                          )}
+                                      return [...prev, subProject.id];
+                                    }
+                                  });
+                                }}
+                                disabled={
+                                  !selectedProjects.includes(project.id)
+                                }
+                              />
+                              <Label
+                                htmlFor={`sub-${subProject.id}`}
+                                className="font-normal"
+                              >
+                                {subProject.name}
+                              </Label>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     ))
