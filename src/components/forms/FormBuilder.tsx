@@ -1,5 +1,5 @@
 import {
-  AlignLeft,
+  AlertCircle,
   ArrowLeft,
   Calendar,
   CheckSquare,
@@ -8,59 +8,21 @@ import {
   FileText,
   Grip,
   Hash,
-  ListChecks,
+  Loader2,
   Plus,
-  Radio,
   Save,
   Settings,
-  ToggleLeft,
   Trash,
   Type,
-  Upload,
   X,
-  Loader2,
-  AlertCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge } from "../ui/data-display/badge";
-import { Button } from "../ui/button/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../ui/data-display/card";
-import { Checkbox } from "../ui/form/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/overlay/dialog";
-import { Input } from "../ui/form/input";
-import { Label } from "../ui/form/label";
-import { ScrollArea } from "../ui/layout/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/form/select";
-import { Separator } from "../ui/layout/separator";
-import { Switch } from "../ui/form/switch";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../ui/navigation/tabs";
-import { Textarea } from "../ui/form/textarea";
-import { FormField } from "./FormField";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch } from "../../store";
+import {
+  fetchFormById,
+  selectCurrentForm,
+} from "../../store/slices/formsSlice";
 import {
   fetchProjects,
   selectAllProjects,
@@ -69,10 +31,41 @@ import {
   fetchSubProjectsByProjectId,
   selectAllSubprojects,
 } from "../../store/slices/subProjectSlice";
+import { Button } from "../ui/button/button";
+import { Badge } from "../ui/data-display/badge";
 import {
-  fetchFormById,
-  selectCurrentForm,
-} from "../../store/slices/formsSlice";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
+import { Checkbox } from "../ui/form/checkbox";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/form/select";
+import { Switch } from "../ui/form/switch";
+import { Separator } from "../ui/layout/separator";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/overlay/dialog";
+import { FormField } from "./FormField";
 
 // Field types available for forms
 const fieldTypes = [
@@ -202,6 +195,7 @@ export function FormBuilder({
   const [isAddFieldDialogOpen, setIsAddFieldDialogOpen] = useState(false);
   const [showFormJson, setShowFormJson] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [includeBeneficiaries, setIncludeBeneficiaries] = useState(true);
 
   // Handle form field selection
   const handleFieldSelect = (fieldId: string) => {
@@ -436,6 +430,19 @@ export function FormBuilder({
                       </>
                     )}
                   </div>
+                  <div className="grid gap-2">
+                    <Label>Include Beneficiaries</Label>
+                    <div className="flex items-center gap-3">
+                      <Switch
+                        checked={includeBeneficiaries}
+                        onCheckedChange={setIncludeBeneficiaries}
+                        aria-label="Include Beneficiaries"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {includeBeneficiaries ? "Enabled" : "Disabled"}
+                      </span>
+                    </div>
+                  </div>
                   {/* <div className="space-y-2">
                     <Label htmlFor="form-description">Description</Label>
                     <Textarea
@@ -568,18 +575,12 @@ export function FormBuilder({
           <div className="col-span-12 lg:col-span-4">
             <div className="sticky top-6">
               <Tabs defaultValue="properties" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-[#EAF4FB]">
+                <TabsList className="grid w-full grid-cols-1 bg-[#EAF4FB]">
                   <TabsTrigger
                     value="properties"
                     className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
                   >
                     Field Properties
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="form-settings"
-                    className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
-                  >
-                    Form Settings
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="properties">
@@ -601,26 +602,6 @@ export function FormBuilder({
                             />
                           </div>
 
-                          {(selectedFieldData.type === "text" ||
-                            selectedFieldData.type === "textarea" ||
-                            selectedFieldData.type === "number") && (
-                            <div className="space-y-2">
-                              <Label htmlFor="field-placeholder">
-                                Placeholder
-                              </Label>
-                              <Input
-                                className="bg-[#EAF4FB] border-0"
-                                id="field-placeholder"
-                                value={selectedFieldData.placeholder || ""}
-                                onChange={(e) =>
-                                  handleFieldUpdate(selectedField!, {
-                                    placeholder: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                          )}
-
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2">
                               <Checkbox
@@ -638,21 +619,6 @@ export function FormBuilder({
                             </div>
                           </div>
 
-                          <div className="space-y-2">
-                            <Label htmlFor="field-help-text">Help Text</Label>
-                            <Textarea
-                              className="bg-[#EAF4FB] border-0"
-                              id="field-help-text"
-                              value={selectedFieldData.helpText || ""}
-                              onChange={(e) =>
-                                handleFieldUpdate(selectedField!, {
-                                  helpText: e.target.value,
-                                })
-                              }
-                              placeholder="Add helpful information for this field"
-                              rows={2}
-                            />
-                          </div>
                           {selectedFieldData?.type === "dropdown" && (
                             <div className="space-y-2">
                               <div className="flex justify-between items-center">
@@ -732,111 +698,6 @@ export function FormBuilder({
                             </div>
                           )}
 
-                          {selectedFieldData.type === "number" && (
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="field-min">Min Value</Label>
-                                <Input
-                                  id="field-min"
-                                  type="number"
-                                  value={
-                                    selectedFieldData.validations?.min || ""
-                                  }
-                                  onChange={(e) => {
-                                    const validations =
-                                      selectedFieldData.validations || {};
-                                    handleFieldUpdate(selectedField!, {
-                                      validations: {
-                                        ...validations,
-                                        min: e.target.value
-                                          ? Number(e.target.value)
-                                          : undefined,
-                                      },
-                                    });
-                                  }}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="field-max">Max Value</Label>
-                                <Input
-                                  id="field-max"
-                                  type="number"
-                                  value={
-                                    selectedFieldData.validations?.max || ""
-                                  }
-                                  onChange={(e) => {
-                                    const validations =
-                                      selectedFieldData.validations || {};
-                                    handleFieldUpdate(selectedField!, {
-                                      validations: {
-                                        ...validations,
-                                        max: e.target.value
-                                          ? Number(e.target.value)
-                                          : undefined,
-                                      },
-                                    });
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          {(selectedFieldData.type === "text" ||
-                            selectedFieldData.type === "textarea") && (
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="field-min-length">
-                                  Min Length
-                                </Label>
-                                <Input
-                                  id="field-min-length"
-                                  type="number"
-                                  value={
-                                    selectedFieldData.validations?.minLength ||
-                                    ""
-                                  }
-                                  onChange={(e) => {
-                                    const validations =
-                                      selectedFieldData.validations || {};
-                                    handleFieldUpdate(selectedField!, {
-                                      validations: {
-                                        ...validations,
-                                        minLength: e.target.value
-                                          ? Number(e.target.value)
-                                          : undefined,
-                                      },
-                                    });
-                                  }}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="field-max-length">
-                                  Max Length
-                                </Label>
-                                <Input
-                                  id="field-max-length"
-                                  type="number"
-                                  value={
-                                    selectedFieldData.validations?.maxLength ||
-                                    ""
-                                  }
-                                  onChange={(e) => {
-                                    const validations =
-                                      selectedFieldData.validations || {};
-                                    handleFieldUpdate(selectedField!, {
-                                      validations: {
-                                        ...validations,
-                                        maxLength: e.target.value
-                                          ? Number(e.target.value)
-                                          : undefined,
-                                      },
-                                    });
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          )}
-
                           <Separator />
 
                           <div className="pt-2">
@@ -863,135 +724,6 @@ export function FormBuilder({
                     </CardContent>
                   </Card>
                 </TabsContent>
-                <TabsContent value="form-settings">
-                  <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
-                    <CardContent className="p-6 space-y-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="form-status">Form Status</Label>
-                        <Select
-                          value={formData.status}
-                          onValueChange={(value: any) =>
-                            setFormData({ ...formData, status: value })
-                          }
-                        >
-                          <SelectTrigger
-                            id="form-status"
-                            className="bg-[#EAF4FB] border-0 text-blue-900"
-                          >
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="archived">Archived</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Associated Projects</Label>
-                        <Select>
-                          <SelectTrigger className="bg-[#EAF4FB] border-0 text-blue-900">
-                            <SelectValue placeholder="Select a project" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {/* {mockProjects.map((project) => (
-                              <SelectItem key={project.id} value={project.id}>
-                                {project.title}
-                              </SelectItem>
-                            ))} */}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Associated Sub-Projects</Label>
-                        <Select>
-                          <SelectTrigger className="bg-[#EAF4FB] border-0 text-blue-900">
-                            <SelectValue placeholder="Select a sub-project" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {/* {mockProjects.flatMap((project) =>
-                              project.subProjects.map((subProject) => (
-                                <SelectItem
-                                  key={subProject.id}
-                                  value={subProject.id}
-                                >
-                                  {subProject.title} ({project.title})
-                                </SelectItem>
-                              ))
-                            )} */}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="version-control">
-                            Version Control
-                          </Label>
-                          <div className="flex items-center space-x-2">
-                            <Label
-                              htmlFor="version-control"
-                              className="text-muted-foreground text-sm bg-blue-100 px-2 rounded"
-                            >
-                              Enabled
-                            </Label>
-                            <Switch id="version-control" />
-                          </div>
-                        </div>
-                        {isEditing && (
-                          <div className="bg-[#EAF4FB] border-0 rounded-md p-3 space-y-2 ">
-                            <div className="flex items-center justify-between b">
-                              <span className="text-sm">Current Version</span>
-                              <Badge variant="outline">
-                                v{formData.version}
-                              </Badge>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full border-0 bg-blue-200 text-blue-900"
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Create New Version
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-2 pt-2">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="show-json">Show Form JSON</Label>
-                          <Switch
-                            id="show-json"
-                            checked={showFormJson}
-                            onCheckedChange={setShowFormJson}
-                          />
-                        </div>
-
-                        {showFormJson && (
-                          <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                            <pre className="text-xs font-mono">
-                              {JSON.stringify(formData, null, 2)}
-                            </pre>
-                          </ScrollArea>
-                        )}
-                      </div>
-
-                      <div className="pt-2">
-                        <Button
-                          variant="outline"
-                          className="w-full border-0 bg-blue-200 text-blue-900"
-                          onClick={handleSaveForm}
-                        >
-                          <Save className="h-4 w-4 mr-2" />
-                          Save Form
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
               </Tabs>
             </div>
           </div>
@@ -1006,7 +738,6 @@ export function FormBuilder({
               </p>
             </div>
             <Button variant="outline" onClick={() => setPreviewMode(false)}>
-              {/* <Edit className="h-4 w-4 mr-2" /> */}
               Edit Form
             </Button>
           </CardHeader>
@@ -1015,7 +746,6 @@ export function FormBuilder({
               {formData.fields.map((field) => (
                 <FormField key={field.id} field={field} />
               ))}
-
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="outline" className="bg-blue-200">
                   Cancel

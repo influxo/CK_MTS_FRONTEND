@@ -147,12 +147,13 @@ export function FormsList({
 
   // Decide which templates to show in the table: prefer store (paginated) else props
   const displayedTemplates =
-    (templatesFromStore && templatesFromStore.length > 0)
+    templatesFromStore && templatesFromStore.length > 0
       ? templatesFromStore
       : formTemplates;
 
   const totalPages =
-    pagination?.totalPages || Math.max(1, Math.ceil((formTemplates?.length || 0) / limit));
+    pagination?.totalPages ||
+    Math.max(1, Math.ceil((formTemplates?.length || 0) / limit));
   const totalCount = pagination?.totalCount ?? (formTemplates?.length || 0);
 
   // Numbered pagination builder (compact with ellipsis) – match BeneficiariesList design
@@ -771,7 +772,9 @@ export function FormsList({
               <span>
                 Page {page} of {Math.max(totalPages || 1, 1)}
               </span>
-              <span className="hidden sm:inline">• Total {totalCount} records</span>
+              <span className="hidden sm:inline">
+                • Total {totalCount} records
+              </span>
               <div className="flex items-center gap-2 ml-2">
                 <Button
                   variant="outline"
@@ -798,14 +801,21 @@ export function FormsList({
                         key={`p-${tok}`}
                         variant="outline"
                         size="sm"
-                        className={tok === page ? "bg-[#2E343E] text-white border-0" : "bg-white"}
+                        className={
+                          tok === page
+                            ? "bg-[#2E343E] text-white border-0"
+                            : "bg-white"
+                        }
                         onClick={() => tok !== page && goToPage(tok)}
                         aria-current={tok === page ? "page" : undefined}
                       >
                         {tok}
                       </Button>
                     ) : (
-                      <span key={`${tok}-${idx}`} className="px-1 text-muted-foreground">
+                      <span
+                        key={`${tok}-${idx}`}
+                        className="px-1 text-muted-foreground"
+                      >
                         …
                       </span>
                     )
