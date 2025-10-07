@@ -24,6 +24,20 @@ export interface CreateProjectResponse {
   data?: Project;
 }
 
+// Update Project
+export interface UpdateProjectRequest {
+  name?: string;
+  description?: string;
+  category?: string;
+  status?: "active" | "inactive" | "pending";
+}
+
+export interface UpdateProjectResponse {
+  success: boolean;
+  message: string;
+  data?: Project;
+}
+
 export interface GetProjectsResponse {
   success: boolean;
   message?: string;
