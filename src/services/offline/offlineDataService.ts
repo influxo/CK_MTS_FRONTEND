@@ -65,14 +65,23 @@ class OfflineDataService {
                 }
 
                 return [];
-            } catch (error) {
-                console.error('Failed to fetch projects from API, falling back to cache:', error);
-                // Fall through to cache
+            } catch (error: any) {
+                // Only fall back to cache for network errors, not auth errors
+                const isNetworkError = !error.response || error.code === 'ERR_NETWORK';
+
+                if (isNetworkError) {
+                    console.log('📱 Network error, using cached projects');
+                    const cachedProjects = await db.projects.toArray();
+                    return cachedProjects.map(this.stripOfflineFields);
+                }
+
+                // For auth errors or other API errors, throw the error
+                throw error;
             }
         }
 
-        // Offline or API failed - use cache
-        console.log('Using cached projects');
+        // Offline - use cache
+        console.log('📱 Offline mode - using cached projects');
         const cachedProjects = await db.projects.toArray();
         return cachedProjects.map(this.stripOfflineFields);
     }
@@ -289,13 +298,26 @@ class OfflineDataService {
                 }
 
                 return [];
-            } catch (error) {
-                console.error('Failed to fetch activities from API, falling back to cache:', error);
+            } catch (error: any) {
+                // Only fall back to cache for network errors, not auth errors
+                const isNetworkError = !error.response || error.code === 'ERR_NETWORK';
+
+                if (isNetworkError) {
+                    console.log('📱 Network error, using cached activities');
+                    const cachedActivities = await db.activities
+                        .where('subprojectId')
+                        .equals(subprojectId)
+                        .toArray();
+                    return cachedActivities.map(this.stripOfflineFields);
+                }
+
+                // For auth errors or other API errors, throw the error
+                throw error;
             }
         }
 
-        // Offline or API failed - use cache
-        console.log('Using cached activities');
+        // Offline - use cache
+        console.log('📱 Offline mode - using cached activities');
         const cachedActivities = await db.activities
             .where('subprojectId')
             .equals(subprojectId)
