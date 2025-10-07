@@ -2,14 +2,37 @@ import { Download, FileEdit, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { Badge } from "../ui/data-display/badge";
-import { Button } from "../ui/button/button";
+import type { AppDispatch } from "../../store";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../ui/data-display/card";
+  createActivity,
+  fetchSubprojectActivities,
+  selectActivityError,
+  selectActivityIsLoading,
+  selectSubprojectActivities,
+  selectSubprojectActivitiesError,
+  selectSubprojectActivitiesLoading,
+} from "../../store/slices/activitySlice";
+import { Button } from "../ui/button/button";
+import { Badge } from "../ui/data-display/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/form/select";
+import { Textarea } from "../ui/form/textarea";
+import { Tabs, TabsContent } from "../ui/navigation/tabs";
 import {
   Dialog,
   DialogContent,
@@ -25,85 +48,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/overlay/dropdown-menu";
-import { Input } from "../ui/form/input";
-import { Label } from "../ui/form/label";
-import { Progress } from "../ui/feedback/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/form/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/data-display/table";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../ui/navigation/tabs";
-import { Textarea } from "../ui/form/textarea";
-import type { AppDispatch } from "../../store";
-import {
-  createActivity,
-  selectActivityIsLoading,
-  selectActivityError,
-  fetchSubprojectActivities,
-  selectSubprojectActivities,
-  selectSubprojectActivitiesLoading,
-  selectSubprojectActivitiesError,
-} from "../../store/slices/activitySlice";
 
 interface SubProjectActivitiesProps {
   subProjectId: string;
 }
-
-// Activities are loaded from API via Redux
-
-// Mock planned activities
-const mockPlannedActivities = [
-  {
-    id: "plan-001",
-    subProjectId: "sub-001",
-    title: "Community Health Education",
-    type: "Education",
-    frequency: "Weekly",
-    targetNumber: 12,
-    completed: 8,
-    description: "Regular health education sessions in community centers",
-    assignedTo: "Community Health Workers",
-  },
-  {
-    id: "plan-002",
-    subProjectId: "sub-001",
-    title: "Mobile Antenatal Clinics",
-    type: "Service Delivery",
-    frequency: "Bi-weekly",
-    targetNumber: 20,
-    completed: 10,
-    description: "Mobile clinics providing antenatal care services",
-    assignedTo: "Medical Teams",
-  },
-  {
-    id: "plan-003",
-    subProjectId: "sub-001",
-    title: "Staff Training Sessions",
-    type: "Training",
-    frequency: "Monthly",
-    targetNumber: 6,
-    completed: 3,
-    description:
-      "Training sessions for project staff and community health workers",
-    assignedTo: "Project Coordinators",
-  },
-];
 
 export function SubProjectActivities({
   subProjectId,
@@ -156,11 +104,6 @@ export function SubProjectActivities({
 
     return matchesSubProject && matchesSearch && matchesStatus;
   });
-
-  // Filter planned activities for this sub-project
-  const filteredPlannedActivities = mockPlannedActivities.filter(
-    (plan) => plan.subProjectId === subProjectId
-  );
 
   return (
     <div className="space-y-6">
@@ -391,21 +334,6 @@ export function SubProjectActivities({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 bg-[#2E343E] bg-opacity-10 items-center">
-          <TabsTrigger
-            value="activities"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
-          >
-            Activities Log
-          </TabsTrigger>
-          <TabsTrigger
-            value="planned"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
-          >
-            Planned Activities
-          </TabsTrigger>
-        </TabsList>
-
         <TabsContent value="activities" className="pt-4">
           <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -537,77 +465,6 @@ export function SubProjectActivities({
                 ))}
             </TableBody>
           </Table>
-        </TabsContent>
-
-        <TabsContent value="planned" className="pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPlannedActivities.map((plan) => (
-              <Card key={plan.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between">
-                    <CardTitle className="text-base">{plan.title}</CardTitle>
-                    <Badge variant="outline">{plan.type}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    {plan.description}
-                  </p>
-
-                  <div>
-                    <div className="text-sm text-muted-foreground">
-                      Progress
-                    </div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm">
-                        {plan.completed} of {plan.targetNumber} completed
-                      </span>
-                      <span className="text-sm">
-                        {Math.round((plan.completed / plan.targetNumber) * 100)}
-                        %
-                      </span>
-                    </div>
-                    <Progress
-                      value={(plan.completed / plan.targetNumber) * 100}
-                      className="h-2"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <div className="text-muted-foreground">Frequency</div>
-                      <div>{plan.frequency}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Assigned To</div>
-                      <div>{plan.assignedTo}</div>
-                    </div>
-                  </div>
-
-                  {/* <div className="flex justify-end gap-2">
-                    <Button variant="outline" size="sm">
-                      View Schedule
-                    </Button>
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Record Activity
-                    </Button>
-                  </div> */}
-                </CardContent>
-              </Card>
-            ))}
-
-            <Card className="border-dashed bg-[#F7F9FB] flex flex-col items-center justify-center p-6">
-              <div className="rounded-full border-dashed border-2 p-3 mb-3">
-                <Plus className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h4 className="mb-1">Create Activity Plan</h4>
-              <p className="text-sm text-muted-foreground text-center mb-3">
-                Define a scheduled activity to be repeated regularly
-              </p>
-              <Button className="bg-black/5">Create Plan</Button>
-            </Card>
-          </div>
         </TabsContent>
       </Tabs>
     </div>

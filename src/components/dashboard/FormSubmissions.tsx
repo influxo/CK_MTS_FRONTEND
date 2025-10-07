@@ -1,10 +1,5 @@
 import * as React from "react";
-import {
-  MoreHorizontal,
-  TrendingDown,
-  TrendingUp,
-  ChevronDown,
-} from "lucide-react";
+import { MoreHorizontal, Filter, ChevronDown } from "lucide-react";
 
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
@@ -26,6 +21,7 @@ import {
   ComposedChart,
   Line,
   Area,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -38,11 +34,13 @@ import type {
 } from "../../services/services/serviceMetricsModels";
 import serviceMetricsService from "../../services/services/serviceMetricsService";
 import servicesService from "../../services/services/serviceServices";
-import formService from "../../services/forms/formService";
+import formTemplatesApi from "../../services/forms/formServices";
 import subProjectService from "../../services/subprojects/subprojectService";
 import type { Project } from "../../services/projects/projectModels";
 import { useSelector } from "react-redux";
 import { selectMetricsFilters } from "../../store/slices/serviceMetricsSlice";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
 
 type Granularity = TimeUnit; // 'day' | 'week' | 'month' | 'quarter' | 'year'
 
@@ -101,6 +99,15 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
   const [items, setItems] = React.useState<
     Array<{ periodStart: string; count: number }>
   >([]);
+  const [summaryExtra, setSummaryExtra] = React.useState<{
+    totalSubmissions?: number;
+    totalServiceDeliveries?: number;
+    totalUniqueBeneficiaries?: number;
+  } | null>(null);
+  const [mostFrequentServices, setMostFrequentServices] = React.useState<
+    Array<{ serviceId: string; name: string; count: number }>
+  >([]);
+  const [showAllServices, setShowAllServices] = React.useState<boolean>(false);
   const [granularity, setGranularity] = React.useState<Granularity>("week");
   const [granularityLocal, setGranularityLocal] = React.useState<
     Granularity | undefined
@@ -127,6 +134,12 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
   // Local project/subproject UI state
   const [projectId, setProjectId] = React.useState<string>("");
   const [subprojectId, setSubprojectId] = React.useState<string>("");
+  const [hasLocalEntityOverride, setHasLocalEntityOverride] =
+    React.useState<boolean>(false);
+
+  // Derived project ID when a global subproject is selected
+  const [globalDerivedProjectId, setGlobalDerivedProjectId] =
+    React.useState<string>("");
 
   // Local options
   const [servicesOptions, setServicesOptions] = React.useState<any[]>([]);
@@ -135,12 +148,38 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
 
   // Global filters
   const globalFilters = useSelector(selectMetricsFilters);
+  const user = useSelector(selectCurrentUser);
+  const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
+  const normalizedRoles = React.useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSubProjectManager = React.useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sub-project manager" ||
+        r === "sub project manager" ||
+        r.includes("sub-project manager") ||
+        r.includes("sub project manager")
+    );
+  }, [normalizedRoles]);
 
   // UI state for dropdown + custom range
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const [customOpen, setCustomOpen] = React.useState(false);
   const [customFrom, setCustomFrom] = React.useState<string>("");
   const [customTo, setCustomTo] = React.useState<string>("");
+  const [showMoreLocal, setShowMoreLocal] = React.useState<boolean>(false);
+  const [chartType, setChartType] = React.useState<"line" | "bar">("line");
+  // Keep dropdowns open when paginating inside them
+  const [openServicesSelect, setOpenServicesSelect] = React.useState(false);
+  const [openTemplatesSelect, setOpenTemplatesSelect] = React.useState(false);
+  // Local pagination state for options
+  const [servicesPage, setServicesPage] = React.useState<number>(1);
+  const [servicesTotalPages, setServicesTotalPages] = React.useState<number>(1);
+  const [templatesPage, setTemplatesPage] = React.useState<number>(1);
+  const [templatesTotalPages, setTemplatesTotalPages] =
+    React.useState<number>(1);
 
   const dayFmt = new Intl.DateTimeFormat(undefined, {
     month: "short",
@@ -227,83 +266,151 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     setCustomOpen(false);
   };
 
-  // Initial load: inherit global filters for defaults
+  // Resolve projectId from global subproject when needed
   React.useEffect(() => {
-    // Load templates
-    (async () => {
-      const forms = await formService.getForms();
-      const templates = (forms?.data as any)?.templates || forms?.data || [];
-      setTemplatesOptions(templates || []);
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const { entityId, entityType } = globalFilters as any;
+    if (entityType === "subproject" && entityId) {
+      (async () => {
+        const res = await subProjectService.getSubProjectById({ id: entityId });
+        if (res.success && (res.data as any)?.projectId) {
+          setGlobalDerivedProjectId((res.data as any).projectId as string);
+        } else {
+          setGlobalDerivedProjectId("");
+        }
+      })();
+    } else if (entityType === "project") {
+      setGlobalDerivedProjectId("");
+    } else {
+      setGlobalDerivedProjectId("");
+    }
+  }, [globalFilters]);
 
-  // Fetch subprojects when local project changes
+  // Effective entity IDs for display and data fetching
+  const globalEntityType = globalFilters.entityType as any;
+  const globalProjectId =
+    globalEntityType === "project"
+      ? (globalFilters.entityId as string) || ""
+      : globalDerivedProjectId || "";
+  const globalSubprojectId =
+    globalEntityType === "subproject"
+      ? (globalFilters.entityId as string) || ""
+      : "";
+
+  const effectiveProjectId = hasLocalEntityOverride
+    ? projectId
+    : globalProjectId;
+  const effectiveSubprojectId = hasLocalEntityOverride
+    ? subprojectId
+    : globalSubprojectId;
+
+  // Reset services pagination when scope changes (global vs project/subproject)
   React.useEffect(() => {
-    if (!projectId) {
+    setServicesPage(1);
+  }, [effectiveProjectId, effectiveSubprojectId]);
+
+  // Load templates with pagination based on effective entity context (scoped when applicable)
+  React.useEffect(() => {
+    (async () => {
+      const params: any = { page: templatesPage, limit: 100 };
+      if (effectiveSubprojectId) {
+        params.subprojectId = effectiveSubprojectId;
+        params.entityType = "subproject";
+      } else if (effectiveProjectId) {
+        params.projectId = effectiveProjectId;
+        params.entityType = "project";
+      }
+      const res = await formTemplatesApi.getFormTemplates(params);
+      if (res.success) {
+        const data: any = res.data || {};
+        setTemplatesOptions(data.templates || []);
+        setTemplatesTotalPages(Number(data.pagination?.totalPages || 1));
+      } else {
+        setTemplatesOptions([]);
+        setTemplatesTotalPages(1);
+      }
+    })();
+  }, [effectiveProjectId, effectiveSubprojectId, templatesPage]);
+
+  // Fetch subprojects when effective project changes
+  React.useEffect(() => {
+    if (!effectiveProjectId) {
       setSubprojectsOptions([]);
       return;
     }
     (async () => {
       const res = await subProjectService.getSubProjectsByProjectId({
-        projectId,
+        projectId: effectiveProjectId,
       });
-      if (res.success) setSubprojectsOptions(res.data);
-    })();
-  }, [projectId]);
-
-  // Inherit global project/subproject into local UI when no local override is set
-  React.useEffect(() => {
-    if (projectId || subprojectId) return; // respect local override
-    const { entityId, entityType } = globalFilters as any;
-    if (!entityId || !entityType) return;
-    if (entityType === "project") {
-      setProjectId(entityId);
-    } else if (entityType === "subproject") {
-      (async () => {
-        const res = await subProjectService.getSubProjectById({ id: entityId });
-        if (res.success && (res.data as any)?.projectId) {
-          setProjectId((res.data as any).projectId);
-          setSubprojectId(entityId);
+      if (res.success) {
+        let options = res.data as any[];
+        if (isSubProjectManager) {
+          try {
+            const proj = (userProjectsTree || []).find(
+              (p: any) => p.id === effectiveProjectId
+            );
+            const allowed = new Set<string>(
+              (proj?.subprojects || []).map((sp: any) => sp.id)
+            );
+            options = options.filter((sp: any) => allowed.has(sp.id));
+          } catch {}
         }
-      })();
-    }
-  }, [
-    globalFilters.entityId,
-    globalFilters.entityType,
-    projectId,
-    subprojectId,
-  ]);
+        setSubprojectsOptions(options);
+      }
+    })();
+  }, [effectiveProjectId, isSubProjectManager, userProjectsTree]);
 
-  // Fetch services when effective entity selection changes (local overrides take precedence, else global)
+  // Reset local overrides whenever global filters change so globals take precedence again
+  React.useEffect(() => {
+    setHasLocalEntityOverride(false);
+    setProjectId("");
+    setSubprojectId("");
+    setMetricLocal(undefined);
+    setServiceIdLocal(undefined);
+    setFormTemplateIdLocal(undefined);
+    setLocalStartDate(undefined);
+    setLocalEndDate(undefined);
+    setGranularityLocal(undefined);
+  }, [globalFilters]);
+
+  // Fetch services when effective entity selection changes (local overrides take precedence, else global) with pagination
   React.useEffect(() => {
     (async () => {
-      const effectiveEntityType = subprojectId
+      const effectiveEntityType = effectiveSubprojectId
         ? "subproject"
-        : projectId
+        : effectiveProjectId
         ? "project"
         : (globalFilters.entityType as any) || undefined;
       const effectiveEntityId =
-        subprojectId || projectId || globalFilters.entityId || undefined;
+        effectiveSubprojectId ||
+        effectiveProjectId ||
+        globalFilters.entityId ||
+        undefined;
       if (effectiveEntityType && effectiveEntityId) {
         const res = await servicesService.getEntityServices({
           entityId: effectiveEntityId,
           entityType: effectiveEntityType,
         });
-        if (res.success) setServicesOptions(res.items || []);
+        if (res.success) {
+          setServicesOptions(res.items || []);
+          setServicesTotalPages(1);
+        }
       } else {
         const res = await servicesService.getAllServices({
-          page: 1,
+          page: servicesPage,
           limit: 100,
         });
-        if (res.success) setServicesOptions(res.items || []);
+        if (res.success) {
+          setServicesOptions(res.items || []);
+          setServicesTotalPages(Number((res as any).totalPages || 1));
+        }
       }
     })();
   }, [
-    projectId,
-    subprojectId,
+    effectiveProjectId,
+    effectiveSubprojectId,
     globalFilters.entityId,
     globalFilters.entityType,
+    servicesPage,
   ]);
 
   // Build merged params from global + local overrides
@@ -350,6 +457,8 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
       const res = await serviceMetricsService.getDeliveriesSeries(params);
       if (res.success) {
         setItems(res.items || []);
+        setSummaryExtra((res as any).summary || null);
+        setMostFrequentServices((res as any).mostFrequentServices || []);
         setGranularity(
           (res.granularity as Granularity) ||
             (params.groupBy as Granularity) ||
@@ -357,6 +466,8 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
         );
       } else {
         setItems([]);
+        setSummaryExtra(null);
+        setMostFrequentServices([]);
       }
     } finally {
       setLoading(false);
@@ -378,262 +489,415 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     localEndDate,
     granularityLocal,
   ]);
-  const submissions = [
-    {
-      form: "Healthcare Assessment",
-      submissions: 342,
-      change: 12,
-      trend: "up",
-      status: "active",
-    },
-    {
-      form: "Education Survey",
-      submissions: 198,
-      change: -5,
-      trend: "down",
-      status: "active",
-    },
-    {
-      form: "Water Quality Report",
-      submissions: 89,
-      change: 23,
-      trend: "up",
-      status: "pending",
-    },
-    {
-      form: "Community Feedback",
-      submissions: 156,
-      change: 8,
-      trend: "up",
-      status: "active",
-    },
+
+  // Build cards from summary totals + most frequent services
+  const cardsData: Array<{
+    title: string;
+    value: number;
+    type: "summary" | "service";
+  }> = [];
+
+  if (summaryExtra) {
+    if (typeof summaryExtra.totalSubmissions === "number") {
+      cardsData.push({
+        title: "Total Submissions",
+        value: Number(summaryExtra.totalSubmissions || 0),
+        type: "summary",
+      });
+    }
+    if (typeof summaryExtra.totalServiceDeliveries === "number") {
+      cardsData.push({
+        title: "Total Service Deliveries",
+        value: Number(summaryExtra.totalServiceDeliveries || 0),
+        type: "summary",
+      });
+    }
+    if (typeof summaryExtra.totalUniqueBeneficiaries === "number") {
+      cardsData.push({
+        title: "Total Unique Beneficiaries",
+        value: Number(summaryExtra.totalUniqueBeneficiaries || 0),
+        type: "summary",
+      });
+    }
+  }
+
+  const svcSource =
+    mostFrequentServices && mostFrequentServices.length > 0
+      ? mostFrequentServices
+      : (summaryExtra as any)?.mostFrequentServices || [];
+  (svcSource || [])
+    .slice() // copy before sort
+    .sort((a: any, b: any) => Number(b?.count || 0) - Number(a?.count || 0))
+    .forEach((svc: any) => {
+      cardsData.push({
+        title: svc.name || svc.serviceName || "Service",
+        value: Number(svc.count || 0),
+        type: "service",
+      });
+    });
+
+  const maxServiceCards = 8;
+  const summaryCards = cardsData.filter((c) => c.type === "summary");
+  const serviceCards = cardsData.filter((c) => c.type === "service");
+  const displayedCards = [
+    ...summaryCards,
+    ...(showAllServices
+      ? serviceCards
+      : serviceCards.slice(0, maxServiceCards)),
   ];
 
   return (
     <Card className="mb-6 bg-[#F7F9FB]   drop-shadow-md shadow-gray-50 border-0">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>
-            {(metricLocal || globalFilters.metric) === "serviceDeliveries"
-              ? "Service Deliveries Overview"
-              : (metricLocal || globalFilters.metric) === "uniqueBeneficiaries"
-              ? "Unique Beneficiaries Overview"
-              : "Form Submissions Overview"}
-          </CardTitle>
-          {/* Local-only filters for Form Submissions: project/subproject + metric/service/template */}
-          <div className=" flex flex-wrap items-center  gap-3">
-            {/* Project (local override) */}
-            <Select
-              value={projectId || "all"}
-              onValueChange={(v) => {
-                const id = v === "all" ? "" : v;
-                setProjectId(id);
-                setSubprojectId("");
-                // Clear dependent local filters when switching entity
-                setServiceIdLocal(undefined);
-                setFormTemplateIdLocal(undefined);
-              }}
-            >
-              <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
-                <SelectValue placeholder="Project" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Projects</SelectItem>
-                {(projects || []).map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Subproject (local override) */}
-            <Select
-              value={subprojectId || "all"}
-              onValueChange={(v) => {
-                const id = v === "all" ? "" : v;
-                setSubprojectId(id);
-                // Clear dependent local filters when switching entity
-                setServiceIdLocal(undefined);
-                setFormTemplateIdLocal(undefined);
-              }}
-              disabled={!projectId}
-            >
-              <SelectTrigger className="w-[220px] bg-blue-200/30   border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
-                <SelectValue placeholder="Subproject" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Subprojects</SelectItem>
-                {subprojectsOptions
-                  .filter((sp) => sp.projectId === projectId)
-                  .map((sp) => (
-                    <SelectItem key={sp.id} value={sp.id}>
-                      {sp.name}
+          <div className="flex items-center gap-3">
+            <CardTitle>
+              {(metricLocal || globalFilters.metric) === "serviceDeliveries"
+                ? "Service Deliveries Overview"
+                : (metricLocal || globalFilters.metric) ===
+                  "uniqueBeneficiaries"
+                ? "Unique Beneficiaries Overview"
+                : "Form Submissions Overview"}
+            </CardTitle>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant={chartType === "line" ? "default" : "outline"}
+                onClick={() => setChartType("line")}
+                className="px-2"
+              >
+                Line
+              </Button>
+              <Button
+                size="sm"
+                variant={chartType === "bar" ? "default" : "outline"}
+                onClick={() => setChartType("bar")}
+                className="px-2"
+              >
+                Bar
+              </Button>
+            </div>
+          </div>
+          {/* Local-only filters for Form Submissions: project/subproject always visible; others hidden behind 'More Filters' */}
+          <div className=" flex flex-col gap-2 w-full md:w-auto">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Project (local override) */}
+              <Select
+                value={
+                  hasLocalEntityOverride
+                    ? projectId || "all"
+                    : globalProjectId || "all"
+                }
+                onValueChange={(v) => {
+                  const id = v === "all" ? "" : v;
+                  setProjectId(id);
+                  setSubprojectId("");
+                  setHasLocalEntityOverride(id !== "");
+                  // Clear dependent local filters when switching entity
+                  setServiceIdLocal(undefined);
+                  setFormTemplateIdLocal(undefined);
+                }}
+              >
+                <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                  <SelectValue placeholder="Project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Projects</SelectItem>
+                  {(projects || []).map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
                     </SelectItem>
                   ))}
-              </SelectContent>
-            </Select>
+                </SelectContent>
+              </Select>
 
-            {/* Metric (local override; inherits global if unset) */}
-            <Select
-              value={
-                (metricLocal || globalFilters.metric || "submissions") as string
-              }
-              onValueChange={(v) => {
-                setMetricLocal(v as MetricType);
-              }}
-            >
-              <SelectTrigger
-                className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0
-             transition-transform duration-200 ease-in-out
-             hover:scale-[1.02] hover:-translate-y-[1px]"
+              {/* Subproject (local override) */}
+              <Select
+                value={
+                  hasLocalEntityOverride
+                    ? subprojectId || "all"
+                    : globalSubprojectId || "all"
+                }
+                onValueChange={(v) => {
+                  const id = v === "all" ? "" : v;
+                  setSubprojectId(id);
+                  setHasLocalEntityOverride(id !== "" || projectId !== "");
+                  // Clear dependent local filters when switching entity
+                  setServiceIdLocal(undefined);
+                  setFormTemplateIdLocal(undefined);
+                }}
+                disabled={!effectiveProjectId}
               >
-                <SelectValue placeholder="Beneficiary" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="submissions">Submissions</SelectItem>
-                <SelectItem value="serviceDeliveries">
-                  Service Deliveries
-                </SelectItem>
-                <SelectItem value="uniqueBeneficiaries">
-                  Unique Beneficiaries
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                <SelectTrigger className="w-[220px] bg-blue-200/30   border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                  <SelectValue placeholder="Subproject" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Subprojects</SelectItem>
+                  {subprojectsOptions
+                    .filter((sp) => sp.projectId === effectiveProjectId)
+                    .map((sp) => (
+                      <SelectItem key={sp.id} value={sp.id}>
+                        {sp.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
 
-            {/* Service (local override; inherits global if unset) */}
-            <Select
-              value={
-                (serviceIdLocal ?? globalFilters.serviceId ?? "all") as string
-              }
-              onValueChange={(v) => {
-                const id = v === "all" ? "" : v;
-                setServiceIdLocal(id || undefined);
-              }}
-            >
-              <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
-                <SelectValue placeholder="Service" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Services</SelectItem>
-                {servicesOptions.map((s: any) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowMoreLocal((s) => !s)}
+                className="bg-[#E0F2FE] text-black border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                {showMoreLocal ? "Hide Filters" : "More Filters"}
+              </Button>
+            </div>
 
-            {/* Form Template (local override; inherits global if unset) */}
-            <Select
-              value={
-                (formTemplateIdLocal ??
-                  globalFilters.formTemplateId ??
-                  "all") as string
-              }
-              onValueChange={(v) => {
-                const id = v === "all" ? "" : v;
-                setFormTemplateIdLocal(id || undefined);
-              }}
-            >
-              <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
-                <SelectValue placeholder="Form Template" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Templates</SelectItem>
-                {templatesOptions.map((t: any) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="relative">
-            <button
-              onClick={() => setFiltersOpen((s) => !s)}
-              className="px-3 py-1.5 rounded-md text-sm bg-blue-200 text-blue-600 hover:bg-blue-200/30 flex items-center gap-2"
-            >
-              <span>
-                Granularity:{" "}
-                <span className="capitalize font-medium">
-                  {(granularity as Granularity) || "week"}
-                </span>
-              </span>
-              <ChevronDown className="h-4 w-4" />
-            </button>
-            {filtersOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-10">
-                <ul className="py-1">
-                  {(
-                    ["day", "week", "month", "quarter", "year"] as Granularity[]
-                  ).map((g) => (
-                    <li key={g}>
-                      <button
-                        onClick={() => {
-                          applyQuery(g);
-                          setCustomOpen(false);
-                          setFiltersOpen(false);
-                        }}
-                        className={[
-                          "w-full text-left px-3 py-2 text-sm rounded-md capitalize transition-transform duration-200 ease-in-out",
-                          granularity === g
-                            ? "bg-[#E5ECF6] text-gray-900 scale-[1.02] -translate-y-[1px]"
-                            : "hover:bg-gray-50 hover:scale-[1.02] hover:-translate-y-[1px]",
-                        ].join(" ")}
+            {showMoreLocal && (
+              <div className="mt-2 p-3 rounded-md bg-white/60 border border-gray-100">
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Metric (local override; inherits global if unset) */}
+                  <Select
+                    value={
+                      (metricLocal ||
+                        globalFilters.metric ||
+                        "submissions") as string
+                    }
+                    onValueChange={(v) => {
+                      setMetricLocal(v as MetricType);
+                    }}
+                  >
+                    <SelectTrigger className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                      <SelectValue placeholder="Beneficiary" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="submissions">Submissions</SelectItem>
+                      <SelectItem value="serviceDeliveries">
+                        Service Deliveries
+                      </SelectItem>
+                      <SelectItem value="uniqueBeneficiaries">
+                        Unique Beneficiaries
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Service (local override; inherits global if unset) */}
+                  <Select
+                    open={openServicesSelect}
+                    onOpenChange={setOpenServicesSelect}
+                    value={
+                      (serviceIdLocal ??
+                        globalFilters.serviceId ??
+                        "all") as string
+                    }
+                    onValueChange={(v) => {
+                      if (v === "__svc_prev__" || v === "__svc_next__") {
+                        if (!effectiveProjectId && !effectiveSubprojectId) {
+                          const nextPage =
+                            v === "__svc_prev__"
+                              ? Math.max(1, servicesPage - 1)
+                              : Math.min(
+                                  servicesTotalPages || 1,
+                                  servicesPage + 1
+                                );
+                          setServicesPage(nextPage);
+                          setOpenServicesSelect(true);
+                        }
+                        return;
+                      }
+                      const id = v === "all" ? "" : v;
+                      setServiceIdLocal(id || undefined);
+                    }}
+                  >
+                    <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                      <SelectValue placeholder="Service" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Services</SelectItem>
+                      {servicesOptions.map((s: any) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                      {/* Pagination controls for services when not scoped to entity */}
+                      {!effectiveProjectId && !effectiveSubprojectId && (
+                        <>
+                          <SelectItem
+                            value="__svc_prev__"
+                            disabled={servicesPage <= 1}
+                          >
+                            ◀ Prev Page
+                          </SelectItem>
+                          <SelectItem value="__svc_info__" disabled>
+                            Page {servicesPage} of {servicesTotalPages || 1}
+                          </SelectItem>
+                          <SelectItem
+                            value="__svc_next__"
+                            disabled={servicesPage >= (servicesTotalPages || 1)}
+                          >
+                            Next Page ▶
+                          </SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Form Template (local override; inherits global if unset) */}
+                  <Select
+                    open={openTemplatesSelect}
+                    onOpenChange={setOpenTemplatesSelect}
+                    value={
+                      (formTemplateIdLocal ??
+                        globalFilters.formTemplateId ??
+                        "all") as string
+                    }
+                    onValueChange={(v) => {
+                      if (v === "__tpl_prev__" || v === "__tpl_next__") {
+                        const nextPage =
+                          v === "__tpl_prev__"
+                            ? Math.max(1, templatesPage - 1)
+                            : Math.min(
+                                templatesTotalPages || 1,
+                                templatesPage + 1
+                              );
+                        setTemplatesPage(nextPage);
+                        setOpenTemplatesSelect(true);
+                        return;
+                      }
+                      const id = v === "all" ? "" : v;
+                      setFormTemplateIdLocal(id || undefined);
+                    }}
+                  >
+                    <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                      <SelectValue placeholder="Form Template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Templates</SelectItem>
+                      {templatesOptions.map((t: any) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                      {/* Pagination controls for templates */}
+                      <SelectItem
+                        value="__tpl_prev__"
+                        disabled={templatesPage <= 1}
                       >
-                        {g}
-                      </button>
-                    </li>
-                  ))}
-                  <li className="my-1 border-t border-gray-100" />
-                  <li>
+                        ◀ Prev Page
+                      </SelectItem>
+                      <SelectItem value="__tpl_info__" disabled>
+                        Page {templatesPage} of {templatesTotalPages || 1}
+                      </SelectItem>
+                      <SelectItem
+                        value="__tpl_next__"
+                        disabled={templatesPage >= (templatesTotalPages || 1)}
+                      >
+                        Next Page ▶
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Granularity dropdown */}
+                  <div className="relative">
                     <button
-                      onClick={() => setCustomOpen((s) => !s)}
-                      className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-50"
+                      onClick={() => setFiltersOpen((s) => !s)}
+                      className="px-3 py-1.5 rounded-md text-sm bg-blue-200 text-blue-600 hover:bg-blue-200/30 flex items-center gap-2"
                     >
-                      Custom range…
+                      <span>
+                        Granularity:{" "}
+                        <span className="capitalize font-medium">
+                          {(granularity as Granularity) || "week"}
+                        </span>
+                      </span>
+                      <ChevronDown className="h-4 w-4" />
                     </button>
-                    {customOpen && (
-                      <div className="px-3 pb-2">
-                        <div className="grid grid-cols-1 gap-2">
-                          <label className="text-xs text-gray-600">
-                            From
-                            <input
-                              type="date"
-                              className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
-                              value={customFrom}
-                              onChange={(e) => setCustomFrom(e.target.value)}
-                            />
-                          </label>
-                          <label className="text-xs text-gray-600">
-                            To
-                            <input
-                              type="date"
-                              className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
-                              value={customTo}
-                              onChange={(e) => setCustomTo(e.target.value)}
-                            />
-                          </label>
-                          <div className="flex justify-end gap-2 pt-1">
+                    {filtersOpen && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-10">
+                        <ul className="py-1">
+                          {(
+                            [
+                              "day",
+                              "week",
+                              "month",
+                              "quarter",
+                              "year",
+                            ] as Granularity[]
+                          ).map((g) => (
+                            <li key={g}>
+                              <button
+                                onClick={() => {
+                                  applyQuery(g);
+                                  setCustomOpen(false);
+                                  setFiltersOpen(false);
+                                }}
+                                className={[
+                                  "w-full text-left px-3 py-2 text-sm rounded-md capitalize transition-transform duration-200 ease-in-out",
+                                  granularity === g
+                                    ? "bg-[#E5ECF6] text-gray-900 scale-[1.02] -translate-y-[1px]"
+                                    : "hover:bg-gray-50 hover:scale-[1.02] hover:-translate-y-[1px]",
+                                ].join(" ")}
+                              >
+                                {g}
+                              </button>
+                            </li>
+                          ))}
+                          <li className="my-1 border-t border-gray-100" />
+                          <li>
                             <button
-                              onClick={() => setCustomOpen(false)}
-                              className="px-3 py-1.5 rounded-md text-sm border border-gray-200"
+                              onClick={() => setCustomOpen((s) => !s)}
+                              className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-50"
                             >
-                              Cancel
+                              Custom range…
                             </button>
-                            <button
-                              onClick={onCustomApply}
-                              className="px-3 py-1.5 rounded-md text-sm bg-black text-white"
-                            >
-                              Apply
-                            </button>
-                          </div>
-                        </div>
+                            {customOpen && (
+                              <div className="px-3 pb-2">
+                                <div className="grid grid-cols-1 gap-2">
+                                  <label className="text-xs text-gray-600">
+                                    From
+                                    <input
+                                      type="date"
+                                      className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                                      value={customFrom}
+                                      onChange={(e) =>
+                                        setCustomFrom(e.target.value)
+                                      }
+                                    />
+                                  </label>
+                                  <label className="text-xs text-gray-600">
+                                    To
+                                    <input
+                                      type="date"
+                                      className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                                      value={customTo}
+                                      onChange={(e) =>
+                                        setCustomTo(e.target.value)
+                                      }
+                                    />
+                                  </label>
+                                  <div className="flex justify-end gap-2 pt-1">
+                                    <button
+                                      onClick={() => setCustomOpen(false)}
+                                      className="px-3 py-1.5 rounded-md text-sm border border-gray-200"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      onClick={onCustomApply}
+                                      className="px-3 py-1.5 rounded-md text-sm bg-black text-white"
+                                    >
+                                      Apply
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </li>
+                        </ul>
                       </div>
                     )}
-                  </li>
-                </ul>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -648,6 +912,8 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
                 data={chartData}
+                barCategoryGap="25%"
+                barGap={2}
                 margin={{
                   top: 5,
                   right: 30,
@@ -665,6 +931,16 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                   >
                     <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
                     <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
+                    {/* Stronger color at top, subtle fade towards bottom */}
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.95} />
+                    <stop offset="60%" stopColor="#3b82f6" stopOpacity={0.68} />
+                    <stop
+                      offset="100%"
+                      stopColor="#3b82f6"
+                      stopOpacity={0.26}
+                    />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -687,21 +963,33 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                     boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                   }}
                 />
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="none"
-                  fill="url(#submissionsFill)"
-                  fillOpacity={1}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 6, fill: "#3b82f6" }}
-                />
+                {chartType === "line" ? (
+                  <>
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="none"
+                      fill="url(#submissionsFill)"
+                      fillOpacity={1}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 6, fill: "#3b82f6" }}
+                    />
+                  </>
+                ) : (
+                  <Bar
+                    dataKey="value"
+                    fill="url(#barFill)"
+                    // No stroke; rely on gradient top being strong
+                    barSize={100}
+                    radius={[6, 6, 0, 0]}
+                  />
+                )}
               </ComposedChart>
             </ResponsiveContainer>
           )}
@@ -710,44 +998,52 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
 
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2   lg:grid-cols-4 gap-4">
-          {submissions.map((submission, index) => (
+          {displayedCards.map((card, index) => (
             <div key={index} className="p-4  bg-[#B1E3FF] rounded-lg">
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium text-sm">{submission.form}</h4>
+                <h4 className="font-medium text-sm truncate" title={card.title}>
+                  {card.title}
+                </h4>
                 <Button variant="ghost" size="sm">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </div>
               <div className="space-y-2">
-                <div className="text-2xl">{submission.submissions}</div>
+                <div className="text-2xl">{card.value}</div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center text-xs">
-                    {submission.trend === "up" ? (
-                      <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
-                    )}
-                    {Math.abs(submission.change)}% this week
+                  {/* No trend/change data for these cards; keep layout clean */}
+                  <div className="text-xs text-gray-600">
+                    {card.type === "summary"
+                      ? "Summary"
+                      : "Most Frequent Service"}
                   </div>
                   <Badge
-                    variant={
-                      submission.status === "active" ? "default" : "secondary"
-                    }
+                    variant={card.type === "summary" ? "default" : "secondary"}
                     className={`text-xs ${
-                      submission.status === "active"
+                      card.type === "summary"
                         ? "bg-[#DEF8EE] text-[#4AA785]"
-                        : submission.status === "pending"
-                        ? "bg-amber-100 text-amber-700"
-                        : ""
+                        : "bg-blue-100 text-blue-700"
                     }`}
                   >
-                    {submission.status}
+                    {card.type === "summary" ? "summary" : "service"}
                   </Badge>
                 </div>
               </div>
             </div>
           ))}
         </div>
+        {serviceCards.length > maxServiceCards && (
+          <div className="flex justify-center mt-4">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowAllServices((s) => !s)}
+              className="bg-blue-200/40 text-blue-700 hover:bg-blue-200/60"
+            >
+              {showAllServices ? "Show less" : "Show more services"}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

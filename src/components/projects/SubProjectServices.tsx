@@ -47,6 +47,7 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import { Textarea } from "../ui/form/textarea";
+import { toast } from "sonner";
 
 interface SubProjectServicesProps {
   subProjectId: string;
@@ -75,15 +76,30 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
   const [search, setSearch] = useState("");
-  const filteredAllServices = useMemo(
-    () =>
-      allServices.filter(
-        (s) =>
-          s.name.toLowerCase().includes(search.toLowerCase()) ||
-          s.description.toLowerCase().includes(search.toLowerCase())
-      ),
-    [allServices, search]
+  // IDs of services already assigned to this sub-project (to exclude from modal)
+  const assignedIds = useMemo(() => new Set((services || []).map((s) => s.id)), [services]);
+
+  // Modal list filtered by search and excluding already assigned services
+  const filteredAllServices = useMemo(() => {
+    const q = search.toLowerCase();
+    return allServices.filter(
+      (s) =>
+        !assignedIds.has(s.id) &&
+        (s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q))
+    );
+  }, [allServices, search, assignedIds]);
+
+  // Pagination state for assign modal
+  const [assignPage, setAssignPage] = useState(1);
+  const [assignLimit, setAssignLimit] = useState(10);
+  const assignTotalPages = useMemo(
+    () => Math.max(1, Math.ceil((filteredAllServices.length || 0) / assignLimit)),
+    [filteredAllServices.length, assignLimit]
   );
+  const paginatedServices = useMemo(() => {
+    const start = (assignPage - 1) * assignLimit;
+    return filteredAllServices.slice(start, start + assignLimit);
+  }, [filteredAllServices, assignPage, assignLimit]);
 
   // Unassign dialog state
   const [isUnassignOpen, setIsUnassignOpen] = useState(false);
@@ -113,9 +129,17 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
   useEffect(() => {
     if (isAssignOpen) {
       setSelectedIds([]);
+      setAssignPage(1);
       dispatch(getAllServices({ page: 1, limit: 200 }));
     }
   }, [isAssignOpen, dispatch]);
+
+  // Keep page within bounds when dataset or page size changes
+  useEffect(() => {
+    if (assignPage > assignTotalPages) {
+      setAssignPage(assignTotalPages);
+    }
+  }, [assignTotalPages, assignPage]);
 
   const handleCreateAndAssign = async () => {
     if (!subProjectId) return;
@@ -145,6 +169,13 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
         setCategory("");
         setStatus("active");
       }
+      toast.success("Shërbimi u shtua me sukses!", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
     } catch (e) {
       // errors handled by slice; keep here to stop spinner
     } finally {
@@ -169,6 +200,15 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
             data: { entityId: subProjectId, entityType: "subproject" },
           })
         ).unwrap();
+
+        //  If we got here, it's successful
+        toast.success("Shërbimi u shtua me sukses!", {
+          style: {
+            backgroundColor: "#d1fae5",
+            color: "#065f46",
+            border: "1px solid #10b981",
+          },
+        });
       } else {
         await dispatch(
           assignServicesBatch({
@@ -324,7 +364,10 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                   <Input
                     placeholder="Search services..."
                     value={search}
-                    onChange={(e) => setSearch(e.currentTarget.value)}
+                    onChange={(e) => {
+                      setSearch(e.currentTarget.value);
+                      setAssignPage(1);
+                    }}
                   />
                   <Button
                     variant="outline"
@@ -357,7 +400,7 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredAllServices.map((svc) => (
+                      {paginatedServices.map((svc) => (
                         <TableRow key={svc.id} className="hover:bg-muted/40">
                           <TableCell>
                             <input
@@ -400,6 +443,55 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                     </TableBody>
                   </Table>
                 </div>
+                {/* Modal pagination controls */}
+                <div className="flex items-center justify-between flex-wrap gap-3 px-1">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>
+                      Page {assignPage} of {Math.max(assignTotalPages || 1, 1)}
+                    </span>
+                    <span className="hidden sm:inline">
+                      • Total {filteredAllServices.length} services
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAssignPage((p) => Math.max(1, p - 1))}
+                      disabled={assignPage <= 1}
+                      className="bg-white"
+                    >
+                      Prev
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAssignPage((p) => Math.min(assignTotalPages, p + 1))}
+                      disabled={assignTotalPages === 0 || assignPage >= assignTotalPages}
+                      className="bg-white"
+                    >
+                      Next
+                    </Button>
+                    <Select
+                      value={String(assignLimit)}
+                      onValueChange={(val) => {
+                        const newLimit = parseInt(val, 10) || 10;
+                        setAssignLimit(newLimit);
+                        setAssignPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="w-[120px] bg-black/5 border-0 text-black">
+                        <SelectValue placeholder="Rows" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10 / page</SelectItem>
+                        <SelectItem value="20">20 / page</SelectItem>
+                        <SelectItem value="50">50 / page</SelectItem>
+                        <SelectItem value="100">100 / page</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
               <DialogFooter>
                 <Button
@@ -422,15 +514,6 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          <Button
-            variant="outline"
-            className="bg-black/5 text-black border-0"
-            onClick={refresh}
-            disabled={isLoading}
-          >
-            {isLoading ? "Refreshing..." : "Refresh"}
-          </Button>
         </div>
       </div>
 

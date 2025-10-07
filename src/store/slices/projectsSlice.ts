@@ -13,6 +13,15 @@ import type {
   RemoveUserFromProjectResponse,
 } from "../../services/projects/projectModels";
 import projectService from "../../services/projects/projectService";
+import serviceMetricsService from "../../services/services/serviceMetricsService";
+import type {
+  DeliveriesFilters,
+  DeliveriesSeriesParams,
+  DeliveriesSeriesResponse,
+  DeliveriesSummaryData,
+  DeliveriesSummaryResponse,
+  TimeUnit,
+} from "../../services/services/serviceMetricsModels";
 
 interface ProjectsState {
   projects: Project[];
@@ -24,6 +33,23 @@ interface ProjectsState {
   assignedUsers: AssignedProjectUser[];
   assignedUsersLoading: boolean;
   assignedUsersError: string | null;
+  // Project-scoped metrics (Overview tab)
+  metrics: {
+    summary: {
+      loading: boolean;
+      error: string | null;
+      data: DeliveriesSummaryData | null;
+      lastKey?: string | null;
+    };
+    series: {
+      loading: boolean;
+      error: string | null;
+      items: DeliveriesSeriesResponse["items"];
+      granularity: TimeUnit;
+      groupedBy: DeliveriesSeriesResponse["groupedBy"];
+      lastKey?: string | null;
+    };
+  };
 }
 
 const initialState: ProjectsState = {
@@ -36,6 +62,22 @@ const initialState: ProjectsState = {
   assignedUsers: [],
   assignedUsersLoading: false,
   assignedUsersError: null,
+  metrics: {
+    summary: {
+      loading: false,
+      error: null,
+      data: null,
+      lastKey: null,
+    },
+    series: {
+      loading: false,
+      error: null,
+      items: [],
+      granularity: "month",
+      groupedBy: null,
+      lastKey: null,
+    },
+  },
 };
 
 export const fetchProjects = createAsyncThunk<
@@ -99,6 +141,71 @@ export const removeUserFromProject = createAsyncThunk<
   }
   return response;
 });
+
+// Project-scoped metrics thunks (always enforce entityType: 'project')
+export const fetchProjectDeliveriesSummary = createAsyncThunk<
+  DeliveriesSummaryResponse,
+  { entityId: string } & Partial<DeliveriesFilters>,
+  { state: any; rejectValue: string }
+>(
+  "projects/fetchProjectDeliveriesSummary",
+  async (args, { rejectWithValue }) => {
+    const response = await serviceMetricsService.getDeliveriesSummary({
+      ...args,
+      entityType: (args as any).entityType || "project",
+      entityId: args.entityId,
+    });
+    if (!response.success) {
+      return rejectWithValue(
+        response.message || "Failed to fetch project deliveries summary"
+      );
+    }
+    return response;
+  },
+  {
+    condition: (args, { getState }) => {
+      const st = getState() as any;
+      const prevKey = st.projects.metrics.summary.lastKey;
+      const key = JSON.stringify({
+        ...args,
+        entityType: (args as any).entityType || "project",
+      });
+      return prevKey !== key && !st.projects.metrics.summary.loading;
+    },
+  }
+);
+
+export const fetchProjectDeliveriesSeries = createAsyncThunk<
+  DeliveriesSeriesResponse,
+  { entityId: string } & Partial<DeliveriesSeriesParams>,
+  { state: any; rejectValue: string }
+>(
+  "projects/fetchProjectDeliveriesSeries",
+  async (args, { rejectWithValue }) => {
+    const response = await serviceMetricsService.getDeliveriesSeries({
+      ...args,
+      entityType: (args as any).entityType || "project",
+      entityId: args.entityId,
+    });
+    if (!response.success) {
+      return rejectWithValue(
+        response.message || "Failed to fetch project deliveries series"
+      );
+    }
+    return response;
+  },
+  {
+    condition: (args, { getState }) => {
+      const st = getState() as any;
+      const prevKey = st.projects.metrics.series.lastKey;
+      const key = JSON.stringify({
+        ...args,
+        entityType: (args as any).entityType || "project",
+      });
+      return prevKey !== key && !st.projects.metrics.series.loading;
+    },
+  }
+);
 
 const projectsSlice = createSlice({
   name: "projects",
@@ -186,6 +293,52 @@ const projectsSlice = createSlice({
       .addCase(removeUserFromProject.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload ?? "Failed to remove user from project";
+      })
+      // project metrics: summary
+      .addCase(fetchProjectDeliveriesSummary.pending, (state) => {
+        state.metrics.summary.loading = true;
+        state.metrics.summary.error = null;
+      })
+      .addCase(fetchProjectDeliveriesSummary.fulfilled, (state, action) => {
+        state.metrics.summary.loading = false;
+        state.metrics.summary.error = null;
+        state.metrics.summary.data = action.payload.data;
+        // @ts-ignore meta is available on action
+        const key = JSON.stringify({
+          ...(action.meta.arg || {}),
+          entityType:
+            ((action.meta as any).arg && (action.meta as any).arg.entityType) ||
+            "project",
+        });
+        state.metrics.summary.lastKey = key;
+      })
+      .addCase(fetchProjectDeliveriesSummary.rejected, (state, action) => {
+        state.metrics.summary.loading = false;
+        state.metrics.summary.error = action.payload || "Failed to fetch project deliveries summary";
+      })
+      // project metrics: series
+      .addCase(fetchProjectDeliveriesSeries.pending, (state) => {
+        state.metrics.series.loading = true;
+        state.metrics.series.error = null;
+      })
+      .addCase(fetchProjectDeliveriesSeries.fulfilled, (state, action) => {
+        state.metrics.series.loading = false;
+        state.metrics.series.error = null;
+        state.metrics.series.items = action.payload.items;
+        state.metrics.series.granularity = action.payload.granularity;
+        state.metrics.series.groupedBy = action.payload.groupedBy;
+        // @ts-ignore meta is available on action
+        const key = JSON.stringify({
+          ...(action.meta.arg || {}),
+          entityType:
+            ((action.meta as any).arg && (action.meta as any).arg.entityType) ||
+            "project",
+        });
+        state.metrics.series.lastKey = key;
+      })
+      .addCase(fetchProjectDeliveriesSeries.rejected, (state, action) => {
+        state.metrics.series.loading = false;
+        state.metrics.series.error = action.payload || "Failed to fetch project deliveries series";
       });
   },
 });
@@ -214,5 +367,11 @@ export const selectAssignedUsersLoading = (state: { projects: ProjectsState }) =
   state.projects.assignedUsersLoading;
 export const selectAssignedUsersError = (state: { projects: ProjectsState }) =>
   state.projects.assignedUsersError;
+
+// Project metrics selectors
+export const selectProjectMetricsSummary = (state: { projects: ProjectsState }) =>
+  state.projects.metrics.summary;
+export const selectProjectMetricsSeries = (state: { projects: ProjectsState }) =>
+  state.projects.metrics.series;
 
 export default projectsSlice.reducer;

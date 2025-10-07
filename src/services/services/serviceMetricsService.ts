@@ -133,10 +133,14 @@ class ServiceMetricsService {
           granularity?: any;
           series?: Array<{ periodStart: string; value: number }>;
           items?: Array<{ periodStart?: string; timestamp?: string; value?: number; count?: number }>;
+          summary?: any;
+          mostFrequentServices?: Array<{ serviceId: string; name: string; count: number }>;
         };
         // Top-level fallbacks
         items?: Array<{ periodStart?: string; timestamp?: string; value?: number; count?: number }>;
         granularity?: any;
+        summary?: any;
+        mostFrequentServices?: Array<{ serviceId: string; name: string; count: number }>;
         message?: string;
       };
       if (!dyn.success || (!dyn.data && !dyn.items)) {
@@ -150,12 +154,21 @@ class ServiceMetricsService {
       }
 
       // Adapt dynamic series -> deliveries series model
-      const rawSeries = (
-        (dyn.data && ((dyn.data as any).series || (dyn.data as any).items)) ||
-        dyn.items ||
-        []
-      ) as any[];
-      const items = rawSeries.map((s) => ({
+      const dataNode: any = (dyn as any).data || {};
+      const itemsNode: any =
+        (dataNode && dataNode.items !== undefined ? dataNode.items : undefined) ??
+        (dyn as any).items;
+
+      let rawSeries: any[] = [];
+      if (Array.isArray(itemsNode)) {
+        rawSeries = itemsNode as any[];
+      } else if (itemsNode && typeof itemsNode === "object") {
+        rawSeries = (itemsNode.series || itemsNode.items || []) as any[];
+      } else {
+        rawSeries = (dataNode.series || dataNode.items || []) as any[];
+      }
+
+      const items = (rawSeries || []).map((s) => ({
         periodStart:
           typeof s.periodStart === "string"
             ? s.periodStart
@@ -164,6 +177,17 @@ class ServiceMetricsService {
             : new Date((s.periodStart || s.timestamp) as any).toISOString(),
         count: Number((s.value ?? s.count) || 0),
       }));
+
+      // Extract optional extras
+      const summary =
+        (dataNode && dataNode.summary) ||
+        (itemsNode && typeof itemsNode === "object" && itemsNode.summary) ||
+        (dyn as any).summary;
+      const mostFrequentServices =
+        (dataNode && dataNode.mostFrequentServices) ||
+        (itemsNode && typeof itemsNode === "object" && itemsNode.mostFrequentServices) ||
+        (summary && (summary as any).mostFrequentServices) ||
+        (dyn as any).mostFrequentServices;
 
       return {
         success: true,
@@ -174,6 +198,8 @@ class ServiceMetricsService {
           (params.groupBy as any) ||
           "month",
         groupedBy: null,
+        summary,
+        mostFrequentServices,
       };
     } catch (error: any) {
       if (error?.response) {

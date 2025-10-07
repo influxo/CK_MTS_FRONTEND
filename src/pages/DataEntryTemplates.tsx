@@ -11,6 +11,7 @@ import {
   selectSelectedTemplate,
   selectSelectedTemplateError,
   selectSelectedTemplateLoading,
+  selectFormTemplatesPagination,
 } from "../store/slices/formSlice";
 import { Card } from "../components/ui/data-display/card";
 import { Button } from "../components/ui/button/button";
@@ -31,6 +32,13 @@ import {
   fetchUserProjectsByUserId,
   selectUserProjectsTree,
 } from "../store/slices/userProjectsSlice";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/form/select";
 
 export function DataEntryTemplates() {
   const dispatch = useDispatch<AppDispatch>();
@@ -86,11 +94,19 @@ export function DataEntryTemplates() {
     if (projectId) return allowedProjectIds?.has(projectId) ?? false;
     if (subprojectId) return allowedSubprojectIds?.has(subprojectId) ?? false;
     return false;
-  }, [hasParam, isSysOrSuperAdmin, projectId, subprojectId, allowedProjectIds, allowedSubprojectIds]);
+  }, [
+    hasParam,
+    isSysOrSuperAdmin,
+    projectId,
+    subprojectId,
+    allowedProjectIds,
+    allowedSubprojectIds,
+  ]);
 
   const loading = useSelector(selectFormTemplatesLoading);
   const error = useSelector(selectFormTemplatesError);
   const templates = useSelector(selectFormTemplates);
+  const pagination = useSelector(selectFormTemplatesPagination);
   const selectedTemplate = useSelector(selectSelectedTemplate);
   const selectedTemplateLoading = useSelector(selectSelectedTemplateLoading);
   const selectedTemplateError = useSelector(selectSelectedTemplateError);
@@ -98,6 +114,10 @@ export function DataEntryTemplates() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
     null
   );
+
+  // Pagination state and loader
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
 
   useEffect(() => {
     if (!hasAccess) return;
@@ -108,11 +128,11 @@ export function DataEntryTemplates() {
         projectId,
         subprojectId,
         entityType,
-        page: 1,
-        limit: 50,
+        page,
+        limit,
       })
     );
-  }, [dispatch, projectId, subprojectId, hasAccess]);
+  }, [dispatch, projectId, subprojectId, hasAccess, page, limit]);
 
   // When a template is selected, fetch its full schema
   useEffect(() => {
@@ -175,6 +195,25 @@ export function DataEntryTemplates() {
     : subprojectId
     ? "subproject"
     : undefined;
+
+  // Build numbered pagination tokens (compact with ellipsis)
+  const pageTokens = useMemo(() => {
+    const total = Math.max(pagination?.totalPages || 1, 1);
+    const current = Math.min(Math.max(pagination?.page || 1, 1), total);
+    const tokens: Array<number | string> = [];
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) tokens.push(i);
+      return tokens;
+    }
+    const left = Math.max(2, current - 1);
+    const right = Math.min(total - 1, current + 1);
+    tokens.push(1);
+    if (left > 2) tokens.push("left-ellipsis");
+    for (let i = left; i <= right; i++) tokens.push(i);
+    if (right < total - 1) tokens.push("right-ellipsis");
+    tokens.push(total);
+    return tokens;
+  }, [pagination]);
 
   return (
     <div className="space-y-6">
@@ -278,6 +317,96 @@ export function DataEntryTemplates() {
                       )}
                     </TableBody>
                   </Table>
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>
+                        Page {pagination?.page || 1} of{" "}
+                        {Math.max(pagination?.totalPages || 1, 1)}
+                      </span>
+                      <span className="hidden sm:inline">
+                        • Total {pagination?.totalCount || 0} records
+                      </span>
+                      <div className="flex items-center gap-2 ml-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          disabled={loading || (pagination?.page || 1) <= 1}
+                          className="bg-white"
+                        >
+                          Prev
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage((p) => p + 1)}
+                          disabled={
+                            loading ||
+                            (pagination?.totalPages || 0) === 0 ||
+                            (pagination?.page || 1) >=
+                              (pagination?.totalPages || 1)
+                          }
+                          className="bg-white"
+                        >
+                          Next
+                        </Button>
+                        <div className="flex items-center gap-1 ml-2">
+                          {pageTokens.map((tok, idx) =>
+                            typeof tok === "number" ? (
+                              <Button
+                                key={`p-${tok}`}
+                                variant="outline"
+                                size="sm"
+                                className={
+                                  tok === (pagination?.page || 1)
+                                    ? "bg-[#2E343E] text-white border-0"
+                                    : "bg-white"
+                                }
+                                onClick={() =>
+                                  tok !== (pagination?.page || 1) &&
+                                  setPage(tok)
+                                }
+                                disabled={loading}
+                                aria-current={
+                                  tok === (pagination?.page || 1)
+                                    ? "page"
+                                    : undefined
+                                }
+                              >
+                                {tok}
+                              </Button>
+                            ) : (
+                              <span
+                                key={`${tok}-${idx}`}
+                                className="px-1 text-muted-foreground"
+                              >
+                                …
+                              </span>
+                            )
+                          )}
+                        </div>
+                        <Select
+                          value={String(limit)}
+                          onValueChange={(val) => {
+                            const newLimit = parseInt(val, 10) || 50;
+                            setLimit(newLimit);
+                            setPage(1);
+                          }}
+                        >
+                          <SelectTrigger className="w-[120px] bg-black/5 border-0 text-black">
+                            <SelectValue placeholder="Rows" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="10">10 / page</SelectItem>
+                            <SelectItem value="20">20 / page</SelectItem>
+                            <SelectItem value="50">50 / page</SelectItem>
+                            <SelectItem value="100">100 / page</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
                 </>
               ) : (
                 <div className="space-y-4">

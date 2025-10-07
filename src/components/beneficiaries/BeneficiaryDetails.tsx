@@ -97,6 +97,7 @@ import {
   TabsTrigger,
 } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
+import { selectCurrentUser } from "../../store/slices/authSlice";
 
 interface BeneficiaryDetailsProps {
   onBack?: () => void;
@@ -210,6 +211,23 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
   const deliveriesSummaryError = useSelector(
     selectServiceDeliveriesSummaryError
   );
+
+  const user = useSelector(selectCurrentUser);
+
+  // Determine role
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
 
   useEffect(() => {
     if (id) {
@@ -765,7 +783,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 />
               </div>
             </div>
-            <DialogFooter>
+            {/* <DialogFooter>
               <Button
                 variant="outline"
                 onClick={() => setIsAddServiceDialogOpen(false)}
@@ -775,7 +793,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               <Button onClick={() => setIsAddServiceDialogOpen(false)}>
                 Record Service
               </Button>
-            </DialogFooter>
+            </DialogFooter> */}
           </DialogContent>
         </Dialog>
       </div>
@@ -1162,24 +1180,18 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">Service History</CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="bg-[#2E343E] text-white"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-                <Button
-                  className="bg-[#2E343E] text-white"
-                  size="sm"
-                  onClick={() => setIsAddServiceDialogOpen(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Record Service
-                </Button>
-              </div>
+              {isSysOrSuperAdmin && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-[#2E343E] text-white"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               <Table>

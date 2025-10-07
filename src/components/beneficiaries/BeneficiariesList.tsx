@@ -17,7 +17,7 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../store";
 import {
@@ -32,9 +32,20 @@ import {
   clearBeneficiaryMessages,
   associateBeneficiaryToEntities,
   selectBeneficiaryAssociateLoading,
+  fetchBeneficiariesByEntity,
+  selectBeneficiariesByEntity,
+  selectBeneficiariesByEntityLoading,
+  selectBeneficiariesByEntityError,
+  selectBeneficiariesPagination,
+  selectBeneficiariesByEntityPagination,
 } from "../../store/slices/beneficiarySlice";
 import { fetchProjects } from "../../store/slices/projectsSlice";
 import { fetchAllSubProjects } from "../../store/slices/subProjectSlice";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsTree,
+} from "../../store/slices/userProjectsSlice";
 import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
@@ -67,14 +78,14 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/data-display/table";
-
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+  } from "../ui/data-display/table";
+import { toast } from "sonner";
 interface BeneficiariesListProps {
   onBeneficiarySelect: (beneficiaryId: string) => void;
 }
@@ -243,42 +254,22 @@ const mockBeneficiaries = [
   },
 ];
 
-// Mock data for projects
-const mockProjects = [
-  {
-    id: "proj-001",
-    title: "Rural Healthcare Initiative",
-    subProjects: [
-      { id: "sub-001", title: "Maternal Health Services" },
-      { id: "sub-002", title: "Child Vaccination Campaign" },
-      { id: "sub-004", title: "Nutrition Support" },
-    ],
-  },
-  {
-    id: "proj-002",
-    title: "Community Development",
-    subProjects: [
-      { id: "sub-003", title: "Water Access Program" },
-      { id: "sub-005", title: "Food Security Initiative" },
-    ],
-  },
-  {
-    id: "proj-003",
-    title: "Youth Empowerment Program",
-    subProjects: [
-      { id: "sub-006", title: "Education Support" },
-      { id: "sub-007", title: "Skills Training" },
-    ],
-  },
-];
+// (Removed unused mockProjects in favor of real projects from Redux)
 
 export function BeneficiariesList({
   onBeneficiarySelect,
 }: BeneficiariesListProps) {
   const dispatch = useDispatch<AppDispatch>();
-  const beneficiaries = useSelector(selectBeneficiaries);
-  const listLoading = useSelector(selectBeneficiariesLoading);
-  const listError = useSelector(selectBeneficiariesError);
+  // Global list selectors
+  const allBeneficiaries = useSelector(selectBeneficiaries);
+  const allListLoading = useSelector(selectBeneficiariesLoading);
+  const allListError = useSelector(selectBeneficiariesError);
+  const allPagination = useSelector(selectBeneficiariesPagination);
+  // By-entity list selectors
+  const byEntityBeneficiaries = useSelector(selectBeneficiariesByEntity);
+  const byEntityListLoading = useSelector(selectBeneficiariesByEntityLoading);
+  const byEntityListError = useSelector(selectBeneficiariesByEntityError);
+  const byEntityPagination = useSelector(selectBeneficiariesByEntityPagination);
   // create state
   const createLoading = useSelector(selectBeneficiaryIsLoading);
   const createError = useSelector(selectBeneficiaryError);
@@ -287,8 +278,12 @@ export function BeneficiariesList({
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [projectFilter, setProjectFilter] = useState("all");
+  const [filterProjectId, setFilterProjectId] = useState("all");
+  const [filterSubProjectId, setFilterSubProjectId] = useState("all");
   const [tagFilter, setTagFilter] = useState("all");
+  // pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedBeneficiaries, setSelectedBeneficiaries] = useState<string[]>(
     []
@@ -316,6 +311,43 @@ export function BeneficiariesList({
     (state: RootState) => state.subprojects.error
   );
 
+  // Role + assigned projects tree
+  const user = useSelector(selectCurrentUser);
+  const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
+  const isSubProjectManager = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sub-project manager" ||
+        r === "sub project manager" ||
+        r.includes("sub-project manager") ||
+        r.includes("sub project manager")
+    );
+  }, [normalizedRoles]);
+  const isFieldOperator = useMemo(() => {
+    return (
+      normalizedRoles.includes("field operator") ||
+      normalizedRoles.includes("field-operator") ||
+      normalizedRoles.includes("fieldoperator") ||
+      normalizedRoles.includes("field_op") ||
+      normalizedRoles.some(
+        (r: string) => r.includes("field") && r.includes("operator")
+      )
+    );
+  }, [normalizedRoles]);
+
   const subprojectsByProjectId = useMemo(() => {
     const map: Record<
       string,
@@ -331,6 +363,113 @@ export function BeneficiariesList({
     }
     return map;
   }, [subprojects]);
+
+  const subprojectsForSelectedProject = useMemo(() => {
+    if (filterProjectId === "all")
+      return [] as { id: string; name: string; projectId: string }[];
+    if (isSysOrSuperAdmin) {
+      return subprojectsByProjectId[filterProjectId] || [];
+    }
+    // Non-admins: build from userProjectsTree
+    const proj = (userProjectsTree || []).find(
+      (p: any) => p.id === filterProjectId
+    );
+    return ((proj?.subprojects || []) as any[]).map((sp: any) => ({
+      id: sp.id,
+      name: sp.name,
+      projectId: filterProjectId,
+    }));
+  }, [
+    filterProjectId,
+    subprojectsByProjectId,
+    isSysOrSuperAdmin,
+    userProjectsTree,
+  ]);
+
+  // Build project options based on role
+  const projectsForSelect = useMemo(() => {
+    if (isSysOrSuperAdmin) return projects;
+    const assigned = (userProjectsTree || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+    }));
+    return assigned as Array<{ id: string; name: string }> as any;
+  }, [isSysOrSuperAdmin, projects, userProjectsTree]);
+
+  // Role-based projects shown in the Add Beneficiary modal (same logic as Dashboard)
+  const projectsForModal = useMemo(() => {
+    if (isSysOrSuperAdmin) return projects;
+    const assigned = (userProjectsTree || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+    }));
+    return assigned as Array<{ id: string; name: string }> as any;
+  }, [isSysOrSuperAdmin, projects, userProjectsTree]);
+
+  // Allowed subprojects for current project (for subproject managers and field operators)
+  const allowedSubprojectIds = useMemo(() => {
+    try {
+      if (filterProjectId === "all") return new Set<string>();
+      const proj = (userProjectsTree || []).find(
+        (p: any) => p.id === filterProjectId
+      );
+      const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
+      return new Set<string>(ids);
+    } catch {
+      return new Set<string>();
+    }
+  }, [userProjectsTree, filterProjectId]);
+
+  const subprojectsForSelect = useMemo(() => {
+    const base = subprojectsForSelectedProject;
+    if (isSysOrSuperAdmin) return base;
+    if (isSubProjectManager || isFieldOperator) {
+      return base.filter((sp) => allowedSubprojectIds.has(sp.id));
+    }
+    return base;
+  }, [
+    subprojectsForSelectedProject,
+    isSysOrSuperAdmin,
+    isSubProjectManager,
+    isFieldOperator,
+    allowedSubprojectIds,
+  ]);
+
+  // Subprojects per project for the modal, filtered by role (SP Manager sees only assigned subprojects)
+  const subprojectsForModalByProjectId = useMemo(() => {
+    const result: Record<
+      string,
+      { id: string; name: string; projectId: string }[]
+    > = {};
+    (projectsForModal || []).forEach((p: any) => {
+      const base = subprojectsByProjectId[p.id] || [];
+      if (isSysOrSuperAdmin) {
+        result[p.id] = base;
+      } else if (isSubProjectManager) {
+        try {
+          const proj = (userProjectsTree || []).find(
+            (xp: any) => xp.id === p.id
+          );
+          const allowed = new Set<string>(
+            (proj?.subprojects || []).map((sp: any) => sp.id)
+          );
+          result[p.id] = base.filter((sp) => allowed.has(sp.id));
+        } catch {
+          result[p.id] = [];
+        }
+      } else {
+        // Program Manager or other non-admin roles: show all subprojects for assigned projects
+        result[p.id] = base;
+      }
+    });
+    return result;
+  }, [
+    projectsForModal,
+    subprojectsByProjectId,
+    isSysOrSuperAdmin,
+    isSubProjectManager,
+    userProjectsTree,
+  ]);
 
   // Form state for creating a beneficiary
   const [form, setForm] = useState<CreateBeneficiaryRequest>({
@@ -357,6 +496,9 @@ export function BeneficiariesList({
   const [medicationsInput, setMedicationsInput] = useState("");
   const [bloodTypeInput, setBloodTypeInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
+  const [ethnicity, setEthnicity] = useState("");
+  const [isUrban, setIsUrban] = useState<boolean>(false);
+  const [householdMembers, setHouseholdMembers] = useState<string>("");
 
   const addItem = (
     value: string,
@@ -403,18 +545,77 @@ export function BeneficiariesList({
     setMedications([]);
     setSelectedProjects([]);
     setSelectedSubProjects([]);
+    setEthnicity("");
+    setIsUrban(false);
+    setHouseholdMembers("");
   };
 
-  // Kick off loading of beneficiaries
+  // Decide which source is active
+  const isEntityMode =
+    filterSubProjectId !== "all" || filterProjectId !== "all";
+  const activePagination = isEntityMode ? byEntityPagination : allPagination;
+  const listLoading = isEntityMode ? byEntityListLoading : allListLoading;
+  const listError = isEntityMode ? byEntityListError : allListError;
+
+  // Loader based on filters and pagination
+  const loadBeneficiaries = useCallback(() => {
+    const statusParam =
+      statusFilter === "all"
+        ? undefined
+        : (statusFilter as "active" | "inactive");
+    if (filterSubProjectId !== "all") {
+      dispatch(
+        fetchBeneficiariesByEntity({
+          entityId: filterSubProjectId,
+          entityType: "subproject",
+          status: statusParam,
+          page,
+          limit,
+        })
+      );
+      return;
+    }
+    if (filterProjectId !== "all") {
+      dispatch(
+        fetchBeneficiariesByEntity({
+          entityId: filterProjectId,
+          entityType: "project",
+          status: statusParam,
+          page,
+          limit,
+        })
+      );
+      return;
+    }
+    dispatch(
+      fetchBeneficiaries({
+        status: statusParam,
+        page,
+        limit,
+      })
+    );
+  }, [
+    dispatch,
+    filterProjectId,
+    filterSubProjectId,
+    statusFilter,
+    page,
+    limit,
+  ]);
+
   useEffect(() => {
-    dispatch(fetchBeneficiaries(undefined));
-  }, [dispatch]);
+    loadBeneficiaries();
+  }, [loadBeneficiaries]);
 
   // Load projects & subprojects for association selection
   useEffect(() => {
-    dispatch(fetchProjects());
-    dispatch(fetchAllSubProjects());
-  }, [dispatch]);
+    if (isSysOrSuperAdmin) {
+      dispatch(fetchProjects());
+      dispatch(fetchAllSubProjects());
+    } else if ((userProjectsTree || []).length === 0 && user?.id) {
+      dispatch(fetchUserProjectsByUserId(String(user.id)) as any);
+    }
+  }, [dispatch, isSysOrSuperAdmin, user?.id, userProjectsTree?.length]);
 
   // Close dialog and refresh list on successful create
   useEffect(() => {
@@ -422,14 +623,15 @@ export function BeneficiariesList({
       setIsAddDialogOpen(false);
       resetForm();
       // refresh list and clear messages
-      dispatch(fetchBeneficiaries(undefined));
+      loadBeneficiaries();
       dispatch(clearBeneficiaryMessages());
     }
-  }, [createSuccess, associateLoading, dispatch]);
+  }, [createSuccess, associateLoading, dispatch, loadBeneficiaries]);
 
   // Build a simple view model from API data for table rendering
+  const rawList = isEntityMode ? byEntityBeneficiaries : allBeneficiaries;
   const list = useMemo(() => {
-    return beneficiaries.map((b) => {
+    return rawList.map((b) => {
       const pii = (b as any).pii || ({} as any);
       const firstName: string = pii.firstName || "";
       const lastName: string = pii.lastName || "";
@@ -454,7 +656,7 @@ export function BeneficiariesList({
         address: pii.address || "",
       };
     });
-  }, [beneficiaries]);
+  }, [rawList]);
 
   // Filter list by search/status (project/tag filters are placeholders)
   const filteredBeneficiaries = useMemo(() => {
@@ -470,11 +672,29 @@ export function BeneficiariesList({
         b.email.toLowerCase().includes(q);
 
       const matchesStatus = statusFilter === "all" || b.status === statusFilter;
-      const matchesProject = projectFilter === "all"; // no-op for now
-      const matchesTag = tagFilter === "all"; // no-op for now
-      return matchesSearch && matchesStatus && matchesProject && matchesTag;
+      const matchesTag = tagFilter === "all"; // placeholder
+      return matchesSearch && matchesStatus && matchesTag;
     });
-  }, [list, searchQuery, statusFilter, projectFilter, tagFilter]);
+  }, [list, searchQuery, statusFilter, tagFilter]);
+
+  // Numbered pagination builder (compact with ellipsis)
+  const pageTokens = useMemo(() => {
+    const total = Math.max(activePagination.totalPages || 1, 1);
+    const current = Math.min(Math.max(activePagination.page || 1, 1), total);
+    const tokens: Array<number | string> = [];
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) tokens.push(i);
+      return tokens;
+    }
+    const left = Math.max(2, current - 1);
+    const right = Math.min(total - 1, current + 1);
+    tokens.push(1);
+    if (left > 2) tokens.push("left-ellipsis");
+    for (let i = left; i <= right; i++) tokens.push(i);
+    if (right < total - 1) tokens.push("right-ellipsis");
+    tokens.push(total);
+    return tokens;
+  }, [activePagination]);
 
   // Unique tags for advanced filter mock (using mockBeneficiaries)
   const uniqueTags = Array.from(
@@ -575,6 +795,13 @@ export function BeneficiariesList({
         }
       }
       // createSuccess effect will handle closing/reset
+      toast.success("Përfituesi u krijua me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
     } catch (_) {
       // errors are surfaced via createError
     }
@@ -736,6 +963,56 @@ export function BeneficiariesList({
                 onChange={(e) =>
                   setForm({ ...form, nationality: e.target.value })
                 }
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="ethnicity" className="text-right">
+                Ethnicity
+              </Label>
+              <Select value={ethnicity} onValueChange={setEthnicity}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select ethnicity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Shqiptar">Shqiptar</SelectItem>
+                  <SelectItem value="Serb">Serb</SelectItem>
+                  <SelectItem value="Boshnjak">Boshnjak</SelectItem>
+                  <SelectItem value="Turk">Turk</SelectItem>
+                  <SelectItem value="Ashkali">Ashkali</SelectItem>
+                  <SelectItem value="Rom">Rom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Residence</Label>
+              <RadioGroup
+                className="col-span-3 flex gap-6"
+                value={isUrban ? "urban" : "rural"}
+                onValueChange={(val) => setIsUrban(val === "urban")}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="rural" id="residence-rural" />
+                  <Label htmlFor="residence-rural">Rural</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="urban" id="residence-urban" />
+                  <Label htmlFor="residence-urban">Urban</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="householdMembers" className="text-right">
+                Household Members
+              </Label>
+              <Input
+                id="householdMembers"
+                type="number"
+                min={0}
+                step={1}
+                className="col-span-3"
+                placeholder="Enter number of household members"
+                value={householdMembers}
+                onChange={(e) => setHouseholdMembers(e.target.value)}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -1048,8 +1325,8 @@ export function BeneficiariesList({
                     <div className="text-sm text-red-500 px-1">
                       {projectsError || subprojectsError}
                     </div>
-                  ) : projects && projects.length > 0 ? (
-                    projects.map((project) => (
+                  ) : projectsForModal && projectsForModal.length > 0 ? (
+                    projectsForModal.map((project: any) => (
                       <div key={project.id} className="border rounded-md p-4">
                         <div className="flex items-center space-x-2 mb-4">
                           <Checkbox
@@ -1059,7 +1336,9 @@ export function BeneficiariesList({
                               setSelectedProjects((prev) => {
                                 if (prev.includes(project.id)) {
                                   const subProjectsForProject =
-                                    subprojectsByProjectId[project.id] || [];
+                                    subprojectsForModalByProjectId[
+                                      project.id
+                                    ] || [];
                                   const subIds = subProjectsForProject.map(
                                     (sp) => sp.id
                                   );
@@ -1084,51 +1363,49 @@ export function BeneficiariesList({
                         </div>
 
                         <div className="pl-6 border-l ml-2 space-y-2">
-                          {(subprojectsByProjectId[project.id] || []).map(
-                            (subProject) => (
-                              <div
-                                key={subProject.id}
-                                className="flex items-center space-x-2"
-                              >
-                                <Checkbox
-                                  id={`sub-${subProject.id}`}
-                                  checked={selectedSubProjects.includes(
-                                    subProject.id
-                                  )}
-                                  onCheckedChange={() => {
-                                    setSelectedSubProjects((prev) => {
-                                      if (prev.includes(subProject.id)) {
-                                        return prev.filter(
-                                          (sp) => sp !== subProject.id
-                                        );
-                                      } else {
-                                        if (
-                                          !selectedProjects.includes(project.id)
-                                        ) {
-                                          setSelectedProjects(
-                                            (prevProjects) => [
-                                              ...prevProjects,
-                                              project.id,
-                                            ]
-                                          );
-                                        }
-                                        return [...prev, subProject.id];
+                          {(
+                            subprojectsForModalByProjectId[project.id] || []
+                          ).map((subProject) => (
+                            <div
+                              key={subProject.id}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                id={`sub-${subProject.id}`}
+                                checked={selectedSubProjects.includes(
+                                  subProject.id
+                                )}
+                                onCheckedChange={() => {
+                                  setSelectedSubProjects((prev) => {
+                                    if (prev.includes(subProject.id)) {
+                                      return prev.filter(
+                                        (sp) => sp !== subProject.id
+                                      );
+                                    } else {
+                                      if (
+                                        !selectedProjects.includes(project.id)
+                                      ) {
+                                        setSelectedProjects((prevProjects) => [
+                                          ...prevProjects,
+                                          project.id,
+                                        ]);
                                       }
-                                    });
-                                  }}
-                                  disabled={
-                                    !selectedProjects.includes(project.id)
-                                  }
-                                />
-                                <Label
-                                  htmlFor={`sub-${subProject.id}`}
-                                  className="font-normal"
-                                >
-                                  {subProject.name}
-                                </Label>
-                              </div>
-                            )
-                          )}
+                                      return [...prev, subProject.id];
+                                    }
+                                  });
+                                }}
+                                disabled={
+                                  !selectedProjects.includes(project.id)
+                                }
+                              />
+                              <Label
+                                htmlFor={`sub-${subProject.id}`}
+                                className="font-normal"
+                              >
+                                {subProject.name}
+                              </Label>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     ))
@@ -1189,7 +1466,13 @@ export function BeneficiariesList({
             />
           </div>
           <div className="flex gap-3">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={(val) => {
+                setStatusFilter(val);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="w-[130px] bg-black/5 border-0 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
@@ -1200,20 +1483,65 @@ export function BeneficiariesList({
                 <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={projectFilter} onValueChange={setProjectFilter}>
-              <SelectTrigger className="w-[180px] bg-black/5 border-0 text-black">
+            <Select
+              value={filterProjectId}
+              onValueChange={(val) => {
+                setFilterProjectId(val);
+                // Reset subproject when project changes
+                setFilterSubProjectId("all");
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[220px] bg-black/5 border-0 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Projects</SelectItem>
-                {mockProjects.map((project) => (
-                  <SelectItem key={project.id} value={project.title}>
-                    {project.title}
+                {projectsForSelect.map((project: any) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+
+            <Select
+              value={filterSubProjectId}
+              onValueChange={(val) => {
+                setFilterSubProjectId(val);
+                setPage(1);
+              }}
+              disabled={filterProjectId === "all"}
+            >
+              <SelectTrigger className="w-[240px] bg-black/5 border-0 text-black">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Subproject" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subprojects</SelectItem>
+                {subprojectsForSelect.map((sp) => (
+                  <SelectItem key={sp.id} value={sp.id}>
+                    {sp.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="bg-black/5 border-0 text-black"
+              onClick={() => setShowAdvancedFilters((v) => !v)}
+              title={
+                showAdvancedFilters
+                  ? "Hide advanced filters"
+                  : "Show advanced filters"
+              }
+            >
+              <SlidersHorizontal className="h-4 w-4 mr-2" />
+              {showAdvancedFilters ? "Advanced Off" : "Advanced"}
+            </Button>
           </div>
         </div>
         <div className="flex gap-3 rounded-[-15px] bg-[rgba(255,0,0,0)]">
@@ -1477,11 +1805,90 @@ export function BeneficiariesList({
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        {/* <div className="text-sm text-muted-foreground">
-          Showing {filteredBeneficiaries.length} of {beneficiaries.length}{" "}
-          beneficiaries
-        </div> */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>
+            Page {activePagination.page} of{" "}
+            {Math.max(activePagination.totalPages || 1, 1)}
+          </span>
+          <span className="hidden sm:inline">
+            • Total {activePagination.totalItems} records
+          </span>
+          <div className="flex items-center gap-2 ml-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={listLoading || activePagination.page <= 1}
+              className="bg-white"
+            >
+              Prev
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={
+                listLoading ||
+                activePagination.totalPages === 0 ||
+                activePagination.page >= activePagination.totalPages
+              }
+              className="bg-white"
+            >
+              Next
+            </Button>
+            <div className="flex items-center gap-1 ml-2">
+              {pageTokens.map((tok, idx) =>
+                typeof tok === "number" ? (
+                  <Button
+                    key={`p-${tok}`}
+                    variant="outline"
+                    size="sm"
+                    className={
+                      tok === activePagination.page
+                        ? "bg-[#2E343E] text-white border-0"
+                        : "bg-white"
+                    }
+                    onClick={() =>
+                      tok !== activePagination.page && setPage(tok)
+                    }
+                    disabled={listLoading}
+                    aria-current={
+                      tok === activePagination.page ? "page" : undefined
+                    }
+                  >
+                    {tok}
+                  </Button>
+                ) : (
+                  <span
+                    key={`${tok}-${idx}`}
+                    className="px-1 text-muted-foreground"
+                  >
+                    …
+                  </span>
+                )
+              )}
+            </div>
+            <Select
+              value={String(limit)}
+              onValueChange={(val) => {
+                const newLimit = parseInt(val, 10) || 20;
+                setLimit(newLimit);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[120px] bg-black/5 border-0 text-black">
+                <SelectValue placeholder="Rows" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10 / page</SelectItem>
+                <SelectItem value="20">20 / page</SelectItem>
+                <SelectItem value="50">50 / page</SelectItem>
+                <SelectItem value="100">100 / page</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         <div className="space-x-2">
           <Button
             variant="outline"
