@@ -116,6 +116,7 @@ import {
   selectSubProjectMetricsSeries,
 } from "../../store/slices/subProjectSlice";
 import { selectCurrentUser } from "../../store/slices/authSlice";
+import { updateSubProject } from "../../store/slices/subProjectSlice";
 
 // We don't need to import the SubProject type directly as it's already used in Redux selectors
 
@@ -152,6 +153,13 @@ const mockSubProjectEnhancement = {
 export function SubProjectDetails() {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  // Edit dialog local state
+  const [editName, setEditName] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editStatus, setEditStatus] = useState<
+    "active" | "inactive" | "pending"
+  >("active");
+  const [editDescription, setEditDescription] = useState("");
 
   const params = useParams<{ projectId: string; subprojectId: string }>();
   const projectId = params.projectId;
@@ -466,6 +474,15 @@ export function SubProjectDetails() {
       }
     }
   }, [subprojectId, projectId, dispatch, navigate]);
+
+  // Seed edit fields when selected subproject changes or dialog opens
+  useEffect(() => {
+    if (!subProject) return;
+    setEditName(subProject.name || "");
+    setEditCategory(subProject.category || "");
+    setEditStatus(subProject.status as any);
+    setEditDescription(subProject.description || "");
+  }, [subProject, isEditDialogOpen]);
 
   useEffect(() => {
     if (user?.roles == null || user.roles.length === 0) return;
@@ -830,7 +847,8 @@ export function SubProjectDetails() {
                   <Input
                     id="title"
                     className="col-span-3"
-                    defaultValue={enhancedSubProject.title}
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -838,7 +856,8 @@ export function SubProjectDetails() {
                     Category *
                   </Label>
                   <Select
-                    defaultValue={enhancedSubProject.category.toLowerCase()}
+                    value={editCategory.toLowerCase()}
+                    onValueChange={(v) => setEditCategory(v)}
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select category" />
@@ -850,6 +869,7 @@ export function SubProjectDetails() {
                         Infrastructure
                       </SelectItem>
                       <SelectItem value="training">Training</SelectItem>
+                      <SelectItem value="food aid">Food Aid</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -880,7 +900,10 @@ export function SubProjectDetails() {
                   <Label htmlFor="status" className="text-right">
                     Status
                   </Label>
-                  <Select defaultValue={enhancedSubProject.status}>
+                  <Select
+                    value={editStatus}
+                    onValueChange={(v) => setEditStatus(v as any)}
+                  >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -930,19 +953,53 @@ export function SubProjectDetails() {
                   <Textarea
                     id="description"
                     className="col-span-3"
-                    defaultValue={enhancedSubProject.description}
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
                     rows={3}
                   />
                 </div>
               </div>
               <DialogFooter>
-                {/* <Button
-                      variant="outline"
-                      onClick={() => setIsEditDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button> */}
-                <Button onClick={() => setIsEditDialogOpen(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    if (!subprojectId) return;
+                    try {
+                      const res = await dispatch(
+                        updateSubProject({
+                          id: subprojectId,
+                          name: editName,
+                          description: editDescription,
+                          category: editCategory,
+                          status: editStatus,
+                        }) as any
+                      ).unwrap();
+                      if (res && res.success) {
+                        toast.success("Nënprojekti u modifikua me sukses", {
+                          style: {
+                            backgroundColor: "#d1fae5",
+                            color: "#065f46",
+                            border: "1px solid #10b981",
+                          },
+                        });
+                      }
+                      setIsEditDialogOpen(false);
+                    } catch (_) {
+                      toast.error("Diçka shkoi gabim", {
+                        style: {
+                          backgroundColor: "#fee2e2",
+                          color: "#991b1b",
+                          border: "1px solid #ef4444",
+                        },
+                      });
+                    }
+                  }}
+                >
                   Save Changes
                 </Button>
               </DialogFooter>
@@ -1987,16 +2044,25 @@ export function SubProjectDetails() {
                               <Label htmlFor="ethnicity" className="text-right">
                                 Ethnicity
                               </Label>
-                              <Select value={ethnicity} onValueChange={setEthnicity}>
+                              <Select
+                                value={ethnicity}
+                                onValueChange={setEthnicity}
+                              >
                                 <SelectTrigger className="col-span-3">
                                   <SelectValue placeholder="Select ethnicity" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="Shqiptar">Shqiptar</SelectItem>
+                                  <SelectItem value="Shqiptar">
+                                    Shqiptar
+                                  </SelectItem>
                                   <SelectItem value="Serb">Serb</SelectItem>
-                                  <SelectItem value="Boshnjak">Boshnjak</SelectItem>
+                                  <SelectItem value="Boshnjak">
+                                    Boshnjak
+                                  </SelectItem>
                                   <SelectItem value="Turk">Turk</SelectItem>
-                                  <SelectItem value="Ashkali">Ashkali</SelectItem>
+                                  <SelectItem value="Ashkali">
+                                    Ashkali
+                                  </SelectItem>
                                   <SelectItem value="Rom">Rom</SelectItem>
                                 </SelectContent>
                               </Select>
@@ -2006,20 +2072,31 @@ export function SubProjectDetails() {
                               <RadioGroup
                                 className="col-span-3 flex gap-6"
                                 value={isUrban ? "urban" : "rural"}
-                                onValueChange={(val) => setIsUrban(val === "urban")}
+                                onValueChange={(val) =>
+                                  setIsUrban(val === "urban")
+                                }
                               >
                                 <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="rural" id="residence-rural" />
+                                  <RadioGroupItem
+                                    value="rural"
+                                    id="residence-rural"
+                                  />
                                   <Label htmlFor="residence-rural">Rural</Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="urban" id="residence-urban" />
+                                  <RadioGroupItem
+                                    value="urban"
+                                    id="residence-urban"
+                                  />
                                   <Label htmlFor="residence-urban">Urban</Label>
                                 </div>
                               </RadioGroup>
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="householdMembers" className="text-right">
+                              <Label
+                                htmlFor="householdMembers"
+                                className="text-right"
+                              >
                                 Household Members
                               </Label>
                               <Input
@@ -2030,7 +2107,9 @@ export function SubProjectDetails() {
                                 className="col-span-3"
                                 placeholder="Enter number of household members"
                                 value={householdMembers}
-                                onChange={(e) => setHouseholdMembers(e.target.value)}
+                                onChange={(e) =>
+                                  setHouseholdMembers(e.target.value)
+                                }
                               />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
@@ -2048,7 +2127,9 @@ export function SubProjectDetails() {
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="active">Active</SelectItem>
-                                  <SelectItem value="inactive">Inactive</SelectItem>
+                                  <SelectItem value="inactive">
+                                    Inactive
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
