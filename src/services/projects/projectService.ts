@@ -43,9 +43,12 @@ class ProjectService {
       const response = await axiosInstance.get<GetProjectsResponse>(
         `${this.projectEndpoint}`
       );
+      console.log('Projects API Response:', response.data);
       return response.data;
     } catch (error: any) {
+      console.error('Projects API Error:', error);
       if (error.response) {
+        console.error('Error response:', error.response.data);
         return error.response.data as GetProjectsResponse;
       }
       return {
