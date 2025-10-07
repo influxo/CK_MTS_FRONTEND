@@ -207,7 +207,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                 <Input
                   id="title"
                   name="name"
-                  className={`col-span-3 border-0 bg-blue-50 ${
+                  className={`col-span-3 border border-[#C6CBCB] ${
                     formErrors.name ? "border-red-500" : ""
                   }`}
                   placeholder="Project title"
@@ -227,7 +227,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                 <Input
                   id="category"
                   name="category"
-                  className={`col-span-3 border-0 bg-blue-50 ${
+                  className={`col-span-3 border border-[#C6CBCB] ${
                     formErrors.category ? "border-red-500" : ""
                   }`}
                   placeholder="Project Category"
@@ -250,7 +250,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                   value={formData.status}
                   onValueChange={(value) => handleSelectField(value, "status")}
                 >
-                  <SelectTrigger className="col-span-3 bg-blue-50 border-0">
+                  <SelectTrigger className="col-span-3 border border-[#C6CBCB]">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -268,7 +268,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                 <Textarea
                   id="description"
                   name="description"
-                  className="col-span-3 bg-blue-50 border-0"
+                  className="col-span-3 border border-[#C6CBCB]"
                   placeholder="Provide a description of the project"
                   rows={3}
                   value={formData.description}

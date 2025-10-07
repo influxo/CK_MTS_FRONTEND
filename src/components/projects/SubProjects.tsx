@@ -273,6 +273,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
             )}
             <DialogFooter>
               <Button
+                className="bg-blue-200"
                 variant="outline"
                 onClick={() => {
                   setIsCreateDialogOpen(false);
@@ -282,6 +283,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
                 Cancel
               </Button>
               <Button
+                className="bg-[#0073e6] text-white"
                 onClick={handleCreateSubmit}
                 disabled={isLoading || !name.trim() || !category.trim()}
               >
@@ -298,7 +300,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search sub-projects..."
-              className="pl-9 border-0 bg-black/5"
+              className="pl-9 border-[#C6CBCB] border bg-transparent focus:bg-transparent focus:outline-none focus:ring-0 focus:ring-transparent focus:border-[#C6CBCB]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -306,7 +308,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
 
           <div className="flex gap-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[130px] border-0 bg-black/5">
+              <SelectTrigger className="w-[130px] border-0 bg-blue-100">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -318,7 +320,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[160px] border-0 bg-black/5">
+              <SelectTrigger className="w-[160px] border-0 bg-blue-100">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
@@ -559,7 +561,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
                     <div className="flex justify-end gap-2">
                       <Button
                         size="sm"
-                        className="hover:bg-black/10 border-0"
+                        className="hover:bg-blue-100 border-0"
                         variant="outline"
                         onClick={() => handleViewSubProject(subProject.id)}
                       >
@@ -570,7 +572,7 @@ export function SubProjects({ projectId: propProjectId }: SubProjectsProps) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 hover:bg-black/10"
+                            className="h-8 w-8 p-0 hover:bg-blue-100"
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>

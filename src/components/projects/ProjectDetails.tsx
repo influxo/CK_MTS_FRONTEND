@@ -581,7 +581,12 @@ export function ProjectDetails() {
   return (
     <div className="space-y-6 ">
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+        <Button
+          variant="outline"
+          className="border border-[#C6CBCB]  hover:bg-blue-200 hover:text-blue-950 "
+          size="sm"
+          onClick={() => navigate(-1)}
+        >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Projects
         </Button>
@@ -614,7 +619,7 @@ export function ProjectDetails() {
                 </Label>
                 <Input
                   id="title"
-                  className="col-span-3"
+                  className="col-span-3 border border-[#C6CBCB]"
                   defaultValue={enhancedProject.title}
                 />
               </div>
@@ -623,7 +628,7 @@ export function ProjectDetails() {
                   Category *
                 </Label>
                 <Select defaultValue={enhancedProject.category.toLowerCase()}>
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger className="col-span-3 border border-[#C6CBCB]">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -648,7 +653,7 @@ export function ProjectDetails() {
                     .toLowerCase()
                     .replace(" ", "-")}
                 >
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger className="col-span-3 border border-[#C6CBCB]">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -667,7 +672,7 @@ export function ProjectDetails() {
                   Status
                 </Label>
                 <Select defaultValue={enhancedProject.status}>
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger className="col-span-3 border border-[#C6CBCB]">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -684,7 +689,7 @@ export function ProjectDetails() {
                 <Input
                   id="start-date"
                   type="date"
-                  className="col-span-3"
+                  className="col-span-3 border border-[#C6CBCB]"
                   defaultValue={enhancedProject.startDate.split("T")[0]}
                 />
               </div>
@@ -695,7 +700,7 @@ export function ProjectDetails() {
                 <Input
                   id="end-date"
                   type="date"
-                  className="col-span-3"
+                  className="col-span-3 border border-[#C6CBCB]"
                   defaultValue={enhancedProject.endDate.split("T")[0]}
                 />
               </div>
@@ -705,7 +710,7 @@ export function ProjectDetails() {
                 </Label>
                 <Textarea
                   id="description"
-                  className="col-span-3"
+                  className="col-span-3 border border-[#C6CBCB]"
                   defaultValue={enhancedProject.description}
                   rows={3}
                 />
@@ -714,11 +719,15 @@ export function ProjectDetails() {
             <DialogFooter>
               <Button
                 variant="outline"
+                className="hover:bg-blue-200 hover:text-blue-950"
                 onClick={() => setIsEditDialogOpen(false)}
               >
                 Cancel
               </Button>
-              <Button onClick={() => setIsEditDialogOpen(false)}>
+              <Button
+                className="bg-[#0073e6] text-white border-0"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
                 Save Changes
               </Button>
             </DialogFooter>

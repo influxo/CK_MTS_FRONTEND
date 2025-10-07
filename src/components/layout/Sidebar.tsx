@@ -70,11 +70,12 @@ export function Sidebar({
   );
   const isSysOrSuperAdmin = useMemo(() => {
     // Accept a variety of backend-provided naming conventions
-    return normalizedRoles.some((r) =>
-      r === "sysadmin" ||
-      r === "superadmin" ||
-      r.includes("system admin") || // matches "system administrator", "system-admin"
-      r.includes("super admin") // matches "super administrator", "super-admin"
+    return normalizedRoles.some(
+      (r) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") || // matches "system administrator", "system-admin"
+        r.includes("super admin") // matches "super administrator", "super-admin"
     );
   }, [normalizedRoles]);
   const isFieldOperator = useMemo(() => {
@@ -263,7 +264,9 @@ export function Sidebar({
                         )}
                       >
                         {isProjectsLoading && (
-                          <span className="text-xs text-gray-400">Loading...</span>
+                          <span className="text-xs text-gray-400">
+                            Loading...
+                          </span>
                         )}
                         {projectsErrMsg && (
                           <span className="text-xs text-black">
