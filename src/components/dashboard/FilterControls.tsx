@@ -62,7 +62,8 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   // Local paginated templates state (do not change global forms slice)
   const [templatesOptions, setTemplatesOptions] = React.useState<any[]>([]);
   const [templatesPage, setTemplatesPage] = React.useState<number>(1);
-  const [templatesTotalPages, setTemplatesTotalPages] = React.useState<number>(1);
+  const [templatesTotalPages, setTemplatesTotalPages] =
+    React.useState<number>(1);
 
   // Role-aware: Sub-Project Manager only sees assigned subprojects for selected project
   const user = useSelector(selectCurrentUser);
@@ -82,7 +83,9 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   }, [normalizedRoles]);
   const allowedSubprojectIds = React.useMemo(() => {
     try {
-      const proj = (userProjectsTree || []).find((p: any) => p.id === projectId);
+      const proj = (userProjectsTree || []).find(
+        (p: any) => p.id === projectId
+      );
       const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
       return new Set<string>(ids);
     } catch {
@@ -136,11 +139,15 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           setTemplatesTotalPages(Number(data.pagination?.totalPages || 1));
         } else {
           // Fallback to redux state
-          setTemplatesOptions((formsState as any)?.templates || (formsState as any) || []);
+          setTemplatesOptions(
+            (formsState as any)?.templates || (formsState as any) || []
+          );
           setTemplatesTotalPages(1);
         }
       } catch (e) {
-        setTemplatesOptions((formsState as any)?.templates || (formsState as any) || []);
+        setTemplatesOptions(
+          (formsState as any)?.templates || (formsState as any) || []
+        );
         setTemplatesTotalPages(1);
       }
     };
@@ -216,7 +223,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
       <div className="flex flex-wrap gap-4 items-center">
         <Select value={projectId || "all"} onValueChange={onProjectChange}>
           <SelectTrigger
-            className="w-[200px] bg-white p-2 rounded-md border-0
+            className="w-[180px] bg-white p-2 rounded-md  border-gray-100
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px] "
           >
@@ -276,14 +283,25 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           <Filter className="h-4 w-4 mr-2" />
           {showMore ? "Hide Filters" : "More Filters"}
         </Button>
-
+        <div className="flex gap-4 justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-[#0073e6] text-white border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px]"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+        </div>
       </div>
       {showMore && (
-        <div className="mt-2 p-3 rounded-md bg-white/60 border border-gray-100">
+        <div className="  rounded-md   border-gray-100">
           <div className="flex flex-wrap gap-4 items-center">
             <Select value={timePreset} onValueChange={onTimePresetChange}>
               <SelectTrigger
-                className="w-[200px] bg-white p-2 rounded-md border-0
+                className="w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
@@ -307,7 +325,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               }}
             >
               <SelectTrigger
-                className="w-[200px] bg-white p-2 rounded-md border-0
+                className="w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
@@ -351,7 +369,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               }}
             >
               <SelectTrigger
-                className="w-[220px] bg-white p-2 rounded-md border-0
+                className="w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
@@ -367,15 +385,21 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                 {/* Pagination controls for global services (not when scoped to entity) */}
                 {!projectId && !subprojectId && (
                   <>
-                    <SelectItem value="__svc_prev__" disabled={(servicesCurrentPage || 1) <= 1}>
+                    <SelectItem
+                      value="__svc_prev__"
+                      disabled={(servicesCurrentPage || 1) <= 1}
+                    >
                       ◀ Prev Page
                     </SelectItem>
                     <SelectItem value="__svc_info__" disabled>
-                      Page {servicesCurrentPage || 1} of {servicesTotalPages || 1}
+                      Page {servicesCurrentPage || 1} of{" "}
+                      {servicesTotalPages || 1}
                     </SelectItem>
                     <SelectItem
                       value="__svc_next__"
-                      disabled={(servicesCurrentPage || 1) >= (servicesTotalPages || 1)}
+                      disabled={
+                        (servicesCurrentPage || 1) >= (servicesTotalPages || 1)
+                      }
                     >
                       Next Page ▶
                     </SelectItem>
@@ -405,7 +429,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               }}
             >
               <SelectTrigger
-                className="w-[220px] bg-white p-2 rounded-md border-0
+                className="w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
@@ -425,7 +449,10 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                 <SelectItem value="__tpl_info__" disabled>
                   Page {templatesPage} of {templatesTotalPages || 1}
                 </SelectItem>
-                <SelectItem value="__tpl_next__" disabled={templatesPage >= (templatesTotalPages || 1)}>
+                <SelectItem
+                  value="__tpl_next__"
+                  disabled={templatesPage >= (templatesTotalPages || 1)}
+                >
                   Next Page ▶
                 </SelectItem>
               </SelectContent>
@@ -434,7 +461,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         </div>
       )}
 
-      <div className="flex gap-4 justify-end">
+      {/* <div className="flex gap-4 justify-end">
         <Button
           variant="outline"
           size="sm"
@@ -445,7 +472,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           <Download className="h-4 w-4 mr-2" />
           Export
         </Button>
-      </div>
+      </div> */}
     </div>
   );
 }

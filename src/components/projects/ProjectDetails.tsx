@@ -976,7 +976,7 @@ export function ProjectDetails() {
       <div className="flex items-center gap-3">
         <Button
           variant="outline"
-          className="border border-[#C6CBCB]  hover:bg-blue-200 hover:text-blue-950 "
+          className=" border-0 bg-[#E0F2FE]  hover:bg-blue-50  "
           size="sm"
           onClick={() => navigate(-1)}
         >
@@ -1112,12 +1112,16 @@ export function ProjectDetails() {
               </div>
               <DialogFooter>
                 <Button
+                  className="bg-[#E0F2FE] border-0"
                   variant="outline"
                   onClick={() => setIsEditDialogOpen(false)}
                 >
                   Cancel
                 </Button>
-                <Button onClick={() => setIsEditDialogOpen(false)}>
+                <Button
+                  onClick={() => setIsEditDialogOpen(false)}
+                  className="bg-[#0073e6] text-white"
+                >
                   Save Changes
                 </Button>
               </DialogFooter>
@@ -1281,11 +1285,12 @@ export function ProjectDetails() {
               You have no access to see detailed info.
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2  gap-6">
               <div className="col-span-2 space-y-6">
                 {/* Overview Filters */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-wrap items-center gap-3">
+                <h1>Overview</h1>
+                <div className="flex flex-col gap-2 justify-between">
+                  <div className="flex flex-wrap items-center gap-3 ">
                     {/* Subproject selector */}
                     <Select
                       value={selectedSubProjectId || "all"}
@@ -1297,7 +1302,7 @@ export function ProjectDetails() {
                         setFormTemplateIdLocal(undefined);
                       }}
                     >
-                      <SelectTrigger className="w-[220px] bg-white border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                      <SelectTrigger className="w-[220px] bg-white border-gray-100 hover:scale-[1.02] hover:-translate-y-[1px]">
                         <SelectValue placeholder="Subproject" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1317,7 +1322,7 @@ export function ProjectDetails() {
                       value={timePreset}
                       onValueChange={onTimePresetChange}
                     >
-                      <SelectTrigger className="w-[200px] bg-white p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                      <SelectTrigger className="w-[200px] bg-white p-2 rounded-md border-gray-100 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
                         <SelectValue placeholder="Time Period" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1344,14 +1349,14 @@ export function ProjectDetails() {
                   </div>
 
                   {showMoreLocal && (
-                    <div className="mt-1 p-3 rounded-md bg-white/60 border border-gray-100">
+                    <div className=" rounded-md  border-gray-100">
                       <div className="flex flex-wrap items-center gap-3">
                         {/* Metric */}
                         <Select
                           value={metricLocal}
                           onValueChange={(v) => setMetricLocal(v as any)}
                         >
-                          <SelectTrigger className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                          <SelectTrigger className="w-[220px]  border-gray-100 p-2 rounded-md  transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
                             <SelectValue placeholder="Metric" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1375,7 +1380,7 @@ export function ProjectDetails() {
                             setServiceIdLocal(id || undefined);
                           }}
                         >
-                          <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                          <SelectTrigger className="w-[200px] border-gray-100 hover:scale-[1.02] hover:-translate-y-[1px]">
                             <SelectValue placeholder="Service" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1396,7 +1401,7 @@ export function ProjectDetails() {
                             setFormTemplateIdLocal(id || undefined);
                           }}
                         >
-                          <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                          <SelectTrigger className="w-[200px] border-gray-100 hover:scale-[1.02] hover:-translate-y-[1px]">
                             <SelectValue placeholder="Form Template" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1413,10 +1418,12 @@ export function ProjectDetails() {
                         <div className="relative">
                           <button
                             onClick={() => setFiltersOpen((s) => !s)}
-                            className="px-3 py-1.5 rounded-md text-sm bg-blue-200 text-blue-600 hover:bg-blue-200/30 flex items-center gap-2"
+                            className="px-3 py-1.5 rounded-md text-sm  flex items-center gap-2 bg-[#E0F2FE] text-black border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px]"
                           >
                             <span>
-                              Granularity:{" "}
+                              {" "}
                               <span className="capitalize font-medium">
                                 {granularity}
                               </span>
@@ -1641,23 +1648,29 @@ export function ProjectDetails() {
                       <div className="flex items-center gap-3">
                         <CardTitle>Project Activity Overview</CardTitle>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant={chartType === "line" ? "default" : "outline"}
-                          onClick={() => setChartType("line")}
-                          className="px-2"
+                      <div className="flex space-x-4 justify-end">
+                        <Tabs
+                          className="w-full"
+                          value={chartType}
+                          onValueChange={(v) =>
+                            setChartType(v as typeof chartType)
+                          }
                         >
-                          Line
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={chartType === "bar" ? "default" : "outline"}
-                          onClick={() => setChartType("bar")}
-                          className="px-2"
-                        >
-                          Bar
-                        </Button>
+                          <TabsList className=" bg-[#E0F2FE] items-center">
+                            <TabsTrigger
+                              value="line"
+                              className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
+                            >
+                              Line
+                            </TabsTrigger>
+                            <TabsTrigger
+                              value="bar"
+                              className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
+                            >
+                              Bar
+                            </TabsTrigger>
+                          </TabsList>
+                        </Tabs>
                       </div>
                     </div>
                   </CardHeader>
