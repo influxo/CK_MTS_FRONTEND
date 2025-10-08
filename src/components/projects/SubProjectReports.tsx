@@ -213,28 +213,28 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-[#2E343E] bg-opacity-10 items-center ">
+        <TabsList className="bg-[#E0F2FE] items-center ">
           <TabsTrigger
             value="saved-reports"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
           >
             Saved Reports
           </TabsTrigger>
           <TabsTrigger
             value="generate-report"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
           >
             Generate New Report
           </TabsTrigger>
           <TabsTrigger
             value="kpi-tracking"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
           >
             KPI Tracking
           </TabsTrigger>
           <TabsTrigger
             value="templates"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
           >
             Report Templates
           </TabsTrigger>

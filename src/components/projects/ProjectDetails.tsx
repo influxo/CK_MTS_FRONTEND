@@ -976,7 +976,7 @@ export function ProjectDetails() {
       <div className="flex items-center gap-3">
         <Button
           variant="outline"
-          className=" border-0 bg-[#E0F2FE]  hover:bg-blue-50  "
+          className=" border-0 bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]"
           size="sm"
           onClick={() => navigate(-1)}
         >
@@ -992,7 +992,7 @@ export function ProjectDetails() {
             <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="ml-auto bg-[#0073e6] border-0 text-white"
+                className="ml-auto bg-[#0073e6] border-0 text-white transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]"
               >
                 <FileEdit className="h-4 w-4 mr-2" />
                 Edit Project
@@ -2814,7 +2814,7 @@ export function ProjectDetails() {
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
-                            className="hover:bg-blue-200"
+                            className="hover:bg-[#E0F2FE] border-0"
                             variant="outline"
                             size="sm"
                             onClick={() => navigate(`/beneficiaries/${r.id}`)}

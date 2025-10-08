@@ -77,7 +77,10 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
   const [assigning, setAssigning] = useState(false);
   const [search, setSearch] = useState("");
   // IDs of services already assigned to this sub-project (to exclude from modal)
-  const assignedIds = useMemo(() => new Set((services || []).map((s) => s.id)), [services]);
+  const assignedIds = useMemo(
+    () => new Set((services || []).map((s) => s.id)),
+    [services]
+  );
 
   // Modal list filtered by search and excluding already assigned services
   const filteredAllServices = useMemo(() => {
@@ -85,7 +88,8 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
     return allServices.filter(
       (s) =>
         !assignedIds.has(s.id) &&
-        (s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q))
+        (s.name.toLowerCase().includes(q) ||
+          s.description.toLowerCase().includes(q))
     );
   }, [allServices, search, assignedIds]);
 
@@ -93,7 +97,8 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
   const [assignPage, setAssignPage] = useState(1);
   const [assignLimit, setAssignLimit] = useState(10);
   const assignTotalPages = useMemo(
-    () => Math.max(1, Math.ceil((filteredAllServices.length || 0) / assignLimit)),
+    () =>
+      Math.max(1, Math.ceil((filteredAllServices.length || 0) / assignLimit)),
     [filteredAllServices.length, assignLimit]
   );
   const paginatedServices = useMemo(() => {
@@ -327,6 +332,7 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
               </div>
               <DialogFooter>
                 <Button
+                  className="bg-[#E0F2FE] text-black border-0"
                   variant="outline"
                   onClick={() => setIsCreateOpen(false)}
                   disabled={creating}
@@ -334,6 +340,7 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                   Cancel
                 </Button>
                 <Button
+                  className="bg-[#0073e6] text-white"
                   onClick={handleCreateAndAssign}
                   disabled={creating || !name.trim() || !category.trim()}
                 >
@@ -347,7 +354,7 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
             <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="bg-black/5 text-black border-0"
+                className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
               >
                 Assign Service
               </Button>
@@ -370,6 +377,7 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                     }}
                   />
                   <Button
+                    className="bg-[#E0F2FE] text-black border-0"
                     variant="outline"
                     onClick={() =>
                       dispatch(getAllServices({ page: 1, limit: 200 }))
@@ -389,7 +397,7 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                 )}
                 <div className="rounded-md border max-h-[360px] overflow-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-[#E5ECF6]">
                       <TableRow>
                         <TableHead className="w-[48px]">
                           <span className="sr-only">Select</span>
@@ -416,13 +424,18 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{svc.category}</Badge>
+                            <Badge
+                              variant="outline"
+                              className="border-0 bg-[#0073e6] text-white"
+                            >
+                              {svc.category}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge
                               className={
                                 svc.status === "active"
-                                  ? "bg-[#2E343E] text-white"
+                                  ? "bg-[#DEF8EE] text-[#4AA785] border-0"
                                   : ""
                               }
                             >
@@ -459,16 +472,20 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                       size="sm"
                       onClick={() => setAssignPage((p) => Math.max(1, p - 1))}
                       disabled={assignPage <= 1}
-                      className="bg-white"
+                      className="  bg-[#E0F2FE] border-0 text-black"
                     >
                       Prev
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setAssignPage((p) => Math.min(assignTotalPages, p + 1))}
-                      disabled={assignTotalPages === 0 || assignPage >= assignTotalPages}
-                      className="bg-white"
+                      onClick={() =>
+                        setAssignPage((p) => Math.min(assignTotalPages, p + 1))
+                      }
+                      disabled={
+                        assignTotalPages === 0 || assignPage >= assignTotalPages
+                      }
+                      className="bg-[#E0F2FE] border-0 text-black"
                     >
                       Next
                     </Button>
@@ -480,7 +497,7 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                         setAssignPage(1);
                       }}
                     >
-                      <SelectTrigger className="w-[120px] bg-black/5 border-0 text-black">
+                      <SelectTrigger className="w-[120px] bg-[#E0F2FE] border-0 text-black">
                         <SelectValue placeholder="Rows" />
                       </SelectTrigger>
                       <SelectContent>
@@ -495,6 +512,7 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
               </div>
               <DialogFooter>
                 <Button
+                  className="bg-[#E0F2FE] border-0 text-black"
                   variant="outline"
                   onClick={() => setIsAssignOpen(false)}
                   disabled={assigning}
@@ -502,6 +520,7 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                   Cancel
                 </Button>
                 <Button
+                  className="bg-[#0073e6] border-0 text-white "
                   onClick={handleAssignSelected}
                   disabled={assigning || selectedIds.length === 0}
                 >
@@ -582,7 +601,7 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                   <TableCell className="text-right">
                     <Button
                       variant="outline"
-                      className="hover:bg-black/5 text-black border-0"
+                      className="hover:bg-[#E0F2FE] text-black border-0"
                       onClick={() => openUnassign(svc)}
                     >
                       Unassign
@@ -611,13 +630,17 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
           )}
           <DialogFooter>
             <Button
-              variant="outline"
+              className="bg-[#E0F2FE] border-0 text-black"
               onClick={() => setIsUnassignOpen(false)}
               disabled={unassignLoading}
             >
               Cancel
             </Button>
-            <Button onClick={handleConfirmUnassign} disabled={unassignLoading}>
+            <Button
+              className="bg-[#0073e6] border-0 text-white"
+              onClick={handleConfirmUnassign}
+              disabled={unassignLoading}
+            >
               {unassignLoading ? "Unassigning..." : "Unassign"}
             </Button>
           </DialogFooter>

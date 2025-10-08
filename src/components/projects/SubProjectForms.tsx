@@ -210,7 +210,7 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
           onOpenChange={setIsCreateFormDialogOpen}
         >
           <DialogTrigger asChild>
-            <Button className="bg-[#2E343E] text-white">
+            <Button className="bg-[#0073e6] text-white transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px] gap-2">
               <Plus className="h-4 w-4 mr-2" />
               Create New Form
             </Button>
@@ -295,12 +295,16 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
             </div>
             <DialogFooter>
               <Button
+                className="bg-[#E0F2FE] border-0"
                 variant="outline"
                 onClick={() => setIsCreateFormDialogOpen(false)}
               >
                 Cancel
               </Button>
-              <Button onClick={() => setIsCreateFormDialogOpen(false)}>
+              <Button
+                className="bg-[#0073e6] text-white border-0"
+                onClick={() => setIsCreateFormDialogOpen(false)}
+              >
                 Create Form & Design Fields
               </Button>
             </DialogFooter>
@@ -309,22 +313,22 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className=" grid  grid-cols-3 bg-[#2E343E] bg-opacity-10 items-center">
+        <TabsList className=" grid  grid-cols-3 bg-[#E0F2FE] items-center">
           <TabsTrigger
             value="all-forms"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
           >
             All Forms
           </TabsTrigger>
           <TabsTrigger
             value="submissions"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
           >
             Recent Submissions
           </TabsTrigger>
           <TabsTrigger
             value="offline-data"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
           >
             Offline Data
           </TabsTrigger>
@@ -422,7 +426,7 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-[#2E343E] bg-opacity-10 text-black"
+                className="bg-[#E0F2FE] border-0 text-black transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px] gap-2"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Export All
@@ -517,7 +521,7 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="bg-[#2E343E] border-0 text-black bg-opacity-10"
+                    className="bg-[#E0F2FE] border-0 text-black bg-opacity-10"
                   >
                     Sync Now
                   </Button>
@@ -540,7 +544,7 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="bg-[#2E343E] border-0 text-black bg-opacity-10"
+                          className="bg-[#E0F2FE] border-0 text-black "
                         >
                           Sync
                         </Button>
@@ -579,7 +583,7 @@ export function SubProjectForms({ subProjectId }: SubProjectFormsProps) {
                   </div>
                 </div>
                 <Button
-                  className=" mt-6 h-10  bg-[#2E343E] border-0  text-white w-2/1"
+                  className=" mt-6 h-10  bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px] gap-2 border-0  text-white w-2/1"
                   size="sm"
                 >
                   Save Settings

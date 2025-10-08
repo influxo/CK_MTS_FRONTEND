@@ -372,7 +372,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
             <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="bg-blue-200 border-0  transition-transform duration-200 ease-in-out
+                className="bg-[#E0F2FE] border-0  transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px] "
               >
                 Assign Service

@@ -373,7 +373,7 @@ export function SubProjects({
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search sub-projects..."
-              className="pl-9 border-[#C6CBCB] border bg-transparent focus:bg-transparent focus:outline-none focus:ring-0 focus:ring-transparent focus:border-[#C6CBCB]"
+              className="pl-9 border-gray-100 border bg-transparent focus:bg-transparent focus:outline-none focus:ring-0 focus:ring-transparent focus:border-[#C6CBCB]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -381,7 +381,7 @@ export function SubProjects({
 
           <div className="flex gap-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[130px] border-0 bg-blue-100">
+              <SelectTrigger className="w-[130px] border-0 bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -393,7 +393,7 @@ export function SubProjects({
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[160px] border-0 bg-blue-100">
+              <SelectTrigger className="w-[160px] border-0 bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Category" />
               </SelectTrigger>

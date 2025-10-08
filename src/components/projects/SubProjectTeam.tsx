@@ -45,7 +45,10 @@ import {
   removeUserFromSubProject,
   assignUserToSubProject,
 } from "../../store/slices/subProjectSlice";
-import { fetchEmployees, selectAllEmployees } from "../../store/slices/employeesSlice";
+import {
+  fetchEmployees,
+  selectAllEmployees,
+} from "../../store/slices/employeesSlice";
 
 interface SubProjectTeamProps {
   subProjectId: string;
@@ -158,7 +161,7 @@ export function SubProjectTeam({
         </div>
         <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#2E343E] text-white">
+            <Button className="bg-[#0073e6] text-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
               <Plus className="h-4 w-4 mr-2" />
               Assign Member
             </Button>
@@ -223,12 +226,17 @@ export function SubProjectTeam({
             </div>
             <DialogFooter>
               <Button
+                className="bg-[#E0F2FE] border-0 "
                 variant="outline"
                 onClick={() => setIsAssignDialogOpen(false)}
               >
                 Cancel
               </Button>
-              <Button disabled={!selectedMemberId} onClick={handleAssignMember}>
+              <Button
+                className="bg-[#0073e6] border-0 text-white"
+                disabled={!selectedMemberId}
+                onClick={handleAssignMember}
+              >
                 Assign Member
               </Button>
             </DialogFooter>
@@ -237,14 +245,14 @@ export function SubProjectTeam({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-[#2E343E] bg-opacity-10 items-center">
+        {/* <TabsList className="bg-[#2E343E] bg-opacity-10 items-center">
           <TabsTrigger
             value="team-members"
             className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
           >
             Team Members
           </TabsTrigger>
-        </TabsList>
+        </TabsList> */}
 
         <TabsContent value="team-members" className="pt-4">
           <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
@@ -253,14 +261,14 @@ export function SubProjectTeam({
                 <Search className="absolute left-2.5  top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search team members..."
-                  className="pl-9 bg-black/5 border-0"
+                  className="pl-9 bg-white border border-gray-100 "
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <div className="flex gap-3">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[130px] bg-black/5 border-0">
+                  <SelectTrigger className="w-[130px] border-0 bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -302,7 +310,7 @@ export function SubProjectTeam({
                                 ? "default"
                                 : "secondary"
                             }
-                            className="text-xs"
+                            className="text-xs text-[#4AA785] bg-[#DEF8EE] "
                           >
                             {member.status}
                           </Badge>
@@ -336,7 +344,7 @@ export function SubProjectTeam({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-destructive"
+                      className="bg-[#E0F2FE]"
                       onClick={() => onRemove(member.id)}
                     >
                       <X className="h-4 w-4 mr-2" />
@@ -356,7 +364,7 @@ export function SubProjectTeam({
                 Assign a new team member to this sub-project
               </p>
               <Button
-                className="bg-black/5"
+                className="bg-[#E0F2FE]"
                 onClick={() => setIsAssignDialogOpen(true)}
               >
                 Assign Member

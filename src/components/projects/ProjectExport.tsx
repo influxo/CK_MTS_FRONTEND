@@ -34,16 +34,16 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">Export Data & Reports</CardTitle>
-            <TabsList className="grid  grid-cols-2 bg-black/5 items-center ">
+            <TabsList className="grid  grid-cols-2 bg-[#E0F2FE] items-center ">
               <TabsTrigger
                 value="reports"
-                className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+                className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
               >
                 Project Reports
               </TabsTrigger>
               <TabsTrigger
                 value="data"
-                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+                className="data-[state=active]:bg-[#0073e6] data-[state=active]:text-white"
               >
                 Raw Data Export
               </TabsTrigger>
@@ -55,7 +55,7 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
             <div className="space-y-2">
               <Label>Report Type</Label>
               <Select defaultValue="summary">
-                <SelectTrigger className="bg-black/5 border-0">
+                <SelectTrigger className="bg-white border-gray-100 ">
                   <SelectValue placeholder="Select report type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -76,7 +76,7 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
             <div className="space-y-2">
               <Label>Time Period</Label>
               <Select defaultValue="all">
-                <SelectTrigger className="bg-black/5 border-0">
+                <SelectTrigger className="bg-white border-gray-100">
                   <SelectValue placeholder="Select time period" />
                 </SelectTrigger>
                 <SelectContent>
@@ -93,7 +93,11 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
               <Label>Include Sub-Projects</Label>
               <div className="flex flex-col gap-2 pt-1">
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="all-subprojects" defaultChecked />
+                  <Checkbox
+                    id="all-subprojects"
+                    className=" bg-[#E0F2FE] border-gray-100 "
+                    defaultChecked
+                  />
                   <label
                     htmlFor="all-subprojects"
                     className="text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -102,7 +106,10 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="selected-subprojects" />
+                  <Checkbox
+                    id="selected-subprojects"
+                    className=" bg-[#E0F2FE] border-gray-100 "
+                  />
                   <label
                     htmlFor="selected-subprojects"
                     className="text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -114,20 +121,20 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button className="gap-2 bg-[#2E343E] text-white">
+              <Button className="gap-2 bg-[#E0F2FE] border-0 ">
                 <FileText className="h-4 w-4" />
                 Export as PDF
               </Button>
               <Button
                 variant="outline"
-                className="gap-2 bg-[#2E343E] text-white"
+                className="gap-2 bg-[#E0F2FE] border-0 "
               >
                 <FileSpreadsheet className="h-4 w-4" />
                 Export as Excel
               </Button>
               <Button
                 variant="outline"
-                className="gap-2 bg-[#2E343E] text-white"
+                className="gap-2 bg-[#E0F2FE] border-0 "
               >
                 <Printer className="h-4 w-4" />
                 Print
@@ -139,7 +146,7 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
             <div className="space-y-2">
               <Label>Data Type</Label>
               <Select defaultValue="all">
-                <SelectTrigger className="bg-black/5 border-0">
+                <SelectTrigger className="bg-white border-gray-100">
                   <SelectValue placeholder="Select data type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -157,7 +164,7 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
             <div className="space-y-2">
               <Label>Export Format</Label>
               <Select defaultValue="excel">
-                <SelectTrigger className="bg-black/5 border-0">
+                <SelectTrigger className="bg-white border-gray-100">
                   <SelectValue placeholder="Select format" />
                 </SelectTrigger>
                 <SelectContent>
@@ -172,7 +179,11 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
               <Label>Export Options</Label>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="include-metadata" defaultChecked />
+                  <Checkbox
+                    id="include-metadata"
+                    className="bg-[#E0F2FE]"
+                    defaultChecked
+                  />
                   <label
                     htmlFor="include-metadata"
                     className="text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -181,7 +192,7 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="include-archived" />
+                  <Checkbox id="include-archived" className="bg-[#E0F2FE]" />
                   <label
                     htmlFor="include-archived"
                     className="text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -190,7 +201,7 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
                   </label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Checkbox id="anonymize-data" />
+                  <Checkbox id="anonymize-data" className="bg-[#E0F2FE]" />
                   <label
                     htmlFor="anonymize-data"
                     className="text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -201,7 +212,7 @@ export function ProjectExport({ projectId }: ProjectExportProps) {
               </div>
             </div>
 
-            <Button className="gap-2 w-full mt-4 h-10 bg-[#2E343E] border-0 text-white">
+            <Button className="gap-2 w-full mt-4 h-10 bg-[#E0F2FE] border-0 ">
               <Download className="h-4 w-4" />
               Download Data
             </Button>
