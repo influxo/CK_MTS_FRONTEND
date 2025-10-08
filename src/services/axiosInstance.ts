@@ -7,7 +7,8 @@ const axiosInstance = axios.create({
   timeout: 30000, // 30 seconds
   headers: {
     "Content-Type": "application/json",
-    // "Cache-Control": "no-cache",
+    "Cache-Control": "no-cache",
+    "ngrok-skip-browser-warning": "true", // Skip ngrok browser warning
   },
 });
 
@@ -45,24 +46,13 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      try {
-        // You can implement token refresh logic here
-        // const refreshToken = localStorage.getItem('refreshToken');
-        // const response = await refreshTokenAPI(refreshToken);
-        // localStorage.setItem('token', response.data.token);
+      // Only redirect if not already on login page to prevent infinite loop
+      const currentPath = window.location.pathname;
+      const isLoginPage = currentPath === '/login' || currentPath === '/';
 
-        // Retry the original request with new token
-        // originalRequest.headers['Authorization'] = `Bearer ${response.data.token}`;
-        // return axiosInstance(originalRequest);
-
-        // For now, just log out the user on auth errors
+      if (!isLoginPage) {
         localStorage.removeItem("token");
         window.location.href = "/login";
-      } catch (refreshError) {
-        // If refresh token fails, log out the user
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-        return Promise.reject(refreshError);
       }
     }
 
