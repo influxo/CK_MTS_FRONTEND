@@ -952,7 +952,7 @@ export function ProjectDetails() {
         </h2>
         <p className="mt-2 text-muted-foreground">{error}</p>
         <Button className="mt-4" onClick={() => navigate(-1)}>
-          Back to Projects
+          Kthehu
         </Button>
       </div>
     );
@@ -966,7 +966,7 @@ export function ProjectDetails() {
           The project you're looking for doesn't exist or has been removed.
         </p>
         <Button className="mt-4" onClick={() => navigate(-1)}>
-          Back to Projects
+          Kthehu
         </Button>
       </div>
     );
@@ -993,7 +993,7 @@ export function ProjectDetails() {
       <div className="flex items-center gap-3">
         <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Projects
+          Kthehu
         </Button>
         <h2 className="text-3xl font-semibold capitalize">
           {enhancedProject.title}
@@ -1007,21 +1007,21 @@ export function ProjectDetails() {
                 className="ml-auto bg-[#0073e6] border-0 text-white"
               >
                 <FileEdit className="h-4 w-4 mr-2" />
-                Edit Project
+                Përditësoni Projektin
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[550px]">
               <DialogHeader>
-                <DialogTitle>Edit Project</DialogTitle>
+                <DialogTitle>Përditësoni Projektin</DialogTitle>
                 <DialogDescription>
-                  Update the details for this project. All fields marked with *
-                  are required.
+                  Përditësoni detajet për këtë projekt. Të gjitha fushat e
+                  shënuara me * janë të detyrueshme.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="title" className="text-right">
-                    Title *
+                    Titulli *
                   </Label>
                   <Input
                     id="title"
@@ -1032,7 +1032,7 @@ export function ProjectDetails() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="category" className="text-right">
-                    Category *
+                    Kategoria *
                   </Label>
                   <Select
                     value={editCategory.toLowerCase()}
@@ -1055,32 +1055,10 @@ export function ProjectDetails() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="type" className="text-right">
-                    Type *
-                  </Label>
-                  <Select
-                    defaultValue={enhancedProject.type
-                      .toLowerCase()
-                      .replace(" ", "-")}
-                  >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="service-delivery">
-                        Service Delivery
-                      </SelectItem>
-                      <SelectItem value="training">Training</SelectItem>
-                      <SelectItem value="construction">Construction</SelectItem>
-                      <SelectItem value="distribution">Distribution</SelectItem>
-                      <SelectItem value="research">Research</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">
-                    Status
+                    Statusi
                   </Label>
                   <Select
                     value={editStatus}
@@ -1096,31 +1074,10 @@ export function ProjectDetails() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="start-date" className="text-right">
-                    Start Date *
-                  </Label>
-                  <Input
-                    id="start-date"
-                    type="date"
-                    className="col-span-3"
-                    defaultValue={enhancedProject.startDate.split("T")[0]}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="end-date" className="text-right">
-                    End Date *
-                  </Label>
-                  <Input
-                    id="end-date"
-                    type="date"
-                    className="col-span-3"
-                    defaultValue={enhancedProject.endDate.split("T")[0]}
-                  />
-                </div>
+
                 <div className="grid grid-cols-4 items-start gap-4">
                   <Label htmlFor="description" className="text-right pt-2">
-                    Description
+                    Përshkrimi
                   </Label>
                   <Textarea
                     id="description"
@@ -1136,7 +1093,7 @@ export function ProjectDetails() {
                   variant="outline"
                   onClick={() => setIsEditDialogOpen(false)}
                 >
-                  Cancel
+                  Dil
                 </Button>
                 <Button
                   onClick={async () => {
@@ -1178,7 +1135,7 @@ export function ProjectDetails() {
                     }
                   }}
                 >
-                  Save Changes
+                  Ruani ndryshimet
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -1251,23 +1208,23 @@ export function ProjectDetails() {
 
                 <div className=" bg-[#E5ECF6] rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">
-                    Sub-Projects
+                    Nënprojektet
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                    <span>{subprojects.length} Sub-projects</span>
+                    <span>{subprojects.length} Nënprojekte</span>
                   </div>
                 </div>
 
                 <div className=" bg-[#E5ECF6] rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">
-                    Beneficiaries
+                    Përfituesit
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <span>
                       {(byEntityMeta.totalItems ?? 0).toLocaleString()}{" "}
-                      Beneficiaries
+                      Përfitues
                     </span>
                   </div>
                 </div>
@@ -1286,7 +1243,7 @@ export function ProjectDetails() {
                 activeTab === "overview" ? "border-black" : "border-transparent"
               }`}
             >
-              Overview
+              Përmbledhje
             </TabsTrigger>
             <TabsTrigger
               value="subprojects"
@@ -1296,7 +1253,7 @@ export function ProjectDetails() {
                   : "border-transparent"
               }`}
             >
-              Sub-Projects
+              Nënprojektet
             </TabsTrigger>
             <TabsTrigger
               value="services"
@@ -1304,7 +1261,7 @@ export function ProjectDetails() {
                 activeTab === "services" ? "border-black" : "border-transparent"
               }`}
             >
-              Services
+              Shërbimet
             </TabsTrigger>
             <TabsTrigger
               value="team"
@@ -1312,7 +1269,7 @@ export function ProjectDetails() {
                 activeTab === "team" ? "border-black" : "border-transparent"
               }`}
             >
-              Team
+              Punëtorët
             </TabsTrigger>
             <TabsTrigger
               value="beneficiaries"
@@ -1322,7 +1279,7 @@ export function ProjectDetails() {
                   : "border-transparent"
               }`}
             >
-              Beneficiaries
+              Përfituesit
             </TabsTrigger>
             <TabsTrigger
               value="reports"
@@ -1330,7 +1287,7 @@ export function ProjectDetails() {
                 activeTab === "reports" ? "border-black" : "border-transparent"
               }`}
             >
-              Reports & Exports
+              Raportet & Exportime
             </TabsTrigger>
           </div>
         </TabsList>
@@ -1338,7 +1295,7 @@ export function ProjectDetails() {
         <TabsContent value="overview" className="pt-6">
           {!hasFullAccess ? (
             <div className="p-6 text-center text-muted-foreground">
-              You have no access to see detailed info.
+              Nuk keni akses për të parë këto informacione.
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-6">

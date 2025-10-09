@@ -97,37 +97,37 @@ export function Sidebar({
   const fullNavItems = useMemo(
     () => [
       {
-        title: "Dashboard",
+        title: "Faqja Kryesore",
         icon: <LayoutDashboard className="h-5 w-5" />,
         to: "/dashboard",
       },
       {
-        title: "Projects",
+        title: "Projektet",
         icon: <FolderKanban className="h-5 w-5" />,
         to: "/projects",
       },
       {
-        title: "Beneficiaries",
+        title: "Përfituesit",
         icon: <Users className="h-5 w-5" />,
         to: "/beneficiaries",
       },
       {
-        title: "Forms",
+        title: "Formularët",
         icon: <ClipboardList className="h-5 w-5" />,
         to: "/forms",
       },
       {
-        title: "Data Entry",
+        title: "Futja e të dhënave",
         icon: <ClipboardList className="h-5 w-5" />,
         to: "/data-entry",
       },
       {
-        title: "Reports",
+        title: "Raportet",
         icon: <BarChart3 className="h-5 w-5" />,
         to: "/reports",
       },
       {
-        title: "Employees",
+        title: "Punëtorët",
         icon: <Users className="h-5 w-5" />,
         to: "/employees",
       },
@@ -235,7 +235,7 @@ export function Sidebar({
           ) : (
             <>
               {navItems.map((item) =>
-                item.title === "Projects" ? (
+                item.title === "Projektet" ? (
                   <div key={item.to}>
                     <button
                       onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
@@ -256,7 +256,7 @@ export function Sidebar({
                           "lg:inline"
                         )}
                       >
-                        Projects
+                        Projektet
                       </span>
                       <ChevronRight
                         size={18}
@@ -356,8 +356,10 @@ export function Sidebar({
             "lg:flex"
           )}
         >
-          <div className="h-2 w-2 rounded-full bg-green-500"></div>
-          <span className="text-xs text-sidebar-foreground/60">System Online</span>
+          {/* <div className="h-2 w-2 rounded-full bg-green-500"></div>
+          <span className="text-xs text-sidebar-foreground/60">
+            System Online
+          </span> */}
         </div>
 
         <Button
@@ -399,9 +401,7 @@ export function Sidebar({
             <ChevronLeft className="h-5 w-5 mr-2" />
           )}
           <span
-            className={cn(
-              isCollapsed && !mobileOpen ? "hidden" : "inline"
-            )}
+            className={cn(isCollapsed && !mobileOpen ? "hidden" : "inline")}
           >
             Collapse
           </span>

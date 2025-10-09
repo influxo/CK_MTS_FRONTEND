@@ -50,6 +50,18 @@ export interface GetEmployeeByIdResponse {
   data: Employee;
 }
 
+// Response model for /users/my-team
+export interface GetMyTeamData {
+  teamMembers: Employee[];
+  count: number;
+}
+
+export interface GetMyTeamResponse {
+  success: boolean;
+  message?: string;
+  data: GetMyTeamData;
+}
+
 // Update User (Employee) request/response
 export interface UpdateUserRequest {
   firstName: string;

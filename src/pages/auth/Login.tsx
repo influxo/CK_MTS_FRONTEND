@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { Form, useNavigate, useLocation } from "react-router-dom";
+import { Form, useLocation, useNavigate } from "react-router-dom";
 import caritas from "../../../public/images/caritas.jpg";
 import logo from "../../../public/images/logo.jpg";
 // import donation from "../../../public/images/donation.jpg";
 // import volunteer from "../../../public/images/volunteer.jpg";
-import { useAuth } from "../../hooks/useAuth";
+import { Eye, EyeOff } from "lucide-react";
+import donation from "../../../public/images/donation.jpg";
+import volunteer from "../../../public/images/volunteer.jpg";
+import { Button } from "../../components/ui/button/button";
 import {
   Card,
   CardContent,
@@ -13,20 +16,16 @@ import {
   CardHeader,
   CardTitle,
 } from "../../components/ui/data-display/card";
-import { Alert, AlertDescription } from "../../components/ui/feedback/alert";
-import { Label } from "../../components/ui/form/label";
-import { Input } from "../../components/ui/form/input";
-import { Button } from "../../components/ui/button/button";
-import { Eye, EyeOff } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   type CarouselApi,
 } from "../../components/ui/data-display/carousel";
-import reactLogo from "../../assets/react.svg";
-import donation from "../../../public/images/donation.jpg";
-import volunteer from "../../../public/images/volunteer.jpg";
+import { Alert, AlertDescription } from "../../components/ui/feedback/alert";
+import { Input } from "../../components/ui/form/input";
+import { Label } from "../../components/ui/form/label";
+import { useAuth } from "../../hooks/useAuth";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -127,7 +126,7 @@ const Login = () => {
                 Login
               </CardTitle>
               <CardDescription className="text-center">
-                Enter your credentials to access your account
+                Shkruani kredencialet për të hyrë në llogarinë tuaj.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -161,7 +160,7 @@ const Login = () => {
                       href="/forgot-password"
                       className="text-sm text-[#00a6ff]  "
                     >
-                      Forgot password?
+                      Keni harruar fjalëkalimin?
                     </a>
                   </div>
                   <div className="relative">
@@ -195,13 +194,13 @@ const Login = () => {
                   className="w-full bg-[#2E343E] text-white"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Signing in..." : "Sign in"}
+                  {isLoading ? "Logging in..." : "Log In"}
                 </Button>
               </Form>
             </CardContent>
             <CardFooter className="flex justify-center">
               <p className="text-sm text-gray-500">
-                Don't have an account? Contact your administrator.
+                Nuk keni llogari? Kontaktoni administratorin.
               </p>
             </CardFooter>
           </Card>

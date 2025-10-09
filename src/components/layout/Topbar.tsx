@@ -207,21 +207,21 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
              hover:scale-[1.02] hover:-translate-y-[1px]"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Create Project
+                Shto Projekt
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[550px]">
               <DialogHeader>
-                <DialogTitle>Create New Project</DialogTitle>
+                <DialogTitle>Krijo Projekt të ri</DialogTitle>
                 <DialogDescription>
-                  Enter the details for your new project. All fields marked with
-                  * are required.
+                  Shkruani detajet për projektin tuaj të ri. Të gjitha fushat e
+                  shënuara me * janë të detyrueshme.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="title" className="text-right">
-                    Title *
+                    Titulli *
                   </Label>
                   <Input
                     id="title"
@@ -229,7 +229,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                     className={`col-span-3 border-0 bg-blue-50 ${
                       formErrors.name ? "border-red-500" : ""
                     }`}
-                    placeholder="Project title"
+                    placeholder="Titulli i projektit"
                     value={formData.name}
                     onChange={handleInputChange}
                   />
@@ -241,7 +241,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="category" className="text-right">
-                    Category *
+                    Kategoria *
                   </Label>
                   <Input
                     id="category"
@@ -249,7 +249,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                     className={`col-span-3 border-0 bg-blue-50 ${
                       formErrors.category ? "border-red-500" : ""
                     }`}
-                    placeholder="Project Category"
+                    placeholder="Kategoria e projektit"
                     value={formData.category}
                     onChange={handleInputChange}
                   />
@@ -262,7 +262,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
 
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">
-                    Status
+                    Statusi
                   </Label>
                   <Select
                     defaultValue="active"
@@ -284,13 +284,13 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
 
                 <div className="grid grid-cols-4 items-start gap-4">
                   <Label htmlFor="description" className="text-right pt-2">
-                    Description
+                    Përshkrimi
                   </Label>
                   <Textarea
                     id="description"
                     name="description"
                     className="col-span-3 bg-blue-50 border-0"
-                    placeholder="Provide a description of the project"
+                    placeholder="Përshkrimi i projektit"
                     rows={3}
                     value={formData.description}
                     onChange={handleInputChange}
@@ -303,13 +303,13 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                   variant="outline"
                   onClick={() => setIsCreateDialogOpen(false)}
                 >
-                  Cancel
+                  Dil
                 </Button>
                 <Button
                   onClick={handleCreateProject}
                   className="bg-[#0073e6] border-0 text-white"
                 >
-                  Create Project
+                  Shto Projektin
                 </Button>
               </DialogFooter>
             </DialogContent>
