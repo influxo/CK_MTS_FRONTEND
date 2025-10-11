@@ -84,14 +84,19 @@ const Login = () => {
       const success = await login(formData);
 
       if (success) {
-        console.log('✅ Login successful, starting data preload...');
+        console.log('✅ Login successful, starting COMPLETE data sync...');
         
-        // Start prefetching data for offline use (non-blocking)
-        import('../../services/offline/dataPreloader').then(({ dataPreloader }) => {
-          dataPreloader.preloadAllData().then(() => {
-            console.log('✅ Data preload completed successfully!');
+        // Start COMPLETE data sync (non-blocking)
+        import('../../services/offline/completeSyncService').then(({ completeSyncService }) => {
+          completeSyncService.syncAllData((progress) => {
+            console.log(`📊 Sync progress: ${progress.completed}/${progress.total} - ${progress.currentEntity}`);
+          }).then(() => {
+            console.log('✅ COMPLETE data sync finished!');
+            completeSyncService.getSyncStats().then(stats => {
+              console.log('📊 Cached data:', stats);
+            });
           }).catch(err => {
-            console.error('❌ Failed to prefetch data:', err);
+            console.error('❌ Failed to sync data:', err);
           });
         });
       }
