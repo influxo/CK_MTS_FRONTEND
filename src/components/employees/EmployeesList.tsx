@@ -107,12 +107,16 @@ export function EmployeesList({
   // Canonicalize role names for consistent display and filtering
   const normalizeRole = (raw?: string): string => {
     const n = (raw || "").toLowerCase().trim();
-    if (n === "sysadmin" || n.includes("system admin")) return "System Administrator";
+    if (n === "sysadmin" || n.includes("system admin"))
+      return "System Administrator";
     if (n === "superadmin" || n.includes("super admin")) return "SuperAdmin";
     if (n.includes("program manager")) return "Program Manager";
     if (n.includes("sub-project manager") || n.includes("sub project manager"))
       return "Sub-Project Manager";
-    if (n.includes("field operator") || (n.includes("field") && n.includes("operator")))
+    if (
+      n.includes("field operator") ||
+      (n.includes("field") && n.includes("operator"))
+    )
       return "Field Operator";
     return raw || "N/A";
   };
@@ -130,7 +134,9 @@ export function EmployeesList({
     id: e.id,
     name: `${e.firstName} ${e.lastName}`.trim(),
     email: e.email,
-    role: normalizeRole(e.roles && e.roles.length > 0 ? e.roles[0].name : "N/A"),
+    role: normalizeRole(
+      e.roles && e.roles.length > 0 ? e.roles[0].name : "N/A"
+    ),
     status: e.status === "active" ? "active" : "pending",
     lastActive: e.lastLogin,
     projects: ["All Projects"],
@@ -284,10 +290,8 @@ export function EmployeesList({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2>Employees</h2>
-          <p className="text-muted-foreground">
-            Manage staff and their project assignments
-          </p>
+          {/* <h2>Employees</h2> */}
+          <p className="text-muted-foreground">Menaxho stafin</p>
         </div>
         <div className="flex gap-3">
           <Button
@@ -296,14 +300,14 @@ export function EmployeesList({
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
-            Filters
+            Filterat
           </Button>
           <Button
             onClick={onInviteClick}
-            className="bg-[#2E343E] border-0 text-white"
+            className="bg-[#0073e6] border-0 text-white"
           >
             <UserPlus className="h-4 w-4 mr-2" />
-            Invite Employee
+            Fto punonjes
           </Button>
         </div>
       </div>
@@ -326,7 +330,7 @@ export function EmployeesList({
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="all">Gjitha Rolet</SelectItem>
                 {ROLE_OPTIONS.map((r) => (
                   <SelectItem key={r} value={r}>
                     {r}
@@ -340,7 +344,7 @@ export function EmployeesList({
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Projects</SelectItem>
+                <SelectItem value="all">Gjitha Projektet</SelectItem>
                 <SelectItem value="Rural Healthcare Initiative">
                   Rural Healthcare
                 </SelectItem>
@@ -385,40 +389,40 @@ export function EmployeesList({
                     <SelectValue placeholder="2FA Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="enabled">Enabled</SelectItem>
-                    <SelectItem value="disabled">Disabled</SelectItem>
+                    <SelectItem value="all">Gjitha</SelectItem>
+                    <SelectItem value="enabled">Aktiv</SelectItem>
+                    <SelectItem value="disabled">Jo Aktiv</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Date Added</Label>
+                <Label>Data e shtimit</Label>
                 <Select defaultValue="any">
                   <SelectTrigger className="mt-2 bg-black/5 border-0">
-                    <SelectValue placeholder="Date Added" />
+                    <SelectValue placeholder="Data e shtimit" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="any">Any Time</SelectItem>
-                    <SelectItem value="today">Today</SelectItem>
-                    <SelectItem value="week">This Week</SelectItem>
-                    <SelectItem value="month">This Month</SelectItem>
-                    <SelectItem value="quarter">This Quarter</SelectItem>
+                    <SelectItem value="any">Gjitha</SelectItem>
+                    <SelectItem value="today">Sot</SelectItem>
+                    <SelectItem value="week">Kjo javë</SelectItem>
+                    <SelectItem value="month">Ky muaj</SelectItem>
+                    <SelectItem value="quarter">Ky vit</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Last Active</Label>
+                <Label>Data e fundit e aktivitetit</Label>
                 <Select defaultValue="any">
                   <SelectTrigger className="mt-2 bg-black/5 border-0">
-                    <SelectValue placeholder="Last Active" />
+                    <SelectValue placeholder="Data e fundit e aktivitetit" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="any">Any Time</SelectItem>
-                    <SelectItem value="today">Today</SelectItem>
-                    <SelectItem value="week">This Week</SelectItem>
-                    <SelectItem value="month">This Month</SelectItem>
+                    <SelectItem value="any">Gjitha</SelectItem>
+                    <SelectItem value="today">Sot</SelectItem>
+                    <SelectItem value="week">Kjo javë</SelectItem>
+                    <SelectItem value="month">Ky muaj</SelectItem>
                     <SelectItem value="inactive">
-                      Inactive (30+ days)
+                      Jo aktiv (30+ ditë)
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -426,10 +430,10 @@ export function EmployeesList({
             </div>
             <div className="flex justify-end mt-4">
               <Button variant="outline" size="sm" className="mr-2 bg-black/10">
-                Reset Filters
+                Reseto Filterat
               </Button>
               <Button size="sm" className="bg-[#2E343E] text-white border-0">
-                Apply Filters
+                Apliko Filterat
               </Button>
             </div>
           </CardContent>
@@ -443,25 +447,25 @@ export function EmployeesList({
               value="active"
               className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
             >
-              Active ({getTabCount("active")})
+              Aktive ({getTabCount("active")})
             </TabsTrigger>
             <TabsTrigger
               value="pending"
               className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
             >
-              Pending ({getTabCount("pending")})
+              Në pritje ({getTabCount("pending")})
             </TabsTrigger>
             <TabsTrigger
               value="inactive"
               className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
             >
-              Inactive ({getTabCount("inactive")})
+              Jo Aktive ({getTabCount("inactive")})
             </TabsTrigger>
             <TabsTrigger
               value="invitations"
               className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
             >
-              Invitations ({getTabCount("invitations")})
+              Ftesat ({getTabCount("invitations")})
             </TabsTrigger>
           </TabsList>
 
@@ -471,11 +475,12 @@ export function EmployeesList({
                 <Table className="border-0">
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
-                      <TableHead className="w-[250px]">Employee</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Projects</TableHead>
-                      <TableHead>Sub-Projects</TableHead>
-                      <TableHead>Last Active</TableHead>
+                      <TableHead className="w-[250px]">Punëtori</TableHead>
+                      <TableHead>Roli</TableHead>
+                      <TableHead>Projektet</TableHead>
+                      <TableHead>Nën projektet</TableHead>
+                      <TableHead>Aktiv për herë të fundit</TableHead>
+                      <TableHead>Statusi</TableHead>
                       <TableHead>2FA</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -563,6 +568,24 @@ export function EmployeesList({
                             : "Never"}
                         </TableCell>
                         <TableCell>
+                          {employee.status === "active" ? (
+                            <Badge
+                              variant="outline"
+                              className=" text-[#4AA785] bg-[#DEF8EE] border-0"
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Aktiv
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="text-black/40 border-0 bg-black/5"
+                            >
+                              Në pritje
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           {employee.twoFactorEnabled ? (
                             <Badge
                               variant="outline"
@@ -589,7 +612,7 @@ export function EmployeesList({
                               onClick={() => onEmployeeSelect(employee.id)}
                             >
                               <Eye className="h-4 w-4 mr-2" />
-                              View
+                              Shiko
                             </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -645,12 +668,12 @@ export function EmployeesList({
                 <Table>
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
-                      <TableHead className="w-[250px]">Employee</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Projects</TableHead>
-                      <TableHead>Sub-Projects</TableHead>
-                      <TableHead>Invited On</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead className="w-[250px]">Punëtori</TableHead>
+                      <TableHead>Roli</TableHead>
+                      <TableHead>Projektet</TableHead>
+                      <TableHead>Nën projektet</TableHead>
+                      <TableHead>Ftuar me</TableHead>
+                      <TableHead>Statusi</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -744,7 +767,7 @@ export function EmployeesList({
                               onClick={() => onEmployeeSelect(employee.id)}
                             >
                               <Eye className="h-4 w-4 mr-2" />
-                              View
+                              Shiko
                             </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -792,12 +815,12 @@ export function EmployeesList({
                 <Table>
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
-                      <TableHead className="w-[250px]">Employee</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Projects</TableHead>
-                      <TableHead>Sub-Projects</TableHead>
-                      <TableHead>Last Active</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead className="w-[250px]">Punëtori</TableHead>
+                      <TableHead>Roli</TableHead>
+                      <TableHead>Projektet</TableHead>
+                      <TableHead>Nën projektet</TableHead>
+                      <TableHead>Ftuar me</TableHead>
+                      <TableHead>Statusi</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -948,12 +971,12 @@ export function EmployeesList({
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
                       <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Projects</TableHead>
-                      <TableHead>Invited By</TableHead>
-                      <TableHead>Invited On</TableHead>
-                      <TableHead>Expires</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Roli</TableHead>
+                      <TableHead>Projektet</TableHead>
+                      <TableHead>Ftuar nga</TableHead>
+                      <TableHead>Ftuar me</TableHead>
+                      <TableHead>Skadon</TableHead>
+                      <TableHead>Statusi</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1067,7 +1090,7 @@ export function EmployeesList({
         </Tabs>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="bg-[#E5ECF6] border-0   drop-shadow-sm shadow-gray-50">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Role Distribution</CardTitle>
@@ -1162,7 +1185,7 @@ export function EmployeesList({
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
