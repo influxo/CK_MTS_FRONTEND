@@ -13,6 +13,7 @@ import kpiReducer from "./slices/kpiSlice";
 import demographicsReducer from "./slices/demographicsSlice";
 import formsReducer from "./slices/formsSlice";
 import formReducer from "./slices/formSlice";
+import offlineMiddleware from "./middleware/offlineMiddleware";
 
 // Configure the Redux store
 export const store = configureStore({
@@ -33,7 +34,15 @@ export const store = configureStore({
     demographics: demographicsReducer,
     // Add other reducers here as your app grows
   },
-  // Add middleware or other configuration options here if needed
+  // Add offline middleware to intercept API calls and read from IndexedDB
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        // Ignore these paths in the state for serialization warnings
+        ignoredActions: ['form/submitFormResponse/fulfilled'],
+        ignoredPaths: ['form.lastSubmission'],
+      },
+    }).concat(offlineMiddleware),
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
