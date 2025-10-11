@@ -536,7 +536,12 @@ export function EmployeeDetails() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={handleBack}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="hover:bg-[#E0F2FE] border-0"
+            onClick={handleBack}
+          >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Kthehuni
           </Button>
@@ -546,7 +551,7 @@ export function EmployeeDetails() {
           {!isEditing ? (
             <>
               <Button
-                className="bg-black/10 text-black border-0"
+                className="bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]  border-0"
                 variant="outline"
                 onClick={() => setShowPasswordResetDialog(true)}
               >
@@ -555,7 +560,7 @@ export function EmployeeDetails() {
               </Button>
 
               <Button
-                className="bg-black/10 text-black border-0"
+                className="bg-[#E0F2FE] text-black transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-0"
                 variant="destructive"
                 onClick={() => setShowDeleteDialog(true)}
               >
@@ -563,7 +568,7 @@ export function EmployeeDetails() {
                 Fshij Punonjësin
               </Button>
               <Button
-                className="bg-[#2E343E] text-white border-0"
+                className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white border-0"
                 variant="outline"
                 onClick={handleEditClick}
               >

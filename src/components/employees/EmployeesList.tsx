@@ -296,7 +296,7 @@ export function EmployeesList({
         <div className="flex gap-3">
           <Button
             variant="outline"
-            className="bg-black/10 border-0"
+            className="bg-[#E0F2FE] border-0"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
@@ -318,14 +318,14 @@ export function EmployeesList({
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search employees..."
-              className="pl-9 bg-black/5 border-0"
+              className="pl-9 bg-white border-gray-100 border"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex gap-3">
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-[150px] bg-black/5 border-0">
+              <SelectTrigger className="w-[200px] bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
@@ -339,7 +339,7 @@ export function EmployeesList({
               </SelectContent>
             </Select>
             <Select value={projectFilter} onValueChange={setProjectFilter}>
-              <SelectTrigger className="w-[180px] bg-black/5 border-0">
+              <SelectTrigger className="w-[180px] bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
@@ -359,7 +359,7 @@ export function EmployeesList({
             <div className="flex gap-3">
               <Button
                 variant="outline"
-                className="bg-[#2E343E] text-white border-0"
+                className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white border-0"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Export
@@ -385,7 +385,7 @@ export function EmployeesList({
               <div>
                 <Label>Two-Factor Status</Label>
                 <Select defaultValue="all">
-                  <SelectTrigger className="mt-2 bg-black/5 border-0">
+                  <SelectTrigger className="mt-2 bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                     <SelectValue placeholder="2FA Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -398,8 +398,8 @@ export function EmployeesList({
               <div>
                 <Label>Data e shtimit</Label>
                 <Select defaultValue="any">
-                  <SelectTrigger className="mt-2 bg-black/5 border-0">
-                    <SelectValue placeholder="Data e shtimit" />
+                  <SelectTrigger className="mt-2 bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
+                    <SelectValue placeholder="Date Added" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="any">Gjitha</SelectItem>
@@ -413,8 +413,8 @@ export function EmployeesList({
               <div>
                 <Label>Data e fundit e aktivitetit</Label>
                 <Select defaultValue="any">
-                  <SelectTrigger className="mt-2 bg-black/5 border-0">
-                    <SelectValue placeholder="Data e fundit e aktivitetit" />
+                  <SelectTrigger className="mt-2 bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
+                    <SelectValue placeholder="Last Active" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="any">Gjitha</SelectItem>
@@ -429,11 +429,15 @@ export function EmployeesList({
               </div>
             </div>
             <div className="flex justify-end mt-4">
-              <Button variant="outline" size="sm" className="mr-2 bg-black/10">
-                Reseto Filterat
+              <Button
+                variant="outline"
+                size="sm"
+                className="mr-2 bg-[#E0F2FE] border-0"
+              >
+                Reset Filters
               </Button>
-              <Button size="sm" className="bg-[#2E343E] text-white border-0">
-                Apliko Filterat
+              <Button size="sm" className="bg-[#0073e6] text-white border-0">
+                Apply Filters
               </Button>
             </div>
           </CardContent>
@@ -442,16 +446,16 @@ export function EmployeesList({
 
       <div className="flex space-x-4 border-b">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className=" bg-[#2E343E] bg-opacity-10 items-center">
+          <TabsList className=" bg-[#E0F2FE]  items-center">
             <TabsTrigger
               value="active"
-              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+              className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
               Aktive ({getTabCount("active")})
             </TabsTrigger>
             <TabsTrigger
               value="pending"
-              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+              className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
               Në pritje ({getTabCount("pending")})
             </TabsTrigger>
@@ -606,7 +610,7 @@ export function EmployeesList({
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
-                              className="hover:bg-black/10 border-0"
+                              className="hover:bg-[#E0F2FE] border-0"
                               variant="outline"
                               size="sm"
                               onClick={() => onEmployeeSelect(employee.id)}

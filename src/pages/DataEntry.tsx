@@ -98,16 +98,16 @@ export function DataEntry({}: DataEntryModuleProps) {
           </p>
         </div>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <TabsList className="bg-[#2E343E] bg-opacity-10 items-center ">
+          <TabsList className="bg-[#E0F2FE]  items-center ">
             <TabsTrigger
               value="entry"
-              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+              className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
               Data Entry
             </TabsTrigger>
             <TabsTrigger
               value="history"
-              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+              className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
               Submission History
             </TabsTrigger>
@@ -122,7 +122,7 @@ export function DataEntry({}: DataEntryModuleProps) {
 
         <TabsContent value="history">
           <Card className="drop-shadow-sm shadow-gray-50 border-0">
-            <CardContent className="p-4 space-y-4">
+            <CardContent className=" space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <Select
                   value={entityType}
@@ -131,7 +131,7 @@ export function DataEntry({}: DataEntryModuleProps) {
                     setSelectedEntityId("");
                   }}
                 >
-                  <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectTrigger className="w-full sm:w-[200px] border border-gray-100 bg-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                     <SelectValue placeholder="Entity Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -145,7 +145,7 @@ export function DataEntry({}: DataEntryModuleProps) {
                     value={selectedEntityId}
                     onValueChange={setSelectedEntityId}
                   >
-                    <SelectTrigger className="w-full sm:w-[260px]">
+                    <SelectTrigger className="w-full sm:w-[260px] border border-gray-100 bg-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                       <SelectValue placeholder="Select a project" />
                     </SelectTrigger>
                     <SelectContent>
@@ -161,7 +161,7 @@ export function DataEntry({}: DataEntryModuleProps) {
                     value={selectedEntityId}
                     onValueChange={setSelectedEntityId}
                   >
-                    <SelectTrigger className="w-full sm:w-[260px]">
+                    <SelectTrigger className="w-full sm:w-[260px] border border-gray-100 bg-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]   ">
                       <SelectValue placeholder="Select a subproject" />
                     </SelectTrigger>
                     <SelectContent>

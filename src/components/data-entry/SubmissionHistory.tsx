@@ -217,7 +217,7 @@ export function SubmissionHistory({
         <Button
           variant="outline"
           size="sm"
-          className="bg-black text-white"
+          className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-black"
           onClick={onBack}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
@@ -235,14 +235,14 @@ export function SubmissionHistory({
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by form, submitter, beneficiary..."
-            className="pl-9 bg-black/5 border-0"
+            className="pl-9 border-gray-100 bg-white border"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <Select value={templateFilter} onValueChange={setTemplateFilter}>
-            <SelectTrigger className="w-full bg-black/5 border-0 sm:w-[220px]">
+            <SelectTrigger className="w-full bg-white border-gray-100 border sm:w-[220px] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
               <Filter className="h-4 w-4 mr-2 " />
               <SelectValue placeholder="Template" />
             </SelectTrigger>
@@ -264,7 +264,7 @@ export function SubmissionHistory({
                 setPage(1);
                 setFromDate(e.target.value);
               }}
-              className="w-[160px] bg-black/5 border-0"
+              className="w-[160px] border-gray-100 bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
               placeholder="From"
             />
             <Input
@@ -274,7 +274,7 @@ export function SubmissionHistory({
                 setPage(1);
                 setToDate(e.target.value);
               }}
-              className="w-[160px] bg-black/5 border-0"
+              className="w-[160px] border-gray-100 bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
               placeholder="To"
             />
           </div>
@@ -286,7 +286,7 @@ export function SubmissionHistory({
               setLimit(Number(v));
             }}
           >
-            <SelectTrigger className="w-full sm:w-[120px] bg-black/5 border-0">
+            <SelectTrigger className="w-full sm:w-[120px] border-gray-100 bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
               <SelectValue placeholder="Page size" />
             </SelectTrigger>
             <SelectContent>
@@ -298,7 +298,7 @@ export function SubmissionHistory({
             </SelectContent>
           </Select>
           <Button
-            className="bg-black/5 hover:bg-black/10"
+            className="bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] "
             variant="ghost"
             onClick={() => {
               setTemplateFilter("all");
@@ -388,14 +388,14 @@ export function SubmissionHistory({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 hover:bg-black/5"
+                            className="h-8 w-8 p-0 hover:bg-[#E0F2FE]"
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleView(r.id)}>
-                            <Eye className="h-4 w-4 mr-2 hover:bg-black/5" />{" "}
+                            <Eye className="h-4 w-4 mr-2 hover:bg-[#E0F2FE]" />{" "}
                             View
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -422,10 +422,12 @@ export function SubmissionHistory({
             <div className="py-3">
               <Pager>
                 <PaginationContent>
-                  <PaginationItem className="hover:bg-black/5">
+                  <PaginationItem className="hover:bg-[#E0F2FE] rounded-lg">
                     <PaginationPrevious
                       className={
-                        !canPrev ? "pointer-events-none opacity-50" : ""
+                        !canPrev
+                          ? "pointer-events-none opacity-50 text-black"
+                          : ""
                       }
                       onClick={(e) => {
                         e.preventDefault();
@@ -441,6 +443,7 @@ export function SubmissionHistory({
                       return (
                         <PaginationItem key={p}>
                           <PaginationLink
+                            className="hover:bg-[#E0F2FE]"
                             href="#"
                             isActive={p === currentPage}
                             onClick={(e) => {
@@ -453,7 +456,7 @@ export function SubmissionHistory({
                         </PaginationItem>
                       );
                     })}
-                  <PaginationItem>
+                  <PaginationItem className="hover:bg-[#E0F2FE] rounded-lg">
                     <PaginationNext
                       className={
                         !canNext ? "pointer-events-none opacity-50" : ""

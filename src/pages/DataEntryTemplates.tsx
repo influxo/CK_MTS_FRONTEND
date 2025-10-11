@@ -221,6 +221,7 @@ export function DataEntryTemplates() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Button
+          className="hover:bg-[#E0F2FE] border-0"
           variant="outline"
           size="sm"
           onClick={() =>
@@ -290,7 +291,7 @@ export function DataEntryTemplates() {
                           <TableCell>
                             <div className="flex gap-2 justify-end">
                               <Button
-                                className="hover:bg-black/10 border-0"
+                                className="hover:bg-[#E0F2FE] border-0"
                                 size="sm"
                                 variant={
                                   selectedTemplateId === tpl.id
@@ -335,7 +336,7 @@ export function DataEntryTemplates() {
                           size="sm"
                           onClick={() => setPage((p) => Math.max(1, p - 1))}
                           disabled={loading || (pagination?.page || 1) <= 1}
-                          className="bg-white"
+                          className="bg-[#E0F2FE]"
                         >
                           Prev
                         </Button>
@@ -349,7 +350,7 @@ export function DataEntryTemplates() {
                             (pagination?.page || 1) >=
                               (pagination?.totalPages || 1)
                           }
-                          className="bg-white"
+                          className="bg-[#E0F2FE]"
                         >
                           Next
                         </Button>
@@ -362,7 +363,7 @@ export function DataEntryTemplates() {
                                 size="sm"
                                 className={
                                   tok === (pagination?.page || 1)
-                                    ? "bg-[#2E343E] text-white border-0"
+                                    ? "bg-[#0073e6] text-white border-0"
                                     : "bg-white"
                                 }
                                 onClick={() =>
@@ -396,7 +397,7 @@ export function DataEntryTemplates() {
                             setPage(1);
                           }}
                         >
-                          <SelectTrigger className="w-[120px] bg-black/5 border-0 text-black">
+                          <SelectTrigger className="w-[120px] bg-[#E0F2FE] border-0 text-black">
                             <SelectValue placeholder="Rows" />
                           </SelectTrigger>
                           <SelectContent>

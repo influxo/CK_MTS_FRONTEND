@@ -404,7 +404,12 @@ export function InviteEmployee({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={onBack}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="hover:bg-[#E0F2FE] border-0"
+            onClick={onBack}
+          >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Kthehu
           </Button>
@@ -425,7 +430,7 @@ export function InviteEmployee({
                 <div className="space-y-2">
                   <Label htmlFor="firstName">Emri</Label>
                   <Input
-                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                    className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                     id="firstName"
                     name="firstName"
                     placeholder="Shkruaj Emrin"
@@ -437,7 +442,7 @@ export function InviteEmployee({
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Mbiemri</Label>
                   <Input
-                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                    className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                     id="lastName"
                     name="lastName"
                     placeholder="Shkruaj Mbiemrin"
@@ -451,7 +456,7 @@ export function InviteEmployee({
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
-                  className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                  className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                   id="email"
                   name="email"
                   type="email"
@@ -468,7 +473,10 @@ export function InviteEmployee({
                   value={inviteData.role}
                   onValueChange={handleRoleChange}
                 >
-                  <SelectTrigger disabled={rolesLoading || !!rolesError}>
+                  <SelectTrigger
+                    className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                    disabled={rolesLoading || !!rolesError}
+                  >
                     <SelectValue
                       placeholder={
                         rolesLoading
@@ -514,7 +522,7 @@ export function InviteEmployee({
               <div className="space-y-2">
                 <Label htmlFor="message">Mesazhi personal</Label>
                 <Textarea
-                  className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                  className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                   id="message"
                   name="message"
                   placeholder="Shtoni një mesazh personal për emailin ftues"
@@ -607,7 +615,7 @@ export function InviteEmployee({
                   value={inviteData.expiration}
                   onValueChange={handleExpirationChange}
                 >
-                  <SelectTrigger className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  ">
+                  <SelectTrigger className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  ">
                     <SelectValue placeholder="Select expiration period" />
                   </SelectTrigger>
                   <SelectContent>
@@ -621,8 +629,18 @@ export function InviteEmployee({
 
               <div className="flex justify-between">
                 <Button
+                  className="bg-[#E0F2FE]  border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+                  type="button"
+                  variant="outline"
+                  onClick={onBack}
+                  disabled={isLoading}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Khtehuni
+                </Button>
+                <Button
                   type="submit"
-                  className="w-full"
+                  className="w-2/2 bg-[#0073e6] text-white"
                   disabled={isLoading || !isFormValid}
                 >
                   {isLoading ? (
@@ -685,7 +703,7 @@ export function InviteEmployee({
                   <Button
                     type="button"
                     size="sm"
-                    className="w-full bg-[#2E343E] text-white"
+                    className="w-full bg-[#0073e6] text-white"
                   >
                     Prano ftesën
                   </Button>

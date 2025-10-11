@@ -264,7 +264,11 @@ export function FormsList({
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => setProjectFilter("all")}>
+          <Button
+            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-black"
+            variant="outline"
+            onClick={() => setProjectFilter("all")}
+          >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
             Advanced Filters
           </Button>
@@ -273,7 +277,7 @@ export function FormsList({
             <Dialog open={isCreateFormOpen} onOpenChange={setIsCreateFormOpen}>
               <Button
                 onClick={() => handleCreateClick()}
-                className="bg-black text-white"
+                className="bg-[#0073e6] text-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Create Form
@@ -702,6 +706,13 @@ export function FormsList({
                           ? "outline"
                           : "secondary"
                       }
+                      className={
+                        template.status === "active"
+                          ? "bg-[#DEF8EE] text-[#4AA785] border-0"
+                          : template.status === "inactive"
+                          ? "bg-black/10 text-black/40 border-0"
+                          : undefined
+                      }
                     >
                       {template.status}
                     </Badge>
@@ -727,7 +738,7 @@ export function FormsList({
                     <div className="flex justify-end gap-2">
                       <Button
                         variant="outline"
-                        className="hover:bg-black/10 border-0"
+                        className="hover:bg-[#E0F2FE] border-0"
                         size="sm"
                         onClick={() => handleEditClick(template.id)}
                       >
@@ -739,7 +750,7 @@ export function FormsList({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 hover:bg-black/10"
+                            className="h-8 w-8 p-0 hover:bg-[#E0F2FE]"
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
@@ -803,7 +814,7 @@ export function FormsList({
                         size="sm"
                         className={
                           tok === page
-                            ? "bg-[#2E343E] text-white border-0"
+                            ? "bg-[#0073e6] text-white border-0"
                             : "bg-white"
                         }
                         onClick={() => tok !== page && goToPage(tok)}
@@ -876,11 +887,19 @@ export function FormsList({
           Showing {displayedTemplates.length} of {totalCount} forms
         </div>
         <div className="space-x-2">
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-[#E0F2FE] border-0 text-black"
+          >
             <HelpCircle className="h-4 w-4 mr-2" />
             Form Templates
           </Button>
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-[#E0F2FE] border-0 text-black"
+          >
             <FileJson className="h-4 w-4 mr-2" />
             Import JSON
           </Button>

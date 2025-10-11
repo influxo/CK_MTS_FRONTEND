@@ -329,7 +329,7 @@ export function ReportsList({
         <div className="flex gap-3">
           <Button
             variant="outline"
-            className="bg-black/5 text-black border-0"
+            className="bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-black border-0"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
@@ -341,7 +341,7 @@ export function ReportsList({
             onOpenChange={setIsNewReportDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button className="bg-[#2E343E] text-white">
+              <Button className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Generate Report
               </Button>
@@ -412,7 +412,7 @@ export function ReportsList({
                       onValueChange={setNewReportScope}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select project" />
+                        <SelectValue placeholder="Select project bg-[#E0F2FE]" />
                       </SelectTrigger>
                       <SelectContent>
                         {mockProjects.map((project) => (
@@ -475,12 +475,14 @@ export function ReportsList({
               </div>
               <DialogFooter>
                 <Button
+                  className="bg-[#E0F2FE] border-0"
                   variant="outline"
                   onClick={() => setIsNewReportDialogOpen(false)}
                 >
                   Cancel
                 </Button>
                 <Button
+                  className="bg-[#0073e6] border-0 text-white"
                   onClick={handleCreateReport}
                   disabled={
                     !newReportName ||
@@ -503,14 +505,14 @@ export function ReportsList({
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search reports..."
-              className="pl-9 bg-black/5 text-black border-0"
+              className="pl-9 bg-white border-gray-100 text-black border"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex gap-3">
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[150px] bg-black/5 text-black border-0">
+              <SelectTrigger className="w-[150px] bg-white border-gray-100 text-black border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
@@ -523,7 +525,7 @@ export function ReportsList({
               </SelectContent>
             </Select>
             <Select value={levelFilter} onValueChange={setLevelFilter}>
-              <SelectTrigger className="w-[150px] bg-black/5 text-black border-0">
+              <SelectTrigger className="w-[150px] bg-white border-gray-100 text-black border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Level" />
               </SelectTrigger>
@@ -536,7 +538,7 @@ export function ReportsList({
             </Select>
             <Button
               variant="outline"
-              className="bg-[#2E343E] text-white border-0"
+              className="bg-[#0073e6] text-white border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
             >
               <FileDown className="h-4 w-4 mr-2" />
               Export List
@@ -556,16 +558,16 @@ export function ReportsList({
             onValueChange={setActiveTab}
             className="w-[220px]"
           >
-            <TabsList className="grid w-full grid-cols-2 bg-black/5">
+            <TabsList className="grid w-full grid-cols-2 bg-[#E0F2FE]">
               <TabsTrigger
                 value="saved-reports"
-                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+                className="data-[state=active]:bg-[#0073e6] data-[state=active]:text-white"
               >
                 Saved
               </TabsTrigger>
               <TabsTrigger
                 value="templates"
-                className="data-[state=active]:bg-[#2E343E] data-[state=active]:text-white"
+                className="data-[state=active]:bg-[#0073e6] data-[state=active]:text-white"
               >
                 Templates
               </TabsTrigger>
@@ -581,7 +583,7 @@ export function ReportsList({
               <div>
                 <Label>Created By</Label>
                 <Select>
-                  <SelectTrigger className="mt-2 bg-black/5 text-black border-0">
+                  <SelectTrigger className="mt-2   border border-gray-100 ">
                     <SelectValue placeholder="All users" />
                   </SelectTrigger>
                   <SelectContent>
@@ -598,7 +600,7 @@ export function ReportsList({
               <div>
                 <Label>Date Created</Label>
                 <Select>
-                  <SelectTrigger className="mt-2 bg-black/5 text-black border-0">
+                  <SelectTrigger className="mt-2  text-black border  border-gray-100">
                     <SelectValue placeholder="Any time" />
                   </SelectTrigger>
                   <SelectContent>
@@ -613,7 +615,7 @@ export function ReportsList({
               <div>
                 <Label>Status</Label>
                 <Select>
-                  <SelectTrigger className="mt-2 bg-black/5 text-black border-0">
+                  <SelectTrigger className="mt-2  text-black border  border-gray-100">
                     <SelectValue placeholder="Any status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -626,10 +628,14 @@ export function ReportsList({
               </div>
             </div>
             <div className="flex justify-end mt-4">
-              <Button variant="outline" size="sm" className="mr-2 bg-black/10">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mr-2 bg-[#E0F2FE] border-0"
+              >
                 Reset Filters
               </Button>
-              <Button size="sm" className="bg-[#2E343E] text-white">
+              <Button size="sm" className="bg-[#0073e6] text-white">
                 Apply Filters
               </Button>
             </div>
@@ -758,7 +764,10 @@ export function ReportsList({
               <p className="text-muted-foreground mb-4">
                 Try adjusting your filters or create a new report.
               </p>
-              <Button onClick={() => setIsNewReportDialogOpen(true)}>
+              <Button
+                className="bg-[#0073e6] text-white"
+                onClick={() => setIsNewReportDialogOpen(true)}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Generate Report
               </Button>
@@ -834,7 +843,7 @@ export function ReportsList({
                 </CardContent>
                 <div className="px-6 py-4 bg-muted/50 flex justify-end">
                   <Button
-                    className="bg-black/10 border-0"
+                    className="bg-[#E0F2FE] border-0"
                     onClick={() => {
                       setNewReportType(template.type);
                       setIsNewReportDialogOpen(true);
@@ -855,7 +864,7 @@ export function ReportsList({
               <p className="text-sm text-muted-foreground text-center mb-3">
                 Design a custom report template for future use
               </p>
-              <Button className="bg-black/10 border-0">Create Template</Button>
+              <Button className="bg-[#E0F2FE] border-0">Create Template</Button>
             </Card>
           </div>
         </TabsContent>
@@ -874,11 +883,15 @@ export function ReportsList({
           )}
         </div>
         <div className="space-x-2">
-          <Button variant="outline" size="sm" className="bg-black/10 border-0">
+          <Button variant="outline" size="sm" className="bg-[#E0F2FE] border-0">
             <Calendar className="h-4 w-4 mr-2" />
             Scheduled Reports
           </Button>
-          <Button variant="outline" size="sm" className="bg-black/10  border-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-[#E0F2FE]  border-0"
+          >
             <UserCircle className="h-4 w-4 mr-2" />
             Manage Recipients
           </Button>
