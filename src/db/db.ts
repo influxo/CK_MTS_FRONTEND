@@ -109,12 +109,66 @@ export interface OfflineFormSubmission extends OfflineEntity {
 }
 
 /**
+ * Offline Service entity
+ */
+export interface OfflineService extends OfflineEntity {
+    name: string;
+    description?: string;
+    category?: string;
+    status: 'active' | 'inactive';
+    createdAt: string;
+}
+
+/**
+ * Offline User entity
+ */
+export interface OfflineUser extends OfflineEntity {
+    username: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    status: string;
+    createdAt: string;
+}
+
+/**
+ * Offline Project User Assignment
+ */
+export interface OfflineProjectUser extends OfflineEntity {
+    projectId: string;
+    userId: string;
+    role?: string;
+    assignedAt: string;
+}
+
+/**
+ * Offline Subproject User Assignment
+ */
+export interface OfflineSubprojectUser extends OfflineEntity {
+    subprojectId: string;
+    userId: string;
+    role?: string;
+    assignedAt: string;
+}
+
+/**
+ * Offline Entity Service Assignment
+ */
+export interface OfflineEntityService extends OfflineEntity {
+    serviceId: string;
+    entityId: string;
+    entityType: 'project' | 'subproject' | 'activity';
+    assignedAt: string;
+}
+
+/**
  * Pending mutation entry
  * Tracks operations that need to be synced to the server
  */
 export interface PendingMutation {
     id: string; // Unique mutation ID
-    entityType: 'project' | 'activity' | 'beneficiary' | 'subproject' | 'formTemplate' | 'formSubmission';
+    entityType: 'project' | 'activity' | 'beneficiary' | 'subproject' | 'formTemplate' | 'formSubmission' | 'service' | 'user' | 'projectUser' | 'subprojectUser' | 'entityService';
     entityId: string; // ID of the entity being modified
     operation: 'create' | 'update' | 'delete';
     data: any; // The data to send to the server
@@ -159,6 +213,11 @@ class OfflineDB extends Dexie {
     subprojects!: Table<OfflineSubproject, string>;
     formTemplates!: Table<OfflineFormTemplate, string>;
     formSubmissions!: Table<OfflineFormSubmission, string>;
+    services!: Table<OfflineService, string>;
+    users!: Table<OfflineUser, string>;
+    projectUsers!: Table<OfflineProjectUser, string>;
+    subprojectUsers!: Table<OfflineSubprojectUser, string>;
+    entityServices!: Table<OfflineEntityService, string>;
     pendingMutations!: Table<PendingMutation, string>;
     syncMetadata!: Table<SyncMetadata, string>;
 
@@ -188,6 +247,23 @@ class OfflineDB extends Dexie {
             pendingMutations: 'id, entityType, entityId, operation, createdAt',
             syncMetadata: 'entityType, lastSyncedAt',
         });
+
+        // Version 3: Add services, users, and assignments
+        this.version(3).stores({
+            projects: 'id, updatedAt, synced, status',
+            activities: 'id, subprojectId, updatedAt, synced, status',
+            beneficiaries: 'id, projectId, updatedAt, synced',
+            subprojects: 'id, projectId, updatedAt, synced, status',
+            formTemplates: 'id, updatedAt, synced, status, projectId, subprojectId, activityId',
+            formSubmissions: 'id, templateId, entityId, entityType, updatedAt, synced, submittedAt',
+            services: 'id, updatedAt, synced, status',
+            users: 'id, updatedAt, synced, email, username',
+            projectUsers: 'id, projectId, userId, updatedAt, synced',
+            subprojectUsers: 'id, subprojectId, userId, updatedAt, synced',
+            entityServices: 'id, serviceId, entityId, entityType, updatedAt, synced',
+            pendingMutations: 'id, entityType, entityId, operation, createdAt',
+            syncMetadata: 'entityType, lastSyncedAt',
+        });
     }
 
     /**
@@ -197,7 +273,7 @@ class OfflineDB extends Dexie {
     async clearAllData() {
         await this.transaction(
             'rw',
-            [this.projects, this.activities, this.beneficiaries, this.subprojects, this.formTemplates, this.formSubmissions, this.pendingMutations, this.syncMetadata],
+            [this.projects, this.activities, this.beneficiaries, this.subprojects, this.formTemplates, this.formSubmissions, this.services, this.users, this.projectUsers, this.subprojectUsers, this.entityServices, this.pendingMutations, this.syncMetadata],
             async () => {
                 await this.projects.clear();
                 await this.activities.clear();
@@ -205,6 +281,11 @@ class OfflineDB extends Dexie {
                 await this.subprojects.clear();
                 await this.formTemplates.clear();
                 await this.formSubmissions.clear();
+                await this.services.clear();
+                await this.users.clear();
+                await this.projectUsers.clear();
+                await this.subprojectUsers.clear();
+                await this.entityServices.clear();
                 await this.pendingMutations.clear();
                 await this.syncMetadata.clear();
             }
@@ -240,6 +321,11 @@ class OfflineDB extends Dexie {
             this.subprojects,
             this.formTemplates,
             this.formSubmissions,
+            this.services,
+            this.users,
+            this.projectUsers,
+            this.subprojectUsers,
+            this.entityServices,
         ];
 
         for (const table of tables) {
