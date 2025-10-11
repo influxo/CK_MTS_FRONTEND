@@ -3,7 +3,8 @@ import type { ReactNode } from 'react';
 import { Provider } from 'react-redux';
 import store from '../store';
 import authService from '../services/auth/authService';
-import { fetchUserProfile } from '../store/slices/authSlice';
+import { fetchUserProfile, setCredentials } from '../store/slices/authSlice';
+import { getLastCachedAuth } from '../services/auth/offlineAuthService';
 
 interface ReduxProviderProps {
   children: ReactNode;
@@ -19,13 +20,36 @@ export const ReduxProvider = ({ children }: ReduxProviderProps) => {
       try {
         // Set auth header if token exists
         authService.initializeAuth();
-        
-        // If authenticated, fetch the user profile
+
+        // Helper: hydrate from cached auth (offline reload)
+        const hydrateFromCache = async () => {
+          const cached = await getLastCachedAuth();
+          if (cached?.token && cached?.userData) {
+            // Ensure axios has the token and Redux has the user
+            localStorage.setItem('token', cached.token);
+            try {
+              const uid = (cached.userData as any)?.id || (cached.userData as any)?._id;
+              if (uid) localStorage.setItem('userId', String(uid));
+            } catch {}
+            authService.setAuthHeader(cached.token);
+            store.dispatch(setCredentials({ user: cached.userData as any, token: cached.token }));
+          }
+        };
+
+        // If authenticated, try to fetch profile; on failure, use cache
         if (authService.isAuthenticated()) {
-          await store.dispatch(fetchUserProfile());
+          const action: any = await store.dispatch(fetchUserProfile());
+          if (!action || typeof action.type !== 'string' || action.type.endsWith('/rejected')) {
+            await hydrateFromCache();
+          }
+        } else {
+          // No token in storage, attempt offline hydration
+          await hydrateFromCache();
         }
       } catch (error) {
         console.error('Failed to initialize authentication:', error);
+        // As a last resort, try to hydrate from cache
+        try { await (async () => { const c = await getLastCachedAuth(); if (c?.token && c?.userData) { localStorage.setItem('token', c.token); authService.setAuthHeader(c.token); store.dispatch(setCredentials({ user: c.userData as any, token: c.token })); } })(); } catch {}
       }
     };
     

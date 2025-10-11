@@ -356,7 +356,8 @@ class OfflineFirstDataService {
             entityId: tempId,
             operation: 'create',
             data,
-            endpoint: '/forms/responses',
+            // Use the same endpoint shape as online submission service
+            endpoint: `/forms/templates/${data.templateId}/responses`,
             method: 'POST',
         });
 
