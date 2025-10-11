@@ -43,6 +43,8 @@ import {
   flushQueue,
   peekQueue,
 } from "../../utils/offlineQueue";
+import { offlineDataService } from "../../services/offline/offlineDataService";
+import { useOfflineStatus } from "../../hooks/useOfflineStatus";
 
 interface DynamicFormSubmissionProps {
   template?: FormTemplate;
@@ -399,29 +401,38 @@ export function FormSubmission({
           ...(servicesPayload.length > 0 ? { services: servicesPayload } : {}),
         };
 
-        if (!isOnline) {
-          enqueueSubmission(template.id, payload);
-          setQueueCount(peekQueue().length);
-          setLocalNotice(
-            "Submission saved offline. It will sync automatically when you're back online."
-          );
-          onSubmissionComplete();
-          return;
-        }
-
+        // Use offline data service for submission
+        // It automatically handles online/offline and queuing
         try {
-          await (
-            dispatch(
-              submitFormResponse({ templateId: template.id, payload })
-            ) as any
-          ).unwrap();
+          await offlineDataService.submitFormResponse({
+            templateId: template.id,
+            entityId,
+            entityType,
+            data: {
+              ...restFormData,
+              ...(selectedBeneficiaryId
+                ? { beneficiaryId: selectedBeneficiaryId }
+                : {}),
+              latitude: coords.lat,
+              longitude: coords.lng,
+              ...(servicesPayload.length > 0 ? { services: servicesPayload } : {}),
+            },
+          });
+
+          if (!isOnline) {
+            setLocalNotice(
+              "Submission saved offline. It will sync automatically when you're back online."
+            );
+          }
+          
           onSubmissionComplete();
-        } catch (e) {
-          // On failure (likely network), save offline
+        } catch (e: any) {
+          // If offline data service fails, fall back to legacy queue
+          console.warn("Offline data service failed, using legacy queue:", e);
           enqueueSubmission(template.id, payload);
           setQueueCount(peekQueue().length);
           setLocalNotice(
-            "Network issue detected. Submission saved offline and will auto-sync."
+            "Submission saved offline and will auto-sync when online."
           );
           onSubmissionComplete();
         }

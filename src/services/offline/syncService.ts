@@ -375,6 +375,33 @@ class SyncService {
                 status: 'idle',
             });
 
+            // Fetch form templates
+            try {
+                const templatesResponse = await axiosInstance.get<{ success: boolean; data: any[] }>('/forms/templates');
+
+                if (templatesResponse.data.success && templatesResponse.data.data) {
+                    const templates = templatesResponse.data.data;
+
+                    for (const template of templates) {
+                        await db.formTemplates.put({
+                            ...template,
+                            synced: true,
+                            _localUpdatedAt: new Date().toISOString(),
+                        });
+                    }
+
+                    console.log(` Cached ${templates.length} form templates`);
+                }
+
+                await db.syncMetadata.put({
+                    entityType: 'formTemplates',
+                    lastSyncedAt: new Date().toISOString(),
+                    status: 'idle',
+                });
+            } catch (error) {
+                console.warn('Failed to sync form templates:', error);
+            }
+
             // Note: Activities are typically loaded per subproject, so we don't fetch all activities here
             // The app should call syncActivitiesForSubproject(subprojectId) when viewing a subproject
 
@@ -478,6 +505,12 @@ class SyncService {
             case 'subproject':
                 table = db.subprojects;
                 break;
+            case 'formTemplate':
+                table = db.formTemplates;
+                break;
+            case 'formSubmission':
+                table = db.formSubmissions;
+                break;
             default:
                 console.warn(`Unknown entity type: ${entityType}`);
                 return;
@@ -503,12 +536,14 @@ class SyncService {
      * Clear synced data (keep pending mutations)
      */
     private async clearSyncedData(): Promise<void> {
-        await db.transaction('rw', [db.projects, db.activities, db.beneficiaries, db.subprojects], async () => {
+        await db.transaction('rw', [db.projects, db.activities, db.beneficiaries, db.subprojects, db.formTemplates, db.formSubmissions], async () => {
             // Only delete synced records
             await db.projects.filter(p => p.synced === true).delete();
             await db.activities.filter(a => a.synced === true).delete();
             await db.beneficiaries.filter(b => b.synced === true).delete();
             await db.subprojects.filter(s => s.synced === true).delete();
+            await db.formTemplates.filter(t => t.synced === true).delete();
+            await db.formSubmissions.filter(s => s.synced === true).delete();
         });
     }
 

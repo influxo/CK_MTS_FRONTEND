@@ -81,7 +81,17 @@ const Login = () => {
     setIsSubmitting(true);
 
     try {
-      await login(formData);
+      const success = await login(formData);
+
+      if (success) {
+        // Start prefetching data for offline use (non-blocking)
+        import('../../services/offline/dataPrefetchService').then(({ dataPrefetchService }) => {
+          dataPrefetchService.prefetchAllData().catch(err => {
+            console.warn('Failed to prefetch data:', err);
+          });
+        });
+      }
+
       // Navigation is handled in the useEffect
     } catch (err) {
       console.error("Login error:", err);

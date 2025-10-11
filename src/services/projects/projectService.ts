@@ -11,6 +11,8 @@ import type {
   RemoveUserFromProjectResponse,
 } from "./projectModels";
 import { toast } from "sonner";
+import { db } from "../../db/db";
+import { syncService } from "../offline/syncService";
 
 class ProjectService {
   private baseUrl = getApiUrl();
@@ -44,9 +46,50 @@ class ProjectService {
         `${this.projectEndpoint}`
       );
       console.log('Projects API Response:', response.data);
+
+      // Cache projects in IndexedDB for offline use
+      if (response.data.success && response.data.data) {
+        try {
+          for (const project of response.data.data) {
+            await db.projects.put({
+              ...project,
+              synced: true,
+              _localUpdatedAt: new Date().toISOString(),
+            });
+          }
+          console.log('✅ Cached', response.data.data.length, 'projects for offline use');
+        } catch (cacheError) {
+          console.warn('Failed to cache projects:', cacheError);
+        }
+      }
+
       return response.data;
     } catch (error: any) {
       console.error('Projects API Error:', error);
+
+      // Check if we're offline or have network error
+      const isNetworkError = !error.response || error.code === 'ERR_NETWORK';
+
+      if (isNetworkError || !syncService.isOnline()) {
+        // Try to return cached data
+        console.log('📱 Network error - loading cached projects');
+        try {
+          const cachedProjects = await db.projects.toArray();
+          const projects = cachedProjects.map(({ synced, _localUpdatedAt, ...project }) => project);
+
+          if (projects.length > 0) {
+            console.log('✅ Loaded', projects.length, 'cached projects');
+            return {
+              success: true,
+              data: projects,
+              message: 'Loaded from cache (offline)',
+            };
+          }
+        } catch (cacheError) {
+          console.error('Failed to load cache:', cacheError);
+        }
+      }
+
       if (error.response) {
         console.error('Error response:', error.response.data);
         return error.response.data as GetProjectsResponse;

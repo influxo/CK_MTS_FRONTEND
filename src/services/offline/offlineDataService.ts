@@ -27,6 +27,34 @@ import axiosInstance from '../axiosInstance';
 import type { Project, CreateProjectRequest } from '../projects/projectModels';
 import type { Activity, CreateSubprojectActivityRequest } from '../activities/activityModels';
 
+// Form types
+interface FormTemplate {
+    id: string;
+    name: string;
+    description?: string;
+    fields: any[];
+    status: 'active' | 'inactive';
+    entityType?: string;
+    projectId?: string;
+    subprojectId?: string;
+    activityId?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface FormSubmission {
+    id: string;
+    templateId: string;
+    entityId: string;
+    entityType: string;
+    data: Record<string, any>;
+    submittedBy: string;
+    submittedAt: string;
+    beneficiaryId?: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 // ===========================
 // Offline Data Service Class
 // ===========================
@@ -506,6 +534,318 @@ class OfflineDataService {
     }
 
     // ===========================
+    // Form Templates
+    // ===========================
+
+    /**
+     * Get all form templates
+     * Online: Fetches from API and caches
+     * Offline: Returns cached templates
+     */
+    async getFormTemplates(): Promise<FormTemplate[]> {
+        const isOnline = syncService.isOnline();
+
+        if (isOnline) {
+            try {
+                const response = await axiosInstance.get<{ success: boolean; data: FormTemplate[] }>('/forms/templates');
+
+                if (response.data.success && response.data.data) {
+                    const templates = response.data.data;
+
+                    // Cache in IndexedDB
+                    for (const template of templates) {
+                        await db.formTemplates.put({
+                            ...template,
+                            synced: true,
+                            _localUpdatedAt: new Date().toISOString(),
+                        });
+                    }
+
+                    return templates;
+                }
+
+                return [];
+            } catch (error: any) {
+                const isNetworkError = !error.response || error.code === 'ERR_NETWORK';
+
+                if (isNetworkError) {
+                    console.log('📱 Network error, using cached form templates');
+                    const cachedTemplates = await db.formTemplates.toArray();
+                    return cachedTemplates.map(this.stripOfflineFields);
+                }
+
+                throw error;
+            }
+        }
+
+        // Offline - use cache
+        console.log('📱 Offline mode - using cached form templates');
+        const cachedTemplates = await db.formTemplates.toArray();
+        return cachedTemplates.map(this.stripOfflineFields);
+    }
+
+    /**
+     * Get form template by ID
+     */
+    async getFormTemplate(id: string): Promise<FormTemplate | null> {
+        const isOnline = syncService.isOnline();
+
+        if (isOnline) {
+            try {
+                const response = await axiosInstance.get<{ success: boolean; data: FormTemplate }>(
+                    `/forms/templates/${id}`
+                );
+
+                if (response.data.success && response.data.data) {
+                    const template = response.data.data;
+
+                    await db.formTemplates.put({
+                        ...template,
+                        synced: true,
+                        _localUpdatedAt: new Date().toISOString(),
+                    });
+
+                    return template;
+                }
+
+                return null;
+            } catch (error) {
+                console.error('Failed to fetch form template from API, falling back to cache:', error);
+            }
+        }
+
+        // Offline or API failed - use cache
+        const cachedTemplate = await db.formTemplates.get(id);
+        return cachedTemplate ? this.stripOfflineFields(cachedTemplate) : null;
+    }
+
+    /**
+     * Get form templates by entity
+     */
+    async getFormTemplatesByEntity(params: {
+        projectId?: string;
+        subprojectId?: string;
+        activityId?: string;
+        entityType?: string;
+    }): Promise<FormTemplate[]> {
+        const isOnline = syncService.isOnline();
+
+        if (isOnline) {
+            try {
+                const response = await axiosInstance.get<{ success: boolean; data: FormTemplate[] }>(
+                    '/forms/templates',
+                    { params }
+                );
+
+                if (response.data.success && response.data.data) {
+                    const templates = response.data.data;
+
+                    for (const template of templates) {
+                        await db.formTemplates.put({
+                            ...template,
+                            synced: true,
+                            _localUpdatedAt: new Date().toISOString(),
+                        });
+                    }
+
+                    return templates;
+                }
+
+                return [];
+            } catch (error: any) {
+                const isNetworkError = !error.response || error.code === 'ERR_NETWORK';
+
+                if (isNetworkError) {
+                    console.log('📱 Network error, using cached form templates');
+                    // Filter locally
+                    let query = db.formTemplates.toCollection();
+                    
+                    if (params.projectId) {
+                        query = db.formTemplates.where('projectId').equals(params.projectId);
+                    } else if (params.subprojectId) {
+                        query = db.formTemplates.where('subprojectId').equals(params.subprojectId);
+                    } else if (params.activityId) {
+                        query = db.formTemplates.where('activityId').equals(params.activityId);
+                    }
+
+                    const cachedTemplates = await query.toArray();
+                    return cachedTemplates.map(this.stripOfflineFields);
+                }
+
+                throw error;
+            }
+        }
+
+        // Offline - filter locally
+        let query = db.formTemplates.toCollection();
+        
+        if (params.projectId) {
+            query = db.formTemplates.where('projectId').equals(params.projectId);
+        } else if (params.subprojectId) {
+            query = db.formTemplates.where('subprojectId').equals(params.subprojectId);
+        } else if (params.activityId) {
+            query = db.formTemplates.where('activityId').equals(params.activityId);
+        }
+
+        const cachedTemplates = await query.toArray();
+        return cachedTemplates.map(this.stripOfflineFields);
+    }
+
+    // ===========================
+    // Form Submissions
+    // ===========================
+
+    /**
+     * Submit a form response
+     * Online: Submits immediately via API
+     * Offline: Queues submission for later sync
+     */
+    async submitFormResponse(submissionData: {
+        templateId: string;
+        entityId: string;
+        entityType: string;
+        data: Record<string, any>;
+    }): Promise<FormSubmission> {
+        const isOnline = syncService.isOnline();
+
+        if (isOnline) {
+            try {
+                const response = await axiosInstance.post<{ success: boolean; data?: FormSubmission }>(
+                    '/forms/responses',
+                    submissionData
+                );
+
+                if (response.data.success && response.data.data) {
+                    const submission = response.data.data;
+
+                    // Cache in IndexedDB
+                    await db.formSubmissions.put({
+                        ...submission,
+                        synced: true,
+                        _localUpdatedAt: new Date().toISOString(),
+                    });
+
+                    return submission;
+                }
+
+                throw new Error('Failed to submit form');
+            } catch (error: any) {
+                console.error('Failed to submit form via API:', error);
+                throw error;
+            }
+        }
+
+        // Offline - create locally and queue
+        console.log('📱 Submitting form offline');
+
+        const tempId = `temp-${crypto?.randomUUID ? crypto.randomUUID() : Date.now()}`;
+        const now = new Date().toISOString();
+
+        // Get current user from localStorage or auth context
+        const currentUser = localStorage.getItem('userId') || 'unknown';
+
+        const newSubmission: FormSubmission = {
+            id: tempId,
+            ...submissionData,
+            submittedBy: currentUser,
+            submittedAt: now,
+            createdAt: now,
+            updatedAt: now,
+        };
+
+        // Store in local DB as unsynced
+        await db.formSubmissions.put({
+            ...newSubmission,
+            synced: false,
+            _localUpdatedAt: now,
+        });
+
+        // Queue mutation
+        await syncService.queueMutation({
+            entityType: 'formSubmission',
+            entityId: tempId,
+            operation: 'create',
+            data: submissionData,
+            endpoint: '/forms/responses',
+            method: 'POST',
+        });
+
+        return newSubmission;
+    }
+
+    /**
+     * Get form submissions for an entity
+     */
+    async getFormSubmissions(params: {
+        templateId?: string;
+        entityId?: string;
+        entityType?: string;
+    }): Promise<FormSubmission[]> {
+        const isOnline = syncService.isOnline();
+
+        if (isOnline) {
+            try {
+                const response = await axiosInstance.get<{ success: boolean; data: FormSubmission[] }>(
+                    '/forms/responses',
+                    { params }
+                );
+
+                if (response.data.success && response.data.data) {
+                    const submissions = response.data.data;
+
+                    for (const submission of submissions) {
+                        await db.formSubmissions.put({
+                            ...submission,
+                            synced: true,
+                            _localUpdatedAt: new Date().toISOString(),
+                        });
+                    }
+
+                    return submissions;
+                }
+
+                return [];
+            } catch (error: any) {
+                const isNetworkError = !error.response || error.code === 'ERR_NETWORK';
+
+                if (isNetworkError) {
+                    console.log('📱 Network error, using cached form submissions');
+                    return this.getLocalFormSubmissions(params);
+                }
+
+                throw error;
+            }
+        }
+
+        // Offline - use cache
+        console.log('📱 Offline mode - using cached form submissions');
+        return this.getLocalFormSubmissions(params);
+    }
+
+    /**
+     * Get form submissions from local cache with filters
+     */
+    private async getLocalFormSubmissions(params: {
+        templateId?: string;
+        entityId?: string;
+        entityType?: string;
+    }): Promise<FormSubmission[]> {
+        let submissions = await db.formSubmissions.toArray();
+
+        if (params.templateId) {
+            submissions = submissions.filter(s => s.templateId === params.templateId);
+        }
+        if (params.entityId) {
+            submissions = submissions.filter(s => s.entityId === params.entityId);
+        }
+        if (params.entityType) {
+            submissions = submissions.filter(s => s.entityType === params.entityType);
+        }
+
+        return submissions.map(this.stripOfflineFields);
+    }
+
+    // ===========================
     // Helper Methods
     // ===========================
 
@@ -546,17 +886,20 @@ class OfflineDataService {
     async getUnsyncedCount(): Promise<{
         projects: number;
         activities: number;
+        formSubmissions: number;
         total: number;
     }> {
-        const [projects, activities] = await Promise.all([
+        const [projects, activities, formSubmissions] = await Promise.all([
             db.projects.filter(p => p.synced === false).count(),
             db.activities.filter(a => a.synced === false).count(),
+            db.formSubmissions.filter(s => s.synced === false).count(),
         ]);
 
         return {
             projects,
             activities,
-            total: projects + activities,
+            formSubmissions,
+            total: projects + activities + formSubmissions,
         };
     }
 }
