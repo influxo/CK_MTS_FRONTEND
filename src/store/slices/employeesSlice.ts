@@ -7,6 +7,7 @@ import type {
   UpdateUserResponse,
   EmployeeProject,
   GetUserProjectsResponse,
+  GetMyTeamResponse,
 } from "../../services/employees/employeesModels";
 import employeesService from "../../services/employees/employeesService";
 
@@ -48,6 +49,19 @@ export const fetchEmployees = createAsyncThunk<
   const response = await employeesService.getAllEmployees();
   if (!response.success) {
     return rejectWithValue(response.message || "Failed to fetch employees");
+  }
+  return response;
+});
+
+// Fetch employees limited to authenticated user's team
+export const fetchMyTeamEmployees = createAsyncThunk<
+  GetMyTeamResponse,
+  void,
+  { rejectValue: string }
+>("employees/fetchMyTeamEmployees", async (_, { rejectWithValue }) => {
+  const response = await employeesService.getMyTeamEmployees();
+  if (!response.success) {
+    return rejectWithValue(response.message || "Failed to fetch team members");
   }
   return response;
 });
@@ -114,6 +128,21 @@ const employeesSlice = createSlice({
       .addCase(fetchEmployees.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload ?? "Failed to fetch employees";
+      })
+
+      // fetchMyTeamEmployees
+      .addCase(fetchMyTeamEmployees.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchMyTeamEmployees.fulfilled, (state, action) => {
+        state.isLoading = false;
+        // Normalize into the same employees array used elsewhere
+        state.employees = (action.payload.data?.teamMembers || []) as Employee[];
+      })
+      .addCase(fetchMyTeamEmployees.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? "Failed to fetch team members";
       })
 
       // fetchSingleEmployee

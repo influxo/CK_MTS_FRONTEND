@@ -104,12 +104,33 @@ export function EmployeesList({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
 
+  // Canonicalize role names for consistent display and filtering
+  const normalizeRole = (raw?: string): string => {
+    const n = (raw || "").toLowerCase().trim();
+    if (n === "sysadmin" || n.includes("system admin")) return "System Administrator";
+    if (n === "superadmin" || n.includes("super admin")) return "SuperAdmin";
+    if (n.includes("program manager")) return "Program Manager";
+    if (n.includes("sub-project manager") || n.includes("sub project manager"))
+      return "Sub-Project Manager";
+    if (n.includes("field operator") || (n.includes("field") && n.includes("operator")))
+      return "Field Operator";
+    return raw || "N/A";
+  };
+
+  const ROLE_OPTIONS = [
+    "System Administrator",
+    "Program Manager",
+    "Sub-Project Manager",
+    "Field Operator",
+    "SuperAdmin",
+  ];
+
   // Map API employees to the display shape used by the table
   const displayEmployees = employees.map((e) => ({
     id: e.id,
     name: `${e.firstName} ${e.lastName}`.trim(),
     email: e.email,
-    role: e.roles && e.roles.length > 0 ? e.roles[0].name : "N/A",
+    role: normalizeRole(e.roles && e.roles.length > 0 ? e.roles[0].name : "N/A"),
     status: e.status === "active" ? "active" : "pending",
     lastActive: e.lastLogin,
     projects: ["All Projects"],
@@ -306,11 +327,11 @@ export function EmployeesList({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="Super Admin">Super Admin</SelectItem>
-                <SelectItem value="Admin">Admin</SelectItem>
-                <SelectItem value="Program Manager">Program Manager</SelectItem>
-                <SelectItem value="Field Staff">Field Staff</SelectItem>
-                <SelectItem value="Data Analyst">Data Analyst</SelectItem>
+                {ROLE_OPTIONS.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {r}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={projectFilter} onValueChange={setProjectFilter}>

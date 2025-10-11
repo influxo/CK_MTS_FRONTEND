@@ -218,6 +218,18 @@ export interface GetBeneficiaryEntitiesResponse {
   message?: string;
 }
 
+// Remove association between beneficiary and an entity (DELETE /beneficiaries/{id}/entities)
+export interface RemoveBeneficiaryEntityAssociationRequest {
+  id: string; // beneficiary id (path)
+  entityId: string; // body
+  entityType: string; // body (e.g., "project" | "subproject")
+}
+
+export interface RemoveBeneficiaryEntityAssociationResponse {
+  success: boolean;
+  message?: string;
+}
+
 // Associate beneficiary to entities (POST /beneficiaries/{id}/entities)
 export interface BeneficiaryEntityAssociationItem {
   entityId: string;

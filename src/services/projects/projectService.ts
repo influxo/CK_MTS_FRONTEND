@@ -9,6 +9,8 @@ import type {
   GetProjectUsersResponse,
   RemoveUserFromProjectRequest,
   RemoveUserFromProjectResponse,
+  UpdateProjectRequest,
+  UpdateProjectResponse,
 } from "./projectModels";
 import { toast } from "sonner";
 
@@ -56,6 +58,27 @@ class ProjectService {
         message: error.message || "Failed to fetch projects.",
         data: [],
       };
+    }
+  }
+
+  async updateProject(
+    id: string,
+    body: UpdateProjectRequest
+  ): Promise<UpdateProjectResponse> {
+    try {
+      const response = await axiosInstance.put<UpdateProjectResponse>(
+        `${this.projectEndpoint}/${encodeURIComponent(id)}`,
+        body
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as UpdateProjectResponse;
+      }
+      return {
+        success: false,
+        message: error.message || "Failed to update project",
+      } as UpdateProjectResponse;
     }
   }
 

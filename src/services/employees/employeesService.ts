@@ -6,6 +6,7 @@ import type {
   UpdateUserRequest,
   UpdateUserResponse,
   GetUserProjectsResponse,
+  GetMyTeamResponse,
 } from "./employeesModels";
 import { toast } from "sonner";
 
@@ -101,6 +102,26 @@ class EmployeesService {
         success: false,
         message: error.message || "Failed to fetch user projects.",
         items: [],
+      };
+    }
+  }
+
+  // Get employees restricted to authenticated user's team assignments
+  async getMyTeamEmployees(): Promise<GetMyTeamResponse> {
+    try {
+      // absolute URL per requirement; relies on axiosInstance to attach token
+      const response = await axiosInstance.get<GetMyTeamResponse>(
+        `http://localhost:3001/api/users/my-team`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as GetMyTeamResponse;
+      }
+      return {
+        success: false,
+        message: error.message || "Failed to fetch team members.",
+        data: { teamMembers: [], count: 0 },
       };
     }
   }

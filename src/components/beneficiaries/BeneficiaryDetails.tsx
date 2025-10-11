@@ -11,7 +11,6 @@ import {
   MapPin,
   MoreHorizontal,
   Phone,
-  Plus,
   Shield,
   ShieldAlert,
   Trash,
@@ -42,6 +41,7 @@ import {
   selectBeneficiaryEntities,
   selectBeneficiaryEntitiesLoading,
   selectBeneficiaryEntitiesError,
+  removeBeneficiaryEntityAssociation,
   fetchServiceDeliveriesSummary,
   selectServiceDeliveriesSummary,
   selectServiceDeliveriesSummaryLoading,
@@ -171,6 +171,11 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddServiceDialogOpen, setIsAddServiceDialogOpen] = useState(false);
   const [isAssociateDialogOpen, setIsAssociateDialogOpen] = useState(false);
+  const [isRemoveAssocOpen, setIsRemoveAssocOpen] = useState(false);
+  const [selectedAssociation, setSelectedAssociation] = useState<{
+    entityId: string;
+    entityType: string;
+  } | null>(null);
   const [editForm, setEditForm] = useState<UpdateBeneficiaryRequest>({
     firstName: "",
     lastName: "",
@@ -575,6 +580,101 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               </Button>
               <Button onClick={handleEditSubmit} disabled={updateLoading}>
                 {updateLoading ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isRemoveAssocOpen} onOpenChange={setIsRemoveAssocOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="bg-[#2E343E] text-white">
+              <Link className="h-4 w-4 mr-2" />
+              Remove Association
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[520px]">
+            <DialogHeader>
+              <DialogTitle>Remove Association</DialogTitle>
+              <DialogDescription>
+                Select one entity to de-associate from this beneficiary.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-3 py-2">
+              {entitiesLoading && (
+                <div className="text-sm text-muted-foreground">
+                  Loading associations…
+                </div>
+              )}
+              {entitiesError && !entitiesLoading && (
+                <div className="text-sm text-red-600">{entitiesError}</div>
+              )}
+              {!entitiesLoading && !entitiesError && entities.length === 0 && (
+                <div className="text-sm text-muted-foreground">
+                  No associations found.
+                </div>
+              )}
+              {!entitiesLoading && !entitiesError && entities.length > 0 && (
+                <div className="space-y-2">
+                  {entities.map((link) => (
+                    <label
+                      key={`${link.entity.id}`}
+                      className="flex items-center gap-3 rounded-md border p-2 bg-[#F7F9FB]"
+                    >
+                      <input
+                        type="radio"
+                        name="assoc-select"
+                        className="h-4 w-4"
+                        checked={
+                          selectedAssociation?.entityId === link.entity.id &&
+                          selectedAssociation?.entityType === link.entity.type
+                        }
+                        onChange={() =>
+                          setSelectedAssociation({
+                            entityId: link.entity.id,
+                            entityType: link.entity.type,
+                          })
+                        }
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">
+                          {link.entity.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground uppercase">
+                          {link.entity.type}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsRemoveAssocOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={!selectedAssociation || !id}
+                onClick={async () => {
+                  if (!id || !selectedAssociation) return;
+                  try {
+                    await dispatch(
+                      removeBeneficiaryEntityAssociation({
+                        id,
+                        entityId: selectedAssociation.entityId,
+                        entityType: selectedAssociation.entityType,
+                      }) as any
+                    ).unwrap();
+                    setIsRemoveAssocOpen(false);
+                    setSelectedAssociation(null);
+                    // refresh entities
+                    dispatch(fetchBeneficiaryEntities({ id }));
+                  } catch (_) {}
+                }}
+              >
+                Remove
               </Button>
             </DialogFooter>
           </DialogContent>

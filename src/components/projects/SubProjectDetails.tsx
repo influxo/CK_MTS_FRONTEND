@@ -116,6 +116,7 @@ import {
   selectSubProjectMetricsSeries,
 } from "../../store/slices/subProjectSlice";
 import { selectCurrentUser } from "../../store/slices/authSlice";
+import { updateSubProject } from "../../store/slices/subProjectSlice";
 
 // We don't need to import the SubProject type directly as it's already used in Redux selectors
 
@@ -152,6 +153,13 @@ const mockSubProjectEnhancement = {
 export function SubProjectDetails() {
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  // Edit dialog local state
+  const [editName, setEditName] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editStatus, setEditStatus] = useState<
+    "active" | "inactive" | "pending"
+  >("active");
+  const [editDescription, setEditDescription] = useState("");
 
   const params = useParams<{ projectId: string; subprojectId: string }>();
   const projectId = params.projectId;
@@ -466,6 +474,15 @@ export function SubProjectDetails() {
       }
     }
   }, [subprojectId, projectId, dispatch, navigate]);
+
+  // Seed edit fields when selected subproject changes or dialog opens
+  useEffect(() => {
+    if (!subProject) return;
+    setEditName(subProject.name || "");
+    setEditCategory(subProject.category || "");
+    setEditStatus(subProject.status as any);
+    setEditDescription(subProject.description || "");
+  }, [subProject, isEditDialogOpen]);
 
   useEffect(() => {
     if (user?.roles == null || user.roles.length === 0) return;
@@ -813,7 +830,7 @@ export function SubProjectDetails() {
             <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="ml-auto bg-[#0073e6] text-white border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]"
+                className="ml-auto bg-[#0073e6] border-0 text-white"
               >
                 <FileEdit className="h-4 w-4 mr-2" />
                 Edit Sub-Project
@@ -835,7 +852,8 @@ export function SubProjectDetails() {
                   <Input
                     id="title"
                     className="col-span-3"
-                    defaultValue={enhancedSubProject.title}
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -843,7 +861,8 @@ export function SubProjectDetails() {
                     Category *
                   </Label>
                   <Select
-                    defaultValue={enhancedSubProject.category.toLowerCase()}
+                    value={editCategory.toLowerCase()}
+                    onValueChange={(v) => setEditCategory(v)}
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select category" />
@@ -855,6 +874,7 @@ export function SubProjectDetails() {
                         Infrastructure
                       </SelectItem>
                       <SelectItem value="training">Training</SelectItem>
+                      <SelectItem value="food aid">Food Aid</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -885,7 +905,10 @@ export function SubProjectDetails() {
                   <Label htmlFor="status" className="text-right">
                     Status
                   </Label>
-                  <Select defaultValue={enhancedSubProject.status}>
+                  <Select
+                    value={editStatus}
+                    onValueChange={(v) => setEditStatus(v as any)}
+                  >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -935,21 +958,53 @@ export function SubProjectDetails() {
                   <Textarea
                     id="description"
                     className="col-span-3"
-                    defaultValue={enhancedSubProject.description}
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
                     rows={3}
                   />
                 </div>
               </div>
               <DialogFooter>
-                {/* <Button
-                      variant="outline"
-                      onClick={() => setIsEditDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button> */}
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
                 <Button
                   className="bg-[#0073e6] border-0 text-white"
-                  onClick={() => setIsEditDialogOpen(false)}
+                  onClick={async () => {
+                    if (!subprojectId) return;
+                    try {
+                      const res = await dispatch(
+                        updateSubProject({
+                          id: subprojectId,
+                          name: editName,
+                          description: editDescription,
+                          category: editCategory,
+                          status: editStatus,
+                        }) as any
+                      ).unwrap();
+                      if (res && res.success) {
+                        toast.success("Nënprojekti u modifikua me sukses", {
+                          style: {
+                            backgroundColor: "#d1fae5",
+                            color: "#065f46",
+                            border: "1px solid #10b981",
+                          },
+                        });
+                      }
+                      setIsEditDialogOpen(false);
+                    } catch (_) {
+                      toast.error("Diçka shkoi gabim", {
+                        style: {
+                          backgroundColor: "#fee2e2",
+                          color: "#991b1b",
+                          border: "1px solid #ef4444",
+                        },
+                      });
+                    }
+                  }}
                 >
                   Save Changes
                 </Button>
