@@ -6,6 +6,8 @@ import type {
   GetSubprojectActivitiesResponse,
 } from "./activityModels";
 import { toast } from "sonner";
+import { db } from "../../db/db";
+import { syncService } from "../offline/syncService";
 
 class ActivityService {
   private baseUrl = getApiUrl();
@@ -53,8 +55,51 @@ class ActivityService {
       const response = await axiosInstance.get<GetSubprojectActivitiesResponse>(
         url
       );
+
+      // Cache activities in IndexedDB for offline use
+      if (response.data.success && response.data.data) {
+        try {
+          for (const activity of response.data.data) {
+            await db.activities.put({
+              ...activity,
+              synced: true,
+              _localUpdatedAt: new Date().toISOString(),
+            });
+          }
+          console.log('✅ Cached', response.data.data.length, 'activities for offline use');
+        } catch (cacheError) {
+          console.warn('Failed to cache activities:', cacheError);
+        }
+      }
+
       return response.data;
     } catch (error: any) {
+      // Check if we're offline or have network error
+      const isNetworkError = !error.response || error.code === 'ERR_NETWORK';
+
+      if (isNetworkError || !syncService.isOnline()) {
+        // Try to return cached data
+        console.log('📱 Network error - loading cached activities');
+        try {
+          const cachedActivities = await db.activities
+            .where('subprojectId')
+            .equals(subprojectId)
+            .toArray();
+          const activities = cachedActivities.map(({ synced, _localUpdatedAt, ...activity }) => activity);
+
+          if (activities.length > 0) {
+            console.log('✅ Loaded', activities.length, 'cached activities');
+            return {
+              success: true,
+              data: activities,
+              message: 'Loaded from cache (offline)',
+            };
+          }
+        } catch (cacheError) {
+          console.error('Failed to load cache:', cacheError);
+        }
+      }
+
       if (error.response) {
         return error.response.data as GetSubprojectActivitiesResponse;
       }
