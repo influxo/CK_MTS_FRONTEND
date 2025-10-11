@@ -270,7 +270,7 @@ export function SubProjectSelection() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search projects or subprojects..."
-            className="pl-9 bg-black/5 border-0"
+            className="pl-9 bg-white border-gray-100   border"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -285,7 +285,7 @@ export function SubProjectSelection() {
             setFilterSubprojectId("all");
           }}
         >
-          <SelectTrigger className="w-full sm:w-[180px] bg-black/5 border-0">
+          <SelectTrigger className="w-full sm:w-[180px] bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
             <SelectValue placeholder="Show" />
           </SelectTrigger>
           <SelectContent>
@@ -301,7 +301,7 @@ export function SubProjectSelection() {
             value={filterProjectId}
             onValueChange={(v) => setFilterProjectId(v)}
           >
-            <SelectTrigger className="w-full sm:w-[220px] bg-black/5 border-0">
+            <SelectTrigger className="w-full sm:w-[220px] bg-white border-gray-100 border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
               <SelectValue placeholder="Select project" />
             </SelectTrigger>
             <SelectContent>
@@ -318,7 +318,7 @@ export function SubProjectSelection() {
             value={filterSubprojectId}
             onValueChange={(v) => setFilterSubprojectId(v)}
           >
-            <SelectTrigger className="w-full sm:w-[260px] bg-black/5 border-0">
+            <SelectTrigger className="w-full sm:w-[260px] bg-[#E0F2FE] border-gray-100 border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
               <SelectValue placeholder="Select subproject" />
             </SelectTrigger>
             <SelectContent>
@@ -391,7 +391,7 @@ export function SubProjectSelection() {
                     <Button
                       onClick={() => handleSelect(item)}
                       size="sm"
-                      className=" hover:bg-black/10"
+                      className=" hover:bg-[#E0F2FE]"
                     >
                       Select
                       <ArrowRight className="h-4 w-4 ml-1" />

@@ -739,7 +739,7 @@ export function FormSubmission({
                 onValueChange={(val) => handleFieldChange("beneficiaryId", val)}
                 disabled={byEntityBeneficiariesLoading}
               >
-                <SelectTrigger className="bg-[#EAF4FB] border-0 text-blue-900">
+                <SelectTrigger className="bg-white border border-gray-100 ">
                   <SelectValue
                     placeholder={
                       byEntityBeneficiariesLoading
@@ -802,7 +802,7 @@ export function FormSubmission({
                     placeholder="Search services..."
                     value={servicesQuery}
                     onChange={(e) => setServicesQuery(e.target.value)}
-                    className="bg-[#EAF4FB] border-0 text-blue-900 focus:ring-1 focus:border-1 focus:ring-[#EAF4FB] focus:border-[#EAF4FB]"
+                    className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-[#EAF4FB] focus:border-[#EAF4FB]"
                   />
                   {/* Selected chips */}
                   {selectedServices.length > 0 && (
@@ -855,11 +855,11 @@ export function FormSubmission({
                           return (
                             <div
                               key={svc.id}
-                              className="p-3 bg-[#EAF4FB] border-0 "
+                              className="p-3 bg-white  border-gray-100 border-0 "
                             >
                               <div className="flex items-center gap-3">
                                 <Checkbox
-                                  className="bg-blue-200 border-0"
+                                  className="bg-white border"
                                   id={`svc-${svc.id}`}
                                   checked={isChecked}
                                   onCheckedChange={(checked) => {

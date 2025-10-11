@@ -107,12 +107,16 @@ export function EmployeesList({
   // Canonicalize role names for consistent display and filtering
   const normalizeRole = (raw?: string): string => {
     const n = (raw || "").toLowerCase().trim();
-    if (n === "sysadmin" || n.includes("system admin")) return "System Administrator";
+    if (n === "sysadmin" || n.includes("system admin"))
+      return "System Administrator";
     if (n === "superadmin" || n.includes("super admin")) return "SuperAdmin";
     if (n.includes("program manager")) return "Program Manager";
     if (n.includes("sub-project manager") || n.includes("sub project manager"))
       return "Sub-Project Manager";
-    if (n.includes("field operator") || (n.includes("field") && n.includes("operator")))
+    if (
+      n.includes("field operator") ||
+      (n.includes("field") && n.includes("operator"))
+    )
       return "Field Operator";
     return raw || "N/A";
   };
@@ -130,7 +134,9 @@ export function EmployeesList({
     id: e.id,
     name: `${e.firstName} ${e.lastName}`.trim(),
     email: e.email,
-    role: normalizeRole(e.roles && e.roles.length > 0 ? e.roles[0].name : "N/A"),
+    role: normalizeRole(
+      e.roles && e.roles.length > 0 ? e.roles[0].name : "N/A"
+    ),
     status: e.status === "active" ? "active" : "pending",
     lastActive: e.lastLogin,
     projects: ["All Projects"],
@@ -292,7 +298,7 @@ export function EmployeesList({
         <div className="flex gap-3">
           <Button
             variant="outline"
-            className="bg-black/10 border-0"
+            className="bg-[#E0F2FE] border-0"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
@@ -300,7 +306,7 @@ export function EmployeesList({
           </Button>
           <Button
             onClick={onInviteClick}
-            className="bg-[#2E343E] border-0 text-white"
+            className="bg-[#0073e6] border-0 text-white"
           >
             <UserPlus className="h-4 w-4 mr-2" />
             Invite Employee
@@ -314,14 +320,14 @@ export function EmployeesList({
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search employees..."
-              className="pl-9 bg-black/5 border-0"
+              className="pl-9 bg-white border-gray-100 border"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex gap-3">
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-[150px] bg-black/5 border-0">
+              <SelectTrigger className="w-[200px] bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
@@ -335,7 +341,7 @@ export function EmployeesList({
               </SelectContent>
             </Select>
             <Select value={projectFilter} onValueChange={setProjectFilter}>
-              <SelectTrigger className="w-[180px] bg-black/5 border-0">
+              <SelectTrigger className="w-[180px] bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
@@ -355,7 +361,7 @@ export function EmployeesList({
             <div className="flex gap-3">
               <Button
                 variant="outline"
-                className="bg-[#2E343E] text-white border-0"
+                className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white border-0"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Export
@@ -381,7 +387,7 @@ export function EmployeesList({
               <div>
                 <Label>Two-Factor Status</Label>
                 <Select defaultValue="all">
-                  <SelectTrigger className="mt-2 bg-black/5 border-0">
+                  <SelectTrigger className="mt-2 bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                     <SelectValue placeholder="2FA Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -394,7 +400,7 @@ export function EmployeesList({
               <div>
                 <Label>Date Added</Label>
                 <Select defaultValue="any">
-                  <SelectTrigger className="mt-2 bg-black/5 border-0">
+                  <SelectTrigger className="mt-2 bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                     <SelectValue placeholder="Date Added" />
                   </SelectTrigger>
                   <SelectContent>
@@ -409,7 +415,7 @@ export function EmployeesList({
               <div>
                 <Label>Last Active</Label>
                 <Select defaultValue="any">
-                  <SelectTrigger className="mt-2 bg-black/5 border-0">
+                  <SelectTrigger className="mt-2 bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                     <SelectValue placeholder="Last Active" />
                   </SelectTrigger>
                   <SelectContent>
@@ -425,10 +431,14 @@ export function EmployeesList({
               </div>
             </div>
             <div className="flex justify-end mt-4">
-              <Button variant="outline" size="sm" className="mr-2 bg-black/10">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mr-2 bg-[#E0F2FE] border-0"
+              >
                 Reset Filters
               </Button>
-              <Button size="sm" className="bg-[#2E343E] text-white border-0">
+              <Button size="sm" className="bg-[#0073e6] text-white border-0">
                 Apply Filters
               </Button>
             </div>
@@ -438,16 +448,16 @@ export function EmployeesList({
 
       <div className="flex space-x-4 border-b">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className=" bg-[#2E343E] bg-opacity-10 items-center">
+          <TabsList className=" bg-[#E0F2FE]  items-center">
             <TabsTrigger
               value="active"
-              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+              className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
               Active ({getTabCount("active")})
             </TabsTrigger>
             <TabsTrigger
               value="pending"
-              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+              className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
               Pending ({getTabCount("pending")})
             </TabsTrigger>
@@ -583,7 +593,7 @@ export function EmployeesList({
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
-                              className="hover:bg-black/10 border-0"
+                              className="hover:bg-[#E0F2FE] border-0"
                               variant="outline"
                               size="sm"
                               onClick={() => onEmployeeSelect(employee.id)}

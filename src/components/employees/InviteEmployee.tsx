@@ -117,9 +117,7 @@ export function InviteEmployee({
     );
   }, [normalizedRoles]);
   const isProgramManager = useMemo(() => {
-    return normalizedRoles.some((r: string) =>
-      r.includes("program manager")
-    );
+    return normalizedRoles.some((r: string) => r.includes("program manager"));
   }, [normalizedRoles]);
   const isSubProjectManager = useMemo(() => {
     return normalizedRoles.some(
@@ -135,7 +133,12 @@ export function InviteEmployee({
   const projectAccessLoading = useMemo(() => {
     if (isSysOrSuperAdmin) return projectsLoading || subprojectsLoading;
     return (userProjectsTree || []).length === 0;
-  }, [isSysOrSuperAdmin, projectsLoading, subprojectsLoading, userProjectsTree?.length]);
+  }, [
+    isSysOrSuperAdmin,
+    projectsLoading,
+    subprojectsLoading,
+    userProjectsTree?.length,
+  ]);
 
   useEffect(() => {
     // Fetch roles always
@@ -205,7 +208,9 @@ export function InviteEmployee({
 
   // Ensure selected role remains valid for current user's allowed options
   useEffect(() => {
-    const allowed = new Set((rolesForSelect || []).map((r: any) => String(r.id)));
+    const allowed = new Set(
+      (rolesForSelect || []).map((r: any) => String(r.id))
+    );
     if (inviteData.role && !allowed.has(String(inviteData.role))) {
       setInviteData((prev) => ({ ...prev, role: "" }));
     }
@@ -216,11 +221,23 @@ export function InviteEmployee({
     if (isSysOrSuperAdmin) return projects;
     // Program/Subproject Managers: assigned only
     if (isProgramManager || isSubProjectManager) {
-      return (userProjectsTree || []).map((p: any) => ({ id: p.id, name: p.name }));
+      return (userProjectsTree || []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+      }));
     }
     // Default: assigned if present
-    return (userProjectsTree || []).map((p: any) => ({ id: p.id, name: p.name }));
-  }, [isSysOrSuperAdmin, isProgramManager, isSubProjectManager, projects, userProjectsTree]);
+    return (userProjectsTree || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+    }));
+  }, [
+    isSysOrSuperAdmin,
+    isProgramManager,
+    isSubProjectManager,
+    projects,
+    userProjectsTree,
+  ]);
 
   // Helper: get subprojects for a project respecting role
   const getSubprojectsForProject = (projectId: string) => {
@@ -393,7 +410,12 @@ export function InviteEmployee({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={onBack}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="hover:bg-[#E0F2FE] border-0"
+            onClick={onBack}
+          >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Employees
           </Button>
@@ -415,7 +437,7 @@ export function InviteEmployee({
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name</Label>
                   <Input
-                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                    className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                     id="firstName"
                     name="firstName"
                     placeholder="Enter first name"
@@ -427,7 +449,7 @@ export function InviteEmployee({
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name</Label>
                   <Input
-                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                    className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                     id="lastName"
                     name="lastName"
                     placeholder="Enter last name"
@@ -441,7 +463,7 @@ export function InviteEmployee({
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
-                  className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                  className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                   id="email"
                   name="email"
                   type="email"
@@ -458,7 +480,10 @@ export function InviteEmployee({
                   value={inviteData.role}
                   onValueChange={handleRoleChange}
                 >
-                  <SelectTrigger disabled={rolesLoading || !!rolesError}>
+                  <SelectTrigger
+                    className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                    disabled={rolesLoading || !!rolesError}
+                  >
                     <SelectValue
                       placeholder={
                         rolesLoading
@@ -480,7 +505,10 @@ export function InviteEmployee({
                         <SelectLabel>Error loading roles</SelectLabel>
                       </SelectGroup>
                     )}
-                    {!rolesLoading && !rolesError && rolesForSelect && rolesForSelect.length > 0
+                    {!rolesLoading &&
+                    !rolesError &&
+                    rolesForSelect &&
+                    rolesForSelect.length > 0
                       ? rolesForSelect.map((role: any) => (
                           <SelectItem key={role.id} value={String(role.id)}>
                             {role.name}
@@ -499,7 +527,7 @@ export function InviteEmployee({
               <div className="space-y-2">
                 <Label htmlFor="message">Personal Message</Label>
                 <Textarea
-                  className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                  className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                   id="message"
                   name="message"
                   placeholder="Add a personal message to the invitation email"
@@ -533,7 +561,9 @@ export function InviteEmployee({
                           <Checkbox
                             id={project.id}
                             checked={selectedProjects.includes(project.id)}
-                            onCheckedChange={() => handleProjectToggle(project.id)}
+                            onCheckedChange={() =>
+                              handleProjectToggle(project.id)
+                            }
                           />
                           <Label htmlFor={project.id} className="font-medium">
                             {project.name}
@@ -590,7 +620,7 @@ export function InviteEmployee({
                   value={inviteData.expiration}
                   onValueChange={handleExpirationChange}
                 >
-                  <SelectTrigger className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  ">
+                  <SelectTrigger className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  ">
                     <SelectValue placeholder="Select expiration period" />
                   </SelectTrigger>
                   <SelectContent>
@@ -618,7 +648,7 @@ export function InviteEmployee({
 
               <div className="flex justify-between">
                 <Button
-                  className="bg-black/10 hover:bg-black/20 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+                  className="bg-[#E0F2FE]  border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
                   type="button"
                   variant="outline"
                   onClick={onBack}
@@ -629,7 +659,7 @@ export function InviteEmployee({
                 </Button>
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-2/2 bg-[#0073e6] text-white"
                   disabled={isLoading || !isFormValid}
                 >
                   {isLoading ? (
@@ -692,7 +722,7 @@ export function InviteEmployee({
                   <Button
                     type="button"
                     size="sm"
-                    className="w-full bg-[#2E343E] text-white"
+                    className="w-full bg-[#0073e6] text-white"
                   >
                     Accept Invitation
                   </Button>

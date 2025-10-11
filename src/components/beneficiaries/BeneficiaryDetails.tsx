@@ -373,6 +373,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Button
+          className="hover:bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
           variant="outline"
           size="sm"
           onClick={onBack ?? (() => navigate("/beneficiaries"))}
@@ -393,7 +394,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           }}
         >
           <DialogTrigger asChild>
-            <Button className="bg-[#2E343E] text-white ml-auto">
+            <Button className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white ml-auto">
               <Edit className="h-4 w-4 mr-2" />
               Edit Profile
             </Button>
@@ -569,6 +570,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 </span>
               </div>
               <Button
+                className="bg-[#E0F2FE] border-0"
                 variant="outline"
                 onClick={() => {
                   setIsEditDialogOpen(false);
@@ -578,7 +580,11 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               >
                 Cancel
               </Button>
-              <Button onClick={handleEditSubmit} disabled={updateLoading}>
+              <Button
+                className="bg-[#0073e6] text-white"
+                onClick={handleEditSubmit}
+                disabled={updateLoading}
+              >
                 {updateLoading ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
@@ -587,7 +593,10 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
 
         <Dialog open={isRemoveAssocOpen} onOpenChange={setIsRemoveAssocOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" className="bg-[#2E343E] text-white">
+            <Button
+              variant="outline"
+              className="bg-[#0073e6] text-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+            >
               <Link className="h-4 w-4 mr-2" />
               Remove Association
             </Button>
@@ -650,12 +659,14 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
             </div>
             <DialogFooter>
               <Button
+                className="bg-[#E0F2FE] border-0"
                 variant="outline"
                 onClick={() => setIsRemoveAssocOpen(false)}
               >
                 Cancel
               </Button>
               <Button
+                className="bg-[#0073e6] text-white"
                 disabled={!selectedAssociation || !id}
                 onClick={async () => {
                   if (!id || !selectedAssociation) return;
@@ -911,7 +922,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   <div className="flex items-center gap-2 ">
                     <h1 className="font-medium text-3xl">{beneficiary.name}</h1>
                     <Badge
-                      style={{ backgroundColor: "#2E343E" }}
+                      style={{ backgroundColor: "#DEF8EE", color: "#4AA785" }}
                       variant={
                         beneficiary.status === "active"
                           ? "default"
@@ -1139,7 +1150,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   <CardTitle className="text-base">Recent Services</CardTitle>
                   <Button
                     variant="ghost"
-                    className="bg-black/10 text-black  border-0"
+                    className="bg-[#E0F2FE] text-black  border-0"
                     size="sm"
                     onClick={() => setActiveTab("services")}
                   >
@@ -1285,7 +1296,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="bg-[#2E343E] text-white"
+                    className="bg-[#0073e6] text-white"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Export
@@ -1337,7 +1348,12 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                             : "—"}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{s.service.category}</Badge>
+                          <Badge
+                            variant="outline"
+                            className="bg-[#0073e6] text-white"
+                          >
+                            {s.service.category}
+                          </Badge>
                         </TableCell>
                         <TableCell>{s.service.name}</TableCell>
                         <TableCell>
@@ -1467,7 +1483,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="bg-BLACK/10 border-0 text-black"
+                className="bg-[#E0F2FE] border-0 text-black"
                 size="sm"
                 disabled={servicesLoading || servicesMeta.page <= 1}
                 onClick={() =>
@@ -1485,7 +1501,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               </Button>
               <Button
                 variant="outline"
-                className="bg-black/10 text-black"
+                className="bg-[#0073e6] text-white"
                 size="sm"
                 disabled={
                   servicesLoading ||

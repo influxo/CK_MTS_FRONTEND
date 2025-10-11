@@ -209,8 +209,11 @@ export function FormBuilder({
       if (assocEntityType === "subproject" && assocEntityId) {
         (async () => {
           try {
-            const res = await subProjectService.getSubProjectById({ id: assocEntityId });
-            const projectId = (res.success && (res.data as any)?.projectId) || "";
+            const res = await subProjectService.getSubProjectById({
+              id: assocEntityId,
+            });
+            const projectId =
+              (res.success && (res.data as any)?.projectId) || "";
             setFormData({
               id: formToEdit.id,
               name: formToEdit.name,
@@ -272,7 +275,9 @@ export function FormBuilder({
   const allowedSubprojectIds = (() => {
     if (isSysOrSuperAdmin) return new Set<string>();
     try {
-      const proj = (userProjectsTree || []).find((p: any) => p.id === formData.project);
+      const proj = (userProjectsTree || []).find(
+        (p: any) => p.id === formData.project
+      );
       const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
       return new Set<string>(ids);
     } catch {
@@ -406,7 +411,12 @@ export function FormBuilder({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={onBack}>
+          <Button
+            variant="outline"
+            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+            size="sm"
+            onClick={onBack}
+          >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Forms
           </Button>
@@ -417,7 +427,7 @@ export function FormBuilder({
         </div>
         <div className="flex gap-2">
           <Button
-            className="bg-blue-200 text-blue-900 border-0"
+            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
             variant="outline"
             onClick={() => setPreviewMode(!previewMode)}
           >
@@ -425,7 +435,7 @@ export function FormBuilder({
             {previewMode ? "Exit Preview" : "Preview"}
           </Button>
           <Button
-            className="bg-[#0073e6] text-white border-0"
+            className="bg-[#0073e6] text-white border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
             onClick={handleSaveForm}
             disabled={isSaving}
           >
@@ -457,7 +467,7 @@ export function FormBuilder({
                     <div className="space-y-2">
                       <Label htmlFor="form-name">Form Name *</Label>
                       <Input
-                        className="bg-[#EAF4FB] border-0"
+                        className="bg-white border-gray-100 border"
                         id="form-name"
                         value={formData.name}
                         onChange={(e) =>
@@ -472,7 +482,7 @@ export function FormBuilder({
                         value={formData.project}
                         onValueChange={handleChangeProject}
                       >
-                        <SelectTrigger className="bg-[#EAF4FB] border-0">
+                        <SelectTrigger className="bg-white border-gray-100 border">
                           <SelectValue placeholder="Select a project" />
                         </SelectTrigger>
                         <SelectContent>
@@ -495,12 +505,14 @@ export function FormBuilder({
                             value={formData.subProject}
                             onValueChange={handleChangeSubProject}
                           >
-                            <SelectTrigger className="bg-[#EAF4FB] border-0">
+                            <SelectTrigger className="bg-white border-gray-100 border">
                               <SelectValue placeholder="Select a subproject" />
                             </SelectTrigger>
                             <SelectContent>
                               {subProjects
-                                .filter((sp) => sp.projectId === formData.project)
+                                .filter(
+                                  (sp) => sp.projectId === formData.project
+                                )
                                 .filter((sp) =>
                                   isSysOrSuperAdmin
                                     ? true
@@ -562,13 +574,10 @@ export function FormBuilder({
                   onOpenChange={setIsAddFieldDialogOpen}
                 >
                   <DialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      className="bg-blue-200 text-blue-900 border-0"
-                    >
+                    {/* <Button size="sm" className="bg-[#E0F2FE] border-0">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Field
-                    </Button>
+                    </Button> */}
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
@@ -603,7 +612,7 @@ export function FormBuilder({
                     </p>
                     <Button
                       onClick={() => setIsAddFieldDialogOpen(true)}
-                      className="bg-blue-200 text-blue-900 border-0"
+                      className="bg-[#E0F2FE] border-0"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add First Field
@@ -652,10 +661,10 @@ export function FormBuilder({
                     ))}
                     <Button
                       variant="outline"
-                      className="w-full border-dashed bg-blue-200 text-blue-900"
+                      className="w-full border-dashed  bg-[#E0F2FE]"
                       onClick={() => setIsAddFieldDialogOpen(true)}
                     >
-                      <Plus className="h-4 w-4 mr-2 text-blue-900" />
+                      <Plus className="h-4 w-4 mr-2 " />
                       Add Field
                     </Button>
                   </div>
@@ -683,7 +692,7 @@ export function FormBuilder({
                           <div className="space-y-2">
                             <Label htmlFor="field-label">Field Label</Label>
                             <Input
-                              className="bg-[#EAF4FB] border-0"
+                              className="bg-white border-gray-100 border"
                               id="field-label"
                               value={selectedFieldData.label}
                               onChange={(e) =>
@@ -716,6 +725,7 @@ export function FormBuilder({
                               <div className="flex justify-between items-center">
                                 <Label>Options</Label>
                                 <Button
+                                  className="hover:bg-[#E0F2FE]"
                                   variant="outline"
                                   size="sm"
                                   onClick={() => {
@@ -795,7 +805,7 @@ export function FormBuilder({
                           <div className="pt-2">
                             <Button
                               variant="outline"
-                              className="w-full bg-blue-200 border-0 text-blue-900"
+                              className="w-full bg-[#E0F2FE] border-0 "
                               size="sm"
                               onClick={() => handleDeleteField(selectedField!)}
                             >
@@ -821,7 +831,7 @@ export function FormBuilder({
           </div>
         </div>
       ) : (
-        <Card>
+        <Card className="bg-[#F7F9FB] border-0">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
               <CardTitle>{formData.name}</CardTitle>
@@ -829,7 +839,11 @@ export function FormBuilder({
                 {formData.description}
               </p>
             </div>
-            <Button variant="outline" onClick={() => setPreviewMode(false)}>
+            <Button
+              className="bg-[#E0F2FE] border-0"
+              variant="outline"
+              onClick={() => setPreviewMode(false)}
+            >
               Edit Form
             </Button>
           </CardHeader>
@@ -839,7 +853,7 @@ export function FormBuilder({
                 <FormField key={field.id} field={field} />
               ))}
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline" className="bg-blue-200">
+                <Button variant="outline" className="bg-[#E0F2FE] border-0">
                   Cancel
                 </Button>
                 <Button className="bg-[#0073e6] text-white">Submit Form</Button>
