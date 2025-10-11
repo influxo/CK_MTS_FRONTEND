@@ -83,7 +83,7 @@ class SyncService {
         }
 
         console.log('Initializing offline sync service...');
-
+ 
         // Set up online/offline event listeners
         window.addEventListener('online', this.handleOnline);
         window.addEventListener('offline', this.handleOffline);
@@ -354,7 +354,6 @@ class SyncService {
             this.notifyListeners();
         }
     }
-
     /**
      * Pull data from server and cache locally
      */
@@ -362,13 +361,10 @@ class SyncService {
         console.log('Syncing from server...');
 
         try {
-            // Fetch projects
-            const projectsResponse = await axiosInstance.get<{ success: boolean; data: Project[] }>('/projects');
-
-            if (projectsResponse.data.success && projectsResponse.data.data) {
+            // Projects
+            const projectsResponse = await axiosInstance.get<{ success: boolean; data: Project[] }>("/projects");
+            if (projectsResponse.data?.success && Array.isArray(projectsResponse.data.data)) {
                 const projects = projectsResponse.data.data;
-
-                // Store in local DB
                 for (const project of projects) {
                     await db.projects.put({
                         ...project,
@@ -376,46 +372,68 @@ class SyncService {
                         _localUpdatedAt: new Date().toISOString(),
                     });
                 }
-
-                console.log(` Cached ${projects.length} projects`);
+                console.log(`Cached ${projects.length} projects`);
+                await db.syncMetadata.put({ entityType: 'projects', lastSyncedAt: new Date().toISOString(), status: 'idle' });
             }
 
-            // Update sync metadata
-            await db.syncMetadata.put({
-                entityType: 'projects',
-                lastSyncedAt: new Date().toISOString(),
-                status: 'idle',
-            });
-
-            // Fetch form templates
+            // Subprojects
             try {
-                const templatesResponse = await axiosInstance.get<{ success: boolean; data: any[] }>('/forms/templates');
-
-                if (templatesResponse.data.success && templatesResponse.data.data) {
-                    const templates = templatesResponse.data.data;
-
-                    for (const template of templates) {
-                        await db.formTemplates.put({
-                            ...template,
+                const subprojectsResp = await axiosInstance.get<any>("/subprojects");
+                const subprojects = subprojectsResp?.data?.data || subprojectsResp?.data?.items || [];
+                if (Array.isArray(subprojects) && subprojects.length) {
+                    for (const sp of subprojects) {
+                        await db.subprojects.put({
+                            ...sp,
                             synced: true,
                             _localUpdatedAt: new Date().toISOString(),
                         });
                     }
-
-                    console.log(` Cached ${templates.length} form templates`);
+                    console.log(`Cached ${subprojects.length} subprojects`);
                 }
-
-                await db.syncMetadata.put({
-                    entityType: 'formTemplates',
-                    lastSyncedAt: new Date().toISOString(),
-                    status: 'idle',
-                });
-            } catch (error) {
-                console.warn('Failed to sync form templates:', error);
+                await db.syncMetadata.put({ entityType: 'subprojects', lastSyncedAt: new Date().toISOString(), status: 'idle' });
+            } catch (e) {
+                console.warn('Failed to sync subprojects:', e);
             }
 
-            // Note: Activities are typically loaded per subproject, so we don't fetch all activities here
-            // The app should call syncActivitiesForSubproject(subprojectId) when viewing a subproject
+            // Form templates
+            try {
+                const templatesResp = await axiosInstance.get<any>("/forms/templates");
+                const tplData = templatesResp?.data;
+                const templates = tplData?.data?.templates || tplData?.data || tplData?.items || [];
+                if (Array.isArray(templates) && templates.length) {
+                    for (const t of templates) {
+                        await db.formTemplates.put({
+                            ...t,
+                            synced: true,
+                            _localUpdatedAt: new Date().toISOString(),
+                        });
+                    }
+                    console.log(`Cached ${templates.length} form templates`);
+                }
+                await db.syncMetadata.put({ entityType: 'formTemplates', lastSyncedAt: new Date().toISOString(), status: 'idle' });
+            } catch (e) {
+                console.warn('Failed to sync form templates:', e);
+            }
+
+            // Services
+            try {
+                const servicesResp = await axiosInstance.get<any>("/services");
+                const svcData = servicesResp?.data;
+                const services = svcData?.data?.items || svcData?.data || svcData?.items || [];
+                if (Array.isArray(services) && services.length) {
+                    for (const s of services) {
+                        await db.services.put({
+                            ...s,
+                            synced: true,
+                            _localUpdatedAt: new Date().toISOString(),
+                        });
+                    }
+                    console.log(`Cached ${services.length} services`);
+                }
+                await db.syncMetadata.put({ entityType: 'services', lastSyncedAt: new Date().toISOString(), status: 'idle' });
+            } catch (e) {
+                console.warn('Failed to sync services:', e);
+            }
 
         } catch (error: any) {
             console.error('Failed to sync from server:', error);
@@ -423,9 +441,6 @@ class SyncService {
         }
     }
 
-    /**
-     * Push pending mutations to server
-     */
     private async syncPendingChanges(): Promise<void> {
         const pendingMutations = await db.pendingMutations.orderBy('createdAt').toArray();
 
