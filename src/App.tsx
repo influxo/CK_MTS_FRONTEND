@@ -4,6 +4,7 @@ import { ReduxProvider } from "./providers/ReduxProvider";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import OfflineIndicator from "./components/OfflineIndicator";
 import AppInitializer from "./components/AppInitializer";
+import { PWAUpdatePrompt } from "./components/PWAUpdatePrompt";
 
 export default function App() {
   const router = createBrowserRouter(routes);
@@ -16,6 +17,7 @@ export default function App() {
       <AppInitializer userId={userId}>
         <RouterProvider router={router} />
         <PWAInstallPrompt />
+        <PWAUpdatePrompt />
         <OfflineIndicator />
       </AppInitializer>
     </ReduxProvider>
