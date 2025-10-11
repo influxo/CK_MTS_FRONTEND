@@ -84,10 +84,14 @@ const Login = () => {
       const success = await login(formData);
 
       if (success) {
+        console.log('✅ Login successful, starting data preload...');
+        
         // Start prefetching data for offline use (non-blocking)
-        import('../../services/offline/dataPrefetchService').then(({ dataPrefetchService }) => {
-          dataPrefetchService.prefetchAllData().catch(err => {
-            console.warn('Failed to prefetch data:', err);
+        import('../../services/offline/dataPreloader').then(({ dataPreloader }) => {
+          dataPreloader.preloadAllData().then(() => {
+            console.log('✅ Data preload completed successfully!');
+          }).catch(err => {
+            console.error('❌ Failed to prefetch data:', err);
           });
         });
       }

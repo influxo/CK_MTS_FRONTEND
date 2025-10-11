@@ -12,12 +12,14 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
   // If it's a pending async thunk, try to fulfill from IndexedDB FIRST
   if (action.type && action.type.endsWith('/pending')) {
     const actionType = action.type.replace('/pending', '');
+    console.log('🔍 Middleware intercepting:', actionType);
     
     try {
       // Intercept fetchProjects
       if (actionType === 'projects/fetchProjects') {
         console.log('📦 Reading projects from IndexedDB (no API call)');
         const projects = await db.projects.toArray();
+        console.log(`✅ Found ${projects.length} projects in IndexedDB`);
         
         // Dispatch fulfilled action - this prevents the API call
         store.dispatch({

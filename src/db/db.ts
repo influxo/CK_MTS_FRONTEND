@@ -190,6 +190,18 @@ export interface SyncMetadata {
     errorMessage?: string;
 }
 
+/**
+ * Auth cache for offline login
+ * Stores hashed credentials for offline authentication
+ */
+export interface AuthCache {
+    email: string; // Primary key
+    passwordHash: string; // Hashed password for verification
+    token: string; // Last valid JWT token
+    userData: any; // User object from server
+    lastLoginAt: string; // Last successful login timestamp
+}
+
 // ===========================
 // Database Class
 // ===========================
@@ -220,6 +232,7 @@ class OfflineDB extends Dexie {
     entityServices!: Table<OfflineEntityService, string>;
     pendingMutations!: Table<PendingMutation, string>;
     syncMetadata!: Table<SyncMetadata, string>;
+    authCache!: Table<AuthCache, string>;
 
     constructor() {
         super('CaritasOfflineDB');
@@ -263,6 +276,24 @@ class OfflineDB extends Dexie {
             entityServices: 'id, serviceId, entityId, entityType, updatedAt, synced',
             pendingMutations: 'id, entityType, entityId, operation, createdAt',
             syncMetadata: 'entityType, lastSyncedAt',
+        });
+
+        // Version 4: Add auth cache for offline login
+        this.version(4).stores({
+            projects: 'id, updatedAt, synced, status',
+            activities: 'id, subprojectId, updatedAt, synced, status',
+            beneficiaries: 'id, projectId, updatedAt, synced',
+            subprojects: 'id, projectId, updatedAt, synced, status',
+            formTemplates: 'id, updatedAt, synced, status, projectId, subprojectId, activityId',
+            formSubmissions: 'id, templateId, entityId, entityType, updatedAt, synced, submittedAt',
+            services: 'id, updatedAt, synced, status',
+            users: 'id, updatedAt, synced, email, username',
+            projectUsers: 'id, projectId, userId, updatedAt, synced',
+            subprojectUsers: 'id, subprojectId, userId, updatedAt, synced',
+            entityServices: 'id, serviceId, entityId, entityType, updatedAt, synced',
+            pendingMutations: 'id, entityType, entityId, operation, createdAt',
+            syncMetadata: 'entityType, lastSyncedAt',
+            authCache: 'email, lastLoginAt',
         });
     }
 

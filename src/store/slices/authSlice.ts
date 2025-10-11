@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import authService from '../../services/auth/authService';
+import { verifyOfflineLogin, cacheAuthCredentials } from '../../services/auth/offlineAuthService';
 import type { LoginRequest, LoginResponse, ResetPasswordRequest, ApiResponse, AcceptInvitationRequest } from '../../services/auth/authModels';
 import type { User } from '../../services/globalModels/User';
 
@@ -28,17 +29,54 @@ const initialState: AuthState = {
 // Async thunks for authentication actions
 export const loginUser = createAsyncThunk<
   LoginResponse,
-  LoginRequest,
+  LoginRequest & { password: string },
   { rejectValue: string }
 >('auth/login', async (credentials, { rejectWithValue }) => {
   try {
+    // Try online login first
+    console.log('🔐 Attempting online login...');
     const response = await authService.login(credentials);
-    if (!response.success) {
-      return rejectWithValue(response.message);
+    
+    if (response.success) {
+      console.log('✅ Online login successful');
+      // Cache credentials for offline use
+      if (response.data?.token && response.data?.user) {
+        await cacheAuthCredentials(
+          credentials.email,
+          credentials.password,
+          response.data.token,
+          response.data.user
+        );
+      }
+      return response;
     }
-    return response;
+    
+    return rejectWithValue(response.message);
   } catch (error: any) {
-    return rejectWithValue(error.message || 'Login failed');
+    console.log('❌ Online login failed, trying offline login...');
+    
+    // If online login fails, try offline login
+    const offlineResult = await verifyOfflineLogin(
+      credentials.email,
+      credentials.password
+    );
+    
+    if (offlineResult.success && offlineResult.token && offlineResult.userData) {
+      console.log('✅ Offline login successful');
+      
+      // Return in the same format as online login
+      return {
+        success: true,
+        message: 'Logged in offline',
+        data: {
+          token: offlineResult.token,
+          user: offlineResult.userData,
+        },
+      };
+    }
+    
+    // Both online and offline login failed
+    return rejectWithValue(offlineResult.message || error.message || 'Login failed');
   }
 });
 
