@@ -1415,23 +1415,27 @@ export function SubProjectDetails() {
                     <div className="flex items-center gap-3">
                       <h4>Subproject Activity Overview</h4>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant={chartType === "line" ? "default" : "outline"}
-                        onClick={() => setChartType("line")}
-                        className="px-2"
+                    <div className="flex space-x-4 justify-end">
+                      <Tabs
+                        className="w-full"
+                        value={chartType}
+                        onValueChange={(v) => setChartType(v as "line" | "bar")}
                       >
-                        Line
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={chartType === "bar" ? "default" : "outline"}
-                        onClick={() => setChartType("bar")}
-                        className="px-2"
-                      >
-                        Bar
-                      </Button>
+                        <TabsList className=" bg-[#E0F2FE] items-center">
+                          <TabsTrigger
+                            value="line"
+                            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
+                          >
+                            Line
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="bar"
+                            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
+                          >
+                            Bar
+                          </TabsTrigger>
+                        </TabsList>
+                      </Tabs>
                     </div>
                   </div>
                   <div className="h-64 mt-4">

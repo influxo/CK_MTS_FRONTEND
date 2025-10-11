@@ -1895,7 +1895,7 @@ export function ProjectDetails() {
                           setAddBeneficiaryTab(v as "new" | "existing")
                         }
                       >
-                        <TabsList className="mb-4 bg-blue-200 bg-opacity-10 items-center">
+                        <TabsList className="mb-4 bg-blue-50 items-center">
                           <TabsTrigger
                             value="new"
                             className=" data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white  "
@@ -2215,6 +2215,7 @@ export function ProjectDetails() {
                                       }}
                                     />
                                     <Button
+                                      className="hover:bg-blue-50 border-0"
                                       type="button"
                                       variant="outline"
                                       onClick={() => {
@@ -2286,6 +2287,7 @@ export function ProjectDetails() {
                                       }}
                                     />
                                     <Button
+                                      className="hover:bg-blue-50 border-0"
                                       type="button"
                                       variant="outline"
                                       onClick={() => {
@@ -2359,6 +2361,7 @@ export function ProjectDetails() {
                                       }}
                                     />
                                     <Button
+                                      className="hover:bg-blue-50 border-0"
                                       type="button"
                                       variant="outline"
                                       onClick={() => {
@@ -2430,6 +2433,7 @@ export function ProjectDetails() {
                                       }}
                                     />
                                     <Button
+                                      className="hover:bg-blue-50 border-0"
                                       type="button"
                                       variant="outline"
                                       onClick={() => {
