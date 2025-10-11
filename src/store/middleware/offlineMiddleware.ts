@@ -6,7 +6,7 @@
  */
 
 import type { Middleware } from '@reduxjs/toolkit';
-import { db } from '../../db/db';
+import { completeDb as db } from '../../db/completeSchema';
 
 const offlineMiddleware: Middleware = (store) => (next) => async (action: any) => {
   // If it's a pending async thunk, try to fulfill from IndexedDB FIRST
