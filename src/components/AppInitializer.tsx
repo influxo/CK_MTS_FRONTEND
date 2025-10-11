@@ -1,7 +1,4 @@
-import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import DataLoadingScreen from './DataLoadingScreen';
-import { dataPreloader } from '../services/offline/dataPreloader';
 
 interface AppInitializerProps {
     children: ReactNode;
@@ -11,51 +8,13 @@ interface AppInitializerProps {
 /**
  * App Initializer Component
  * 
- * Handles initial data preload before showing the app.
- * Shows loading screen on first load, then shows app immediately on subsequent loads.
+ * Simple wrapper - app works immediately with IndexedDB
+ * No loading screen needed - data loads in background via middleware
  */
-export function AppInitializer({ children, userId }: AppInitializerProps) {
-    const [isLoading, setIsLoading] = useState(true);
-    const [isDataReady, setIsDataReady] = useState(false);
-
-    useEffect(() => {
-        const checkAndLoad = async () => {
-            try {
-                // Check if data is already preloaded
-                const isPreloaded = await dataPreloader.isDataPreloaded();
-                
-                if (isPreloaded) {
-                    // Data already exists, show app immediately
-                    console.log('✅ Data already preloaded');
-                    setIsDataReady(true);
-                    setIsLoading(false);
-                } else {
-                    // Need to show loading screen
-                    console.log('⏳ Data not preloaded, showing loading screen');
-                    setIsLoading(true);
-                }
-            } catch (error) {
-                console.error('Error checking preload status:', error);
-                // Show app anyway to avoid blocking user
-                setIsDataReady(true);
-                setIsLoading(false);
-            }
-        };
-
-        checkAndLoad();
-    }, []);
-
-    const handleLoadComplete = () => {
-        setIsDataReady(true);
-        setIsLoading(false);
-    };
-
-    // Show loading screen if data needs to be preloaded
-    if (isLoading && !isDataReady) {
-        return <DataLoadingScreen userId={userId} onComplete={handleLoadComplete} />;
-    }
-
-    // Show app
+export function AppInitializer({ children }: AppInitializerProps) {
+    // Just render the app immediately
+    // The offline middleware will handle reading from IndexedDB
+    // The preload happens after login (in Login.tsx)
     return <>{children}</>;
 }
 
