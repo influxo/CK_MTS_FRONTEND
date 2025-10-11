@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { AccountSetup } from "./AccountSetup";
@@ -29,6 +29,8 @@ export function EmployeesModule() {
   const error = useSelector(selectEmployeesError);
   const user = useSelector(selectCurrentUser);
 
+  const hasFetchedRef = useRef(false);
+
   // Determine if user is sys or super admin
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
@@ -45,12 +47,16 @@ export function EmployeesModule() {
   }, [normalizedRoles]);
 
   useEffect(() => {
+    if (hasFetchedRef.current) return;
+    if (!user || !Array.isArray(user.roles) || user.roles.length === 0) return;
+
+    hasFetchedRef.current = true;
     if (isSysOrSuperAdmin) {
       dispatch(fetchEmployees());
     } else {
       dispatch(fetchMyTeamEmployees());
     }
-  }, [dispatch, isSysOrSuperAdmin]);
+  }, [dispatch, isSysOrSuperAdmin, user]);
   // Handle when an employee is selected from the list -> navigate to details route
   const handleEmployeeSelect = (employeeId: string) => {
     navigate(`/employees/${employeeId}`);
