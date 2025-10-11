@@ -252,7 +252,7 @@ export function SubProjectActivities({
                       </Select>
                       <Button
                         variant="ghost"
-                        className="text-destructive"
+                        className="hover:bg-[#E0F2FE] hover:text-black"
                         onClick={() => {
                           const next = reportingFieldsRows.filter(
                             (_, i) => i !== idx
@@ -265,7 +265,7 @@ export function SubProjectActivities({
                     </div>
                   ))}
                   <Button
-                    variant="outline"
+                    className="bg-[#E0F2FE] border-0 text-black"
                     onClick={() =>
                       setReportingFieldsRows([
                         ...reportingFieldsRows,
@@ -280,13 +280,14 @@ export function SubProjectActivities({
             </div>
             <DialogFooter>
               <Button
-                variant="outline"
+                className="bg-[#E0F2FE] border-0 text-black"
                 onClick={() => setIsCreateActivityDialogOpen(false)}
                 disabled={isCreating}
               >
                 Cancel
               </Button>
               <Button
+                className="bg-[#0073e6] border-0 text-white"
                 onClick={async () => {
                   const reportingFields: Record<string, string> = {};
                   reportingFieldsRows
@@ -341,13 +342,13 @@ export function SubProjectActivities({
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search activities..."
-                  className="pl-9 bg-black/5 border-0"
+                  className="pl-9 bg-white border border-gray-100 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[160px] bg-black/5 border-0">
+                <SelectTrigger className="w-[160px] bg-white border border-gray-100 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -424,7 +425,10 @@ export function SubProjectActivities({
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="bg-black/5">
+                      <Badge
+                        variant="secondary"
+                        className="bg-[#E0F2FE] border-0"
+                      >
                         {activity.frequency}
                       </Badge>
                     </TableCell>

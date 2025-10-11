@@ -301,7 +301,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                   </Label>
                   <Input
                     id="svc-name"
-                    className="col-span-3"
+                    className="col-span-3 border border-[#C6CBCB]"
                     value={name}
                     onChange={(e) => setName(e.currentTarget.value)}
                   />
@@ -312,7 +312,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                   </Label>
                   <Input
                     id="svc-category"
-                    className="col-span-3"
+                    className="col-span-3 border border-[#C6CBCB]"
                     value={category}
                     onChange={(e) => setCategory(e.currentTarget.value)}
                   />
@@ -323,7 +323,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                   </Label>
                   <Textarea
                     id="svc-description"
-                    className="col-span-3"
+                    className="col-span-3 border border-[#C6CBCB]"
                     rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.currentTarget.value)}
@@ -335,7 +335,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                     value={status}
                     onValueChange={(v) => setStatus(v as "active" | "inactive")}
                   >
-                    <SelectTrigger className="col-span-3">
+                    <SelectTrigger className="col-span-3 border border-[#C6CBCB]">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -347,6 +347,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
               </div>
               <DialogFooter>
                 <Button
+                  className="bg-blue-200 border-0"
                   variant="outline"
                   onClick={() => setIsCreateOpen(false)}
                   disabled={creating}
@@ -371,7 +372,8 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
             <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="bg-black/10 hover:bg-black/20"
+                className="bg-[#E0F2FE] border-0  transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
               >
                 Assign Service
               </Button>
@@ -394,6 +396,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                     }}
                   />
                   <Button
+                    className="bg-blue-200 border-0"
                     variant="outline"
                     onClick={() =>
                       dispatch(getAllServices({ page: 1, limit: 200 }))
@@ -413,7 +416,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                 )}
                 <div className="rounded-md border max-h-[360px] overflow-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-[#EDEEFC]">
                       <TableRow>
                         <TableHead className="w-[48px]">
                           <span className="sr-only">Select</span>
@@ -428,6 +431,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                         <TableRow key={svc.id} className="hover:bg-muted/40">
                           <TableCell>
                             <input
+                              className=""
                               type="checkbox"
                               checked={selectedIds.includes(svc.id)}
                               onChange={() => toggleSelect(svc.id)}
@@ -440,13 +444,18 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{svc.category}</Badge>
+                            <Badge
+                              variant="outline"
+                              className="bg-[#0073e6] text-white border-0"
+                            >
+                              {svc.category}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge
                               className={
                                 svc.status === "active"
-                                  ? "bg-[#2E343E] text-white"
+                                  ? "bg-[#DEF8EE] text-[#4AA785] border-0"
                                   : ""
                               }
                             >
@@ -523,6 +532,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
               </div>
               <DialogFooter>
                 <Button
+                  className="bg-blue-200 border-0"
                   variant="outline"
                   onClick={() => setIsAssignOpen(false)}
                   disabled={assigning}
@@ -618,7 +628,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                   <TableCell className="text-right">
                     <Button
                       variant="outline"
-                      className="hover:bg-black/10 border-0"
+                      className="hover:bg-blue-100 border-0"
                       onClick={() => openUnassign(svc)}
                     >
                       Unassign

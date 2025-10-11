@@ -991,7 +991,12 @@ export function ProjectDetails() {
   return (
     <div className="space-y-6 ">
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+        <Button
+          variant="outline"
+          className=" border-0 bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]"
+          size="sm"
+          onClick={() => navigate(-1)}
+        >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Kthehu
         </Button>
@@ -1004,7 +1009,7 @@ export function ProjectDetails() {
             <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="ml-auto bg-[#0073e6] border-0 text-white"
+                className="ml-auto bg-[#0073e6] border-0 text-white transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]"
               >
                 <FileEdit className="h-4 w-4 mr-2" />
                 Përditësoni Projektin
@@ -1090,6 +1095,7 @@ export function ProjectDetails() {
               </div>
               <DialogFooter>
                 <Button
+                  className="bg-[#E0F2FE] border-0"
                   variant="outline"
                   onClick={() => setIsEditDialogOpen(false)}
                 >
@@ -1298,11 +1304,12 @@ export function ProjectDetails() {
               Nuk keni akses për të parë këto informacione.
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2  gap-6">
               <div className="col-span-2 space-y-6">
                 {/* Overview Filters */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-wrap items-center gap-3">
+                <h1>Overview</h1>
+                <div className="flex flex-col gap-2 justify-between">
+                  <div className="flex flex-wrap items-center gap-3 ">
                     {/* Subproject selector */}
                     <Select
                       value={selectedSubProjectId || "all"}
@@ -1314,7 +1321,7 @@ export function ProjectDetails() {
                         setFormTemplateIdLocal(undefined);
                       }}
                     >
-                      <SelectTrigger className="w-[220px] bg-white border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                      <SelectTrigger className="w-[220px] bg-white border-gray-100 hover:scale-[1.02] hover:-translate-y-[1px]">
                         <SelectValue placeholder="Subproject" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1334,7 +1341,7 @@ export function ProjectDetails() {
                       value={timePreset}
                       onValueChange={onTimePresetChange}
                     >
-                      <SelectTrigger className="w-[200px] bg-white p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                      <SelectTrigger className="w-[200px] bg-white p-2 rounded-md border-gray-100 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
                         <SelectValue placeholder="Time Period" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1361,14 +1368,14 @@ export function ProjectDetails() {
                   </div>
 
                   {showMoreLocal && (
-                    <div className="mt-1 p-3 rounded-md bg-white/60 border border-gray-100">
+                    <div className=" rounded-md  border-gray-100">
                       <div className="flex flex-wrap items-center gap-3">
                         {/* Metric */}
                         <Select
                           value={metricLocal}
                           onValueChange={(v) => setMetricLocal(v as any)}
                         >
-                          <SelectTrigger className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                          <SelectTrigger className="w-[220px]  border-gray-100 p-2 rounded-md  transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
                             <SelectValue placeholder="Metric" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1392,7 +1399,7 @@ export function ProjectDetails() {
                             setServiceIdLocal(id || undefined);
                           }}
                         >
-                          <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                          <SelectTrigger className="w-[200px] border-gray-100 hover:scale-[1.02] hover:-translate-y-[1px]">
                             <SelectValue placeholder="Service" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1413,7 +1420,7 @@ export function ProjectDetails() {
                             setFormTemplateIdLocal(id || undefined);
                           }}
                         >
-                          <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                          <SelectTrigger className="w-[200px] border-gray-100 hover:scale-[1.02] hover:-translate-y-[1px]">
                             <SelectValue placeholder="Form Template" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1430,10 +1437,12 @@ export function ProjectDetails() {
                         <div className="relative">
                           <button
                             onClick={() => setFiltersOpen((s) => !s)}
-                            className="px-3 py-1.5 rounded-md text-sm bg-blue-200 text-blue-600 hover:bg-blue-200/30 flex items-center gap-2"
+                            className="px-3 py-1.5 rounded-md text-sm  flex items-center gap-2 bg-[#E0F2FE] text-black border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px]"
                           >
                             <span>
-                              Granularity:{" "}
+                              {" "}
                               <span className="capitalize font-medium">
                                 {granularity}
                               </span>
@@ -1658,23 +1667,29 @@ export function ProjectDetails() {
                       <div className="flex items-center gap-3">
                         <CardTitle>Project Activity Overview</CardTitle>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant={chartType === "line" ? "default" : "outline"}
-                          onClick={() => setChartType("line")}
-                          className="px-2"
+                      <div className="flex space-x-4 justify-end">
+                        <Tabs
+                          className="w-full"
+                          value={chartType}
+                          onValueChange={(v) =>
+                            setChartType(v as typeof chartType)
+                          }
                         >
-                          Line
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={chartType === "bar" ? "default" : "outline"}
-                          onClick={() => setChartType("bar")}
-                          className="px-2"
-                        >
-                          Bar
-                        </Button>
+                          <TabsList className=" bg-[#E0F2FE] items-center">
+                            <TabsTrigger
+                              value="line"
+                              className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
+                            >
+                              Line
+                            </TabsTrigger>
+                            <TabsTrigger
+                              value="bar"
+                              className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
+                            >
+                              Bar
+                            </TabsTrigger>
+                          </TabsList>
+                        </Tabs>
                       </div>
                     </div>
                   </CardHeader>
@@ -1899,7 +1914,7 @@ export function ProjectDetails() {
                           setAddBeneficiaryTab(v as "new" | "existing")
                         }
                       >
-                        <TabsList className="mb-4 bg-blue-200 bg-opacity-10 items-center">
+                        <TabsList className="mb-4 bg-blue-50 items-center">
                           <TabsTrigger
                             value="new"
                             className=" data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white  "
@@ -2219,6 +2234,7 @@ export function ProjectDetails() {
                                       }}
                                     />
                                     <Button
+                                      className="hover:bg-blue-50 border-0"
                                       type="button"
                                       variant="outline"
                                       onClick={() => {
@@ -2290,6 +2306,7 @@ export function ProjectDetails() {
                                       }}
                                     />
                                     <Button
+                                      className="hover:bg-blue-50 border-0"
                                       type="button"
                                       variant="outline"
                                       onClick={() => {
@@ -2363,6 +2380,7 @@ export function ProjectDetails() {
                                       }}
                                     />
                                     <Button
+                                      className="hover:bg-blue-50 border-0"
                                       type="button"
                                       variant="outline"
                                       onClick={() => {
@@ -2434,6 +2452,7 @@ export function ProjectDetails() {
                                       }}
                                     />
                                     <Button
+                                      className="hover:bg-blue-50 border-0"
                                       type="button"
                                       variant="outline"
                                       onClick={() => {
@@ -2818,7 +2837,7 @@ export function ProjectDetails() {
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
-                            className="hover:bg-blue-200"
+                            className="hover:bg-[#E0F2FE] border-0"
                             variant="outline"
                             size="sm"
                             onClick={() => navigate(`/beneficiaries/${r.id}`)}

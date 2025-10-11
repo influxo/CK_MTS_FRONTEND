@@ -78,13 +78,13 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-  } from "../ui/data-display/table";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
 import { toast } from "sonner";
 interface BeneficiariesListProps {
   onBeneficiarySelect: (beneficiaryId: string) => void;

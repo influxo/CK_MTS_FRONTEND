@@ -962,7 +962,7 @@ export function FormSubmission({
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 justify-end">
-        <Button
+        {/* <Button
           variant="outline"
           className="w-full bg-blue-200 text-blue-900 border-0 sm:w-auto"
           onClick={handleSaveDraft}
@@ -976,7 +976,7 @@ export function FormSubmission({
               Save Draft
             </>
           )}
-        </Button>
+        </Button> */}
 
         <Button
           className="w-full bg-[#0073e6] text-white sm:w-auto"

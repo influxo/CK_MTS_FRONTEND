@@ -813,7 +813,12 @@ export function SubProjectDetails() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+        <Button
+          variant="outline"
+          className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]"
+          size="sm"
+          onClick={() => navigate(-1)}
+        >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Project
         </Button>
@@ -825,7 +830,7 @@ export function SubProjectDetails() {
             <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="ml-auto bg-[#2B2B2B] text-white"
+                className="ml-auto bg-[#0073e6] border-0 text-white"
               >
                 <FileEdit className="h-4 w-4 mr-2" />
                 Edit Sub-Project
@@ -967,6 +972,7 @@ export function SubProjectDetails() {
                   Cancel
                 </Button>
                 <Button
+                  className="bg-[#0073e6] border-0 text-white"
                   onClick={async () => {
                     if (!subprojectId) return;
                     try {
@@ -1013,7 +1019,12 @@ export function SubProjectDetails() {
           <div className="flex flex-col md:flex-row gap-6 w-full">
             <div className="flex-1 space-y-5">
               <div className="flex gap-2">
-                <Badge variant="outline">{enhancedSubProject.category}</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-[#0073e6] text-white border-0"
+                >
+                  {enhancedSubProject.category}
+                </Badge>
                 <Badge variant="outline">{enhancedSubProject.type}</Badge>
                 <Badge
                   variant="default"
@@ -1173,7 +1184,7 @@ export function SubProjectDetails() {
                 <div className="flex flex-wrap items-center gap-3">
                   {/* Time Period */}
                   <Select value={timePreset} onValueChange={onTimePresetChange}>
-                    <SelectTrigger className="w-[200px] bg-white p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                    <SelectTrigger className="w-[200px] bg-white border-gray-100 border p-2 rounded-md  transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
                       <SelectValue placeholder="Time Period" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1196,14 +1207,14 @@ export function SubProjectDetails() {
                 </div>
 
                 {showMoreLocal && (
-                  <div className="mt-1 p-3 rounded-md bg-white/60 border border-gray-100">
+                  <div className="">
                     <div className="flex flex-wrap items-center gap-3">
                       {/* Metric */}
                       <Select
                         value={metricLocal}
                         onValueChange={(v) => setMetricLocal(v as any)}
                       >
-                        <SelectTrigger className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                        <SelectTrigger className="w-[200px]  p-2 rounded-md border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
                           <SelectValue placeholder="Metric" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1227,7 +1238,7 @@ export function SubProjectDetails() {
                           setServiceIdLocal(id || undefined);
                         }}
                       >
-                        <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                        <SelectTrigger className="w-[200px]  p-2 rounded-md border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
                           <SelectValue placeholder="Service" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1248,7 +1259,7 @@ export function SubProjectDetails() {
                           setFormTemplateIdLocal(id || undefined);
                         }}
                       >
-                        <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                        <SelectTrigger className="w-[200px]  p-2 rounded-md border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
                           <SelectValue placeholder="Form Template" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1265,10 +1276,10 @@ export function SubProjectDetails() {
                       <div className="relative">
                         <button
                           onClick={() => setFiltersOpen((s) => !s)}
-                          className="px-3 py-1.5 rounded-md text-sm bg-blue-200 text-blue-600 hover:bg-blue-200/30 flex items-center gap-2"
+                          className="px-3 py-1.5 rounded-md text-sm bg-[#E0F2FE]  flex items-center transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px] gap-2"
                         >
                           <span>
-                            Granularity:{" "}
+                            {" "}
                             <span className="capitalize font-medium">
                               {granularity}
                             </span>
@@ -1459,23 +1470,27 @@ export function SubProjectDetails() {
                     <div className="flex items-center gap-3">
                       <h4>Subproject Activity Overview</h4>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant={chartType === "line" ? "default" : "outline"}
-                        onClick={() => setChartType("line")}
-                        className="px-2"
+                    <div className="flex space-x-4 justify-end">
+                      <Tabs
+                        className="w-full"
+                        value={chartType}
+                        onValueChange={(v) => setChartType(v as "line" | "bar")}
                       >
-                        Line
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={chartType === "bar" ? "default" : "outline"}
-                        onClick={() => setChartType("bar")}
-                        className="px-2"
-                      >
-                        Bar
-                      </Button>
+                        <TabsList className=" bg-[#E0F2FE] items-center">
+                          <TabsTrigger
+                            value="line"
+                            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
+                          >
+                            Line
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="bar"
+                            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
+                          >
+                            Bar
+                          </TabsTrigger>
+                        </TabsList>
+                      </Tabs>
                     </div>
                   </div>
                   <div className="h-64 mt-4">
@@ -1880,9 +1895,17 @@ export function SubProjectDetails() {
                           setAddBeneficiaryTab(v as "new" | "existing")
                         }
                       >
-                        <TabsList className="mb-4">
-                          <TabsTrigger value="new">Add New</TabsTrigger>
-                          <TabsTrigger value="existing">
+                        <TabsList className="mb-4 bg-[#E0F2FE] ">
+                          <TabsTrigger
+                            value="new"
+                            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
+                          >
+                            Add New
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="existing"
+                            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
+                          >
                             Add Existing
                           </TabsTrigger>
                         </TabsList>
@@ -2167,6 +2190,7 @@ export function SubProjectDetails() {
                                       }}
                                     />
                                     <Button
+                                      className="hover:bg-[#E0F2FE] border-0"
                                       type="button"
                                       variant="outline"
                                       onClick={() => {
@@ -2238,6 +2262,7 @@ export function SubProjectDetails() {
                                       }}
                                     />
                                     <Button
+                                      className="hover:bg-[#E0F2FE] border-0"
                                       type="button"
                                       variant="outline"
                                       onClick={() => {
@@ -2311,6 +2336,7 @@ export function SubProjectDetails() {
                                       }}
                                     />
                                     <Button
+                                      className="hover:bg-[#E0F2FE] border-0"
                                       type="button"
                                       variant="outline"
                                       onClick={() => {
@@ -2382,6 +2408,7 @@ export function SubProjectDetails() {
                                       }}
                                     />
                                     <Button
+                                      className="hover:bg-[#E0F2FE] border-0"
                                       type="button"
                                       variant="outline"
                                       onClick={() => {
@@ -2523,6 +2550,7 @@ export function SubProjectDetails() {
 
                       <DialogFooter>
                         <Button
+                          className="bg-[#E0F2FE] border-0"
                           variant="outline"
                           onClick={() => setIsAddDialogOpen(false)}
                         >
@@ -2530,6 +2558,7 @@ export function SubProjectDetails() {
                         </Button>
                         {addBeneficiaryTab === "new" ? (
                           <Button
+                            className="bg-[#0073e6] border-0 text-white"
                             onClick={handleCreateSubmit}
                             disabled={createLoading}
                           >
@@ -2537,6 +2566,7 @@ export function SubProjectDetails() {
                           </Button>
                         ) : (
                           <Button
+                            className="bg-[#0073e6] border-0 text-white"
                             onClick={handleAssociateExistingSubmit}
                             disabled={
                               associateLoading ||
@@ -2648,6 +2678,7 @@ export function SubProjectDetails() {
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
+                            className="hover:bg-[#E0F2FE] border-0"
                             variant="outline"
                             size="sm"
                             onClick={() => navigate(`/beneficiaries/${r.id}`)}

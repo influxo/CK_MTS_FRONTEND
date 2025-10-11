@@ -44,7 +44,10 @@ import {
   selectAssignedUsersLoading,
   removeUserFromProject,
 } from "../../store/slices/projectsSlice";
-import { fetchEmployees, selectAllEmployees } from "../../store/slices/employeesSlice";
+import {
+  fetchEmployees,
+  selectAllEmployees,
+} from "../../store/slices/employeesSlice";
 
 interface ProjectTeamProps {
   projectId: string;
@@ -279,7 +282,10 @@ export function ProjectTeam({
                       </TableCell>
                       <TableCell>{u.email}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="capitalize">
+                        <Badge
+                          variant="outline"
+                          className="capitalize text-[#4AA785] bg-[#DEF8EE] border-0"
+                        >
                           {u.status || "unknown"}
                         </Badge>
                       </TableCell>

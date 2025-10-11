@@ -223,7 +223,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
       <div className="flex flex-wrap gap-4 items-center">
         <Select value={projectId || "all"} onValueChange={onProjectChange}>
           <SelectTrigger
-            className="w-[200px] bg-white p-2 rounded-md border-0
+            className="w-[180px] bg-white p-2 rounded-md  border-gray-100
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px] "
           >
@@ -283,13 +283,25 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           <Filter className="h-4 w-4 mr-2" />
           {showMore ? "Hide Filters" : "More Filters"}
         </Button>
+        <div className="flex gap-4 justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-[#0073e6] text-white border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px]"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+        </div>
       </div>
       {showMore && (
-        <div className="mt-2 p-3 rounded-md bg-white/60 border border-gray-100">
+        <div className="  rounded-md   border-gray-100">
           <div className="flex flex-wrap gap-4 items-center">
             <Select value={timePreset} onValueChange={onTimePresetChange}>
               <SelectTrigger
-                className="w-[200px] bg-white p-2 rounded-md border-0
+                className="w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
@@ -313,7 +325,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               }}
             >
               <SelectTrigger
-                className="w-[200px] bg-white p-2 rounded-md border-0
+                className="w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
@@ -357,7 +369,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               }}
             >
               <SelectTrigger
-                className="w-[220px] bg-white p-2 rounded-md border-0
+                className="w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
@@ -417,7 +429,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               }}
             >
               <SelectTrigger
-                className="w-[220px] bg-white p-2 rounded-md border-0
+                className="w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
@@ -449,7 +461,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         </div>
       )}
 
-      <div className="flex gap-4 justify-end">
+      {/* <div className="flex gap-4 justify-end">
         <Button
           variant="outline"
           size="sm"
@@ -460,7 +472,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           <Download className="h-4 w-4 mr-2" />
           Export
         </Button>
-      </div>
+      </div> */}
     </div>
   );
 }

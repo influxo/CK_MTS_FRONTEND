@@ -41,6 +41,7 @@ import { useSelector } from "react-redux";
 import { selectMetricsFilters } from "../../store/slices/serviceMetricsSlice";
 import { selectCurrentUser } from "../../store/slices/authSlice";
 import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@radix-ui/react-tabs";
 
 type Granularity = TimeUnit; // 'day' | 'week' | 'month' | 'quarter' | 'year'
 
@@ -559,24 +560,27 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                 ? "Unique Beneficiaries Overview"
                 : "Form Submissions Overview"}
             </CardTitle>
-            <div className="flex items-center gap-1">
-              <Button
-                size="sm"
-                variant={chartType === "line" ? "default" : "outline"}
-                onClick={() => setChartType("line")}
-                className="px-2"
-              >
-                Line
-              </Button>
-              <Button
-                size="sm"
-                variant={chartType === "bar" ? "default" : "outline"}
-                onClick={() => setChartType("bar")}
-                className="px-2"
-              >
-                Bar
-              </Button>
-            </div>
+
+            <Tabs
+              className="w-[220px] bg-blue-50 p-1   rounded-full"
+              value={chartType}
+              onValueChange={(value) => setChartType(value as "line" | "bar")}
+            >
+              <TabsList className=" grid w-full grid-cols-2 rounded-full  ">
+                <TabsTrigger
+                  value="line"
+                  className=" data-[state=active]:bg-[#0073e6] rounded-full data-[state=active]:text-white"
+                >
+                  Line
+                </TabsTrigger>
+                <TabsTrigger
+                  value="bar"
+                  className=" data-[state=active]:bg-[#0073e6] rounded-full data-[state=active]:text-white"
+                >
+                  Bar
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
           {/* Local-only filters for Form Submissions: project/subproject always visible; others hidden behind 'More Filters' */}
           <div className=" flex flex-col gap-2 w-full md:w-auto">
@@ -598,7 +602,11 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                   setFormTemplateIdLocal(undefined);
                 }}
               >
-                <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                <SelectTrigger
+                  className="w-[180px] bg-white p-2 rounded-md  border-gray-100
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+                >
                   <SelectValue placeholder="Project" />
                 </SelectTrigger>
                 <SelectContent>
@@ -628,7 +636,11 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                 }}
                 disabled={!effectiveProjectId}
               >
-                <SelectTrigger className="w-[220px] bg-blue-200/30   border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
+                <SelectTrigger
+                  className="w-[180px] bg-white p-2 rounded-md  border-gray-100
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+                >
                   <SelectValue placeholder="Subproject" />
                 </SelectTrigger>
                 <SelectContent>
@@ -655,248 +667,258 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
             </div>
 
             {showMoreLocal && (
-              <div className="mt-2 p-3 rounded-md bg-white/60 border border-gray-100">
-                <div className="flex flex-wrap items-center gap-3">
-                  {/* Metric (local override; inherits global if unset) */}
-                  <Select
-                    value={
-                      (metricLocal ||
-                        globalFilters.metric ||
-                        "submissions") as string
-                    }
-                    onValueChange={(v) => {
-                      setMetricLocal(v as MetricType);
-                    }}
+              <div className="flex gap-4">
+                {/* Metric (local override; inherits global if unset) */}
+                <Select
+                  value={
+                    (metricLocal ||
+                      globalFilters.metric ||
+                      "submissions") as string
+                  }
+                  onValueChange={(v) => {
+                    setMetricLocal(v as MetricType);
+                  }}
+                >
+                  <SelectTrigger
+                    className="w-[180px] bg-white p-2 rounded-md  border-gray-100
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
                   >
-                    <SelectTrigger className="w-[220px] bg-blue-200/30 p-2 rounded-md border-0 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
-                      <SelectValue placeholder="Beneficiary" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="submissions">Submissions</SelectItem>
-                      <SelectItem value="serviceDeliveries">
-                        Service Deliveries
-                      </SelectItem>
-                      <SelectItem value="uniqueBeneficiaries">
-                        Unique Beneficiaries
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <SelectValue placeholder="Beneficiary" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="submissions">Submissions</SelectItem>
+                    <SelectItem value="serviceDeliveries">
+                      Service Deliveries
+                    </SelectItem>
+                    <SelectItem value="uniqueBeneficiaries">
+                      Unique Beneficiaries
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
 
-                  {/* Service (local override; inherits global if unset) */}
-                  <Select
-                    open={openServicesSelect}
-                    onOpenChange={setOpenServicesSelect}
-                    value={
-                      (serviceIdLocal ??
-                        globalFilters.serviceId ??
-                        "all") as string
-                    }
-                    onValueChange={(v) => {
-                      if (v === "__svc_prev__" || v === "__svc_next__") {
-                        if (!effectiveProjectId && !effectiveSubprojectId) {
-                          const nextPage =
-                            v === "__svc_prev__"
-                              ? Math.max(1, servicesPage - 1)
-                              : Math.min(
-                                  servicesTotalPages || 1,
-                                  servicesPage + 1
-                                );
-                          setServicesPage(nextPage);
-                          setOpenServicesSelect(true);
-                        }
-                        return;
-                      }
-                      const id = v === "all" ? "" : v;
-                      setServiceIdLocal(id || undefined);
-                    }}
-                  >
-                    <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
-                      <SelectValue placeholder="Service" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Services</SelectItem>
-                      {servicesOptions.map((s: any) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                      {/* Pagination controls for services when not scoped to entity */}
-                      {!effectiveProjectId && !effectiveSubprojectId && (
-                        <>
-                          <SelectItem
-                            value="__svc_prev__"
-                            disabled={servicesPage <= 1}
-                          >
-                            ◀ Prev Page
-                          </SelectItem>
-                          <SelectItem value="__svc_info__" disabled>
-                            Page {servicesPage} of {servicesTotalPages || 1}
-                          </SelectItem>
-                          <SelectItem
-                            value="__svc_next__"
-                            disabled={servicesPage >= (servicesTotalPages || 1)}
-                          >
-                            Next Page ▶
-                          </SelectItem>
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Form Template (local override; inherits global if unset) */}
-                  <Select
-                    open={openTemplatesSelect}
-                    onOpenChange={setOpenTemplatesSelect}
-                    value={
-                      (formTemplateIdLocal ??
-                        globalFilters.formTemplateId ??
-                        "all") as string
-                    }
-                    onValueChange={(v) => {
-                      if (v === "__tpl_prev__" || v === "__tpl_next__") {
+                {/* Service (local override; inherits global if unset) */}
+                <Select
+                  open={openServicesSelect}
+                  onOpenChange={setOpenServicesSelect}
+                  value={
+                    (serviceIdLocal ??
+                      globalFilters.serviceId ??
+                      "all") as string
+                  }
+                  onValueChange={(v) => {
+                    if (v === "__svc_prev__" || v === "__svc_next__") {
+                      if (!effectiveProjectId && !effectiveSubprojectId) {
                         const nextPage =
-                          v === "__tpl_prev__"
-                            ? Math.max(1, templatesPage - 1)
+                          v === "__svc_prev__"
+                            ? Math.max(1, servicesPage - 1)
                             : Math.min(
-                                templatesTotalPages || 1,
-                                templatesPage + 1
+                                servicesTotalPages || 1,
+                                servicesPage + 1
                               );
-                        setTemplatesPage(nextPage);
-                        setOpenTemplatesSelect(true);
-                        return;
+                        setServicesPage(nextPage);
+                        setOpenServicesSelect(true);
                       }
-                      const id = v === "all" ? "" : v;
-                      setFormTemplateIdLocal(id || undefined);
-                    }}
+                      return;
+                    }
+                    const id = v === "all" ? "" : v;
+                    setServiceIdLocal(id || undefined);
+                  }}
+                >
+                  <SelectTrigger
+                    className="w-[180px] bg-white p-2 rounded-md  border-gray-100
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
                   >
-                    <SelectTrigger className="w-[200px] bg-blue-200/30 border-0 hover:scale-[1.02] hover:-translate-y-[1px]">
-                      <SelectValue placeholder="Form Template" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Templates</SelectItem>
-                      {templatesOptions.map((t: any) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.name}
+                    <SelectValue placeholder="Service" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Services</SelectItem>
+                    {servicesOptions.map((s: any) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                    {/* Pagination controls for services when not scoped to entity */}
+                    {!effectiveProjectId && !effectiveSubprojectId && (
+                      <>
+                        <SelectItem
+                          value="__svc_prev__"
+                          disabled={servicesPage <= 1}
+                        >
+                          ◀ Prev Page
                         </SelectItem>
-                      ))}
-                      {/* Pagination controls for templates */}
-                      <SelectItem
-                        value="__tpl_prev__"
-                        disabled={templatesPage <= 1}
-                      >
-                        ◀ Prev Page
-                      </SelectItem>
-                      <SelectItem value="__tpl_info__" disabled>
-                        Page {templatesPage} of {templatesTotalPages || 1}
-                      </SelectItem>
-                      <SelectItem
-                        value="__tpl_next__"
-                        disabled={templatesPage >= (templatesTotalPages || 1)}
-                      >
-                        Next Page ▶
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                        <SelectItem value="__svc_info__" disabled>
+                          Page {servicesPage} of {servicesTotalPages || 1}
+                        </SelectItem>
+                        <SelectItem
+                          value="__svc_next__"
+                          disabled={servicesPage >= (servicesTotalPages || 1)}
+                        >
+                          Next Page ▶
+                        </SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
 
-                  {/* Granularity dropdown */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setFiltersOpen((s) => !s)}
-                      className="px-3 py-1.5 rounded-md text-sm bg-blue-200 text-blue-600 hover:bg-blue-200/30 flex items-center gap-2"
+                {/* Form Template (local override; inherits global if unset) */}
+                <Select
+                  open={openTemplatesSelect}
+                  onOpenChange={setOpenTemplatesSelect}
+                  value={
+                    (formTemplateIdLocal ??
+                      globalFilters.formTemplateId ??
+                      "all") as string
+                  }
+                  onValueChange={(v) => {
+                    if (v === "__tpl_prev__" || v === "__tpl_next__") {
+                      const nextPage =
+                        v === "__tpl_prev__"
+                          ? Math.max(1, templatesPage - 1)
+                          : Math.min(
+                              templatesTotalPages || 1,
+                              templatesPage + 1
+                            );
+                      setTemplatesPage(nextPage);
+                      setOpenTemplatesSelect(true);
+                      return;
+                    }
+                    const id = v === "all" ? "" : v;
+                    setFormTemplateIdLocal(id || undefined);
+                  }}
+                >
+                  <SelectTrigger
+                    className="w-[180px] bg-white p-2 rounded-md  border-gray-100
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+                  >
+                    <SelectValue placeholder="Form Template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Templates</SelectItem>
+                    {templatesOptions.map((t: any) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                    {/* Pagination controls for templates */}
+                    <SelectItem
+                      value="__tpl_prev__"
+                      disabled={templatesPage <= 1}
                     >
-                      <span>
-                        Granularity:{" "}
-                        <span className="capitalize font-medium">
-                          {(granularity as Granularity) || "week"}
-                        </span>
+                      ◀ Prev Page
+                    </SelectItem>
+                    <SelectItem value="__tpl_info__" disabled>
+                      Page {templatesPage} of {templatesTotalPages || 1}
+                    </SelectItem>
+                    <SelectItem
+                      value="__tpl_next__"
+                      disabled={templatesPage >= (templatesTotalPages || 1)}
+                    >
+                      Next Page ▶
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Granularity dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setFiltersOpen((s) => !s)}
+                    className="px-3 py-1.5 rounded-md text-sm bg-[#E0F2FE]   flex items-center gap-2"
+                  >
+                    <span>
+                      {" "}
+                      <span className="capitalize font-medium">
+                        {(granularity as Granularity) || "week"}
                       </span>
-                      <ChevronDown className="h-4 w-4" />
-                    </button>
-                    {filtersOpen && (
-                      <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-10">
-                        <ul className="py-1">
-                          {(
-                            [
-                              "day",
-                              "week",
-                              "month",
-                              "quarter",
-                              "year",
-                            ] as Granularity[]
-                          ).map((g) => (
-                            <li key={g}>
-                              <button
-                                onClick={() => {
-                                  applyQuery(g);
-                                  setCustomOpen(false);
-                                  setFiltersOpen(false);
-                                }}
-                                className={[
-                                  "w-full text-left px-3 py-2 text-sm rounded-md capitalize transition-transform duration-200 ease-in-out",
-                                  granularity === g
-                                    ? "bg-[#E5ECF6] text-gray-900 scale-[1.02] -translate-y-[1px]"
-                                    : "hover:bg-gray-50 hover:scale-[1.02] hover:-translate-y-[1px]",
-                                ].join(" ")}
-                              >
-                                {g}
-                              </button>
-                            </li>
-                          ))}
-                          <li className="my-1 border-t border-gray-100" />
-                          <li>
+                    </span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  {filtersOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-10">
+                      <ul className="py-1">
+                        {(
+                          [
+                            "day",
+                            "week",
+                            "month",
+                            "quarter",
+                            "year",
+                          ] as Granularity[]
+                        ).map((g) => (
+                          <li key={g}>
                             <button
-                              onClick={() => setCustomOpen((s) => !s)}
-                              className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-50"
+                              onClick={() => {
+                                applyQuery(g);
+                                setCustomOpen(false);
+                                setFiltersOpen(false);
+                              }}
+                              className={[
+                                "w-full text-left px-3 py-2 text-sm rounded-md capitalize transition-transform duration-200 ease-in-out",
+                                granularity === g
+                                  ? "bg-[#E5ECF6] text-gray-900 scale-[1.02] -translate-y-[1px]"
+                                  : "hover:bg-gray-50 hover:scale-[1.02] hover:-translate-y-[1px]",
+                              ].join(" ")}
                             >
-                              Custom range…
+                              {g}
                             </button>
-                            {customOpen && (
-                              <div className="px-3 pb-2">
-                                <div className="grid grid-cols-1 gap-2">
-                                  <label className="text-xs text-gray-600">
-                                    From
-                                    <input
-                                      type="date"
-                                      className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
-                                      value={customFrom}
-                                      onChange={(e) =>
-                                        setCustomFrom(e.target.value)
-                                      }
-                                    />
-                                  </label>
-                                  <label className="text-xs text-gray-600">
-                                    To
-                                    <input
-                                      type="date"
-                                      className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
-                                      value={customTo}
-                                      onChange={(e) =>
-                                        setCustomTo(e.target.value)
-                                      }
-                                    />
-                                  </label>
-                                  <div className="flex justify-end gap-2 pt-1">
-                                    <button
-                                      onClick={() => setCustomOpen(false)}
-                                      className="px-3 py-1.5 rounded-md text-sm border border-gray-200"
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      onClick={onCustomApply}
-                                      className="px-3 py-1.5 rounded-md text-sm bg-black text-white"
-                                    >
-                                      Apply
-                                    </button>
-                                  </div>
+                          </li>
+                        ))}
+                        <li className="my-1 border-t border-gray-100" />
+                        <li>
+                          <button
+                            onClick={() => setCustomOpen((s) => !s)}
+                            className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-50"
+                          >
+                            Custom range…
+                          </button>
+                          {customOpen && (
+                            <div className="px-3 pb-2">
+                              <div className="grid grid-cols-1 gap-2">
+                                <label className="text-xs text-gray-600">
+                                  From
+                                  <input
+                                    type="date"
+                                    className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                                    value={customFrom}
+                                    onChange={(e) =>
+                                      setCustomFrom(e.target.value)
+                                    }
+                                  />
+                                </label>
+                                <label className="text-xs text-gray-600">
+                                  To
+                                  <input
+                                    type="date"
+                                    className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                                    value={customTo}
+                                    onChange={(e) =>
+                                      setCustomTo(e.target.value)
+                                    }
+                                  />
+                                </label>
+                                <div className="flex justify-end gap-2 pt-1">
+                                  <button
+                                    onClick={() => setCustomOpen(false)}
+                                    className="px-3 py-1.5 rounded-md text-sm border border-gray-200"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    onClick={onCustomApply}
+                                    className="px-3 py-1.5 rounded-md text-sm bg-black text-white"
+                                  >
+                                    Apply
+                                  </button>
                                 </div>
                               </div>
-                            )}
-                          </li>
-                        </ul>
-                      </div>
-                    )}
-                  </div>
+                            </div>
+                          )}
+                        </li>
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -997,53 +1019,150 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
       </CardHeader>
 
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2   lg:grid-cols-4 gap-4">
-          {displayedCards.map((card, index) => (
-            <div key={index} className="p-4  bg-[#B1E3FF] rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium text-sm truncate" title={card.title}>
-                  {card.title}
-                </h4>
-                <Button variant="ghost" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
+        <Tabs defaultValue="all">
+          <div className="flex items-center justify-between mb-4">
+            <TabsList className="flex gap-2">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="summary">Summary</TabsTrigger>
+              <TabsTrigger value="services">Services</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="all">
+            <div className="grid grid-cols-1 md:grid-cols-2   lg:grid-cols-4 gap-4">
+              {displayedCards.map((card, index) => (
+                <div key={index} className="p-4  bg-[#B1E3FF] rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4
+                      className="font-medium text-sm truncate"
+                      title={card.title}
+                    >
+                      {card.title}
+                    </h4>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-2xl">{card.value}</div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-gray-600">
+                        {card.type === "summary"
+                          ? "Summary"
+                          : "Most Frequent Service"}
+                      </div>
+                      <Badge
+                        variant={
+                          card.type === "summary" ? "default" : "secondary"
+                        }
+                        className={`text-xs ${
+                          card.type === "summary"
+                            ? "bg-[#DEF8EE] text-[#4AA785]"
+                            : "bg-blue-100 text-blue-700"
+                        }`}
+                      >
+                        {card.type === "summary" ? "summary" : "service"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {serviceCards.length > maxServiceCards && (
+              <div className="flex justify-center mt-4">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowAllServices((s) => !s)}
+                  className="bg-blue-200/40 text-blue-700 hover:bg-blue-200/60"
+                >
+                  {showAllServices ? "Show less" : "Show more services"}
                 </Button>
               </div>
-              <div className="space-y-2">
-                <div className="text-2xl">{card.value}</div>
-                <div className="flex items-center justify-between">
-                  {/* No trend/change data for these cards; keep layout clean */}
-                  <div className="text-xs text-gray-600">
-                    {card.type === "summary"
-                      ? "Summary"
-                      : "Most Frequent Service"}
+            )}
+          </TabsContent>
+
+          <TabsContent value="summary">
+            <div className="grid grid-cols-1 md:grid-cols-2   lg:grid-cols-4 gap-4">
+              {summaryCards.map((card, index) => (
+                <div key={index} className="p-4  bg-[#B1E3FF] rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4
+                      className="font-medium text-sm truncate"
+                      title={card.title}
+                    >
+                      {card.title}
+                    </h4>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Badge
-                    variant={card.type === "summary" ? "default" : "secondary"}
-                    className={`text-xs ${
-                      card.type === "summary"
-                        ? "bg-[#DEF8EE] text-[#4AA785]"
-                        : "bg-blue-100 text-blue-700"
-                    }`}
-                  >
-                    {card.type === "summary" ? "summary" : "service"}
-                  </Badge>
+                  <div className="space-y-2">
+                    <div className="text-2xl">{card.value}</div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-gray-600">Summary</div>
+                      <Badge
+                        variant="default"
+                        className="text-xs bg-[#DEF8EE] text-[#4AA785]"
+                      >
+                        summary
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-        {serviceCards.length > maxServiceCards && (
-          <div className="flex justify-center mt-4">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowAllServices((s) => !s)}
-              className="bg-blue-200/40 text-blue-700 hover:bg-blue-200/60"
-            >
-              {showAllServices ? "Show less" : "Show more services"}
-            </Button>
-          </div>
-        )}
+          </TabsContent>
+
+          <TabsContent value="services">
+            <div className="grid grid-cols-1 md:grid-cols-2   lg:grid-cols-4 gap-4">
+              {(showAllServices
+                ? serviceCards
+                : serviceCards.slice(0, maxServiceCards)
+              ).map((card, index) => (
+                <div key={index} className="p-4  bg-[#B1E3FF] rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4
+                      className="font-medium text-sm truncate"
+                      title={card.title}
+                    >
+                      {card.title}
+                    </h4>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-2xl">{card.value}</div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-gray-600">
+                        Most Frequent Service
+                      </div>
+                      <Badge
+                        variant="secondary"
+                        className="text-xs bg-blue-100 text-blue-700"
+                      >
+                        service
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {serviceCards.length > maxServiceCards && (
+              <div className="flex justify-center mt-4">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowAllServices((s) => !s)}
+                  className="bg-blue-200/40 text-blue-700 hover:bg-blue-200/60"
+                >
+                  {showAllServices ? "Show less" : "Show more services"}
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
