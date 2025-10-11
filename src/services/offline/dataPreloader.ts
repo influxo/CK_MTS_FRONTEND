@@ -76,6 +76,11 @@ class DataPreloader {
                 { name: 'Activities', fn: () => this.preloadActivities() },
                 { name: 'Beneficiaries', fn: () => this.preloadBeneficiaries() },
                 { name: 'Form Templates', fn: () => this.preloadFormTemplates() },
+                { name: 'Services', fn: () => this.preloadServices() },
+                { name: 'Users', fn: () => this.preloadUsers() },
+                { name: 'Project Users', fn: () => this.preloadProjectUsers() },
+                { name: 'Subproject Users', fn: () => this.preloadSubprojectUsers() },
+                { name: 'Entity Services', fn: () => this.preloadEntityServices() },
                 { name: 'User Data', fn: () => userId ? this.preloadUserData(userId) : Promise.resolve(0) },
             ];
 
@@ -282,6 +287,219 @@ class DataPreloader {
     }
 
     /**
+     * Preload services
+     */
+    private async preloadServices(): Promise<number> {
+        try {
+            const response = await axiosInstance.get<{ success: boolean; data: any[] }>('/services');
+            
+            if (response.data.success && response.data.data) {
+                const services = response.data.data;
+                const now = new Date().toISOString();
+
+                for (const service of services) {
+                    await db.services.put({
+                        ...service,
+                        synced: true,
+                        _localUpdatedAt: now,
+                    });
+                }
+
+                return services.length;
+            }
+
+            return 0;
+        } catch (error) {
+            console.error('Failed to preload services:', error);
+            return 0;
+        }
+    }
+
+    /**
+     * Preload users
+     */
+    private async preloadUsers(): Promise<number> {
+        try {
+            const response = await axiosInstance.get<{ success: boolean; data: any[] }>('/users');
+            
+            if (response.data.success && response.data.data) {
+                const users = response.data.data;
+                const now = new Date().toISOString();
+
+                for (const user of users) {
+                    await db.users.put({
+                        ...user,
+                        synced: true,
+                        _localUpdatedAt: now,
+                    });
+                }
+
+                return users.length;
+            }
+
+            return 0;
+        } catch (error) {
+            console.error('Failed to preload users:', error);
+            return 0;
+        }
+    }
+
+    /**
+     * Preload project user assignments
+     */
+    private async preloadProjectUsers(): Promise<number> {
+        try {
+            const projects = await db.projects.toArray();
+            let totalCount = 0;
+            const now = new Date().toISOString();
+
+            for (const project of projects) {
+                try {
+                    const response = await axiosInstance.get<{ success: boolean; data: any[] }>(
+                        `/projects/${project.id}/users`
+                    );
+
+                    if (response.data.success && response.data.data) {
+                        for (const assignment of response.data.data) {
+                            await db.projectUsers.put({
+                                id: `${project.id}-${assignment.userId}`,
+                                projectId: project.id,
+                                userId: assignment.userId,
+                                role: assignment.role,
+                                assignedAt: assignment.assignedAt || now,
+                                updatedAt: now,
+                                synced: true,
+                                _localUpdatedAt: now,
+                            });
+                            totalCount++;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`Failed to preload users for project ${project.id}`);
+                }
+            }
+
+            return totalCount;
+        } catch (error) {
+            console.error('Failed to preload project users:', error);
+            return 0;
+        }
+    }
+
+    /**
+     * Preload subproject user assignments
+     */
+    private async preloadSubprojectUsers(): Promise<number> {
+        try {
+            const subprojects = await db.subprojects.toArray();
+            let totalCount = 0;
+            const now = new Date().toISOString();
+
+            for (const subproject of subprojects) {
+                try {
+                    const response = await axiosInstance.get<{ success: boolean; data: any[] }>(
+                        `/subprojects/${subproject.id}/users`
+                    );
+
+                    if (response.data.success && response.data.data) {
+                        for (const assignment of response.data.data) {
+                            await db.subprojectUsers.put({
+                                id: `${subproject.id}-${assignment.userId}`,
+                                subprojectId: subproject.id,
+                                userId: assignment.userId,
+                                role: assignment.role,
+                                assignedAt: assignment.assignedAt || now,
+                                updatedAt: now,
+                                synced: true,
+                                _localUpdatedAt: now,
+                            });
+                            totalCount++;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`Failed to preload users for subproject ${subproject.id}`);
+                }
+            }
+
+            return totalCount;
+        } catch (error) {
+            console.error('Failed to preload subproject users:', error);
+            return 0;
+        }
+    }
+
+    /**
+     * Preload entity service assignments
+     */
+    private async preloadEntityServices(): Promise<number> {
+        try {
+            let totalCount = 0;
+            const now = new Date().toISOString();
+
+            // Get services for all projects
+            const projects = await db.projects.toArray();
+            for (const project of projects) {
+                try {
+                    const response = await axiosInstance.get<{ success: boolean; data: any[] }>(
+                        `/services/entity?entityId=${project.id}&entityType=project`
+                    );
+
+                    if (response.data.success && response.data.data) {
+                        for (const service of response.data.data) {
+                            await db.entityServices.put({
+                                id: `${project.id}-project-${service.id}`,
+                                serviceId: service.id,
+                                entityId: project.id,
+                                entityType: 'project',
+                                assignedAt: service.assignedAt || now,
+                                updatedAt: now,
+                                synced: true,
+                                _localUpdatedAt: now,
+                            });
+                            totalCount++;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`Failed to preload services for project ${project.id}`);
+                }
+            }
+
+            // Get services for all subprojects
+            const subprojects = await db.subprojects.toArray();
+            for (const subproject of subprojects) {
+                try {
+                    const response = await axiosInstance.get<{ success: boolean; data: any[] }>(
+                        `/services/entity?entityId=${subproject.id}&entityType=subproject`
+                    );
+
+                    if (response.data.success && response.data.data) {
+                        for (const service of response.data.data) {
+                            await db.entityServices.put({
+                                id: `${subproject.id}-subproject-${service.id}`,
+                                serviceId: service.id,
+                                entityId: subproject.id,
+                                entityType: 'subproject',
+                                assignedAt: service.assignedAt || now,
+                                updatedAt: now,
+                                synced: true,
+                                _localUpdatedAt: now,
+                            });
+                            totalCount++;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`Failed to preload services for subproject ${subproject.id}`);
+                }
+            }
+
+            return totalCount;
+        } catch (error) {
+            console.error('Failed to preload entity services:', error);
+            return 0;
+        }
+    }
+
+    /**
      * Preload user-specific data
      */
     private async preloadUserData(userId: string): Promise<number> {
@@ -325,21 +543,31 @@ class DataPreloader {
         beneficiaries: number;
         formTemplates: number;
         formSubmissions: number;
+        services: number;
+        users: number;
+        projectUsers: number;
+        subprojectUsers: number;
+        entityServices: number;
         pendingMutations: number;
         totalSize: number;
     }> {
-        const [projects, subprojects, activities, beneficiaries, formTemplates, formSubmissions, pendingMutations] = await Promise.all([
+        const [projects, subprojects, activities, beneficiaries, formTemplates, formSubmissions, services, users, projectUsers, subprojectUsers, entityServices, pendingMutations] = await Promise.all([
             db.projects.count(),
             db.subprojects.count(),
             db.activities.count(),
             db.beneficiaries.count(),
             db.formTemplates.count(),
             db.formSubmissions.count(),
+            db.services.count(),
+            db.users.count(),
+            db.projectUsers.count(),
+            db.subprojectUsers.count(),
+            db.entityServices.count(),
             db.pendingMutations.count(),
         ]);
 
         // Estimate total size (rough calculation)
-        const totalSize = projects + subprojects + activities + beneficiaries + formTemplates + formSubmissions;
+        const totalSize = projects + subprojects + activities + beneficiaries + formTemplates + formSubmissions + services + users + projectUsers + subprojectUsers + entityServices;
 
         return {
             projects,
@@ -348,6 +576,11 @@ class DataPreloader {
             beneficiaries,
             formTemplates,
             formSubmissions,
+            services,
+            users,
+            projectUsers,
+            subprojectUsers,
+            entityServices,
             pendingMutations,
             totalSize,
         };
