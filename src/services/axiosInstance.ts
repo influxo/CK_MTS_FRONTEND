@@ -40,26 +40,16 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config || {};
 
     // Handle 401 Unauthorized errors (token expired)
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-
-      // Only redirect if not already on login page to prevent infinite loop
-      const currentPath = window.location.pathname;
-      const isLoginPage = currentPath === '/login' || currentPath === '/';
-
-      if (!isLoginPage) {
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-      }
+      // IMPORTANT: Do not remove token or hard-redirect here to avoid reload loops.
+      // Let the app's auth flow (ReduxProvider + ProtectedRoute) decide what to do.
     }
 
-    // Handle other errors
-    // You can implement global error handling here
-    // e.g., show toast notifications for network errors
-
+    // Handle other errors globally if desired
     return Promise.reject(error);
   }
 );

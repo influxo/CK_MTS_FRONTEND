@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Provider } from 'react-redux';
 import store from '../store';
 import authService from '../services/auth/authService';
-import { fetchUserProfile, setCredentials } from '../store/slices/authSlice';
+import { fetchUserProfile, setCredentials, clearCredentials } from '../store/slices/authSlice';
 import { getLastCachedAuth } from '../services/auth/offlineAuthService';
 
 interface ReduxProviderProps {
@@ -36,11 +36,25 @@ export const ReduxProvider = ({ children }: ReduxProviderProps) => {
           }
         };
 
-        // If authenticated, try to fetch profile; on failure, use cache
+        // If authenticated, try to fetch profile; on failure, use cache; if no cache, clear auth
         if (authService.isAuthenticated()) {
           const action: any = await store.dispatch(fetchUserProfile());
           if (!action || typeof action.type !== 'string' || action.type.endsWith('/rejected')) {
-            await hydrateFromCache();
+            const cached = await getLastCachedAuth();
+            if (cached?.token && cached?.userData) {
+              // hydrate from cache
+              localStorage.setItem('token', cached.token);
+              try {
+                const uid = (cached.userData as any)?.id || (cached.userData as any)?._id;
+                if (uid) localStorage.setItem('userId', String(uid));
+              } catch {}
+              authService.setAuthHeader(cached.token);
+              store.dispatch(setCredentials({ user: cached.userData as any, token: cached.token }));
+            } else {
+              // no valid cache and profile failed -> clear stale token and creds
+              try { localStorage.removeItem('token'); localStorage.removeItem('userId'); } catch {}
+              store.dispatch(clearCredentials());
+            }
           }
         } else {
           // No token in storage, attempt offline hydration
