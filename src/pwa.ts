@@ -1,6 +1,7 @@
 import { registerSW } from 'virtual:pwa-register'
 import { syncService } from './services/offline/syncService'
 import { initializeDatabase } from './db/db'
+import { dataPreloader } from './services/offline/dataPreloader'
 import { toast } from 'sonner'
 
 // This is the PWA registration function
@@ -59,7 +60,22 @@ export async function registerPWA() {
   console.log('Initializing sync service...')
   await syncService.initialize()
 
-  console.log('PWA and offline sync initialized')
+  console.log('✅ PWA and offline sync initialized')
+}
+
+/**
+ * Preload all data for offline use
+ * Call this after successful login
+ */
+export async function preloadDataForOffline(userId?: string): Promise<void> {
+  try {
+    console.log('🔄 Preloading data for offline use...')
+    await dataPreloader.preloadAllData(userId)
+    console.log('✅ Data preload complete')
+  } catch (error) {
+    console.error('❌ Data preload failed:', error)
+    throw error
+  }
 }
 
 /**
