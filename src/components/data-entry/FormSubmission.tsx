@@ -43,8 +43,7 @@ import {
   flushQueue,
   peekQueue,
 } from "../../utils/offlineQueue";
-import { offlineDataService } from "../../services/offline/offlineDataService";
-import { useOfflineStatus } from "../../hooks/useOfflineStatus";
+import { offlineFirstDataService } from "../../services/offline/offlineFirstDataService";
 
 interface DynamicFormSubmissionProps {
   template?: FormTemplate;
@@ -401,10 +400,10 @@ export function FormSubmission({
           ...(servicesPayload.length > 0 ? { services: servicesPayload } : {}),
         };
 
-        // Use offline data service for submission
+        // Use offline-first data service for submission
         // It automatically handles online/offline and queuing
         try {
-          await offlineDataService.submitFormResponse({
+          await offlineFirstDataService.submitFormResponse({
             templateId: template.id,
             entityId,
             entityType,
