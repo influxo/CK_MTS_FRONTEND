@@ -124,3 +124,17 @@ export async function updateCachedToken(email: string, newToken: string): Promis
         console.log('✅ Cached token updated');
     }
 }
+
+/**
+ * Get the most recent cached auth record (for offline hydration on reload)
+ */
+export async function getLastCachedAuth(): Promise<AuthCache | null> {
+    try {
+        // Use secondary index on lastLoginAt to fetch the latest cached user
+        const latest = await db.authCache.orderBy('lastLoginAt').last();
+        return latest ?? null;
+    } catch (error) {
+        console.warn('Failed to read cached auth for offline hydration:', error);
+        return null;
+    }
+}

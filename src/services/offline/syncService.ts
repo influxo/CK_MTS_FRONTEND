@@ -86,7 +86,7 @@ class SyncService {
 
         // Set up online/offline event listeners
         window.addEventListener('online', this.handleOnline);
-        window.addEventListener('online', this.handleOffline);
+        window.addEventListener('offline', this.handleOffline);
 
         // Update initial state
         await this.updatePendingMutationsCount();
@@ -263,6 +263,18 @@ class SyncService {
 
         // Trigger sync
         await this.performSync();
+
+        // After pushing queued mutations and a light pull, optionally run a deeper background sync
+        try {
+            const mod = await import('./completeSyncService');
+            const complete = (mod as any).completeSyncService;
+            if (complete && typeof complete.syncAllData === 'function') {
+                // Fire and forget
+                complete.syncAllData().catch((e: any) => console.warn('Background complete sync failed:', e));
+            }
+        } catch (e) {
+            // ignore if module path differs or not available in certain builds
+        }
     };
 
     private handleOffline = () => {
@@ -516,18 +528,27 @@ class SyncService {
                 return;
         }
 
+        const now = new Date().toISOString();
+
         // Update the entity with server data if available
         if (serverData?.data) {
-            await table.put({
-                ...serverData.data,
-                synced: true,
-                _localUpdatedAt: new Date().toISOString(),
-            });
+            const newRecord = { ...serverData.data, synced: true, _localUpdatedAt: now };
+            const newId = (serverData.data as any)?.id;
+
+            // If this was a create with a temporary ID, remove the temp and insert the server record
+            const isTemp = typeof entityId === 'string' && entityId.startsWith('temp-');
+            if (isTemp && newId && newId !== entityId) {
+                try {
+                    await table.delete(entityId);
+                } catch {}
+            }
+
+            await table.put(newRecord);
         } else {
-            // Just mark as synced
+            // Just mark as synced on the existing record
             await table.update(entityId, {
                 synced: true,
-                _localUpdatedAt: new Date().toISOString(),
+                _localUpdatedAt: now,
             });
         }
     }
