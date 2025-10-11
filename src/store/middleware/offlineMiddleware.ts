@@ -6,35 +6,31 @@
  */
 
 import type { Middleware } from '@reduxjs/toolkit';
-import { completeDb as db } from '../../db/completeSchema';
+import { db } from '../../db/db';
 
 const offlineMiddleware: Middleware = (store) => (next) => async (action: any) => {
   // If it's a pending async thunk, try to fulfill from IndexedDB FIRST
   if (action.type && action.type.endsWith('/pending')) {
     const actionType = action.type.replace('/pending', '');
     console.log('🔍 Middleware intercepting:', actionType);
+    const isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
     
     try {
       // Intercept fetchProjects
       if (actionType === 'projects/fetchProjects') {
-        console.log('📦 Reading projects from IndexedDB (no API call)');
+        if (!isOffline) return next(action);
         const projects = await db.projects.toArray();
-        console.log(`✅ Found ${projects.length} projects in IndexedDB`);
-        
-        // Dispatch fulfilled action - this prevents the API call
         store.dispatch({
           type: 'projects/fetchProjects/fulfilled',
           payload: { success: true, data: projects.map(stripOfflineFields) },
           meta: action.meta,
         });
-        
-        // Return WITHOUT calling next() - this prevents the original async thunk from running
-        return Promise.resolve(projects);
+        return Promise.resolve();
       }
 
       // Intercept fetchSubProjectsByProjectId
       if (actionType === 'subprojects/fetchByProjectId') {
-        console.log('📦 Reading subprojects from IndexedDB (no API call)');
+        if (!isOffline) return next(action);
         const projectId = action.meta?.arg?.projectId;
         if (projectId) {
           const subprojects = await db.subprojects
@@ -52,7 +48,7 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
 
       // Intercept fetchAllSubProjects
       if (actionType === 'subprojects/fetch') {
-        console.log('📦 Reading all subprojects from IndexedDB (no API call)');
+        if (!isOffline) return next(action);
         const subprojects = await db.subprojects.toArray();
         store.dispatch({
           type: 'subprojects/fetch/fulfilled',
@@ -63,7 +59,7 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
 
       // Intercept fetchSubprojectActivities
       if (actionType === 'activities/fetchBySubproject') {
-        console.log('📦 Reading activities from IndexedDB (no API call)');
+        if (!isOffline) return next(action);
         const subprojectId = action.meta?.arg;
         if (subprojectId) {
           const activities = await db.activities
@@ -81,7 +77,7 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
 
       // Intercept getSubProjectById
       if (actionType === 'subprojects/getById') {
-        console.log('📦 Reading subproject by id from IndexedDB (no API call)');
+        if (!isOffline) return next(action);
         const id = action.meta?.arg?.id;
         if (id) {
           const subproject = await db.subprojects.get(id);
@@ -94,33 +90,22 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
             return Promise.resolve();
           }
           // If offline and not found locally, reject to avoid network call
-          if (typeof navigator !== 'undefined' && !navigator.onLine) {
-            store.dispatch({
-              type: 'subprojects/getById/rejected',
-              payload: 'Subproject not available offline',
-              meta: action.meta,
-              error: { message: 'offline' },
-            });
-            return Promise.resolve();
-          }
+          store.dispatch({
+            type: 'subprojects/getById/rejected',
+            payload: 'Subproject not available offline',
+            meta: action.meta,
+            error: { message: 'offline' },
+          });
+          return Promise.resolve();
         }
         // If not found locally, let the thunk proceed
       }
 
       // Intercept fetchFormTemplates
       if (actionType === 'form/fetchFormTemplates') {
-        const params = action.meta?.arg || {};
-        let query = db.formTemplates.toCollection();
-        
-        if (params.projectId) {
-          query = db.formTemplates.where('projectId').equals(params.projectId);
-        } else if (params.subprojectId) {
-          query = db.formTemplates.where('subprojectId').equals(params.subprojectId);
-        } else if (params.activityId) {
-          query = db.formTemplates.where('activityId').equals(params.activityId);
-        }
-
-        const templates = await query.toArray();
+        if (!isOffline) return next(action);
+        // When offline, return all cached templates (filtering by entity may not be available offline)
+        const templates = await db.formTemplates.toArray();
         store.dispatch({
           type: 'form/fetchFormTemplates/fulfilled',
           payload: {
@@ -130,8 +115,8 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
               pagination: {
                 page: 1,
                 limit: 100,
-                totalItems: templates.length,
                 totalPages: 1,
+                totalCount: templates.length,
               },
             },
           },
@@ -142,7 +127,7 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
 
       // Intercept fetchFormTemplateById
       if (actionType === 'form/fetchFormTemplateById') {
-        console.log('📦 Reading form template by id from IndexedDB (no API call)');
+        if (!isOffline) return next(action);
         const id = action.meta?.arg?.id;
         if (id) {
           const template = await db.formTemplates.get(id);
@@ -155,21 +140,20 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
             return Promise.resolve();
           }
           // If offline and not found locally, reject to avoid network call
-          if (typeof navigator !== 'undefined' && !navigator.onLine) {
-            store.dispatch({
-              type: 'form/fetchFormTemplateById/rejected',
-              payload: 'Template not available offline',
-              meta: action.meta,
-              error: { message: 'offline' },
-            });
-            return Promise.resolve();
-          }
+          store.dispatch({
+            type: 'form/fetchFormTemplateById/rejected',
+            payload: 'Template not available offline',
+            meta: action.meta,
+            error: { message: 'offline' },
+          });
+          return Promise.resolve();
         }
         // If not found locally, let the thunk proceed
       }
 
       // Intercept fetchEmployees
       if (actionType === 'employees/fetchEmployees') {
+        if (!isOffline) return next(action);
         const users = await db.users.toArray();
         store.dispatch({
           type: 'employees/fetchEmployees/fulfilled',
@@ -180,18 +164,16 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
 
       // Intercept getAllServices
       if (actionType === 'services/getAll') {
+        if (!isOffline) return next(action);
         const services = await db.services.toArray();
         store.dispatch({
           type: 'services/getAll/fulfilled',
           payload: {
-            success: true,
-            data: {
-              items: services.map(stripOfflineFields),
-              page: 1,
-              limit: 100,
-              totalItems: services.length,
-              totalPages: 1,
-            },
+            items: services.map(stripOfflineFields),
+            page: 1,
+            limit: 100,
+            totalItems: services.length,
+            totalPages: 1,
           },
           meta: action.meta,
         });
@@ -200,6 +182,7 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
 
       // Intercept getEntityServices
       if (actionType === 'services/getEntityServices') {
+        if (!isOffline) return next(action);
         const { entityId, entityType } = action.meta?.arg || {};
         if (entityId && entityType) {
           const entityServices = await db.entityServices
@@ -216,7 +199,6 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
           store.dispatch({
             type: 'services/getEntityServices/fulfilled',
             payload: {
-              success: true,
               items: validServices.map(stripOfflineFields),
             },
             meta: action.meta,
@@ -227,6 +209,7 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
 
       // Intercept fetchUserProjectsByUserId
       if (actionType === 'userProjects/fetchByUserId') {
+        if (!isOffline) return next(action);
         const userId = action.meta?.arg;
         if (userId) {
           // Get user's projects
@@ -277,6 +260,7 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
 
       // Intercept fetchBeneficiariesByEntityForForm
       if (actionType === 'form/fetchBeneficiariesByEntity') {
+        if (!isOffline) return next(action);
         const beneficiaries = await db.beneficiaries.toArray();
 
         // Filter by entity if needed (this is a simplified version)
@@ -299,6 +283,7 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
 
       // Intercept beneficiaries/fetchByEntity (used in SubProjectDetails)
       if (actionType === 'beneficiaries/fetchByEntity') {
+        if (!isOffline) return next(action);
         const beneficiaries = await db.beneficiaries.toArray();
         store.dispatch({
           type: 'beneficiaries/fetchByEntity/fulfilled',

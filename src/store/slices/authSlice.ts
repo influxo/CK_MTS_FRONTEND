@@ -34,11 +34,11 @@ export const loginUser = createAsyncThunk<
 >('auth/login', async (credentials, { rejectWithValue }) => {
   try {
     // Try online login first
-    console.log('🔐 Attempting online login...');
+    console.log('Attempting online login...');
     const response = await authService.login(credentials);
     
     if (response.success) {
-      console.log('✅ Online login successful');
+      console.log('Online login successful');
       // Cache credentials for offline use
       if (response.data?.token && response.data?.user) {
         await cacheAuthCredentials(
@@ -53,7 +53,7 @@ export const loginUser = createAsyncThunk<
     
     return rejectWithValue(response.message);
   } catch (error: any) {
-    console.log('❌ Online login failed, trying offline login...');
+    console.log('Online login failed, trying offline login...');
     
     // If online login fails, try offline login
     const offlineResult = await verifyOfflineLogin(
@@ -62,7 +62,7 @@ export const loginUser = createAsyncThunk<
     );
     
     if (offlineResult.success && offlineResult.token && offlineResult.userData) {
-      console.log('✅ Offline login successful');
+      console.log('Offline login successful');
       
       // Return in the same format as online login
       return {
