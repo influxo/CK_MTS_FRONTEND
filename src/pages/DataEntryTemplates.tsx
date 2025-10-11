@@ -147,6 +147,25 @@ export function DataEntryTemplates() {
     return "Templates";
   }, [projectId, subprojectId]);
 
+  // Build numbered pagination tokens (compact with ellipsis)
+  const pageTokens = useMemo(() => {
+    const total = Math.max(pagination?.totalPages || 1, 1);
+    const current = Math.min(Math.max(pagination?.page || 1, 1), total);
+    const tokens: Array<number | string> = [];
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) tokens.push(i);
+      return tokens;
+    }
+    const left = Math.max(2, current - 1);
+    const right = Math.min(total - 1, current + 1);
+    tokens.push(1);
+    if (left > 2) tokens.push("left-ellipsis");
+    for (let i = left; i <= right; i++) tokens.push(i);
+    if (right < total - 1) tokens.push("right-ellipsis");
+    tokens.push(total);
+    return tokens;
+  }, [pagination]);
+
   if (!hasParam) {
     return (
       <div className="space-y-4">
@@ -196,24 +215,7 @@ export function DataEntryTemplates() {
     ? "subproject"
     : undefined;
 
-  // Build numbered pagination tokens (compact with ellipsis)
-  const pageTokens = useMemo(() => {
-    const total = Math.max(pagination?.totalPages || 1, 1);
-    const current = Math.min(Math.max(pagination?.page || 1, 1), total);
-    const tokens: Array<number | string> = [];
-    if (total <= 7) {
-      for (let i = 1; i <= total; i++) tokens.push(i);
-      return tokens;
-    }
-    const left = Math.max(2, current - 1);
-    const right = Math.min(total - 1, current + 1);
-    tokens.push(1);
-    if (left > 2) tokens.push("left-ellipsis");
-    for (let i = left; i <= right; i++) tokens.push(i);
-    if (right < total - 1) tokens.push("right-ellipsis");
-    tokens.push(total);
-    return tokens;
-  }, [pagination]);
+
 
   return (
     <div className="space-y-6">
