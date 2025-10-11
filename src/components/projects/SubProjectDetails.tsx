@@ -94,8 +94,13 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
-import servicesService from "../../services/services/serviceServices";
-import formService from "../../services/forms/formService";
+import {
+  getEntityServices,
+  selectEntityServices,
+  selectEntityServicesLoading,
+  selectEntityServicesError,
+} from "../../store/slices/serviceSlice";
+import { fetchFormTemplates, selectFormTemplates } from "../../store/slices/formSlice";
 import type { TimeUnit } from "../../services/services/serviceMetricsModels";
 import serviceMetricsService from "../../services/services/serviceMetricsService";
 import {
@@ -198,6 +203,12 @@ export function SubProjectDetails() {
   const seriesState = useSelector((state: RootState) =>
     selectSubProjectMetricsSeries(state)
   );
+  // Entity services for filters (use Redux so offline middleware can serve from IndexedDB)
+  const entityServices = useSelector(selectEntityServices);
+  const entityServicesLoading = useSelector(selectEntityServicesLoading);
+  const entityServicesError = useSelector(selectEntityServicesError);
+  // Form templates for filters (use Redux so offline middleware can serve from IndexedDB)
+  const templatesFromStore = useSelector(selectFormTemplates);
 
   // Overview local filter state (mirroring ProjectDetails)
   const [chartType, setChartType] = useState<"line" | "bar">("line");
@@ -517,33 +528,44 @@ export function SubProjectDetails() {
     user?.roles,
   ]);
 
-  // Load services and templates for filters
+  // Load services for filters via Redux (offline-aware)
   useEffect(() => {
-    (async () => {
-      if (!subprojectId) return;
-
-      // Only run effect if user roles are loaded
-      if (user?.roles == null || user.roles.length === 0) return;
-
-      if (!hasFullAccess) {
-        return; // exit
-      }
-      const res = await servicesService.getEntityServices({
+    if (!subprojectId) return;
+    // Only run effect if user roles are loaded
+    if (user?.roles == null || user.roles.length === 0) return;
+    if (!hasFullAccess) return; // exit
+    dispatch(
+      getEntityServices({
         entityId: subprojectId,
         entityType: "subproject" as any,
-      });
-      if (res && res.success) setServicesOptions(res.items || []);
-      else setServicesOptions([]);
-    })();
-  }, [subprojectId, hasFullAccess, user?.roles]);
+      })
+    );
+  }, [dispatch, subprojectId, hasFullAccess, user?.roles]);
+
+  // Reflect Redux entity services into local options
+  useEffect(() => {
+    setServicesOptions(entityServices || []);
+  }, [entityServices]);
 
   useEffect(() => {
-    (async () => {
-      const forms = await formService.getForms();
-      const templates = (forms?.data as any)?.templates || forms?.data || [];
-      setTemplatesOptions(templates || []);
-    })();
-  }, []);
+    if (!subprojectId) return;
+    // Only run effect if user roles are loaded
+    if (user?.roles == null || user.roles.length === 0) return;
+    if (!hasFullAccess) return; // exit
+    dispatch(
+      fetchFormTemplates({
+        subprojectId,
+        entityType: "subproject",
+        page: 1,
+        limit: 100,
+      }) as any
+    );
+  }, [dispatch, subprojectId, hasFullAccess, user?.roles]);
+
+  // Reflect Redux templates into local options
+  useEffect(() => {
+    setTemplatesOptions(templatesFromStore || []);
+  }, [templatesFromStore]);
 
   // Fetch subproject metrics whenever Overview is active and filters change
   useEffect(() => {
@@ -556,6 +578,10 @@ export function SubProjectDetails() {
     if (!hasFullAccess) {
       return; // exit
     }
+
+    // Avoid network calls while offline
+    const online = typeof navigator !== "undefined" ? navigator.onLine : true;
+    if (!online) return;
 
     const commonFilters = {
       entityId: subprojectId,
@@ -602,6 +628,11 @@ export function SubProjectDetails() {
       if (!subprojectId) return;
       if (user?.roles == null || user.roles.length === 0) return;
       if (!hasFullAccess) {
+        setSeriesSummary(null);
+        return;
+      }
+      // Avoid network calls while offline
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
         setSeriesSummary(null);
         return;
       }

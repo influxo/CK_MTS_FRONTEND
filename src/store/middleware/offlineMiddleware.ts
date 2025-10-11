@@ -79,6 +79,34 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
         return Promise.resolve();
       }
 
+      // Intercept getSubProjectById
+      if (actionType === 'subprojects/getById') {
+        console.log('📦 Reading subproject by id from IndexedDB (no API call)');
+        const id = action.meta?.arg?.id;
+        if (id) {
+          const subproject = await db.subprojects.get(id);
+          if (subproject) {
+            store.dispatch({
+              type: 'subprojects/getById/fulfilled',
+              payload: { success: true, data: stripOfflineFields(subproject) },
+              meta: action.meta,
+            });
+            return Promise.resolve();
+          }
+          // If offline and not found locally, reject to avoid network call
+          if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            store.dispatch({
+              type: 'subprojects/getById/rejected',
+              payload: 'Subproject not available offline',
+              meta: action.meta,
+              error: { message: 'offline' },
+            });
+            return Promise.resolve();
+          }
+        }
+        // If not found locally, let the thunk proceed
+      }
+
       // Intercept fetchFormTemplates
       if (actionType === 'form/fetchFormTemplates') {
         const params = action.meta?.arg || {};
@@ -110,6 +138,34 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
           meta: action.meta,
         });
         return Promise.resolve();
+      }
+
+      // Intercept fetchFormTemplateById
+      if (actionType === 'form/fetchFormTemplateById') {
+        console.log('📦 Reading form template by id from IndexedDB (no API call)');
+        const id = action.meta?.arg?.id;
+        if (id) {
+          const template = await db.formTemplates.get(id);
+          if (template) {
+            store.dispatch({
+              type: 'form/fetchFormTemplateById/fulfilled',
+              payload: { success: true, data: stripOfflineFields(template) },
+              meta: action.meta,
+            });
+            return Promise.resolve();
+          }
+          // If offline and not found locally, reject to avoid network call
+          if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            store.dispatch({
+              type: 'form/fetchFormTemplateById/rejected',
+              payload: 'Template not available offline',
+              meta: action.meta,
+              error: { message: 'offline' },
+            });
+            return Promise.resolve();
+          }
+        }
+        // If not found locally, let the thunk proceed
       }
 
       // Intercept fetchEmployees
@@ -161,7 +217,7 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
             type: 'services/getEntityServices/fulfilled',
             payload: {
               success: true,
-              data: validServices.map(stripOfflineFields),
+              items: validServices.map(stripOfflineFields),
             },
             meta: action.meta,
           });
@@ -230,6 +286,23 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
           type: 'form/fetchBeneficiariesByEntity/fulfilled',
           payload: {
             success: true,
+            items: beneficiaries.map(stripOfflineFields),
+            page: 1,
+            limit: 100,
+            totalItems: beneficiaries.length,
+            totalPages: 1,
+          },
+          meta: action.meta,
+        });
+        return Promise.resolve();
+      }
+
+      // Intercept beneficiaries/fetchByEntity (used in SubProjectDetails)
+      if (actionType === 'beneficiaries/fetchByEntity') {
+        const beneficiaries = await db.beneficiaries.toArray();
+        store.dispatch({
+          type: 'beneficiaries/fetchByEntity/fulfilled',
+          payload: {
             items: beneficiaries.map(stripOfflineFields),
             page: 1,
             limit: 100,
