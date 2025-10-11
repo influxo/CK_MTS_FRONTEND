@@ -58,11 +58,11 @@ export function Profile() {
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <div className="flex items-center justify-between">
-        <h2>My Profile</h2>
+        <h2>Profili im</h2>
       </div>
 
       {isLoading && (
-        <div className="p-4 rounded border bg-white">Loading profile...</div>
+        <div className="p-4 rounded border bg-white">Duke procesuar...</div>
       )}
 
       {error && (
@@ -85,7 +85,7 @@ export function Profile() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Status</span>
+                  <span className="text-muted-foreground">Statusi</span>
                   {user.status === "active" ? (
                     <Badge className="bg-green-100 text-green-800">
                       Active
@@ -103,7 +103,7 @@ export function Profile() {
                   )}
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Role</span>
+                  <span className="text-muted-foreground">Roli</span>
                   <Badge variant="outline">
                     {user.roles?.[0]?.name ?? "N/A"}
                   </Badge>
@@ -130,7 +130,9 @@ export function Profile() {
                   <span>{user.id}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Last Login:</span>
+                  <span className="text-muted-foreground">
+                    Aktiv për herë të fundit:
+                  </span>
                   <span>{formatDateTime(user.lastLogin)}</span>
                 </div>
               </div>
@@ -145,13 +147,13 @@ export function Profile() {
                   value="profile"
                   className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
                 >
-                  Profile
+                  Profili
                 </TabsTrigger>
                 <TabsTrigger
                   value="security"
                   className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
                 >
-                  Security
+                  Siguria
                 </TabsTrigger>
               </TabsList>
 
@@ -159,13 +161,13 @@ export function Profile() {
                 <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
                   <CardHeader>
                     <CardTitle className="text-lg">
-                      Personal Information
+                      Informata Personale
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="firstName">First Name</Label>
+                        <Label htmlFor="firstName">Emri</Label>
                         <Input
                           id="firstName"
                           value={user.firstName ?? ""}
@@ -174,7 +176,7 @@ export function Profile() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="lastName">Last Name</Label>
+                        <Label htmlFor="lastName">Mbiemri</Label>
                         <Input
                           id="lastName"
                           value={user.lastName ?? ""}
@@ -183,7 +185,7 @@ export function Profile() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
+                        <Label htmlFor="email">Emaili</Label>
                         <Input
                           id="email"
                           type="email"
@@ -202,7 +204,7 @@ export function Profile() {
                         />
                       </div>
                       <div className="space-y-2 md:col-span-2">
-                        <Label>Roles</Label>
+                        <Label>Roli</Label>
                         <div className="flex flex-wrap gap-2">
                           {user.roles?.length ? (
                             user.roles.map((r) => (
@@ -216,7 +218,7 @@ export function Profile() {
                             ))
                           ) : (
                             <span className="text-sm text-gray-600">
-                              No roles assigned
+                              Nuk ka rol
                             </span>
                           )}
                         </div>
@@ -229,8 +231,8 @@ export function Profile() {
               <TabsContent value="security" className="space-y-6 pt-6">
                 <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
                   <CardHeader>
-                    <CardTitle className="text-lg">Security</CardTitle>
-                    <CardDescription>Account security details</CardDescription>
+                    <CardTitle className="text-lg">Siguria</CardTitle>
+                    <CardDescription>Detajet e sigurisë</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -244,7 +246,7 @@ export function Profile() {
                       </div>
                       <div className="space-y-1">
                         <div className="text-sm text-muted-foreground">
-                          Last Login
+                          Aktiv për herë të fundit
                         </div>
                         <div className="text-sm font-medium">
                           {formatDateTime(user.lastLogin)}

@@ -4,52 +4,50 @@ import {
   CheckCircle,
   FileDown,
   KeyRound,
+  Loader2,
   LockKeyhole,
-  Mail,
   MailCheck,
   Pencil,
   Save,
-  Shield,
   Smartphone,
   Trash,
-  Loader2,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
+import type {
+  EmployeeStatus,
+  UpdateUserRequest,
+} from "../../services/employees/employeesModels";
 import type { AppDispatch } from "../../store";
 import {
   clearSingleEmployee,
   fetchSingleEmployee,
+  // projects tree
+  fetchUserProjects,
+  selectEmployeeUpdateError,
+  selectEmployeeUpdating,
   selectSingleEmployee,
   selectSingleEmployeeError,
   selectSingleEmployeeLoading,
-  updateEmployee,
-  selectEmployeeUpdating,
-  selectEmployeeUpdateError,
-  // projects tree
-  fetchUserProjects,
   selectUserProjects,
-  selectUserProjectsLoading,
   selectUserProjectsError,
+  selectUserProjectsLoading,
+  updateEmployee,
 } from "../../store/slices/employeesSlice";
 import {
   fetchRolePermissions,
-  selectRolePermissions,
-  selectRolePermissionsLoading,
-  selectRolePermissionsError,
   fetchRoles,
   selectAllRoles,
-  selectRolesLoading,
+  selectRolePermissions,
+  selectRolePermissionsError,
+  selectRolePermissionsLoading,
   selectRolesError,
+  selectRolesLoading,
 } from "../../store/slices/roleSlice";
-import type {
-  UpdateUserRequest,
-  EmployeeStatus,
-} from "../../services/employees/employeesModels";
+import { Button } from "../ui/button/button";
 import { Avatar, AvatarFallback } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
-import { Button } from "../ui/button/button";
 import {
   Card,
   CardContent,
@@ -57,27 +55,6 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/data-display/card";
-import { Checkbox } from "../ui/form/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/overlay/dialog";
-import { Input } from "../ui/form/input";
-import { Label } from "../ui/form/label";
-import { ScrollArea } from "../ui/layout/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/form/select";
-import { Separator } from "../ui/layout/separator";
-import { Switch } from "../ui/form/switch";
 import {
   Table,
   TableBody,
@@ -86,12 +63,32 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/data-display/table";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/form/select";
+import { Switch } from "../ui/form/switch";
+import { ScrollArea } from "../ui/layout/scroll-area";
+import { Separator } from "../ui/layout/separator";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "../ui/navigation/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/overlay/dialog";
 
 // Employee page now fetches data from API; mockEmployee removed
 
@@ -278,6 +275,7 @@ export function EmployeeDetails() {
           subProjects: [] as string[],
           twoFactorEnabled: singleEmployee.twoFactorEnabled,
           createdAt: singleEmployee.createdAt,
+          emailVerified: singleEmployee.emailVerified,
           createdBy: singleEmployee.invitedBy ?? "-",
           lastUpdated: singleEmployee.updatedAt,
           lastLogin: singleEmployee.lastLogin,
@@ -301,6 +299,7 @@ export function EmployeeDetails() {
     role: "",
     status: "",
     twoFactorEnabled: false,
+    emailVerified: false,
     projects: [] as string[],
     subProjects: [] as string[],
   });
@@ -324,6 +323,7 @@ export function EmployeeDetails() {
         role: employee.role,
         status: employee.status,
         twoFactorEnabled: employee.twoFactorEnabled,
+        emailVerified: employee.emailVerified,
         projects: employee.projects,
         subProjects: employee.subProjects,
       });
@@ -424,6 +424,7 @@ export function EmployeeDetails() {
       role: employee.role,
       status: employee.status,
       twoFactorEnabled: employee.twoFactorEnabled,
+      emailVerified: employee.emailVerified,
       projects: employee.projects,
       subProjects: employee.subProjects,
     });
@@ -487,11 +488,11 @@ export function EmployeeDetails() {
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" onClick={handleBack}>
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Employees
+              Kthehu
             </Button>
-            <h2>Employee Details</h2>
+            <h2>Detajet e punonjësit</h2>
           </div>
-          <div className="text-muted-foreground">Loading…</div>
+          <div className="text-muted-foreground">Duke procesuar... </div>
         </div>
       </div>
     );
@@ -504,9 +505,9 @@ export function EmployeeDetails() {
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" onClick={handleBack}>
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Employees
+              Kthehuni
             </Button>
-            <h2>Employee Details</h2>
+            <h2>Detajet e punonjësit</h2>
           </div>
           <div className="text-destructive">Error: {singleError}</div>
         </div>
@@ -521,11 +522,11 @@ export function EmployeeDetails() {
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" onClick={handleBack}>
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Employees
+              Kthehu
             </Button>
-            <h2>Employee Details</h2>
+            <h2>Detajet e punonjësit</h2>
           </div>
-          <div className="text-muted-foreground">No data</div>
+          <div className="text-muted-foreground">Nuk ka të dhëna</div>
         </div>
       </div>
     );
@@ -537,9 +538,9 @@ export function EmployeeDetails() {
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Employees
+            Kthehuni
           </Button>
-          <h2>Employee Details</h2>
+          <h2>Detajet e punonjësit</h2>
         </div>
         <div className="flex gap-2">
           {!isEditing ? (
@@ -550,7 +551,7 @@ export function EmployeeDetails() {
                 onClick={() => setShowPasswordResetDialog(true)}
               >
                 <KeyRound className="h-4 w-4 mr-2" />
-                Reset Password
+                Reset Password-in
               </Button>
 
               <Button
@@ -559,7 +560,7 @@ export function EmployeeDetails() {
                 onClick={() => setShowDeleteDialog(true)}
               >
                 <Trash className="h-4 w-4 mr-2" />
-                Delete
+                Fshij Punonjësin
               </Button>
               <Button
                 className="bg-[#2E343E] text-white border-0"
@@ -567,7 +568,7 @@ export function EmployeeDetails() {
                 onClick={handleEditClick}
               >
                 <Pencil className="h-4 w-4 mr-2" />
-                Edit
+                Modifiko
               </Button>
             </>
           ) : (
@@ -577,18 +578,18 @@ export function EmployeeDetails() {
                 onClick={handleCancelClick}
                 disabled={isUpdating}
               >
-                Cancel
+                Dil
               </Button>
               <Button onClick={handleSaveClick} disabled={isUpdating}>
                 {isUpdating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving...
+                    Duke ruajtur...
                   </>
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Save Changes
+                    Ruani ndryshimet
                   </>
                 )}
               </Button>
@@ -614,23 +615,23 @@ export function EmployeeDetails() {
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Status</span>
+                <span className="text-muted-foreground">Statusi</span>
                 {employee.status === "active" ? (
                   <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                    Active
+                    Aktiv
                   </Badge>
                 ) : employee.status === "pending" ? (
                   <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400">
-                    Pending
+                    Në pritje
                   </Badge>
                 ) : (
                   <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400">
-                    Inactive
+                    Inaktiv
                   </Badge>
                 )}
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Role</span>
+                <span className="text-muted-foreground">Roli</span>
                 <Badge variant="outline">{employee.role}</Badge>
               </div>
               <div className="flex justify-between items-center">
@@ -640,14 +641,14 @@ export function EmployeeDetails() {
                     variant="outline"
                     className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
                   >
-                    Enabled
+                    Aktiv
                   </Badge>
                 ) : (
                   <Badge
                     variant="outline"
                     className="bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
                   >
-                    Disabled
+                    Jo-aktiv
                   </Badge>
                 )}
               </div>
@@ -658,14 +659,16 @@ export function EmployeeDetails() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <Pencil className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Last updated:</span>
+                <span className="text-muted-foreground">Modifikuar më:</span>
                 <span>{formatDateTime(employee.lastUpdated)}</span>
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <Pencil className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Last Login:</span>
+                <span className="text-muted-foreground">
+                  Aktiv për herë të fundit:
+                </span>
                 {employee.lastLogin && (
                   <span>{formatDateTime(employee.lastLogin)}</span>
                 )}
@@ -674,7 +677,7 @@ export function EmployeeDetails() {
 
             <Separator />
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <h4 className="text-sm font-medium">Quick Actions</h4>
               <div className="grid grid-cols-1 gap-2">
                 <Button
@@ -702,7 +705,7 @@ export function EmployeeDetails() {
                   Export Data
                 </Button>
               </div>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 
@@ -713,52 +716,52 @@ export function EmployeeDetails() {
                 value="profile"
                 className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
               >
-                Profile
+                Profili
               </TabsTrigger>
               <TabsTrigger
                 value="permissions"
                 className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
               >
-                Permissions
+                Të drejtat e qasjes
               </TabsTrigger>
               <TabsTrigger
                 value="projects"
                 className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
               >
-                Projects
+                Projekte
               </TabsTrigger>
               <TabsTrigger
                 value="security"
                 className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
               >
-                Security
+                Siguri
               </TabsTrigger>
               <TabsTrigger
                 value="activity"
                 className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
               >
-                Activity Log
+                Të dhënat e aktivitetit
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile" className="space-y-6 pt-6">
               <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
                 <CardHeader>
-                  <CardTitle className="text-lg">
-                    Personal Information
-                  </CardTitle>
+                  <CardTitle className="text-lg">Informata Personale</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {updateError && (
-                    <div className="bg-destructive/10 border border-destructive rounded-md p-3 mb-4">
-                      <span className="text-destructive">
-                        Failed to update user: {updateError}
-                      </span>
-                    </div>
-                  )}
+                  {/* <div>
+                    {updateError && (
+                      <div className="bg-destructive/10 border border-destructive rounded-md p-3 mb-4">
+                        <span className="text-destructive">
+                          Failed to update user: {updateError}
+                        </span>
+                      </div>
+                    )}
+                  </div> */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
+                      <Label htmlFor="name">Emri i plotë</Label>
                       <Input
                         className="bg-black/5 border-0"
                         id="name"
@@ -769,7 +772,7 @@ export function EmployeeDetails() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
+                      <Label htmlFor="email">Email</Label>
                       <Input
                         className="bg-black/5 border-0"
                         id="email"
@@ -781,7 +784,7 @@ export function EmployeeDetails() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
+                      <Label htmlFor="phone">Numri i telefonit</Label>
                       <Input
                         className="bg-black/5 border-0"
                         id="phone"
@@ -792,7 +795,7 @@ export function EmployeeDetails() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="role">Role</Label>
+                      <Label htmlFor="role">Roli</Label>
                       {isEditing ? (
                         <>
                           <Select
@@ -830,7 +833,7 @@ export function EmployeeDetails() {
                     {isEditing && (
                       <>
                         <div className="space-y-2">
-                          <Label htmlFor="status">Status</Label>
+                          <Label htmlFor="status">Statusi</Label>
                           <Select
                             value={formData.status}
                             onValueChange={handleStatusChange}
@@ -840,9 +843,9 @@ export function EmployeeDetails() {
                               <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="inactive">Inactive</SelectItem>
-                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="active">Aktiv</SelectItem>
+                              <SelectItem value="inactive">Jo-aktiv</SelectItem>
+                              <SelectItem value="pending">Në pritje</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -871,29 +874,19 @@ export function EmployeeDetails() {
                   <div className="flex justify-between items-center">
                     <div>
                       <CardTitle className="text-lg">
-                        User Permissions
+                        Të drejtat e punëtorit
                       </CardTitle>
                       <CardDescription>
-                        Define what this employee can access and modify in the
-                        system.
+                        Këto janë të drejtat dhe qasjet që punëtori ka brenda
+                        platformës, në varësi të rolit të caktuar.
                       </CardDescription>
                     </div>
-                    {isEditing && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="bg-black/10"
-                      >
-                        Select All
-                      </Button>
-                    )}
+                    {isEditing && <div></div>}
                   </div>
                 </CardHeader>
                 <CardContent>
                   {isPermissionsLoading ? (
-                    <div className="text-muted-foreground">
-                      Loading permissions…
-                    </div>
+                    <div className="text-muted-foreground">Duke procesuar…</div>
                   ) : permissionsError ? (
                     <div className="bg-destructive/10 border border-destructive rounded-md p-3 flex items-center justify-between">
                       <span className="text-destructive">
@@ -906,12 +899,12 @@ export function EmployeeDetails() {
                           roleId && dispatch(fetchRolePermissions(roleId))
                         }
                       >
-                        Retry
+                        Ri-provo
                       </Button>
                     </div>
                   ) : permissions.length === 0 ? (
                     <div className="text-muted-foreground">
-                      No permissions found for this role.
+                      Nuk ka të drejta për këtë rol.
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -965,17 +958,17 @@ export function EmployeeDetails() {
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
-                      <CardTitle className="text-lg">Projects</CardTitle>
+                      <CardTitle className="text-lg">Projekte</CardTitle>
                       <CardDescription>
-                        Projects, subprojects and activities assigned to this
-                        employee.
+                        Projekte, nëpërprojekte dhe aktivitetet në të cilat ka
+                        qasje punëtori.
                       </CardDescription>
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {isUserProjectsLoading && (
                         <span className="inline-flex items-center">
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Loading projects…
+                          Duke procesuar…
                         </span>
                       )}
                     </div>
@@ -992,12 +985,12 @@ export function EmployeeDetails() {
                         size="sm"
                         onClick={() => id && dispatch(fetchUserProjects(id))}
                       >
-                        Retry
+                        Ri-provo
                       </Button>
                     </div>
                   ) : userProjects.length === 0 && !isUserProjectsLoading ? (
                     <div className="text-muted-foreground">
-                      No projects found.
+                      Nuk ka projekte të gjetura.
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -1076,7 +1069,7 @@ export function EmployeeDetails() {
             <TabsContent value="security" className="space-y-6 pt-6">
               <Card className="bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
                 <CardHeader>
-                  <CardTitle className="text-lg">Account Security</CardTitle>
+                  <CardTitle className="text-lg">Siguria e Llogarisë</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className=" bg-white rounded-md p-4">
@@ -1088,7 +1081,7 @@ export function EmployeeDetails() {
                         <div>
                           <h4 className="font-medium">Password</h4>
                           <p className="text-sm text-muted-foreground">
-                            Last changed 3 months ago
+                            Modifikuar para 3 muajsh
                           </p>
                         </div>
                       </div>
@@ -1097,7 +1090,7 @@ export function EmployeeDetails() {
                         className="bg-[#2E343E] border-0 text-white"
                         onClick={() => setShowPasswordResetDialog(true)}
                       >
-                        Reset Password
+                        Reseto Password-in
                       </Button>
                     </div>
                   </div>
@@ -1145,7 +1138,9 @@ export function EmployeeDetails() {
                         <div>
                           <h4 className="font-medium">Email Verification</h4>
                           <p className="text-sm text-muted-foreground">
-                            Email is verified
+                            {formData.emailVerified
+                              ? "Email është verifikuar"
+                              : "Email nuk është verifikuar"}
                           </p>
                         </div>
                       </div>
@@ -1154,7 +1149,9 @@ export function EmployeeDetails() {
                         className="bg-green-100 text-[#4AA785] border-0"
                       >
                         <CheckCircle className="h-3 w-3 mr-1" />
-                        Verified
+                        {formData.emailVerified
+                          ? "Verifikuar"
+                          : "Nuk është verifikuar"}
                       </Badge>
                     </div>
                   </div>
@@ -1163,11 +1160,12 @@ export function EmployeeDetails() {
                     <AlertTriangle className="h-5 w-5 text-[#8A8CD9] mt-0.5" />
                     <div>
                       <h4 className="font-medium text-[#8A8CD9] ">
-                        Security Recommendation
+                        Rekomandim për Sigurinë
                       </h4>
                       <p className="text-[#8A8CD9]/80 text-sm mt-1 ">
-                        Two-factor authentication is highly recommended for all
-                        users, especially those with administrative access.
+                        Two-factor authentication rekomandohet fuqishëm për të
+                        gjithë përdoruesit, veçanërisht për ata me akses
+                        administrativ..
                       </p>
                     </div>
                   </div>
