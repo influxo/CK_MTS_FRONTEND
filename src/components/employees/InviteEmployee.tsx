@@ -36,6 +36,7 @@ import {
 } from "../ui/form/select";
 import { Textarea } from "../ui/form/textarea";
 import { Separator } from "../ui/layout/separator";
+import { useTranslation } from "../../hooks/useTranslation";
 
 // Projects and subprojects are now fetched from API via Redux slices
 
@@ -50,6 +51,7 @@ export function InviteEmployee({
   onBack,
   onInviteCreated,
 }: InviteEmployeeProps) {
+  const { t } = useTranslation();
   // State for the invite form
   const [inviteData, setInviteData] = useState({
     firstName: "",
@@ -411,7 +413,7 @@ export function InviteEmployee({
             onClick={onBack}
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Kthehu
+            {t('employees.goBack')}
           </Button>
         </div>
       </div>
@@ -419,33 +421,33 @@ export function InviteEmployee({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
           <CardHeader>
-            <CardTitle>Fto punonjës</CardTitle>
+            <CardTitle>{t('employees.inviteNewEmployee')}</CardTitle>
             <CardDescription>
-              Shtoni të dhëna për të ftuar punonjës të ri.
+              {t('employees.addDetailsToInvite')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">Emri</Label>
+                  <Label htmlFor="firstName">{t('auth.firstName')}</Label>
                   <Input
                     className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                     id="firstName"
                     name="firstName"
-                    placeholder="Shkruaj Emrin"
+                    placeholder={t('employees.enterFirstName')}
                     value={inviteData.firstName}
                     onChange={handleInputChange}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Mbiemri</Label>
+                  <Label htmlFor="lastName">{t('auth.lastName')}</Label>
                   <Input
                     className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                     id="lastName"
                     name="lastName"
-                    placeholder="Shkruaj Mbiemrin"
+                    placeholder={t('employees.enterLastName')}
                     value={inviteData.lastName}
                     onChange={handleInputChange}
                     required
@@ -454,13 +456,13 @@ export function InviteEmployee({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('common.email')}</Label>
                 <Input
                   className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="Shkruaj Email adresën"
+                  placeholder={t('employees.enterEmailAddress')}
                   value={inviteData.email}
                   onChange={handleInputChange}
                   required
@@ -468,7 +470,7 @@ export function InviteEmployee({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role">Roli</Label>
+                <Label htmlFor="role">{t('common.role')}</Label>
                 <Select
                   value={inviteData.role}
                   onValueChange={handleRoleChange}
@@ -480,22 +482,22 @@ export function InviteEmployee({
                     <SelectValue
                       placeholder={
                         rolesLoading
-                          ? "Duke procesuar..."
+                          ? t('employees.processing')
                           : rolesError
-                          ? "Diçka shkoi gabim"
-                          : "Zgjedh rolin"
+                          ? t('employees.somethingWentWrong')
+                          : t('employees.selectRole')
                       }
                     />
                   </SelectTrigger>
                   <SelectContent>
                     {rolesLoading && (
                       <SelectGroup>
-                        <SelectLabel>Duke procesuar...</SelectLabel>
+                        <SelectLabel>{t('employees.processing')}</SelectLabel>
                       </SelectGroup>
                     )}
                     {!rolesLoading && rolesError && (
                       <SelectGroup>
-                        <SelectLabel>Diçka shkoi gabim</SelectLabel>
+                        <SelectLabel>{t('employees.somethingWentWrong')}</SelectLabel>
                       </SelectGroup>
                     )}
                     {!rolesLoading &&
@@ -511,7 +513,7 @@ export function InviteEmployee({
                         !rolesError && (
                           <SelectGroup>
                             <SelectLabel>
-                              Nuk ka role të disponueshme.
+                              {t('employees.noRolesAvailable')}
                             </SelectLabel>
                           </SelectGroup>
                         )}
@@ -520,12 +522,12 @@ export function InviteEmployee({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="message">Mesazhi personal</Label>
+                <Label htmlFor="message">{t('employees.personalMessage')}</Label>
                 <Textarea
                   className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                   id="message"
                   name="message"
-                  placeholder="Shtoni një mesazh personal për emailin ftues"
+                  placeholder={t('employees.addPersonalMessage')}
                   value={inviteData.message}
                   onChange={handleInputChange}
                   rows={3}
@@ -535,15 +537,15 @@ export function InviteEmployee({
               <Separator />
 
               <div className="space-y-2">
-                <Label>Qasja në projekte</Label>
+                <Label>{t('employees.projectAccess')}</Label>
                 <div className="mt-4 space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    Zgjedh projekte dhe nëpërprojekte specifike:
+                    {t('employees.selectSpecificProjects')}
                   </p>
 
                   {projectAccessLoading ? (
                     <div className="text-sm text-muted-foreground px-1">
-                      Duke procesuar...
+                      {t('employees.processing')}
                     </div>
                   ) : projectsError || subprojectsError ? (
                     <div className="text-sm text-red-500 px-1">
@@ -601,7 +603,7 @@ export function InviteEmployee({
                     ))
                   ) : (
                     <div className="text-sm text-muted-foreground px-1">
-                      No projects available
+                      {t('employees.noProjectsAvailable')}
                     </div>
                   )}
                 </div>
@@ -610,7 +612,7 @@ export function InviteEmployee({
               <Separator />
 
               <div className="space-y-2">
-                <Label htmlFor="expiration">Skadimi i ftesës</Label>
+                <Label htmlFor="expiration">{t('employees.invitationExpiry')}</Label>
                 <Select
                   value={inviteData.expiration}
                   onValueChange={handleExpirationChange}
@@ -619,10 +621,10 @@ export function InviteEmployee({
                     <SelectValue placeholder="Select expiration period" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="3">3 ditë</SelectItem>
-                    <SelectItem value="7">7 ditë</SelectItem>
-                    <SelectItem value="14">14 ditë</SelectItem>
-                    <SelectItem value="30">30 ditë</SelectItem>
+                    <SelectItem value="3">3 {t('employees.days')}</SelectItem>
+                    <SelectItem value="7">7 {t('employees.days')}</SelectItem>
+                    <SelectItem value="14">14 {t('employees.days')}</SelectItem>
+                    <SelectItem value="30">30 {t('employees.days')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -636,7 +638,7 @@ export function InviteEmployee({
                   disabled={isLoading}
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Khtehuni
+                  {t('employees.goBack')}
                 </Button>
                 <Button
                   type="submit"
@@ -644,13 +646,13 @@ export function InviteEmployee({
                   disabled={isLoading || !isFormValid}
                 >
                   {isLoading ? (
-                    "Dërgimi në proces..."
+                    t('employees.sending')
                   ) : isSubmitted ? (
-                    "Ftesa u dërgua"
+                    t('employees.invitationSent')
                   ) : (
                     <>
                       <UserPlus className="mr-2 h-4 w-4" />
-                      Dërgo ftesë
+                      {t('employees.sendInvitation')}
                     </>
                   )}
                 </Button>
@@ -662,7 +664,7 @@ export function InviteEmployee({
         <div className="space-y-6">
           <Card className="bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
             <CardHeader>
-              <CardTitle>Pamje paraprake e ftesës</CardTitle>
+              <CardTitle>{t('employees.invitePreview')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="bg-[#E3F5FF] rounded-md p-4 ">
@@ -672,13 +674,13 @@ export function InviteEmployee({
                   </div>
                   <div>
                     <h4 className="font-medium">
-                      Ftesa për CaritasMotherTeresa
+                      {t('employees.invitationFor')}
                     </h4>
                   </div>
                 </div>
 
                 <p className="text-sm mb-3">
-                  Jeni ftuar t’i bashkoheni CaritasMotherTeresa si
+                  {t('employees.youAreInvited')}
                   {selectedRoleName ? (
                     <Badge className="ml-1">{selectedRoleName}</Badge>
                   ) : (
@@ -694,8 +696,7 @@ export function InviteEmployee({
 
                 <div className="border rounded p-3 bg-card text-sm mb-3">
                   <p>
-                    Klikoni butonin më poshtë për të pranuar ftesën dhe për të
-                    krijuar llogarinë tuaj.
+                    {t('employees.clickToAccept')}
                   </p>
                 </div>
 
@@ -705,12 +706,12 @@ export function InviteEmployee({
                     size="sm"
                     className="w-full bg-[#0073e6] text-white"
                   >
-                    Prano ftesën
+                    {t('employees.acceptInvitation')}
                   </Button>
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  Kjo ftesë do të skadon në {inviteData.expiration} ditë.
+                  {t('employees.expiresIn')} {inviteData.expiration} {t('employees.days')}.
                 </p>
               </div>
             </CardContent>
@@ -718,14 +719,13 @@ export function InviteEmployee({
 
           <Card className="bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
             <CardHeader>
-              <CardTitle>Informata shtesë</CardTitle>
+              <CardTitle>{t('employees.additionalInfo')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-2">
                 <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <p className="text-sm text-muted-foreground">
-                  Punonjësit e rinj do të duhet të krijojnë llogarinë e tyre dhe
-                  të vendosin një fjalëkalim kur të pranojnë ftesën.
+                  {t('employees.newEmployeesWillNeed')}
                 </p>
               </div>
 
@@ -740,7 +740,7 @@ export function InviteEmployee({
               <div className="flex items-start gap-2">
                 <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <p className="text-sm text-muted-foreground">
-                  Akseset bazohen në rolin e caktuar gjatë ftesës.
+                  {t('employees.accessBasedOnRole')}
                 </p>
               </div>
             </CardContent>
@@ -751,15 +751,15 @@ export function InviteEmployee({
               <CardHeader>
                 <CardTitle className="text-green-600 dark:text-green-400 flex items-center gap-2">
                   <Check className="h-5 w-5" />
-                  Ftesa u dërgua
+                  {t('employees.invitationSent')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm">Ftesa u dërgua në {inviteData.email}.</p>
+                <p className="text-sm">{t('employees.inviteSentTo')} {inviteData.email}.</p>
 
                 <div className="border rounded-md p-3 space-y-2">
                   <Label className="text-xs text-muted-foreground">
-                    Linku i ftesës
+                    {t('employees.invitationLink')}
                   </Label>
                   <div className="flex items-center gap-2">
                     <Input value={inviteLink} readOnly className="text-xs" />
@@ -778,7 +778,7 @@ export function InviteEmployee({
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Mund ta shpërndani këtë link manualisht.
+                    {t('employees.shareManually')}
                   </p>
                 </div>
               </CardContent>

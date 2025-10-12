@@ -86,6 +86,7 @@ import {
   TableRow,
 } from "../ui/data-display/table";
 import { toast } from "sonner";
+import { useTranslation } from "../../hooks/useTranslation";
 interface BeneficiariesListProps {
   onBeneficiarySelect: (beneficiaryId: string) => void;
 }
@@ -259,6 +260,7 @@ const mockBeneficiaries = [
 export function BeneficiariesList({
   onBeneficiarySelect,
 }: BeneficiariesListProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   // Global list selectors
   const allBeneficiaries = useSelector(selectBeneficiaries);
@@ -835,9 +837,11 @@ export function BeneficiariesList({
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="all">
+                  {t("beneficiaries.allStatus")}
+                </SelectItem>
+                <SelectItem value="active">{t("common.active")}</SelectItem>
+                <SelectItem value="inactive">{t("common.inactive")}</SelectItem>
               </SelectContent>
             </Select>
             <Select
@@ -854,7 +858,7 @@ export function BeneficiariesList({
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Projects</SelectItem>
+                <SelectItem value="all">{t("common.allProjects")}</SelectItem>
                 {projectsForSelect.map((project: any) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
@@ -876,7 +880,9 @@ export function BeneficiariesList({
                 <SelectValue placeholder="Subproject" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Subprojects</SelectItem>
+                <SelectItem value="all">
+                  {t("subProjects.allSubProjects")}
+                </SelectItem>
                 {subprojectsForSelect.map((sp) => (
                   <SelectItem key={sp.id} value={sp.id}>
                     {sp.name}
@@ -908,7 +914,8 @@ export function BeneficiariesList({
                 className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black"
                 // variant="outline"
               >
-                Bulk Actions ({selectedBeneficiaries.length})
+                {t("beneficiaries.bulkActions")} ({selectedBeneficiaries.length}
+                )
               </Button>
             )}
           </div>
@@ -917,26 +924,25 @@ export function BeneficiariesList({
           <DialogTrigger asChild>
             <Button className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white">
               <Plus className="h-4 w-4 mr-2" />
-              Add Beneficiary
+              {t("beneficiaries.addBeneficiary")}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Beneficiary</DialogTitle>
+              <DialogTitle>{t("beneficiaries.addNewBeneficiary")}</DialogTitle>
               <DialogDescription>
-                Enter the details of the beneficiary you want to add to the
-                system.
+                {t("beneficiaries.enterBeneficiaryDetails")}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="firstName" className="text-right">
-                  First Name *
+                  {t("beneficiaries.firstName")} *
                 </Label>
                 <Input
                   id="firstName"
                   className="col-span-3"
-                  placeholder="Enter first name"
+                  placeholder={t("beneficiaries.enterFirstName")}
                   value={form.firstName}
                   onChange={(e) =>
                     setForm({ ...form, firstName: e.target.value })
@@ -945,12 +951,12 @@ export function BeneficiariesList({
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="lastName" className="text-right">
-                  Last Name *
+                  {t("beneficiaries.lastName")} *
                 </Label>
                 <Input
                   id="lastName"
                   className="col-span-3"
-                  placeholder="Enter last name"
+                  placeholder={t("beneficiaries.enterLastName")}
                   value={form.lastName}
                   onChange={(e) =>
                     setForm({ ...form, lastName: e.target.value })
@@ -958,7 +964,9 @@ export function BeneficiariesList({
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">Gender *</Label>
+                <Label className="text-right">
+                  {t("beneficiaries.gender")} *
+                </Label>
                 <RadioGroup
                   className="col-span-3 flex gap-4"
                   value={form.gender}
@@ -966,21 +974,21 @@ export function BeneficiariesList({
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="female" id="female" />
-                    <Label htmlFor="female">Female</Label>
+                    <Label htmlFor="female">{t("beneficiaries.female")}</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="male" id="male" />
-                    <Label htmlFor="male">Male</Label>
+                    <Label htmlFor="male">{t("beneficiaries.male")}</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="other" id="other" />
-                    <Label htmlFor="other">Other</Label>
+                    <Label htmlFor="other">{t("beneficiaries.other")}</Label>
                   </div>
                 </RadioGroup>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="dob" className="text-right">
-                  Date of Birth *
+                  {t("beneficiaries.dateOfBirth")} *
                 </Label>
                 <Input
                   id="dob"
@@ -992,12 +1000,12 @@ export function BeneficiariesList({
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="nationalId" className="text-right">
-                  National ID *
+                  {t("beneficiaries.nationalId")} *
                 </Label>
                 <Input
                   id="nationalId"
                   className="col-span-3"
-                  placeholder="Enter national ID"
+                  placeholder={t("beneficiaries.enterNationalId")}
                   value={form.nationalId}
                   onChange={(e) =>
                     setForm({ ...form, nationalId: e.target.value })
@@ -1006,37 +1014,37 @@ export function BeneficiariesList({
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="phone" className="text-right">
-                  Phone
+                  {t("beneficiaries.phone")}
                 </Label>
                 <Input
                   id="phone"
                   className="col-span-3"
-                  placeholder="Enter phone number"
+                  placeholder={t("beneficiaries.enterPhoneNumber")}
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="email" className="text-right">
-                  Email
+                  {t("beneficiaries.email")}
                 </Label>
                 <Input
                   id="email"
                   type="email"
                   className="col-span-3"
-                  placeholder="Enter email"
+                  placeholder={t("beneficiaries.enterEmail")}
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="address" className="text-right">
-                  Address
+                  {t("beneficiaries.address")}
                 </Label>
                 <Input
                   id="address"
                   className="col-span-3"
-                  placeholder="Enter address"
+                  placeholder={t("beneficiaries.enterAddress")}
                   value={form.address}
                   onChange={(e) =>
                     setForm({ ...form, address: e.target.value })
@@ -1045,12 +1053,12 @@ export function BeneficiariesList({
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="municipality" className="text-right">
-                  Municipality
+                  {t("beneficiaries.municipality")}
                 </Label>
                 <Input
                   id="municipality"
                   className="col-span-3"
-                  placeholder="Enter municipality"
+                  placeholder={t("beneficiaries.enterMunicipality")}
                   value={form.municipality}
                   onChange={(e) =>
                     setForm({ ...form, municipality: e.target.value })
@@ -1059,12 +1067,12 @@ export function BeneficiariesList({
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="nationality" className="text-right">
-                  Nationality
+                  {t("beneficiaries.nationality")}
                 </Label>
                 <Input
                   id="nationality"
                   className="col-span-3"
-                  placeholder="Enter nationality"
+                  placeholder={t("beneficiaries.enterNationality")}
                   value={form.nationality}
                   onChange={(e) =>
                     setForm({ ...form, nationality: e.target.value })
@@ -1073,11 +1081,13 @@ export function BeneficiariesList({
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="ethnicity" className="text-right">
-                  Ethnicity
+                  {t("beneficiaries.ethnicity")}
                 </Label>
                 <Select value={ethnicity} onValueChange={setEthnicity}>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select ethnicity" />
+                    <SelectValue
+                      placeholder={t("beneficiaries.selectEthnicity")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Shqiptar">Shqiptar</SelectItem>
@@ -1090,7 +1100,9 @@ export function BeneficiariesList({
                 </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">Residence</Label>
+                <Label className="text-right">
+                  {t("beneficiaries.residence")}
+                </Label>
                 <RadioGroup
                   className="col-span-3 flex gap-6"
                   value={isUrban ? "urban" : "rural"}
@@ -1098,17 +1110,21 @@ export function BeneficiariesList({
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="rural" id="residence-rural" />
-                    <Label htmlFor="residence-rural">Rural</Label>
+                    <Label htmlFor="residence-rural">
+                      {t("beneficiaries.rural")}
+                    </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="urban" id="residence-urban" />
-                    <Label htmlFor="residence-urban">Urban</Label>
+                    <Label htmlFor="residence-urban">
+                      {t("beneficiaries.urban")}
+                    </Label>
                   </div>
                 </RadioGroup>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="householdMembers" className="text-right">
-                  Household Members
+                  {t("beneficiaries.householdMembers")}
                 </Label>
                 <Input
                   id="householdMembers"
@@ -1116,25 +1132,29 @@ export function BeneficiariesList({
                   min={0}
                   step={1}
                   className="col-span-3"
-                  placeholder="Enter number of household members"
+                  placeholder={t("beneficiaries.enterHouseholdMembers")}
                   value={householdMembers}
                   onChange={(e) => setHouseholdMembers(e.target.value)}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="status" className="text-right">
-                  Status *
+                  {t("common.status")} *
                 </Label>
                 <Select
                   value={form.status}
                   onValueChange={(val) => setForm({ ...form, status: val })}
                 >
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue
+                      placeholder={t("beneficiaries.selectStatus")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="active">{t("common.active")}</SelectItem>
+                    <SelectItem value="inactive">
+                      {t("common.inactive")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1142,17 +1162,17 @@ export function BeneficiariesList({
               {/* Extended medical/details section */}
               <div className="border-t pt-2 mt-2">
                 <div className="text-sm font-medium mb-2">
-                  Additional Details
+                  {t("beneficiaries.additionalDetails")}
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4 mb-2">
                   <Label htmlFor="allergies" className="text-right">
-                    Allergies
+                    {t("beneficiaries.allergies")}
                   </Label>
                   <div className="col-span-3 space-y-2">
                     <div className="flex gap-2">
                       <Input
                         id="allergies"
-                        placeholder="Type and press Enter"
+                        placeholder={t("beneficiaries.typeAndPressEnter")}
                         value={allergiesInput}
                         onChange={(e) => setAllergiesInput(e.target.value)}
                         onKeyDown={(e) => {
@@ -1171,7 +1191,8 @@ export function BeneficiariesList({
                           setAllergiesInput("");
                         }}
                       >
-                        <Plus className="h-4 w-4 mr-1" /> Add
+                        <Plus className="h-4 w-4 mr-1" />{" "}
+                        {t("beneficiaries.add")}
                       </Button>
                     </div>
                     {allergies.length > 0 && (
@@ -1200,13 +1221,13 @@ export function BeneficiariesList({
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4 mb-2">
                   <Label htmlFor="disabilities" className="text-right">
-                    Disabilities
+                    {t("common.disabilities")}
                   </Label>
                   <div className="col-span-3 space-y-2">
                     <div className="flex gap-2">
                       <Input
                         id="disabilities"
-                        placeholder="Type and press Enter"
+                        placeholder={t("beneficiaries.typeAndPressEnter")}
                         value={disabilitiesInput}
                         onChange={(e) => setDisabilitiesInput(e.target.value)}
                         onKeyDown={(e) => {
@@ -1233,7 +1254,8 @@ export function BeneficiariesList({
                           setDisabilitiesInput("");
                         }}
                       >
-                        <Plus className="h-4 w-4 mr-1" /> Add
+                        <Plus className="h-4 w-4 mr-1" />{" "}
+                        {t("beneficiaries.add")}
                       </Button>
                     </div>
                     {disabilities.length > 0 && (
@@ -1262,13 +1284,13 @@ export function BeneficiariesList({
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4 mb-2">
                   <Label htmlFor="chronicConditions" className="text-right">
-                    Chronic Conditions
+                    {t("beneficiaries.chronicConditions")}
                   </Label>
                   <div className="col-span-3 space-y-2">
                     <div className="flex gap-2">
                       <Input
                         id="chronicConditions"
-                        placeholder="Type and press Enter"
+                        placeholder={t("beneficiaries.typeAndPressEnter")}
                         value={chronicConditionsInput}
                         onChange={(e) =>
                           setChronicConditionsInput(e.target.value)
@@ -1297,7 +1319,8 @@ export function BeneficiariesList({
                           setChronicConditionsInput("");
                         }}
                       >
-                        <Plus className="h-4 w-4 mr-1" /> Add
+                        <Plus className="h-4 w-4 mr-1" />{" "}
+                        {t("beneficiaries.add")}
                       </Button>
                     </div>
                     {chronicConditions.length > 0 && (
@@ -1330,13 +1353,13 @@ export function BeneficiariesList({
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4 mb-2">
                   <Label htmlFor="medications" className="text-right">
-                    Medications
+                    {t("beneficiaries.medications")}
                   </Label>
                   <div className="col-span-3 space-y-2">
                     <div className="flex gap-2">
                       <Input
                         id="medications"
-                        placeholder="Type and press Enter"
+                        placeholder={t("beneficiaries.typeAndPressEnter")}
                         value={medicationsInput}
                         onChange={(e) => setMedicationsInput(e.target.value)}
                         onKeyDown={(e) => {
@@ -1363,7 +1386,8 @@ export function BeneficiariesList({
                           setMedicationsInput("");
                         }}
                       >
-                        <Plus className="h-4 w-4 mr-1" /> Add
+                        <Plus className="h-4 w-4 mr-1" />{" "}
+                        {t("beneficiaries.add")}
                       </Button>
                     </div>
                     {medications.length > 0 && (
@@ -1392,46 +1416,45 @@ export function BeneficiariesList({
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4 mb-2">
                   <Label htmlFor="bloodType" className="text-right">
-                    Blood Type
+                    {t("beneficiaries.bloodType")}
                   </Label>
                   <Input
                     id="bloodType"
                     className="col-span-3"
-                    placeholder="e.g. O+"
+                    placeholder={t("beneficiaries.egBloodType")}
                     value={bloodTypeInput}
                     onChange={(e) => setBloodTypeInput(e.target.value)}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-start gap-4">
                   <Label htmlFor="notes" className="text-right mt-2">
-                    Notes
+                    {t("beneficiaries.notes")}
                   </Label>
                   <textarea
                     id="notes"
                     className="col-span-3 bg-white border border-input rounded-md p-2 min-h-[70px]"
-                    placeholder="Any special notes..."
+                    placeholder={t("beneficiaries.anySpecialNotes")}
                     value={notesInput}
                     onChange={(e) => setNotesInput(e.target.value)}
                   />
                 </div>
                 <div className="text-[11px] text-muted-foreground mt-2">
-                  Add each item individually using the field above. Press Enter
-                  or click Add.
+                  {t("beneficiaries.addEachItemInstruction")}
                 </div>
               </div>
 
               {/* Project Associations */}
               <div className="border-t pt-4 mt-4">
                 <div className="space-y-2">
-                  <Label>Project Associations</Label>
+                  <Label>{t("beneficiaries.projectAssociations")}</Label>
                   <div className="mt-4 space-y-4">
                     <p className="text-sm text-muted-foreground">
-                      Select specific projects and sub-projects:
+                      {t("beneficiaries.selectProjectsSubprojects")}
                     </p>
 
                     {projectsLoading || subprojectsLoading ? (
                       <div className="text-sm text-muted-foreground px-1">
-                        Loading projects...
+                        {t("beneficiaries.loadingProjects")}
                       </div>
                     ) : projectsError || subprojectsError ? (
                       <div className="text-sm text-red-500 px-1">
@@ -1525,7 +1548,7 @@ export function BeneficiariesList({
                       ))
                     ) : (
                       <div className="text-sm text-muted-foreground px-1">
-                        No projects available
+                        {t("beneficiaries.noProjectsAvailable")}
                       </div>
                     )}
                   </div>
@@ -1542,7 +1565,7 @@ export function BeneficiariesList({
               <div className="flex items-center mr-auto">
                 <ShieldAlert className="h-4 w-4 mr-2 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">
-                  Personal data will be pseudonymized
+                  {t("beneficiaries.personalDataPseudonymized")}
                 </span>
               </div>
               <Button
@@ -1552,17 +1575,17 @@ export function BeneficiariesList({
                   dispatch(clearBeneficiaryMessages());
                 }}
               >
-                Cancel
+                {t("beneficiaries.cancel")}
               </Button>
               <Button
                 onClick={handleCreateSubmit}
                 disabled={createLoading || associateLoading}
               >
                 {createLoading
-                  ? "Creating..."
+                  ? t("beneficiaries.creating")
                   : associateLoading
-                  ? "Associating..."
-                  : "Add Beneficiary"}
+                  ? t("beneficiaries.associating")
+                  : t("beneficiaries.addBeneficiary")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1574,59 +1597,75 @@ export function BeneficiariesList({
           <CardContent className="py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <Label>Location</Label>
+                <Label>{t("beneficiaries.location")}</Label>
                 <Select>
                   <SelectTrigger className="mt-2 bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black">
-                    <SelectValue placeholder="All locations" />
+                    <SelectValue
+                      placeholder={t("beneficiaries.allLocations")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    <SelectItem value="northern">Northern District</SelectItem>
-                    <SelectItem value="eastern">Eastern Region</SelectItem>
-                    <SelectItem value="southern">Southern Province</SelectItem>
-                    <SelectItem value="western">Western District</SelectItem>
-                    <SelectItem value="central">Central Region</SelectItem>
+                    <SelectItem value="all">
+                      {t("beneficiaries.allLocationsOption")}
+                    </SelectItem>
+                    <SelectItem value="northern">
+                      {t("beneficiaries.northernDistrict")}
+                    </SelectItem>
+                    <SelectItem value="eastern">
+                      {t("beneficiaries.easternRegion")}
+                    </SelectItem>
+                    <SelectItem value="southern">
+                      {t("beneficiaries.southernProvince")}
+                    </SelectItem>
+                    <SelectItem value="western">
+                      {t("beneficiaries.westernDistrict")}
+                    </SelectItem>
+                    <SelectItem value="central">
+                      {t("beneficiaries.centralRegion")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Age Range</Label>
+                <Label>{t("beneficiaries.ageRange")}</Label>
                 <div className="grid grid-cols-2 gap-2 mt-2 ">
                   <Input
                     type="number"
-                    placeholder="Min age"
+                    placeholder={t("beneficiaries.minAge")}
                     className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black"
                   />
                   <Input
                     type="number"
-                    placeholder="Max age"
+                    placeholder={t("beneficiaries.maxAge")}
                     className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black"
                   />
                 </div>
               </div>
               <div>
-                <Label>Registration Date</Label>
+                <Label>{t("beneficiaries.registrationDate")}</Label>
                 <div className="grid grid-cols-2 gap-2 mt-2 ">
                   <Input
                     type="date"
-                    placeholder="From"
+                    placeholder={t("beneficiaries.from")}
                     className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black"
                   />
                   <Input
                     type="date"
-                    placeholder="To"
+                    placeholder={t("beneficiaries.to")}
                     className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black"
                   />
                 </div>
               </div>
               <div>
-                <Label>Tags</Label>
+                <Label>{t("beneficiaries.tags")}</Label>
                 <Select value={tagFilter} onValueChange={setTagFilter}>
                   <SelectTrigger className="mt-2 bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black">
-                    <SelectValue placeholder="All tags" />
+                    <SelectValue placeholder={t("beneficiaries.allTags")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Tags</SelectItem>
+                    <SelectItem value="all">
+                      {t("beneficiaries.allTagsOption")}
+                    </SelectItem>
                     {uniqueTags.map((tag) => (
                       <SelectItem key={tag} value={tag}>
                         {tag.replace("-", " ")}
@@ -1642,9 +1681,11 @@ export function BeneficiariesList({
                 // size="sm"
                 className="mr-2 bg-[#E0F2FE]"
               >
-                Reset Filters
+                {t("common.resetFilters")}
               </Button>
-              <Button className="bg-[#0073e6] text-white">Apply Filters</Button>
+              <Button className="bg-[#0073e6] text-white">
+                {t("common.applyFilters")}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -1653,7 +1694,7 @@ export function BeneficiariesList({
       <div className="rounded-md border overflow-hidden">
         {listLoading && (
           <div className="p-4 text-sm text-muted-foreground">
-            Loading beneficiaries...
+            {t("beneficiaries.loadingBeneficiaries")}
           </div>
         )}
         {listError && !listLoading && (
@@ -1672,13 +1713,19 @@ export function BeneficiariesList({
                   onCheckedChange={handleSelectAll}
                 />
               </TableHead>
-              <TableHead className="w-[250px]">Beneficiary</TableHead>
-              <TableHead>Gender/DOB</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Municipality/Nationality</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Registration</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="w-[250px]">
+                {t("beneficiaries.beneficiary")}
+              </TableHead>
+              <TableHead>{t("beneficiaries.genderDob")}</TableHead>
+              <TableHead>{t("common.status")}</TableHead>
+              <TableHead>
+                {t("beneficiaries.municipalityNationality")}
+              </TableHead>
+              <TableHead>{t("beneficiaries.contact")}</TableHead>
+              <TableHead>{t("beneficiaries.registration")}</TableHead>
+              <TableHead className="text-right">
+                {t("common.actions")}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="bg-[#F7F9FB]">
@@ -1737,7 +1784,8 @@ export function BeneficiariesList({
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    Nationality: {beneficiary.nationality || "—"}
+                    {t("beneficiaries.nationalityLabel")}{" "}
+                    {beneficiary.nationality || "—"}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -1767,7 +1815,7 @@ export function BeneficiariesList({
                       onClick={() => onBeneficiarySelect(beneficiary.id)}
                     >
                       <Eye className="h-4 w-4 mr-2 " />
-                      View
+                      {t("beneficiaries.view")}
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -1782,19 +1830,19 @@ export function BeneficiariesList({
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>
                           <FileEdit className="h-4 w-4 mr-2" />
-                          Edit
+                          {t("beneficiaries.edit")}
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <Link className="h-4 w-4 mr-2" />
-                          Associate
+                          {t("beneficiaries.associate")}
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <FileCheck className="h-4 w-4 mr-2" />
-                          Record Service
+                          {t("beneficiaries.recordService")}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">
                           <Trash className="h-4 w-4 mr-2" />
-                          Delete
+                          {t("beneficiaries.delete")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -1809,9 +1857,11 @@ export function BeneficiariesList({
       {filteredBeneficiaries.length === 0 && !listLoading && (
         <div className="text-center py-10 border rounded-lg">
           <User className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <h3 className="text-lg mb-2">No beneficiaries found</h3>
+          <h3 className="text-lg mb-2">
+            {t("beneficiaries.noBeneficiariesFound")}
+          </h3>
           <p className="text-muted-foreground">
-            Try adjusting your filters or search criteria.
+            {t("beneficiaries.tryAdjustingFilters")}
           </p>
         </div>
       )}
@@ -1819,11 +1869,13 @@ export function BeneficiariesList({
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>
-            Page {activePagination.page} of{" "}
+            {t("beneficiaries.pageOf")} {activePagination.page}{" "}
+            {t("beneficiaries.of")}{" "}
             {Math.max(activePagination.totalPages || 1, 1)}
           </span>
           <span className="hidden sm:inline">
-            • Total {activePagination.totalItems} records
+            • {t("beneficiaries.total")} {activePagination.totalItems}{" "}
+            {t("beneficiaries.records")}
           </span>
           <div className="flex items-center gap-2 ml-2">
             <Button
@@ -1833,7 +1885,7 @@ export function BeneficiariesList({
               disabled={listLoading || activePagination.page <= 1}
               className="bg-white"
             >
-              Prev
+              {t("beneficiaries.prev")}
             </Button>
             <Button
               variant="outline"
@@ -1846,7 +1898,7 @@ export function BeneficiariesList({
               }
               className="bg-white"
             >
-              Next
+              {t("beneficiaries.next")}
             </Button>
             <div className="flex items-center gap-1 ml-2">
               {pageTokens.map((tok, idx) =>
@@ -1889,13 +1941,21 @@ export function BeneficiariesList({
               }}
             >
               <SelectTrigger className="w-[120px] bg-[#E0F2FE] border-0 text-black">
-                <SelectValue placeholder="Rows" />
+                <SelectValue placeholder={t("beneficiaries.rows")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="10">10 / page</SelectItem>
-                <SelectItem value="20">20 / page</SelectItem>
-                <SelectItem value="50">50 / page</SelectItem>
-                <SelectItem value="100">100 / page</SelectItem>
+                <SelectItem value="10">
+                  10 {t("beneficiaries.perPage")}
+                </SelectItem>
+                <SelectItem value="20">
+                  20 {t("beneficiaries.perPage")}
+                </SelectItem>
+                <SelectItem value="50">
+                  50 {t("beneficiaries.perPage")}
+                </SelectItem>
+                <SelectItem value="100">
+                  100 {t("beneficiaries.perPage")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1907,7 +1967,7 @@ export function BeneficiariesList({
             className="bg-[#0073e6] text-white"
           >
             <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Export to Excel
+            {t("beneficiaries.exportToExcel")}
           </Button>
           <Button
             variant="outline"
@@ -1915,7 +1975,7 @@ export function BeneficiariesList({
             className="bg-[#0073e6] text-white"
           >
             <FileText className="h-4 w-4 mr-2" />
-            Export to PDF
+            {t("beneficiaries.exportToPdf")}
           </Button>
         </div>
       </div>

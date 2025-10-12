@@ -73,6 +73,7 @@ import {
 import { selectCreateSuccessMessage } from "../../store/slices/projectsSlice";
 import { toast } from "sonner";
 import { selectCurrentUser } from "../../store/slices/authSlice";
+import { useTranslation } from "../../hooks/useTranslation";
 import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
 
 interface SubProjectsProps {
@@ -88,6 +89,7 @@ export function SubProjects({
   isProgramManager,
   hasFullAccess,
 }: SubProjectsProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { projectId: paramProjectId } = useParams<{ projectId: string }>();
   const projectId = paramProjectId || propProjectId || "";
@@ -245,7 +247,7 @@ export function SubProjects({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3>Sub-Projects</h3>
+        <h3>{t('subProjects.subProjects')}</h3>
         {hasFullAccess && (
           <Dialog
             open={isCreateDialogOpen}
@@ -259,55 +261,54 @@ export function SubProjects({
              hover:scale-[1.02] hover:-translate-y-[1px]"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Create Sub-Project
+                {t('subProjects.createSubProject')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[550px]">
               <DialogHeader>
-                <DialogTitle>Create New Sub-Project</DialogTitle>
+                <DialogTitle>{t('subProjects.createNewSubProject')}</DialogTitle>
                 <DialogDescription>
-                  Add a new sub-project to this project. All fields marked with
-                  * are required.
+                  {t('subProjects.createSubProjectDesc')}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="title" className="text-right">
-                    Title *
+                    {t('subProjects.title')}
                   </Label>
                   <Input
                     id="title"
                     className="col-span-3"
-                    placeholder="Sub-project title"
+                    placeholder={t('subProjects.subProjectTitle')}
                     value={name}
                     onChange={(e) => setName(e.currentTarget.value)}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="category" className="text-right">
-                    Category *
+                    {t('subProjects.category')}
                   </Label>
                   <Select
                     value={category}
                     onValueChange={(val) => setCategory(val as string)}
                   >
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder={t('subProjects.selectCategory')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Healthcare">Healthcare</SelectItem>
-                      <SelectItem value="Education">Education</SelectItem>
+                      <SelectItem value="Healthcare">{t('subProjects.healthcare')}</SelectItem>
+                      <SelectItem value="Education">{t('subProjects.education')}</SelectItem>
                       <SelectItem value="Infrastructure">
-                        Infrastructure
+                        {t('subProjects.infrastructure')}
                       </SelectItem>
-                      <SelectItem value="Training">Training</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
+                      <SelectItem value="Training">{t('subProjects.training')}</SelectItem>
+                      <SelectItem value="Other">{t('subProjects.other')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">
-                    Status
+                    {t('subProjects.status')}
                   </Label>
                   <Select
                     value={status}
@@ -317,23 +318,23 @@ export function SubProjects({
                     defaultValue="active"
                   >
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder={t('subProjects.selectStatus')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="active">{t('subProjects.active')}</SelectItem>
+                      <SelectItem value="inactive">{t('subProjects.inactive')}</SelectItem>
+                      <SelectItem value="pending">{t('subProjects.pending')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 items-start gap-4">
                   <Label htmlFor="description" className="text-right pt-2">
-                    Description
+                    {t('subProjects.description')}
                   </Label>
                   <Textarea
                     id="description"
                     className="col-span-3"
-                    placeholder="Provide a description of the sub-project"
+                    placeholder={t('subProjects.descriptionPlaceholder')}
                     rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.currentTarget.value)}
@@ -349,7 +350,7 @@ export function SubProjects({
                     dispatch(clearSubprojectMessages());
                   }}
                 >
-                  Cancel
+                  {t('subProjects.cancel')}
                 </Button>
                 <Button
                   className="bg-[#0073e6] text-white flex items-center
@@ -359,7 +360,7 @@ export function SubProjects({
                   onClick={handleCreateSubmit}
                   disabled={isLoading || !name.trim() || !category.trim()}
                 >
-                  {isLoading ? "Creating..." : "Create Sub-Project"}
+                  {isLoading ? t('subProjects.creating') : t('subProjects.createSubProject')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -372,7 +373,7 @@ export function SubProjects({
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search sub-projects..."
+              placeholder={t('subProjects.searchSubProjects')}
               className="pl-9 border-gray-100 border bg-transparent focus:bg-transparent focus:outline-none focus:ring-0 focus:ring-transparent focus:border-[#C6CBCB]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -386,10 +387,10 @@ export function SubProjects({
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="all">{t('subProjects.allStatus')}</SelectItem>
+                <SelectItem value="active">{t('subProjects.active')}</SelectItem>
+                <SelectItem value="inactive">{t('subProjects.inactive')}</SelectItem>
+                <SelectItem value="pending">{t('subProjects.pending')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -398,7 +399,7 @@ export function SubProjects({
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="all">{t('subProjects.allCategories')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -423,7 +424,7 @@ export function SubProjects({
                             : "secondary"
                         }
                       >
-                        {subProject.status === "active" ? "Active" : "Inactive"}
+                        {subProject.status === "active" ? t('subProjects.active') : t('subProjects.inactive')}
                       </Badge>
                     </div>
                   </div>
@@ -437,15 +438,15 @@ export function SubProjects({
                       <DropdownMenuItem
                         onClick={() => handleViewSubProject(subProject.id)}
                       >
-                        View Details
+                        {t('subProjects.viewDetails')}
                       </DropdownMenuItem>
                       <DropdownMenuItem>
                         <FileEdit className="h-4 w-4 mr-2" />
-                        Edit
+                        {t('subProjects.edit')}
                       </DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive">
                         <Trash className="h-4 w-4 mr-2" />
-                        Delete
+                        {t('subProjects.delete')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -464,13 +465,13 @@ export function SubProjects({
                   </Avatar>
                   <div className="text-sm">
                     <div>{/* lead placeholder */}</div>
-                    <div className="text-muted-foreground">Project Lead</div>
+                    <div className="text-muted-foreground">{t('subProjects.projectLead')}</div>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
+                      <span className="text-muted-foreground">{t('subProjects.progress')}</span>
                       <span>—</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -483,18 +484,18 @@ export function SubProjects({
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="flex items-center gap-1">
                       <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                      <span>— Activities</span>
+                      <span>— {t('subProjects.activities')}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>— Beneficiaries</span>
+                      <span>— {t('subProjects.beneficiaries')}</span>
                     </div>
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="border-t pt-3 flex justify-between text-sm">
                 <div>
-                  <span className="text-muted-foreground">Location: </span>—
+                  <span className="text-muted-foreground">{t('subProjects.location')}</span>—
                 </div>
                 <Button
                   variant="ghost"
@@ -502,7 +503,7 @@ export function SubProjects({
                   className="text-primary bg-orange-50"
                   onClick={() => handleViewSubProject(subProject.id)}
                 >
-                  View Details
+                  {t('subProjects.viewDetails')}
                 </Button>
               </CardFooter>
             </Card>
@@ -513,15 +514,15 @@ export function SubProjects({
           <Table>
             <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
-                <TableHead className="w-[250px]">Sub-Project</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead>Timeline</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Lead</TableHead>
-                <TableHead>Stats</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[250px]">{t('subProjects.subProject')}</TableHead>
+                <TableHead>{t('subProjects.category')}</TableHead>
+                <TableHead>{t('subProjects.status')}</TableHead>
+                <TableHead>{t('subProjects.progress')}</TableHead>
+                <TableHead>{t('subProjects.timeline')}</TableHead>
+                <TableHead>{t('subProjects.location')}</TableHead>
+                <TableHead>{t('subProjects.lead')}</TableHead>
+                <TableHead>{t('subProjects.stats')}</TableHead>
+                <TableHead className="text-right">{t('subProjects.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="bg-[#F7F9FB]">
@@ -562,7 +563,7 @@ export function SubProjects({
                             : "rgba(28,28,28,0.4)",
                       }}
                     >
-                      {subProject.status === "active" ? "Active" : "Inactive"}
+                      {subProject.status === "active" ? t('subProjects.active') : t('subProjects.inactive')}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -597,11 +598,11 @@ export function SubProjects({
                     <div className="text-sm space-y-1">
                       <div className="flex items-center gap-1">
                         <Users className="h-3 w-3 text-muted-foreground" />
-                        <span>— Beneficiaries</span>
+                        <span>— {t('subProjects.beneficiaries')}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <CheckCircle className="h-3 w-3 text-muted-foreground" />
-                        <span>— Activities</span>
+                        <span>— {t('subProjects.activities')}</span>
                       </div>
                     </div>
                   </TableCell>
@@ -613,7 +614,7 @@ export function SubProjects({
                         variant="outline"
                         onClick={() => handleViewSubProject(subProject.id)}
                       >
-                        View
+                        {t('subProjects.view')}
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -628,11 +629,11 @@ export function SubProjects({
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>
                             <FileEdit className="h-4 w-4 mr-2" />
-                            Edit
+                            {t('subProjects.edit')}
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive">
                             <Trash className="h-4 w-4 mr-2" />
-                            Delete
+                            {t('subProjects.delete')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

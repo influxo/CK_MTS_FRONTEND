@@ -42,6 +42,7 @@ import { selectMetricsFilters } from "../../store/slices/serviceMetricsSlice";
 import { selectCurrentUser } from "../../store/slices/authSlice";
 import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@radix-ui/react-tabs";
+import { useTranslation } from "../../hooks/useTranslation";
 
 type Granularity = TimeUnit; // 'day' | 'week' | 'month' | 'quarter' | 'year'
 
@@ -95,6 +96,7 @@ function defaultWindowFor(g: Granularity): { from: Date; to: Date } {
 }
 
 export function FormSubmissions({ projects }: { projects: Project[] }) {
+  const { t } = useTranslation();
   // Local series state (isolated from global dashboard)
   const [loading, setLoading] = React.useState<boolean>(false);
   const [items, setItems] = React.useState<
@@ -501,21 +503,21 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
   if (summaryExtra) {
     if (typeof summaryExtra.totalSubmissions === "number") {
       cardsData.push({
-        title: "Total Submissions",
+        title: t('dashboard.totalSubmissions'),
         value: Number(summaryExtra.totalSubmissions || 0),
         type: "summary",
       });
     }
     if (typeof summaryExtra.totalServiceDeliveries === "number") {
       cardsData.push({
-        title: "Total Service Deliveries",
+        title: t('dashboard.totalServiceDeliveries'),
         value: Number(summaryExtra.totalServiceDeliveries || 0),
         type: "summary",
       });
     }
     if (typeof summaryExtra.totalUniqueBeneficiaries === "number") {
       cardsData.push({
-        title: "Total Unique Beneficiaries",
+        title: t('dashboard.totalUniqueBeneficiaries'),
         value: Number(summaryExtra.totalUniqueBeneficiaries || 0),
         type: "summary",
       });
@@ -531,7 +533,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     .sort((a: any, b: any) => Number(b?.count || 0) - Number(a?.count || 0))
     .forEach((svc: any) => {
       cardsData.push({
-        title: svc.name || svc.serviceName || "Service",
+        title: svc.name || svc.serviceName || t('dashboard.service'),
         value: Number(svc.count || 0),
         type: "service",
       });
@@ -554,11 +556,11 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
           <div className="flex items-center gap-3">
             <CardTitle>
               {(metricLocal || globalFilters.metric) === "serviceDeliveries"
-                ? "Service Deliveries Overview"
+                ? t('dashboard.serviceDeliveriesOverview')
                 : (metricLocal || globalFilters.metric) ===
                   "uniqueBeneficiaries"
-                ? "Unique Beneficiaries Overview"
-                : "Form Submissions Overview"}
+                ? t('dashboard.uniqueBeneficiariesOverview')
+                : t('dashboard.formSubmissionsOverview')}
             </CardTitle>
 
             <Tabs
@@ -571,13 +573,13 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                   value="line"
                   className=" data-[state=active]:bg-[#0073e6] rounded-full data-[state=active]:text-white"
                 >
-                  Line
+                  {t('dashboard.lineChart')}
                 </TabsTrigger>
                 <TabsTrigger
                   value="bar"
                   className=" data-[state=active]:bg-[#0073e6] rounded-full data-[state=active]:text-white"
                 >
-                  Bar
+                  {t('dashboard.barChart')}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -607,10 +609,10 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                 >
-                  <SelectValue placeholder="Project" />
+                  <SelectValue placeholder={t('common.selectProject')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Projects</SelectItem>
+                  <SelectItem value="all">{t('common.allProjects')}</SelectItem>
                   {(projects || []).map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}
@@ -641,10 +643,10 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                 >
-                  <SelectValue placeholder="Subproject" />
+                  <SelectValue placeholder={t('subProjects.selectSubProject')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Subprojects</SelectItem>
+                  <SelectItem value="all">{t('subProjects.allSubProjects')}</SelectItem>
                   {subprojectsOptions
                     .filter((sp) => sp.projectId === effectiveProjectId)
                     .map((sp) => (
@@ -662,7 +664,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                 className="bg-[#E0F2FE] text-black border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
               >
                 <Filter className="h-4 w-4 mr-2" />
-                {showMoreLocal ? "Hide Filters" : "More Filters"}
+                {showMoreLocal ? t('dashboard.hideFilters') : t('dashboard.moreFilters')}
               </Button>
             </div>
 
@@ -684,15 +686,15 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                   >
-                    <SelectValue placeholder="Beneficiary" />
+                    <SelectValue placeholder={t('dashboard.metric')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="submissions">Submissions</SelectItem>
+                    <SelectItem value="submissions">{t('dashboard.submissions')}</SelectItem>
                     <SelectItem value="serviceDeliveries">
-                      Service Deliveries
+                      {t('dashboard.serviceDeliveries')}
                     </SelectItem>
                     <SelectItem value="uniqueBeneficiaries">
-                      Unique Beneficiaries
+                      {t('dashboard.uniqueBeneficiaries')}
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -730,10 +732,10 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                   >
-                    <SelectValue placeholder="Service" />
+                    <SelectValue placeholder={t('dashboard.service')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Services</SelectItem>
+                    <SelectItem value="all">{t('dashboard.allServices')}</SelectItem>
                     {servicesOptions.map((s: any) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.name}
@@ -793,10 +795,10 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                   >
-                    <SelectValue placeholder="Form Template" />
+                    <SelectValue placeholder={t('dashboard.formTemplate')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Templates</SelectItem>
+                    <SelectItem value="all">{t('dashboard.allTemplates')}</SelectItem>
                     {templatesOptions.map((t: any) => (
                       <SelectItem key={t.id} value={t.id}>
                         {t.name}
@@ -1022,9 +1024,9 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
         <Tabs defaultValue="all">
           <div className="flex items-center justify-between mb-4">
             <TabsList className="flex gap-2">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="summary">Summary</TabsTrigger>
-              <TabsTrigger value="services">Services</TabsTrigger>
+              <TabsTrigger value="all">{t('common.all')}</TabsTrigger>
+              <TabsTrigger value="summary">{t('dashboard.summary')}</TabsTrigger>
+              <TabsTrigger value="services">{t('dashboard.services')}</TabsTrigger>
             </TabsList>
           </div>
 
@@ -1048,8 +1050,8 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                     <div className="flex items-center justify-between">
                       <div className="text-xs text-gray-600">
                         {card.type === "summary"
-                          ? "Summary"
-                          : "Most Frequent Service"}
+                          ? t('dashboard.summary')
+                          : t('dashboard.mostFrequentService')}
                       </div>
                       <Badge
                         variant={
@@ -1100,7 +1102,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                   <div className="space-y-2">
                     <div className="text-2xl">{card.value}</div>
                     <div className="flex items-center justify-between">
-                      <div className="text-xs text-gray-600">Summary</div>
+                      <div className="text-xs text-gray-600">{t('dashboard.summary')}</div>
                       <Badge
                         variant="default"
                         className="text-xs bg-[#DEF8EE] text-[#4AA785]"

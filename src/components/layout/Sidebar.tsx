@@ -15,6 +15,7 @@ import { Button } from "../ui/button/button";
 import { ScrollArea } from "../ui/layout/scroll-area";
 import { cn } from "../ui/utils/utils";
 import { useAuth } from "../../hooks/useAuth";
+import { useTranslation } from "../../hooks/useTranslation";
 import type { Project } from "../../services/projects/projectModels";
 import { useEffect, useMemo, useState } from "react";
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -65,6 +66,8 @@ export function Sidebar({
 
   // Treat sidebar as collapsed only on small screens and when not in mobile-open overlay
   const isCollapsed = collapsed && !mobileOpen;
+  
+  const { t } = useTranslation();
 
   // Role helpers
   const normalizedRoles = useMemo(
@@ -97,53 +100,53 @@ export function Sidebar({
   const fullNavItems = useMemo(
     () => [
       {
-        title: "Faqja Kryesore",
+        title: t('sidebar.dashboard'),
         icon: <LayoutDashboard className="h-5 w-5" />,
         to: "/dashboard",
       },
       {
-        title: "Projektet",
+        title: t('sidebar.projects'),
         icon: <FolderKanban className="h-5 w-5" />,
         to: "/projects",
       },
       {
-        title: "Përfituesit",
+        title: t('sidebar.beneficiaries'),
         icon: <Users className="h-5 w-5" />,
         to: "/beneficiaries",
       },
       {
-        title: "Formularët",
+        title: t('sidebar.forms'),
         icon: <ClipboardList className="h-5 w-5" />,
         to: "/forms",
       },
       {
-        title: "Futja e të dhënave",
+        title: t('sidebar.dataEntry'),
         icon: <ClipboardList className="h-5 w-5" />,
         to: "/data-entry",
       },
       {
-        title: "Raportet",
+        title: t('sidebar.reports'),
         icon: <BarChart3 className="h-5 w-5" />,
         to: "/reports",
       },
       {
-        title: "Punëtorët",
+        title: t('sidebar.employees'),
         icon: <Users className="h-5 w-5" />,
         to: "/employees",
       },
     ],
-    []
+    [t]
   );
 
   const navItems = useMemo(() => {
     if (isFieldOperator && !isSysOrSuperAdmin) {
-      // Field operators should see Dashboard, Projects and Data Entry only
+      // Field operators should see Dashboard and Data Entry only
       return fullNavItems.filter((i) =>
-        ["Dashboard", "Data Entry"].includes(i.title)
+        [t('sidebar.dashboard'), t('sidebar.dataEntry')].includes(i.title)
       );
     }
     return fullNavItems;
-  }, [fullNavItems, isFieldOperator, isSysOrSuperAdmin]);
+  }, [fullNavItems, isFieldOperator, isSysOrSuperAdmin, t]);
 
   // Load user's assigned projects if not admin
   useEffect(() => {
@@ -231,11 +234,11 @@ export function Sidebar({
       <ScrollArea className="flex-1 py-4">
         <nav className="flex flex-col gap-1 px-2">
           {authLoading || !user ? (
-            <div className="px-2 py-2 text-xs text-gray-500">Loading menu…</div>
+            <div className="px-2 py-2 text-xs text-gray-500">{t('sidebar.loadingMenu')}</div>
           ) : (
             <>
               {navItems.map((item) =>
-                item.title === "Projektet" ? (
+                item.title === t('sidebar.projects') ? (
                   <div key={item.to}>
                     <button
                       onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
@@ -256,7 +259,7 @@ export function Sidebar({
                           "lg:inline"
                         )}
                       >
-                        Projektet
+                        {t('sidebar.projects')}
                       </span>
                       <ChevronRight
                         size={18}
@@ -281,12 +284,12 @@ export function Sidebar({
                       >
                         {isProjectsLoading && (
                           <span className="text-xs text-gray-400">
-                            Loading...
+                            {t('common.loading')}
                           </span>
                         )}
                         {projectsErrMsg && (
                           <span className="text-xs text-black">
-                            Error loading projects
+                            {t('sidebar.errorLoadingProjects')}
                           </span>
                         )}
                         {visibleProjects?.map((project) => {
@@ -383,7 +386,7 @@ export function Sidebar({
               "lg:inline"
             )}
           >
-            Logout
+            {t('auth.logout')}
           </span>
         </Button>
 
@@ -403,7 +406,7 @@ export function Sidebar({
           <span
             className={cn(isCollapsed && !mobileOpen ? "hidden" : "inline")}
           >
-            Collapse
+            {t('sidebar.collapse')}
           </span>
         </Button>
       </div>

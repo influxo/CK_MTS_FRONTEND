@@ -30,9 +30,11 @@ import {
 import { fetchForms, selectAllForms } from "../../store/slices/formsSlice";
 import formTemplatesApi from "../../services/forms/formServices";
 import { selectCurrentUser } from "../../store/slices/authSlice";
+import { useTranslation } from "../../hooks/useTranslation";
 import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
 
 export function FilterControls({ projects }: { projects: Project[] }) {
+  const { t } = useTranslation();
   const dispatch: any = useDispatch();
   const subprojects = useSelector(selectAllSubprojects);
   const subprojectsLoading = useSelector(selectSubprojectsLoading);
@@ -227,10 +229,10 @@ export function FilterControls({ projects }: { projects: Project[] }) {
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px] "
           >
-            <SelectValue placeholder="Select Project" />
+            <SelectValue placeholder={t('common.selectProject')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Projects</SelectItem>
+            <SelectItem value="all">{t('common.allProjects')}</SelectItem>
             {projects.map((project) => (
               <SelectItem key={project.id} value={project.id}>
                 {project.name}
@@ -249,13 +251,13 @@ export function FilterControls({ projects }: { projects: Project[] }) {
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px] "
           >
-            <SelectValue placeholder="Select Subproject" />
+            <SelectValue placeholder={t('subProjects.selectSubProject')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Subprojects</SelectItem>
+            <SelectItem value="all">{t('subProjects.allSubProjects')}</SelectItem>
             {subprojectsLoading ? (
               <SelectItem value="loading" disabled>
-                Loading...
+                {t('common.loading')}
               </SelectItem>
             ) : (
               subprojects
@@ -305,14 +307,14 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
-                <SelectValue placeholder="Time Period" />
+                <SelectValue placeholder={t('dashboard.timePeriod')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all-period">All Period</SelectItem>
-                <SelectItem value="last-7-days">Last 7 days</SelectItem>
-                <SelectItem value="last-30-days">Last 30 days</SelectItem>
-                <SelectItem value="last-90-days">Last 90 days</SelectItem>
-                <SelectItem value="custom">Custom range</SelectItem>
+                <SelectItem value="all-period">{t('dashboard.allPeriod')}</SelectItem>
+                <SelectItem value="last-7-days">{t('dashboard.last7Days')}</SelectItem>
+                <SelectItem value="last-30-days">{t('dashboard.last30Days')}</SelectItem>
+                <SelectItem value="last-90-days">{t('dashboard.last90Days')}</SelectItem>
+                <SelectItem value="custom">{t('dashboard.customRange')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -329,12 +331,12 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
-                <SelectValue placeholder="Metric" />
+                <SelectValue placeholder={t('dashboard.metric')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="submissions">Submissions</SelectItem>
+                <SelectItem value="submissions">{t('dashboard.submissions')}</SelectItem>
                 <SelectItem value="serviceDeliveries">
-                  Service Deliveries
+                  {t('dashboard.serviceDeliveries')}
                 </SelectItem>
                 <SelectItem value="uniqueBeneficiaries">
                   Unique Beneficiaries
@@ -373,10 +375,10 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
-                <SelectValue placeholder="Service" />
+                <SelectValue placeholder={t('dashboard.service')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Services</SelectItem>
+                <SelectItem value="all">{t('dashboard.allServices')}</SelectItem>
                 {servicesForSelect.map((s: any) => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.name}
@@ -433,10 +435,10 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
-                <SelectValue placeholder="Form Template" />
+                <SelectValue placeholder={t('dashboard.formTemplate')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Templates</SelectItem>
+                <SelectItem value="all">{t('dashboard.allTemplates')}</SelectItem>
                 {(templatesOptions || []).map((t: any) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}

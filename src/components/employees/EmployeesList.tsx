@@ -65,6 +65,7 @@ import {
   TabsTrigger,
 } from "../ui/navigation/tabs";
 import type { Employee as ApiEmployee } from "../../services/employees/employeesModels";
+import { useTranslation } from "../../hooks/useTranslation";
 
 // Using API data provided via props; mock employees removed.
 
@@ -96,6 +97,7 @@ export function EmployeesList({
   isLoading,
   error,
 }: EmployeesListProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -150,8 +152,8 @@ export function EmployeesList({
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2>Employees</h2>
-            <p className="text-muted-foreground">Loading employees…</p>
+            <h2>{t('employees.title')}</h2>
+            <p className="text-muted-foreground">{t('common.loading')}</p>
           </div>
         </div>
       </div>
@@ -163,8 +165,8 @@ export function EmployeesList({
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2>Employees</h2>
-            <p className="text-destructive">Error: {error}</p>
+            <h2>{t('employees.title')}</h2>
+            <p className="text-destructive">{t('common.error')}: {error}</p>
           </div>
         </div>
       </div>
@@ -290,8 +292,7 @@ export function EmployeesList({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          {/* <h2>Employees</h2> */}
-          <p className="text-muted-foreground">Menaxho stafin</p>
+          <p className="text-muted-foreground">{t('dashboard.manageStaff')}</p>
         </div>
         <div className="flex gap-3">
           <Button
@@ -300,14 +301,14 @@ export function EmployeesList({
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
-            Filterat
+            {t('employees.filters')}
           </Button>
           <Button
             onClick={onInviteClick}
             className="bg-[#0073e6] border-0 text-white"
           >
             <UserPlus className="h-4 w-4 mr-2" />
-            Fto punonjes
+            {t('employees.inviteEmployee')}
           </Button>
         </div>
       </div>
@@ -317,7 +318,7 @@ export function EmployeesList({
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search employees..."
+              placeholder={t('employees.searchEmployees')}
               className="pl-9 bg-white border-gray-100 border"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -330,7 +331,7 @@ export function EmployeesList({
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Gjitha Rolet</SelectItem>
+                <SelectItem value="all">{t('common.allRoles')}</SelectItem>
                 {ROLE_OPTIONS.map((r) => (
                   <SelectItem key={r} value={r}>
                     {r}
@@ -344,7 +345,7 @@ export function EmployeesList({
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Gjitha Projektet</SelectItem>
+                <SelectItem value="all">{t('common.allProjects')}</SelectItem>
                 <SelectItem value="Rural Healthcare Initiative">
                   Rural Healthcare
                 </SelectItem>
@@ -362,7 +363,7 @@ export function EmployeesList({
                 className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white border-0"
               >
                 <Download className="h-4 w-4 mr-2" />
-                Export
+                {t('common.export')}
               </Button>
             </div>
           </div>
@@ -383,35 +384,35 @@ export function EmployeesList({
           <CardContent className="py-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label>Two-Factor Status</Label>
+                <Label>{t('employees.twoFactorStatus')}</Label>
                 <Select defaultValue="all">
                   <SelectTrigger className="mt-2 bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                     <SelectValue placeholder="2FA Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Gjitha</SelectItem>
-                    <SelectItem value="enabled">Aktiv</SelectItem>
-                    <SelectItem value="disabled">Jo Aktiv</SelectItem>
+                    <SelectItem value="all">{t('common.all')}</SelectItem>
+                    <SelectItem value="enabled">{t('common.active')}</SelectItem>
+                    <SelectItem value="disabled">{t('common.inactive')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Data e shtimit</Label>
+                <Label>{t('employees.dateAdded')}</Label>
                 <Select defaultValue="any">
                   <SelectTrigger className="mt-2 bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                     <SelectValue placeholder="Date Added" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="any">Gjitha</SelectItem>
-                    <SelectItem value="today">Sot</SelectItem>
-                    <SelectItem value="week">Kjo javë</SelectItem>
-                    <SelectItem value="month">Ky muaj</SelectItem>
-                    <SelectItem value="quarter">Ky vit</SelectItem>
+                    <SelectItem value="any">{t('common.all')}</SelectItem>
+                    <SelectItem value="today">{t('common.today')}</SelectItem>
+                    <SelectItem value="week">{t('common.thisWeek')}</SelectItem>
+                    <SelectItem value="month">{t('common.thisMonth')}</SelectItem>
+                    <SelectItem value="quarter">{t('common.thisYear')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Data e fundit e aktivitetit</Label>
+                <Label>{t('employees.lastActiveDate')}</Label>
                 <Select defaultValue="any">
                   <SelectTrigger className="mt-2 bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                     <SelectValue placeholder="Last Active" />
@@ -422,7 +423,7 @@ export function EmployeesList({
                     <SelectItem value="week">Kjo javë</SelectItem>
                     <SelectItem value="month">Ky muaj</SelectItem>
                     <SelectItem value="inactive">
-                      Jo aktiv (30+ ditë)
+                      {t('employees.inactive30Days')}
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -434,10 +435,10 @@ export function EmployeesList({
                 size="sm"
                 className="mr-2 bg-[#E0F2FE] border-0"
               >
-                Reset Filters
+                {t('employees.resetFilters')}
               </Button>
               <Button size="sm" className="bg-[#0073e6] text-white border-0">
-                Apply Filters
+                {t('employees.applyFilters')}
               </Button>
             </div>
           </CardContent>
@@ -451,25 +452,25 @@ export function EmployeesList({
               value="active"
               className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
-              Aktive ({getTabCount("active")})
+              {t('employees.allActiveEmployees')} ({getTabCount("active")})
             </TabsTrigger>
             <TabsTrigger
               value="pending"
               className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
-              Në pritje ({getTabCount("pending")})
+              {t('employees.pendingEmployees')} ({getTabCount("pending")})
             </TabsTrigger>
             <TabsTrigger
               value="inactive"
               className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
             >
-              Jo Aktive ({getTabCount("inactive")})
+              {t('employees.inactiveEmployees')} ({getTabCount("inactive")})
             </TabsTrigger>
             <TabsTrigger
               value="invitations"
               className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
             >
-              Ftesat ({getTabCount("invitations")})
+              {t('employees.invitations')} ({getTabCount("invitations")})
             </TabsTrigger>
           </TabsList>
 
@@ -479,14 +480,14 @@ export function EmployeesList({
                 <Table className="border-0">
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
-                      <TableHead className="w-[250px]">Punëtori</TableHead>
-                      <TableHead>Roli</TableHead>
-                      <TableHead>Projektet</TableHead>
-                      <TableHead>Nën projektet</TableHead>
-                      <TableHead>Aktiv për herë të fundit</TableHead>
-                      <TableHead>Statusi</TableHead>
+                      <TableHead className="w-[250px]">{t('employees.employee')}</TableHead>
+                      <TableHead>{t('common.role')}</TableHead>
+                      <TableHead>{t('projects.title')}</TableHead>
+                      <TableHead>{t('subProjects.title')}</TableHead>
+                      <TableHead>{t('employees.lastActive')}</TableHead>
+                      <TableHead>{t('common.status')}</TableHead>
                       <TableHead>2FA</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="text-right">{t('common.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody className="bg-[#F7F9FB]">
@@ -569,7 +570,7 @@ export function EmployeesList({
                         <TableCell>
                           {employee.lastActive
                             ? formatDate(employee.lastActive)
-                            : "Never"}
+                            : t('common.never')}
                         </TableCell>
                         <TableCell>
                           {employee.status === "active" ? (
@@ -578,14 +579,14 @@ export function EmployeesList({
                               className=" text-[#4AA785] bg-[#DEF8EE] border-0"
                             >
                               <CheckCircle className="h-3 w-3 mr-1" />
-                              Aktiv
+                              {t('common.active')}
                             </Badge>
                           ) : (
                             <Badge
                               variant="outline"
                               className="text-black/40 border-0 bg-black/5"
                             >
-                              Në pritje
+                              {t('common.pending')}
                             </Badge>
                           )}
                         </TableCell>
@@ -596,14 +597,14 @@ export function EmployeesList({
                               className=" text-[#4AA785] bg-[#DEF8EE] border-0"
                             >
                               <CheckCircle className="h-3 w-3 mr-1" />
-                              Enabled
+                              {t('common.enabled')}
                             </Badge>
                           ) : (
                             <Badge
                               variant="outline"
                               className="text-black/40 border-0 bg-black/5"
                             >
-                              Disabled
+                              {t('common.disabled')}
                             </Badge>
                           )}
                         </TableCell>
@@ -641,18 +642,18 @@ export function EmployeesList({
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <KeyRound className="h-4 w-4 mr-2" />
-                                  Reset Password
+                                  {t('employees.resetPassword')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <Shield className="h-4 w-4 mr-2" />
-                                  Manage Permissions
+                                  {t('employees.managePermissions')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   className="text-destructive"
                                   onClick={() => handleDeleteClick(employee.id)}
                                 >
                                   <Trash className="h-4 w-4 mr-2" />
-                                  Delete
+                                  {t('common.delete')}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -672,13 +673,13 @@ export function EmployeesList({
                 <Table>
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
-                      <TableHead className="w-[250px]">Punëtori</TableHead>
-                      <TableHead>Roli</TableHead>
-                      <TableHead>Projektet</TableHead>
-                      <TableHead>Nën projektet</TableHead>
-                      <TableHead>Ftuar me</TableHead>
-                      <TableHead>Statusi</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="w-[250px]">{t('employees.employee')}</TableHead>
+                      <TableHead>{t('common.role')}</TableHead>
+                      <TableHead>{t('projects.title')}</TableHead>
+                      <TableHead>{t('subProjects.title')}</TableHead>
+                      <TableHead>{t('employees.invitedOn')}</TableHead>
+                      <TableHead>{t('common.status')}</TableHead>
+                      <TableHead className="text-right">{t('common.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

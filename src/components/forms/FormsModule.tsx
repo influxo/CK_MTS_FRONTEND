@@ -6,6 +6,7 @@ import { FormBuilder } from "./FormBuilder";
 import type { FormTemplateAndPagination } from "../../services/forms/formModels";
 import { createForm } from "../../store/slices/formsSlice";
 import { toast } from "sonner";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface FormsModuleProps {
   forms: FormTemplateAndPagination;
@@ -14,6 +15,7 @@ interface FormsModuleProps {
 }
 
 export function FormsModule({ forms, onFormCreated, onFormDeleted }: FormsModuleProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [isCreatingForm, setIsCreatingForm] = useState(false);
@@ -44,16 +46,16 @@ export function FormsModule({ forms, onFormCreated, onFormDeleted }: FormsModule
       }
       
       // Show success toast
-      toast.success(`"${formData.name}" created successfully!`, {
-        description: 'The form has been saved and is now available in your forms list.',
+      toast.success(`"${formData.name}" ${t('forms.createdSuccessfully')}`, {
+        description: t('forms.formSavedDesc'),
         duration: 5000,
       });
       
       handleBackToForms();
     } catch (err) {
       console.error("Failed to save form:", err);
-      toast.error('Failed to save form', {
-        description: err instanceof Error ? err.message : 'An unknown error occurred',
+      toast.error(t('forms.failedToSaveForm'), {
+        description: err instanceof Error ? err.message : t('forms.unknownError'),
         duration: 5000,
       });
     }

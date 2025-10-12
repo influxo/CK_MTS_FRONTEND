@@ -47,6 +47,7 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import { Textarea } from "../ui/form/textarea";
+import { LanguageSwitcher } from "../LanguageSwitcher";
 
 interface TopbarProps {
   title?: string;
@@ -192,6 +193,9 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         </Sheet>
 
         {/* No theme toggle - light mode only */}
+
+        {/* Language Switcher */}
+        <LanguageSwitcher />
 
         {/* Create Project */}
         {isSysOrSuperAdmin && (

@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "../ui/data-display/card";
 import { Progress } from "../ui/feedback/progress";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface ProjectStatsProps {
   projectId: string;
@@ -35,6 +36,7 @@ const mockMonthlyData = [
 ];
 
 export function ProjectStats({ projectId, summary }: ProjectStatsProps) {
+  const { t } = useTranslation();
   console.log("projectId, veq sa me i ik unused declaration", projectId);
 
   return (
@@ -42,25 +44,39 @@ export function ProjectStats({ projectId, summary }: ProjectStatsProps) {
       {/* Top full-width Key Statistics row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <h1 className="text-base sm:text-lg font-semibold md:col-span-1">
-          Key Statistics
+          {t("projectStats.keyStatistics")}
         </h1>
         <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="bg-[#B1E3FF] drop-shadow-sm shadow-gray-50 border-0">
             <CardContent className="p-6">
-              <div className="text-sm text-muted-foreground">Total Submissions</div>
-              <div className="text-3xl font-medium mt-1">{Number(summary?.totalSubmissions || 0).toLocaleString()}</div>
+              <div className="text-sm text-muted-foreground">
+                {t("projectStats.totalSubmissions")}
+              </div>
+              <div className="text-3xl font-medium mt-1">
+                {Number(summary?.totalSubmissions || 0).toLocaleString()}
+              </div>
             </CardContent>
           </Card>
           <Card className="bg-[#B1E3FF] drop-shadow-sm shadow-gray-50 border-0">
             <CardContent className="p-6">
-              <div className="text-sm text-muted-foreground">Total Service Deliveries</div>
-              <div className="text-3xl font-medium mt-1">{Number(summary?.totalServiceDeliveries || 0).toLocaleString()}</div>
+              <div className="text-sm text-muted-foreground">
+                {t("projectStats.totalServiceDeliveries")}
+              </div>
+              <div className="text-3xl font-medium mt-1">
+                {Number(summary?.totalServiceDeliveries || 0).toLocaleString()}
+              </div>
             </CardContent>
           </Card>
           <Card className="bg-[#B1E3FF] drop-shadow-sm shadow-gray-50 border-0">
             <CardContent className="p-6">
-              <div className="text-sm text-muted-foreground">Total Unique Beneficiaries</div>
-              <div className="text-3xl font-medium mt-1">{Number(summary?.totalUniqueBeneficiaries || 0).toLocaleString()}</div>
+              <div className="text-sm text-muted-foreground">
+                {t("projectStats.totalUniqueBeneficiaries")}
+              </div>
+              <div className="text-3xl font-medium mt-1">
+                {Number(
+                  summary?.totalUniqueBeneficiaries || 0
+                ).toLocaleString()}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -70,12 +86,16 @@ export function ProjectStats({ projectId, summary }: ProjectStatsProps) {
       <div className="grid  grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="bg-[#F7F9FB]  border-0 drop-shadow-sm shadow-gray-50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Project Progress</CardTitle>
+            <CardTitle className="text-base">
+              {t("projectStats.projectProgress")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Overall Progress</span>
+                <span className="text-muted-foreground">
+                  {t("projectStats.overallProgress")}
+                </span>
                 <span>65%</span>
               </div>
               <Progress value={65} className="h-2 " />
@@ -84,7 +104,7 @@ export function ProjectStats({ projectId, summary }: ProjectStatsProps) {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                  Budget Utilization
+                  {t("projectStats.budgetUtilization")}
                 </span>
                 <span>42%</span>
               </div>
@@ -94,7 +114,7 @@ export function ProjectStats({ projectId, summary }: ProjectStatsProps) {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                  Beneficiary Target
+                  {t("projectStats.beneficiaryTarget")}
                 </span>
                 <span>78%</span>
               </div>
@@ -104,7 +124,7 @@ export function ProjectStats({ projectId, summary }: ProjectStatsProps) {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                  Activity Completion
+                  {t("projectStats.activityCompletion")}
                 </span>
                 <span>51%</span>
               </div>
@@ -115,7 +135,9 @@ export function ProjectStats({ projectId, summary }: ProjectStatsProps) {
 
         <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Monthly Activity</CardTitle>
+            <CardTitle className="text-base">
+              {t("projectStats.monthlyActivity")}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-64">
@@ -129,8 +151,14 @@ export function ProjectStats({ projectId, summary }: ProjectStatsProps) {
                   0
                 );
                 const pieData = [
-                  { name: "Activities", value: totalActivities },
-                  { name: "Beneficiaries", value: totalBeneficiaries },
+                  {
+                    name: t("projectStats.activities"),
+                    value: totalActivities,
+                  },
+                  {
+                    name: t("projectStats.beneficiaries"),
+                    value: totalBeneficiaries,
+                  },
                 ];
                 const COLORS = ["#FF5E3A", "#6366F1"]; // brand orange + indigo
                 return (

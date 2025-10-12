@@ -15,8 +15,10 @@ import {
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { selectSummary } from "../../store/slices/serviceMetricsSlice";
+import { useTranslation } from "../../hooks/useTranslation";
 
 export function SummaryMetrics() {
+  const { t } = useTranslation();
   const summary = useSelector(selectSummary);
   const loading = summary.loading;
   const data = summary.data || {
@@ -33,7 +35,7 @@ export function SummaryMetrics() {
              hover:-translate-y-1 hover:shadow-md    border-0"
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm">Service Deliveries</CardTitle>
+          <CardTitle className="text-sm">{t('dashboard.servicesDelivered')}</CardTitle>
           <BarChart3 className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -44,7 +46,7 @@ export function SummaryMetrics() {
               </div>
               <div className="flex items-center text-xs text-muted-foreground">
                 <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                +12% from last month
+                +12% {t('dashboard.fromLastMonth')}
               </div>
             </div>
             <Badge variant="secondary" className="  text-black ">
@@ -61,7 +63,7 @@ export function SummaryMetrics() {
              hover:-translate-y-1 hover:shadow-md"
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm">Unique Beneficiaries</CardTitle>
+          <CardTitle className="text-sm">{t('dashboard.uniqueBeneficiaries')}</CardTitle>
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -72,7 +74,7 @@ export function SummaryMetrics() {
               </div>
               <div className="flex items-center text-xs text-muted-foreground">
                 <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                +8% from last month
+                +8% {t('dashboard.fromLastMonth')}
               </div>
             </div>
             <Badge variant="secondary" className="text-black">
@@ -88,7 +90,7 @@ export function SummaryMetrics() {
              hover:-translate-y-1 hover:shadow-md  drop-shadow-sm shadow-gray-50"
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm">Unique Staff</CardTitle>
+          <CardTitle className="text-sm">{t('dashboard.uniqueStaff')}</CardTitle>
           <ClipboardList className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>

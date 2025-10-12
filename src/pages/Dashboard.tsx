@@ -11,6 +11,8 @@ import { SummaryMetrics } from "../components/dashboard/SummaryMetrics";
 import type { AppDispatch } from "../store";
 
 import { selectCurrentUser } from "../store/slices/authSlice";
+import { useAuth } from "../hooks/useAuth";
+import { useTranslation } from "../hooks/useTranslation";
 
 import {
   fetchDeliveriesSeries,
@@ -27,8 +29,10 @@ import {
   fetchProjects,
 } from "../store/slices/projectsSlice";
 
-export function Dashboard() {
+export default function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation();
+  const { isLoading, error } = useAuth();
   const user = useSelector(selectCurrentUser);
   const metricsFilters = useSelector(selectMetricsFilters);
   const didResetRef = useRef(false);
@@ -105,6 +109,14 @@ export function Dashboard() {
     dispatch(fetchDeliveriesSummary(filters));
     dispatch(fetchDeliveriesSeries(filters));
   }, [dispatch, metricsFilters, isFieldOperator, user?.id]);
+
+  if (isLoading) {
+    return <div>{t("common.loading")}</div>;
+  }
+
+  if (error) {
+    return <div>{t("common.error")}: {error}</div>;
+  }
 
   if (isFieldOperator && !isSysOrSuperAdmin) {
     // Simplified dashboard for Field Operator: only cards + graph, filtered by staffUserId

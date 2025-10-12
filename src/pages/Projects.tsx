@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "../hooks/useTranslation";
 import { ProjectsList } from "../components/projects/ProjectsList";
 import type { AppDispatch } from "../store";
 import {
@@ -10,6 +11,7 @@ import {
 } from "../store/slices/projectsSlice";
 
 export function Projects() {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const projects = useSelector(selectAllProjects);
   const isLoading = useSelector(selectProjectsLoading);
@@ -19,8 +21,8 @@ export function Projects() {
     dispatch(fetchProjects());
   }, [dispatch]);
 
-  if (isLoading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error}</p>;
+  if (isLoading) return <p>{t('common.loading')}</p>;
+  if (error) return <p>{t('common.error')}: {error}</p>;
 
   return <ProjectsList projects={projects} />;
 }
