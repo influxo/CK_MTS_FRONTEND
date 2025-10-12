@@ -26,7 +26,6 @@
 import { db, type PendingMutation } from '../../db/db';
 import axiosInstance from '../axiosInstance';
 import { toast } from 'sonner';
-import type { Project } from '../projects/projectModels';
 import type { Activity } from '../activities/activityModels';
 
 // ===========================
@@ -177,6 +176,34 @@ class SyncService {
             console.error('Manual sync failed:', error);
             throw error;
         }
+    }
+
+    /**
+     * Apply server ID remapping for records created offline with a temporary ID
+     */
+    private async applyServerIdMapping(entityType: string, tempId: string, serverId: string): Promise<void> {
+        let table: any;
+        switch (entityType) {
+            case 'project': table = db.projects; break;
+            case 'activity': table = db.activities; break;
+            case 'beneficiary': table = db.beneficiaries; break;
+            case 'subproject': table = db.subprojects; break;
+            case 'formTemplate': table = db.formTemplates; break;
+            case 'formSubmission': table = db.formSubmissions; break;
+            case 'service': table = db.services; break;
+            case 'user': table = db.users; break;
+            case 'projectUser': table = db.projectUsers; break;
+            case 'subprojectUser': table = db.subprojectUsers; break;
+            case 'entityService': table = db.entityServices; break;
+            default:
+                return;
+        }
+        const existing = await table.get(tempId);
+        if (!existing) return;
+        const now = new Date().toISOString();
+        const copy = { ...existing, id: serverId, synced: true, _localUpdatedAt: now };
+        try { await table.delete(tempId); } catch {}
+        await table.put(copy);
     }
 
     /**
@@ -361,80 +388,122 @@ class SyncService {
         console.log('Syncing from server...');
 
         try {
-            // Projects
-            const projectsResponse = await axiosInstance.get<{ success: boolean; data: Project[] }>("/projects");
-            if (projectsResponse.data?.success && Array.isArray(projectsResponse.data.data)) {
-                const projects = projectsResponse.data.data;
-                for (const project of projects) {
-                    await db.projects.put({
-                        ...project,
+            // Determine delta vs full
+            const metaAll = await db.syncMetadata.get('all');
+            const since = metaAll?.lastSyncedAt;
+            const body: any = since ? { since } : { full: true };
+
+            const resp = await axiosInstance.post<any>('/sync/pull', body);
+            const payload = resp?.data || {};
+            const data = payload?.data || {};
+            const now = new Date().toISOString();
+
+            // Build template associations map
+            const assocByTemplate = new Map<string, any[]>();
+            const fea = Array.isArray(data.formEntityAssociations) ? data.formEntityAssociations : [];
+            for (const a of fea) {
+                const tid = String(a.formTemplateId);
+                const list = assocByTemplate.get(tid) || [];
+                list.push({
+                    formTemplateId: tid,
+                    entityId: a.entityId,
+                    entityType: a.entityType,
+                    updatedAt: a.updatedAt,
+                    createdAt: a.createdAt,
+                });
+                assocByTemplate.set(tid, list);
+            }
+
+            await db.transaction('rw', [
+                db.projects,
+                db.subprojects,
+                db.activities,
+                db.formTemplates,
+                db.services,
+                db.users,
+                db.projectUsers,
+                db.subprojectUsers,
+                db.entityServices,
+                db.beneficiaries,
+                db.activityUsers,
+                db.serviceDeliveries,
+                db.roles,
+                db.permissions,
+                db.rolePermissions,
+                db.userRoles,
+                db.formFields,
+                db.kpis,
+                db.beneficiaryDetails,
+                db.beneficiaryAssignments,
+                db.beneficiaryMappings,
+                db.beneficiaryMatchKeys,
+                db.formSubmissions,
+                db.syncMetadata,
+            ], async () => {
+                // Upsert helpers
+                const upsert = async (table: any, items: any[]) => {
+                    if (!Array.isArray(items) || items.length === 0) return;
+                    for (const it of items) {
+                        await table.put({ ...it, synced: true, _localUpdatedAt: now });
+                    }
+                };
+
+                await upsert(db.projects, data.projects || []);
+                await upsert(db.subprojects, data.subprojects || []);
+                await upsert(db.activities, data.activities || []);
+
+                // Attach associations to templates before upsert
+                const templates = Array.isArray(data.formTemplates) ? data.formTemplates : [];
+                for (const t of templates) {
+                    const tid = String(t.id);
+                    const associations = assocByTemplate.get(tid) || [];
+                    (t as any).entityAssociations = associations;
+                    await db.formTemplates.put({ ...t, synced: true, _localUpdatedAt: now });
+                }
+
+                await upsert(db.services, data.services || []);
+                await upsert(db.entityServices, data.entityServices || []);
+                await upsert(db.users, data.users || []);
+                await upsert(db.projectUsers, data.projectUsers || []);
+                await upsert(db.subprojectUsers, data.subprojectUsers || []);
+                await upsert(db.beneficiaries, data.beneficiaries || []);
+                await upsert(db.activityUsers, data.activityUsers || []);
+                await upsert(db.serviceDeliveries, data.serviceDeliveries || []);
+                await upsert(db.roles, data.roles || []);
+                await upsert(db.permissions, data.permissions || []);
+                await upsert(db.rolePermissions, data.rolePermissions || []);
+                await upsert(db.userRoles, data.userRoles || []);
+                await upsert(db.formFields, data.formFields || []);
+                await upsert(db.kpis, data.kpis || []);
+                await upsert(db.beneficiaryDetails, data.beneficiaryDetails || []);
+                await upsert(db.beneficiaryAssignments, data.beneficiaryAssignments || []);
+                await upsert(db.beneficiaryMappings, data.beneficiaryMappings || []);
+                await upsert(db.beneficiaryMatchKeys, data.beneficiaryMatchKeys || []);
+
+                // Map formResponses -> formSubmissions
+                const responses = Array.isArray(data.formResponses) ? data.formResponses : [];
+                for (const r of responses) {
+                    await db.formSubmissions.put({
+                        id: r.id,
+                        templateId: r.formTemplateId,
+                        entityId: r.entityId,
+                        entityType: r.entityType,
+                        data: r.data,
+                        submittedBy: r.submittedBy,
+                        submittedAt: r.submittedAt,
+                        beneficiaryId: r.beneficiaryId || null,
+                        createdAt: r.createdAt,
+                        updatedAt: r.updatedAt,
                         synced: true,
-                        _localUpdatedAt: new Date().toISOString(),
-                    });
+                        _localUpdatedAt: now,
+                    } as any);
                 }
-                console.log(`Cached ${projects.length} projects`);
-                await db.syncMetadata.put({ entityType: 'projects', lastSyncedAt: new Date().toISOString(), status: 'idle' });
-            }
 
-            // Subprojects
-            try {
-                const subprojectsResp = await axiosInstance.get<any>("/subprojects");
-                const subprojects = subprojectsResp?.data?.data || subprojectsResp?.data?.items || [];
-                if (Array.isArray(subprojects) && subprojects.length) {
-                    for (const sp of subprojects) {
-                        await db.subprojects.put({
-                            ...sp,
-                            synced: true,
-                            _localUpdatedAt: new Date().toISOString(),
-                        });
-                    }
-                    console.log(`Cached ${subprojects.length} subprojects`);
-                }
-                await db.syncMetadata.put({ entityType: 'subprojects', lastSyncedAt: new Date().toISOString(), status: 'idle' });
-            } catch (e) {
-                console.warn('Failed to sync subprojects:', e);
-            }
+                // Update sync metadata (global)
+                await db.syncMetadata.put({ entityType: 'all', lastSyncedAt: now, status: 'idle' });
+            });
 
-            // Form templates
-            try {
-                const templatesResp = await axiosInstance.get<any>("/forms/templates");
-                const tplData = templatesResp?.data;
-                const templates = tplData?.data?.templates || tplData?.data || tplData?.items || [];
-                if (Array.isArray(templates) && templates.length) {
-                    for (const t of templates) {
-                        await db.formTemplates.put({
-                            ...t,
-                            synced: true,
-                            _localUpdatedAt: new Date().toISOString(),
-                        });
-                    }
-                    console.log(`Cached ${templates.length} form templates`);
-                }
-                await db.syncMetadata.put({ entityType: 'formTemplates', lastSyncedAt: new Date().toISOString(), status: 'idle' });
-            } catch (e) {
-                console.warn('Failed to sync form templates:', e);
-            }
-
-            // Services
-            try {
-                const servicesResp = await axiosInstance.get<any>("/services");
-                const svcData = servicesResp?.data;
-                const services = svcData?.data?.items || svcData?.data || svcData?.items || [];
-                if (Array.isArray(services) && services.length) {
-                    for (const s of services) {
-                        await db.services.put({
-                            ...s,
-                            synced: true,
-                            _localUpdatedAt: new Date().toISOString(),
-                        });
-                    }
-                    console.log(`Cached ${services.length} services`);
-                }
-                await db.syncMetadata.put({ entityType: 'services', lastSyncedAt: new Date().toISOString(), status: 'idle' });
-            } catch (e) {
-                console.warn('Failed to sync services:', e);
-            }
-
+            console.log('Cached snapshot via /sync/pull');
         } catch (error: any) {
             console.error('Failed to sync from server:', error);
             throw error;
@@ -449,16 +518,70 @@ class SyncService {
             return;
         }
 
-        console.log(`Syncing ${pendingMutations.length} pending changes...`);
+        console.log(`Syncing ${pendingMutations.length} pending changes (batch)...`);
+
+        // Build batch payload
+        const metaAll = await db.syncMetadata.get('all');
+        const changes = pendingMutations.map(m => ({
+            clientMutationId: m.id,
+            entityType: m.entityType,
+            operation: m.operation,
+            method: m.method,
+            endpoint: m.endpoint,
+            entityId: m.entityId,
+            data: m.data,
+        }));
 
         let successCount = 0;
         let failureCount = 0;
+        const fallback: typeof pendingMutations = [];
 
-        for (const mutation of pendingMutations) {
+        try {
+            const resp = await axiosInstance.post<any>('/sync/push', {
+                lastSyncedAt: metaAll?.lastSyncedAt,
+                changes,
+            });
+            const results: Array<any> = Array.isArray(resp?.data?.results) ? resp.data.results : [];
+
+            // Map results by clientMutationId
+            const byId = new Map(results.map(r => [r.clientMutationId, r]));
+            for (const m of pendingMutations) {
+                const r = byId.get(m.id);
+                if (!r) { fallback.push(m); continue; }
+                if (r.status === 'applied') {
+                    // Handle serverId remap for creates
+                    if (m.operation === 'create' && r.serverId && r.serverId !== m.entityId) {
+                        await this.applyServerIdMapping(m.entityType, m.entityId, r.serverId);
+                    }
+                    // Mark as synced
+                    if (m.operation !== 'delete') {
+                        await this.markEntityAsSynced(m.entityType, r.serverId || m.entityId);
+                    }
+                    await db.pendingMutations.delete(m.id);
+                    successCount++;
+                } else if (r.status === 'ignored') {
+                    fallback.push(m);
+                } else if (r.status === 'error') {
+                    failureCount++;
+                    await db.pendingMutations.update(m.id, {
+                        retryCount: m.retryCount + 1,
+                        lastError: r.error || 'Unknown error',
+                    });
+                } else {
+                    // Unknown outcome -> fallback
+                    fallback.push(m);
+                }
+            }
+        } catch (e) {
+            // If batch push fails entirely, fallback to per-mutation
+            console.warn('Batch /sync/push failed, falling back to individual requests:', e);
+            fallback.push(...pendingMutations);
+        }
+
+        // Fallback: execute the ignored/unhandled mutations individually (legacy path)
+        for (const mutation of fallback) {
             try {
-                // Execute the mutation
                 let response;
-
                 switch (mutation.method) {
                     case 'POST':
                         response = await axiosInstance.post(mutation.endpoint, mutation.data);
@@ -470,42 +593,25 @@ class SyncService {
                         response = await axiosInstance.delete(mutation.endpoint);
                         break;
                 }
-
-                // Mark entity as synced in local DB
                 if (mutation.operation !== 'delete') {
                     await this.markEntityAsSynced(mutation.entityType, mutation.entityId, response?.data);
                 }
-
-                // Remove from pending queue
                 await db.pendingMutations.delete(mutation.id);
-
                 successCount++;
-                console.log(` Synced ${mutation.operation} ${mutation.entityType} ${mutation.entityId}`);
             } catch (error: any) {
                 failureCount++;
-                console.error(`Failed to sync ${mutation.operation} ${mutation.entityType}:`, error);
-
-                // Update retry count and error
                 await db.pendingMutations.update(mutation.id, {
                     retryCount: mutation.retryCount + 1,
                     lastError: error.message || 'Unknown error',
                 });
-
-                // If too many retries, we might want to remove or flag it
-                if (mutation.retryCount >= 5) {
-                    console.error(`Mutation ${mutation.id} has failed ${mutation.retryCount} times`);
-                }
             }
         }
 
         await this.updatePendingMutationsCount();
 
         console.log(` Sync complete: ${successCount} succeeded, ${failureCount} failed`);
-
         if (successCount > 0) {
-            toast.success('Changes synced', {
-                description: `${successCount} change(s) synced successfully`,
-            });
+            toast.success('Changes synced', { description: `${successCount} change(s) synced successfully` });
         }
     }
 
@@ -572,7 +678,31 @@ class SyncService {
      * Clear synced data (keep pending mutations)
      */
     private async clearSyncedData(): Promise<void> {
-        await db.transaction('rw', [db.projects, db.activities, db.beneficiaries, db.subprojects, db.formTemplates, db.formSubmissions], async () => {
+        await db.transaction('rw', [
+            db.projects,
+            db.activities,
+            db.beneficiaries,
+            db.subprojects,
+            db.formTemplates,
+            db.formSubmissions,
+            db.services,
+            db.users,
+            db.projectUsers,
+            db.subprojectUsers,
+            db.entityServices,
+            db.activityUsers,
+            db.serviceDeliveries,
+            db.roles,
+            db.permissions,
+            db.rolePermissions,
+            db.userRoles,
+            db.formFields,
+            db.kpis,
+            db.beneficiaryDetails,
+            db.beneficiaryAssignments,
+            db.beneficiaryMappings,
+            db.beneficiaryMatchKeys,
+        ], async () => {
             // Only delete synced records
             await db.projects.filter(p => p.synced === true).delete();
             await db.activities.filter(a => a.synced === true).delete();
@@ -580,6 +710,23 @@ class SyncService {
             await db.subprojects.filter(s => s.synced === true).delete();
             await db.formTemplates.filter(t => t.synced === true).delete();
             await db.formSubmissions.filter(s => s.synced === true).delete();
+            await db.services.filter(s => s.synced === true).delete();
+            await db.users.filter(u => u.synced === true).delete();
+            await db.projectUsers.filter(pu => pu.synced === true).delete();
+            await db.subprojectUsers.filter(su => su.synced === true).delete();
+            await db.entityServices.filter(es => es.synced === true).delete();
+            await db.activityUsers.filter(au => au.synced === true).delete();
+            await db.serviceDeliveries.filter(sd => sd.synced === true).delete();
+            await db.roles.filter(r => r.synced === true).delete();
+            await db.permissions.filter(p => p.synced === true).delete();
+            await db.rolePermissions.filter(rp => rp.synced === true).delete();
+            await db.userRoles.filter(ur => ur.synced === true).delete();
+            await db.formFields.filter(ff => ff.synced === true).delete();
+            await db.kpis.filter(k => k.synced === true).delete();
+            await db.beneficiaryDetails.filter(bd => bd.synced === true).delete();
+            await db.beneficiaryAssignments.filter(ba => ba.synced === true).delete();
+            await db.beneficiaryMappings.filter(bm => bm.synced === true).delete();
+            await db.beneficiaryMatchKeys.filter(bmk => bmk.synced === true).delete();
         });
     }
 

@@ -163,6 +163,52 @@ export interface OfflineEntityService extends OfflineEntity {
 }
 
 /**
+ * Offline Activity-User assignment
+ */
+export interface OfflineActivityUser extends OfflineEntity {
+    activityId: string;
+    userId: string;
+    role?: string;
+    assignedAt?: string;
+    createdAt: string;
+}
+
+/**
+ * Offline Service Delivery
+ */
+export interface OfflineServiceDelivery extends OfflineEntity {
+    serviceId: string;
+    beneficiaryId: string | null;
+    entityId: string;
+    entityType: 'project' | 'subproject' | 'activity';
+    formResponseId: string | null;
+    staffUserId: string | null;
+    deliveredAt: string;
+    notes?: any;
+    createdAt: string;
+}
+
+/** Role/Permission models for offline gating */
+export interface OfflineRole extends OfflineEntity { name: string; createdAt: string; }
+export interface OfflinePermission extends OfflineEntity { name: string; createdAt: string; }
+export interface OfflineRolePermission extends OfflineEntity { roleId: string; permissionId: string; createdAt: string; }
+export interface OfflineUserRole extends OfflineEntity { userId: string; roleId: string; createdAt: string; }
+
+/** Form field definitions */
+export interface OfflineFormField extends OfflineEntity { templateId: string; name: string; type: string; config?: any; createdAt: string; }
+
+/** Beneficiary details and assignments */
+export interface OfflineBeneficiaryDetails extends OfflineEntity { beneficiaryId: string; details: any; createdAt: string; }
+export interface OfflineBeneficiaryAssignment extends OfflineEntity { beneficiaryId: string; entityId: string; entityType: 'project' | 'subproject' | 'activity'; createdAt: string; }
+
+/** KPI definition */
+export interface OfflineKpi extends OfflineEntity { fieldId: string; name: string; type: string; config?: any; createdAt: string; }
+
+/** Beneficiary mapping and match keys */
+export interface OfflineBeneficiaryMapping extends OfflineEntity { formTemplateId: string; mapping: any; createdAt: string; }
+export interface OfflineBeneficiaryMatchKey extends OfflineEntity { beneficiaryId: string; keyType: string; keyHash: string; createdAt: string; }
+
+/**
  * Pending mutation entry
  * Tracks operations that need to be synced to the server
  */
@@ -230,6 +276,18 @@ class OfflineDB extends Dexie {
     projectUsers!: Table<OfflineProjectUser, string>;
     subprojectUsers!: Table<OfflineSubprojectUser, string>;
     entityServices!: Table<OfflineEntityService, string>;
+    activityUsers!: Table<OfflineActivityUser, string>;
+    serviceDeliveries!: Table<OfflineServiceDelivery, string>;
+    roles!: Table<OfflineRole, string>;
+    permissions!: Table<OfflinePermission, string>;
+    rolePermissions!: Table<OfflineRolePermission, string>;
+    userRoles!: Table<OfflineUserRole, string>;
+    formFields!: Table<OfflineFormField, string>;
+    beneficiaryDetails!: Table<OfflineBeneficiaryDetails, string>;
+    beneficiaryAssignments!: Table<OfflineBeneficiaryAssignment, string>;
+    kpis!: Table<OfflineKpi, string>;
+    beneficiaryMappings!: Table<OfflineBeneficiaryMapping, string>;
+    beneficiaryMatchKeys!: Table<OfflineBeneficiaryMatchKey, string>;
     pendingMutations!: Table<PendingMutation, string>;
     syncMetadata!: Table<SyncMetadata, string>;
     authCache!: Table<AuthCache, string>;
@@ -291,6 +349,36 @@ class OfflineDB extends Dexie {
             projectUsers: 'id, projectId, userId, updatedAt, synced',
             subprojectUsers: 'id, subprojectId, userId, updatedAt, synced',
             entityServices: 'id, serviceId, entityId, entityType, updatedAt, synced',
+            pendingMutations: 'id, entityType, entityId, operation, createdAt',
+            syncMetadata: 'entityType, lastSyncedAt',
+            authCache: 'email, lastLoginAt',
+        });
+
+        // Version 5: Add additional tables to mirror backend models
+        this.version(5).stores({
+            projects: 'id, updatedAt, synced, status',
+            activities: 'id, subprojectId, updatedAt, synced, status',
+            beneficiaries: 'id, projectId, updatedAt, synced',
+            subprojects: 'id, projectId, updatedAt, synced, status',
+            formTemplates: 'id, updatedAt, synced, status, projectId, subprojectId, activityId',
+            formSubmissions: 'id, templateId, entityId, entityType, updatedAt, synced, submittedAt',
+            services: 'id, updatedAt, synced, status',
+            users: 'id, updatedAt, synced, email, username',
+            projectUsers: 'id, projectId, userId, updatedAt, synced',
+            subprojectUsers: 'id, subprojectId, userId, updatedAt, synced',
+            entityServices: 'id, serviceId, entityId, entityType, updatedAt, synced',
+            activityUsers: 'id, activityId, userId, updatedAt, synced',
+            serviceDeliveries: 'id, serviceId, beneficiaryId, entityId, entityType, deliveredAt, updatedAt, synced',
+            roles: 'id, name, updatedAt, synced',
+            permissions: 'id, name, updatedAt, synced',
+            rolePermissions: 'id, roleId, permissionId, updatedAt, synced',
+            userRoles: 'id, userId, roleId, updatedAt, synced',
+            formFields: 'id, templateId, updatedAt, synced',
+            beneficiaryDetails: 'id, beneficiaryId, updatedAt, synced',
+            beneficiaryAssignments: 'id, beneficiaryId, entityId, entityType, updatedAt, synced',
+            kpis: 'id, fieldId, updatedAt, synced',
+            beneficiaryMappings: 'id, formTemplateId, updatedAt, synced',
+            beneficiaryMatchKeys: 'id, beneficiaryId, keyType, keyHash, updatedAt, synced',
             pendingMutations: 'id, entityType, entityId, operation, createdAt',
             syncMetadata: 'entityType, lastSyncedAt',
             authCache: 'email, lastLoginAt',
