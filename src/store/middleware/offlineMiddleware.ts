@@ -28,6 +28,37 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
         return Promise.resolve();
       }
 
+      // Intercept subprojects/fetchUsers -> join subprojectUsers with users
+      if (actionType === 'subprojects/fetchUsers') {
+        if (!isOffline) return next(action);
+        const subprojectId = action.meta?.arg?.subprojectId || action.meta?.arg?.id || action.meta?.arg;
+        if (subprojectId) {
+          const assignments = await db.subprojectUsers
+            .where('subprojectId')
+            .equals(subprojectId)
+            .toArray();
+          const userIds = assignments.map((a) => a.userId);
+          const users = await db.users.bulkGet(userIds);
+          const items = assignments.map((a) => {
+            const u = users.find((x) => x && x.id === a.userId);
+            return stripOfflineFields({
+              id: a.id,
+              subprojectId: a.subprojectId,
+              userId: a.userId,
+              role: a.role,
+              assignedAt: a.assignedAt,
+              user: u ? stripOfflineFields(u as any) : undefined,
+            });
+          });
+          store.dispatch({
+            type: 'subprojects/fetchUsers/fulfilled',
+            payload: { success: true, data: items },
+            meta: action.meta,
+          });
+        }
+        return Promise.resolve();
+      }
+
       // Intercept fetchSubProjectsByProjectId
       if (actionType === 'subprojects/fetchByProjectId') {
         if (!isOffline) return next(action);
@@ -104,19 +135,40 @@ const offlineMiddleware: Middleware = (store) => (next) => async (action: any) =
       // Intercept fetchFormTemplates
       if (actionType === 'form/fetchFormTemplates') {
         if (!isOffline) return next(action);
-        // When offline, return all cached templates (filtering by entity may not be available offline)
+        const params = action.meta?.arg || {};
+        const { projectId, subprojectId, activityId, entityType } = params;
         const templates = await db.formTemplates.toArray();
+        const targetId = projectId || subprojectId || activityId;
+        const filtered = Array.isArray(templates)
+          ? templates.filter((tpl: any) => {
+              // Prefer association array if present
+              const assoc: any[] = Array.isArray(tpl?.entityAssociations)
+                ? tpl.entityAssociations
+                : [];
+              if (assoc.length && targetId && entityType) {
+                return assoc.some(
+                  (a) => String(a.entityId) === String(targetId) && String(a.entityType) === String(entityType)
+                );
+              }
+              // Fallback to legacy fields if provided
+              if (projectId && tpl.projectId === projectId) return true;
+              if (subprojectId && tpl.subprojectId === subprojectId) return true;
+              if (activityId && tpl.activityId === activityId) return true;
+              // If no filters, include
+              return !targetId;
+            })
+          : [];
         store.dispatch({
           type: 'form/fetchFormTemplates/fulfilled',
           payload: {
             success: true,
             data: {
-              templates: templates.map(stripOfflineFields),
+              templates: filtered.map(stripOfflineFields),
               pagination: {
                 page: 1,
                 limit: 100,
                 totalPages: 1,
-                totalCount: templates.length,
+                totalCount: filtered.length,
               },
             },
           },

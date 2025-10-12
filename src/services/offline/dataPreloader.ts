@@ -233,10 +233,10 @@ class DataPreloader {
      */
     private async preloadBeneficiaries(): Promise<number> {
         try {
-            const response = await axiosInstance.get<{ success: boolean; data: any[] }>('/beneficiaries');
-            
-            if (response.data.success && response.data.data) {
-                const beneficiaries = response.data.data;
+            const response = await axiosInstance.get<any>('/beneficiaries');
+            const resp = response?.data || {};
+            const beneficiaries = resp?.items || resp?.data || [];
+            if (Array.isArray(beneficiaries)) {
                 const now = new Date().toISOString();
 
                 for (const beneficiary of beneficiaries) {
@@ -262,10 +262,11 @@ class DataPreloader {
      */
     private async preloadFormTemplates(): Promise<number> {
         try {
-            const response = await axiosInstance.get<{ success: boolean; data: any[] }>('/forms/templates');
-            
-            if (response.data.success && response.data.data) {
-                const templates = response.data.data;
+            const response = await axiosInstance.get<any>('/forms/templates');
+            const resp = response?.data || {};
+            // Support shapes: {data: {templates, pagination}}, {data: items}, {data: []}
+            const templates = resp?.data?.templates || resp?.data?.items || resp?.data || resp?.items || [];
+            if (Array.isArray(templates)) {
                 const now = new Date().toISOString();
 
                 for (const template of templates) {
@@ -291,10 +292,10 @@ class DataPreloader {
      */
     private async preloadServices(): Promise<number> {
         try {
-            const response = await axiosInstance.get<{ success: boolean; data: any[] }>('/services');
-            
-            if (response.data.success && response.data.data) {
-                const services = response.data.data;
+            const response = await axiosInstance.get<any>('/services');
+            const resp = response?.data || {};
+            const services = resp?.data?.items || resp?.data || resp?.items || [];
+            if (Array.isArray(services)) {
                 const now = new Date().toISOString();
 
                 for (const service of services) {

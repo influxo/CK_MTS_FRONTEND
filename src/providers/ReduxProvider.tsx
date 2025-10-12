@@ -5,6 +5,7 @@ import store from '../store';
 import authService from '../services/auth/authService';
 import { fetchUserProfile, setCredentials, clearCredentials } from '../store/slices/authSlice';
 import { getLastCachedAuth } from '../services/auth/offlineAuthService';
+import { preloadDataForOffline } from '../pwa';
 
 interface ReduxProviderProps {
   children: ReactNode;
@@ -39,7 +40,17 @@ export const ReduxProvider = ({ children }: ReduxProviderProps) => {
         // If authenticated, try to fetch profile; on failure, use cache; if no cache, clear auth
         if (authService.isAuthenticated()) {
           const action: any = await store.dispatch(fetchUserProfile());
-          if (!action || typeof action.type !== 'string' || action.type.endsWith('/rejected')) {
+          if (action && typeof action.type === 'string' && action.type.endsWith('/fulfilled')) {
+            // After successful profile fetch, kick off full preload when online
+            try {
+              const uid = (action.payload as any)?.id || (action.payload as any)?._id || localStorage.getItem('userId') || undefined;
+              if (navigator.onLine) {
+                await preloadDataForOffline(uid ? String(uid) : undefined);
+              }
+            } catch (e) {
+              console.warn('Preload after profile failed:', e);
+            }
+          } else {
             const cached = await getLastCachedAuth();
             if (cached?.token && cached?.userData) {
               // hydrate from cache
@@ -50,6 +61,15 @@ export const ReduxProvider = ({ children }: ReduxProviderProps) => {
               } catch {}
               authService.setAuthHeader(cached.token);
               store.dispatch(setCredentials({ user: cached.userData as any, token: cached.token }));
+              // Try to preload as well (if online)
+              try {
+                const uid = (cached.userData as any)?.id || (cached.userData as any)?._id;
+                if (navigator.onLine) {
+                  await preloadDataForOffline(uid ? String(uid) : undefined);
+                }
+              } catch (e) {
+                console.warn('Preload after cache hydration failed:', e);
+              }
             } else {
               // no valid cache and profile failed -> clear stale token and creds
               try { localStorage.removeItem('token'); localStorage.removeItem('userId'); } catch {}
