@@ -210,8 +210,8 @@ export function FormSubmission({
   };
 
   useEffect(() => {
-    // Load beneficiaries linked to the provided entity context
-    if (entityId && entityType) {
+    // Load beneficiaries linked to the provided entity context (only if includeBeneficiaries is true)
+    if (entityId && entityType && template?.includeBeneficiaries) {
       dispatch(
         fetchBeneficiariesByEntityForForm({
           entityId,
@@ -220,7 +220,9 @@ export function FormSubmission({
           limit: 50,
         })
       );
-      // Load services assigned to this entity for selection in delivery section
+    }
+    // Load services assigned to this entity for selection in delivery section
+    if (entityId && entityType) {
       dispatch(
         getEntityServices({
           entityId,
@@ -228,7 +230,7 @@ export function FormSubmission({
         })
       );
     }
-  }, [dispatch, entityId, entityType]);
+  }, [dispatch, entityId, entityType, template?.includeBeneficiaries]);
 
   useEffect(() => {
     // Calculate progress based on filled required fields
@@ -730,8 +732,8 @@ export function FormSubmission({
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Beneficiary selector (based on entity context) */}
-          {entityId && entityType && (
+          {/* Beneficiary selector (based on entity context and includeBeneficiaries flag) */}
+          {entityId && entityType && template?.includeBeneficiaries && (
             <div className="space-y-2">
               <Label htmlFor="beneficiaryId">Beneficiary</Label>
               <Select

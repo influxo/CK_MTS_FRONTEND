@@ -758,6 +758,9 @@ export function BeneficiariesList({
       const payload: CreateBeneficiaryRequest = hasAnyDetails
         ? {
             ...form,
+            ethnicity: ethnicity.trim() || undefined,
+            residence: isUrban ? "Urban" : "Rural",
+            householdMembers: householdMembers.trim() ? parseInt(householdMembers.trim(), 10) : undefined,
             details: {
               allergies: allergiesFinal,
               disabilities: disabilitiesFinal,
@@ -767,7 +770,12 @@ export function BeneficiariesList({
               notes: notesInput.trim() || undefined,
             },
           }
-        : form;
+        : {
+            ...form,
+            ethnicity: ethnicity.trim() || undefined,
+            residence: isUrban ? "Urban" : "Rural",
+            householdMembers: householdMembers.trim() ? parseInt(householdMembers.trim(), 10) : undefined,
+          };
 
       const createRes = await dispatch(createBeneficiary(payload)).unwrap();
       const newId = createRes?.data?.id;

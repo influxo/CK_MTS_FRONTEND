@@ -80,6 +80,7 @@ class FormService {
           deletedAt: "",
           programId: "",
           entityAssociations: [],
+          includeBeneficiaries: false,
         },
       };
     }
