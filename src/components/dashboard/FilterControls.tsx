@@ -220,10 +220,10 @@ export function FilterControls({ projects }: { projects: Project[] }) {
 
   return (
     <div className="flex flex-col  bg-[#F7F9FB]   drop-shadow-sm shadow-gray-50 gap-4 mb-6 p-4 bg-card rounded-lg ">
-      <div className="flex flex-wrap gap-4 items-center">
+      <div className="flex flex-row flex-wrap gap-4 items-center w-full">
         <Select value={projectId || "all"} onValueChange={onProjectChange}>
           <SelectTrigger
-            className="w-[180px] bg-white p-2 rounded-md  border-gray-100
+            className="w-full md:w-[180px] bg-white p-2 rounded-md  border-gray-100
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px] "
           >
@@ -245,7 +245,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           disabled={!projectId}
         >
           <SelectTrigger
-            className="w-[180px] bg-white border-0 border-gray-100 p-2 rounded-md 
+            className="w-full md:w-[180px] bg-white border-0 border-gray-100 p-2 rounded-md 
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px] "
           >
@@ -283,25 +283,13 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           <Filter className="h-4 w-4 mr-2" />
           {showMore ? "Hide Filters" : "More Filters"}
         </Button>
-        <div className="flex gap-4 justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-[#0073e6] text-white border-0 
-             transition-transform duration-200 ease-in-out 
-             hover:scale-105 hover:-translate-y-[1px]"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
       </div>
       {showMore && (
         <div className="  rounded-md   border-gray-100">
-          <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex flex-col md:flex-row flex-wrap gap-4 items-stretch md:items-center">
             <Select value={timePreset} onValueChange={onTimePresetChange}>
               <SelectTrigger
-                className="w-[180px] bg-white p-2 rounded-md border-0
+                className="w-full md:w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
@@ -325,7 +313,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               }}
             >
               <SelectTrigger
-                className="w-[180px] bg-white p-2 rounded-md border-0
+                className="w-full md:w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
@@ -369,7 +357,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               }}
             >
               <SelectTrigger
-                className="w-[180px] bg-white p-2 rounded-md border-0
+                className="w-full md:w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
@@ -429,7 +417,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               }}
             >
               <SelectTrigger
-                className="w-[180px] bg-white p-2 rounded-md border-0
+                className="w-full md:w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
@@ -460,6 +448,18 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           </div>
         </div>
       )}
+      <div className="flex gap-4 justify-end w-full">
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-[#0073e6] text-white border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px]"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export
+        </Button>
+      </div>
 
       {/* <div className="flex gap-4 justify-end">
         <Button
