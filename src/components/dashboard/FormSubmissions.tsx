@@ -503,21 +503,21 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
   if (summaryExtra) {
     if (typeof summaryExtra.totalSubmissions === "number") {
       cardsData.push({
-        title: t('dashboard.totalSubmissions'),
+        title: t("dashboard.totalSubmissions"),
         value: Number(summaryExtra.totalSubmissions || 0),
         type: "summary",
       });
     }
     if (typeof summaryExtra.totalServiceDeliveries === "number") {
       cardsData.push({
-        title: t('dashboard.totalServiceDeliveries'),
+        title: t("dashboard.totalServiceDeliveries"),
         value: Number(summaryExtra.totalServiceDeliveries || 0),
         type: "summary",
       });
     }
     if (typeof summaryExtra.totalUniqueBeneficiaries === "number") {
       cardsData.push({
-        title: t('dashboard.totalUniqueBeneficiaries'),
+        title: t("dashboard.totalUniqueBeneficiaries"),
         value: Number(summaryExtra.totalUniqueBeneficiaries || 0),
         type: "summary",
       });
@@ -533,7 +533,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     .sort((a: any, b: any) => Number(b?.count || 0) - Number(a?.count || 0))
     .forEach((svc: any) => {
       cardsData.push({
-        title: svc.name || svc.serviceName || t('dashboard.service'),
+        title: svc.name || svc.serviceName || t("dashboard.service"),
         value: Number(svc.count || 0),
         type: "service",
       });
@@ -556,11 +556,11 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
           <div className="flex items-center gap-3">
             <CardTitle>
               {(metricLocal || globalFilters.metric) === "serviceDeliveries"
-                ? t('dashboard.serviceDeliveriesOverview')
+                ? t("dashboard.serviceDeliveriesOverview")
                 : (metricLocal || globalFilters.metric) ===
                   "uniqueBeneficiaries"
-                ? t('dashboard.uniqueBeneficiariesOverview')
-                : t('dashboard.formSubmissionsOverview')}
+                ? t("dashboard.uniqueBeneficiariesOverview")
+                : t("dashboard.formSubmissionsOverview")}
             </CardTitle>
 
             <Tabs
@@ -573,13 +573,13 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                   value="line"
                   className=" data-[state=active]:bg-[#0073e6] rounded-full data-[state=active]:text-white"
                 >
-                  {t('dashboard.lineChart')}
+                  {t("dashboard.lineChart")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="bar"
                   className=" data-[state=active]:bg-[#0073e6] rounded-full data-[state=active]:text-white"
                 >
-                  {t('dashboard.barChart')}
+                  {t("dashboard.barChart")}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -609,10 +609,10 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                 >
-                  <SelectValue placeholder={t('common.selectProject')} />
+                  <SelectValue placeholder={t("common.selectProject")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t('common.allProjects')}</SelectItem>
+                  <SelectItem value="all">{t("common.allProjects")}</SelectItem>
                   {(projects || []).map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}
@@ -643,10 +643,14 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                 >
-                  <SelectValue placeholder={t('subProjects.selectSubProject')} />
+                  <SelectValue
+                    placeholder={t("subProjects.selectSubProject")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t('subProjects.allSubProjects')}</SelectItem>
+                  <SelectItem value="all">
+                    {t("subProjectsDetails.allSubProjects")}
+                  </SelectItem>
                   {subprojectsOptions
                     .filter((sp) => sp.projectId === effectiveProjectId)
                     .map((sp) => (
@@ -664,7 +668,9 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                 className="bg-[#E0F2FE] text-black border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
               >
                 <Filter className="h-4 w-4 mr-2" />
-                {showMoreLocal ? t('dashboard.hideFilters') : t('dashboard.moreFilters')}
+                {showMoreLocal
+                  ? t("dashboard.hideFilters")
+                  : t("dashboard.moreFilters")}
               </Button>
             </div>
 
@@ -686,15 +692,17 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                   >
-                    <SelectValue placeholder={t('dashboard.metric')} />
+                    <SelectValue placeholder={t("dashboard.metric")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="submissions">{t('dashboard.submissions')}</SelectItem>
+                    <SelectItem value="submissions">
+                      {t("dashboard.submissions")}
+                    </SelectItem>
                     <SelectItem value="serviceDeliveries">
-                      {t('dashboard.serviceDeliveries')}
+                      {t("dashboard.serviceDeliveries")}
                     </SelectItem>
                     <SelectItem value="uniqueBeneficiaries">
-                      {t('dashboard.uniqueBeneficiaries')}
+                      {t("dashboard.uniqueBeneficiaries")}
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -732,10 +740,12 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                   >
-                    <SelectValue placeholder={t('dashboard.service')} />
+                    <SelectValue placeholder={t("dashboard.service")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t('dashboard.allServices')}</SelectItem>
+                    <SelectItem value="all">
+                      {t("dashboard.allServices")}
+                    </SelectItem>
                     {servicesOptions.map((s: any) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.name}
@@ -795,10 +805,12 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                   >
-                    <SelectValue placeholder={t('dashboard.formTemplate')} />
+                    <SelectValue placeholder={t("dashboard.formTemplate")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t('dashboard.allTemplates')}</SelectItem>
+                    <SelectItem value="all">
+                      {t("dashboard.allTemplates")}
+                    </SelectItem>
                     {templatesOptions.map((t: any) => (
                       <SelectItem key={t.id} value={t.id}>
                         {t.name}
@@ -1024,9 +1036,13 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
         <Tabs defaultValue="all">
           <div className="flex items-center justify-between mb-4">
             <TabsList className="flex gap-2">
-              <TabsTrigger value="all">{t('common.all')}</TabsTrigger>
-              <TabsTrigger value="summary">{t('dashboard.summary')}</TabsTrigger>
-              <TabsTrigger value="services">{t('dashboard.services')}</TabsTrigger>
+              <TabsTrigger value="all">{t("common.all")}</TabsTrigger>
+              <TabsTrigger value="summary">
+                {t("dashboard.summary")}
+              </TabsTrigger>
+              <TabsTrigger value="services">
+                {t("dashboard.services")}
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -1050,8 +1066,8 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                     <div className="flex items-center justify-between">
                       <div className="text-xs text-gray-600">
                         {card.type === "summary"
-                          ? t('dashboard.summary')
-                          : t('dashboard.mostFrequentService')}
+                          ? t("dashboard.summary")
+                          : t("dashboard.mostFrequentService")}
                       </div>
                       <Badge
                         variant={
@@ -1102,7 +1118,9 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                   <div className="space-y-2">
                     <div className="text-2xl">{card.value}</div>
                     <div className="flex items-center justify-between">
-                      <div className="text-xs text-gray-600">{t('dashboard.summary')}</div>
+                      <div className="text-xs text-gray-600">
+                        {t("dashboard.summary")}
+                      </div>
                       <Badge
                         variant="default"
                         className="text-xs bg-[#DEF8EE] text-[#4AA785]"

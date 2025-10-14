@@ -48,6 +48,7 @@ import {
 } from "../ui/form/select";
 import { Textarea } from "../ui/form/textarea";
 import { LanguageSwitcher } from "../LanguageSwitcher";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface TopbarProps {
   title?: string;
@@ -61,6 +62,8 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(selectCurrentUser);
+
+  const { t } = useTranslation();
 
   // Determine role
   const normalizedRoles = useMemo(
@@ -211,7 +214,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
              hover:scale-[1.02] hover:-translate-y-[1px]"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Shto Projekt
+                {t("createProject")}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[550px]">

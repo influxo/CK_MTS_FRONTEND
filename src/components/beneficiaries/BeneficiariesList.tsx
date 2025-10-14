@@ -760,7 +760,9 @@ export function BeneficiariesList({
             ...form,
             ethnicity: ethnicity.trim() || undefined,
             residence: isUrban ? "Urban" : "Rural",
-            householdMembers: householdMembers.trim() ? parseInt(householdMembers.trim(), 10) : undefined,
+            householdMembers: householdMembers.trim()
+              ? parseInt(householdMembers.trim(), 10)
+              : undefined,
             details: {
               allergies: allergiesFinal,
               disabilities: disabilitiesFinal,
@@ -774,7 +776,9 @@ export function BeneficiariesList({
             ...form,
             ethnicity: ethnicity.trim() || undefined,
             residence: isUrban ? "Urban" : "Rural",
-            householdMembers: householdMembers.trim() ? parseInt(householdMembers.trim(), 10) : undefined,
+            householdMembers: householdMembers.trim()
+              ? parseInt(householdMembers.trim(), 10)
+              : undefined,
           };
 
       const createRes = await dispatch(createBeneficiary(payload)).unwrap();
@@ -889,7 +893,7 @@ export function BeneficiariesList({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">
-                  {t("subProjects.allSubProjects")}
+                  {t("subProjectsDetails.allSubProjects")}
                 </SelectItem>
                 {subprojectsForSelect.map((sp) => (
                   <SelectItem key={sp.id} value={sp.id}>

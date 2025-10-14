@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button/button";
 import { Card, CardContent, CardHeader } from "../ui/data-display/card";
+import { Checkbox } from "../ui/form/checkbox";
 import { Input } from "../ui/form/input";
-import { Textarea } from "../ui/form/textarea";
+import { Label } from "../ui/form/label";
+import { RadioGroup, RadioGroupItem } from "../ui/form/radio-group";
 import {
   Select,
   SelectContent,
@@ -10,39 +12,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/form/select";
-import { Checkbox } from "../ui/form/checkbox";
-import { RadioGroup, RadioGroupItem } from "../ui/form/radio-group";
-import { Label } from "../ui/form/label";
+import { Textarea } from "../ui/form/textarea";
 
-import { Save, Send, Clock, AlertCircle } from "lucide-react";
-import { Progress } from "../ui/feedback/progress";
-import { Alert, AlertDescription } from "../ui/feedback/alert";
+import { AlertCircle, Send } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
+import { useAuth } from "../../hooks/useAuth";
+import { useTranslation } from "../../hooks/useTranslation";
+import type {
+  FormTemplate,
+  ServicePayload,
+} from "../../services/forms/formModels";
 import type { AppDispatch } from "../../store";
 import {
-  submitFormResponse,
-  selectFormSubmitLoading,
-  selectFormSubmitError,
   fetchBeneficiariesByEntityForForm,
   selectFormBeneficiariesByEntity,
-  selectFormBeneficiariesByEntityLoading,
   selectFormBeneficiariesByEntityError,
+  selectFormBeneficiariesByEntityLoading,
+  selectFormSubmitError,
+  selectFormSubmitLoading,
+  submitFormResponse,
 } from "../../store/slices/formSlice";
-import type { FormTemplate } from "../../services/forms/formModels";
-import { MapPin } from "lucide-react";
 import {
   getEntityServices,
   selectEntityServices,
-  selectEntityServicesLoading,
   selectEntityServicesError,
+  selectEntityServicesLoading,
 } from "../../store/slices/serviceSlice";
-import { useAuth } from "../../hooks/useAuth";
-import type { ServicePayload } from "../../services/forms/formModels";
 import {
   enqueueSubmission,
   flushQueue,
   peekQueue,
 } from "../../utils/offlineQueue";
+import { Alert, AlertDescription } from "../ui/feedback/alert";
+import { Progress } from "../ui/feedback/progress";
 
 interface DynamicFormSubmissionProps {
   template?: FormTemplate;
@@ -89,6 +91,7 @@ export function FormSubmission({
   onBack,
   onSubmissionComplete,
 }: DynamicFormSubmissionProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const submitLoading = useSelector(selectFormSubmitLoading);
   const submitError = useSelector(selectFormSubmitError);
@@ -197,10 +200,8 @@ export function FormSubmission({
         // Provide clearer guidance for offline devices without GPS hardware
         const offline = typeof navigator !== "undefined" && !navigator.onLine;
         const errMsg = offline
-          ? "Offline geolocation is not available on this device. Use a tablet/phone with built-in GPS or re-enable internet to assist location."
-          : e2?.message ||
-            e?.message ||
-            "Failed to retrieve GPS location. Please enable location services and grant permission.";
+          ? t("formSubmission.gpsOfflineError")
+          : e2?.message || e?.message || t("formSubmission.gpsPermissionError");
         setGpsError(errMsg);
         throw e2;
       }
@@ -295,8 +296,8 @@ export function FormSubmission({
         if (!gps) {
           const offline = typeof navigator !== "undefined" && !navigator.onLine;
           const errMsg = offline
-            ? "Offline geolocation is not available on this device. Use a tablet/phone with built-in GPS or re-enable internet to assist location."
-            : err?.message || "Unable to watch position.";
+            ? t("formSubmission.gpsOfflineError")
+            : err?.message || t("formSubmission.gpsPositionError");
           setGpsError(errMsg);
         }
       },
@@ -310,11 +311,11 @@ export function FormSubmission({
     return (
       <div className="text-center py-12">
         <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="font-medium mb-2">Form not found</h3>
+        <h3 className="font-medium mb-2">{t("formSubmission.formNotFound")}</h3>
         <p className="text-muted-foreground mb-4">
-          The requested form could not be loaded.
+          {t("formSubmission.formNotLoaded")}
         </p>
-        <Button onClick={onBack}>Go Back</Button>
+        <Button onClick={onBack}>{t("formSubmission.goBack")}</Button>
       </div>
     );
   }
@@ -346,7 +347,9 @@ export function FormSubmission({
           value === "" ||
           (Array.isArray(value) && value.length === 0)
         ) {
-          errors[field.id] = `${field.label} is required`;
+          errors[field.id] = `${field.label} ${t(
+            "formSubmission.fieldRequired"
+          )}`;
         }
       }
     });
@@ -404,9 +407,7 @@ export function FormSubmission({
         if (!isOnline) {
           enqueueSubmission(template.id, payload);
           setQueueCount(peekQueue().length);
-          setLocalNotice(
-            "Submission saved offline. It will sync automatically when you're back online."
-          );
+          setLocalNotice(t("formSubmission.submissionSavedOffline"));
           onSubmissionComplete();
           return;
         }
@@ -422,9 +423,7 @@ export function FormSubmission({
           // On failure (likely network), save offline
           enqueueSubmission(template.id, payload);
           setQueueCount(peekQueue().length);
-          setLocalNotice(
-            "Network issue detected. Submission saved offline and will auto-sync."
-          );
+          setLocalNotice(t("formSubmission.networkIssueOffline"));
           onSubmissionComplete();
         }
       } catch (e) {
@@ -539,7 +538,7 @@ export function FormSubmission({
               onValueChange={(val) => handleFieldChange(field.id, val)}
             >
               <SelectTrigger className={hasError ? "border-destructive" : ""}>
-                <SelectValue placeholder="Select an option" />
+                <SelectValue placeholder={t("formSubmission.selectAnOption")} />
               </SelectTrigger>
               <SelectContent>
                 {field.options?.map((option: string) => (
@@ -721,7 +720,7 @@ export function FormSubmission({
 
       <Card className="border-0 bg-white">
         <CardHeader>
-          <h3>Form Details</h3>
+          <h3>{t("formSubmission.formDetails")}</h3>
 
           <div className="flex items-center justify-end ">
             <span className="text-sm  text-muted-foreground">
@@ -735,7 +734,9 @@ export function FormSubmission({
           {/* Beneficiary selector (based on entity context and includeBeneficiaries flag) */}
           {entityId && entityType && template?.includeBeneficiaries && (
             <div className="space-y-2">
-              <Label htmlFor="beneficiaryId">Beneficiary</Label>
+              <Label htmlFor="beneficiaryId">
+                {t("formSubmission.beneficiary")}
+              </Label>
               <Select
                 value={formData["beneficiaryId"] || ""}
                 onValueChange={(val) => handleFieldChange("beneficiaryId", val)}
@@ -745,8 +746,8 @@ export function FormSubmission({
                   <SelectValue
                     placeholder={
                       byEntityBeneficiariesLoading
-                        ? "Loading beneficiaries..."
-                        : "Select a beneficiary"
+                        ? t("formSubmission.loadingBeneficiaries")
+                        : t("formSubmission.selectBeneficiary")
                     }
                   />
                 </SelectTrigger>
@@ -779,16 +780,16 @@ export function FormSubmission({
           {entityId && entityType && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label>Services Delivered</Label>
+                <Label>{t("formSubmission.servicesDelivered")}</Label>
                 {selectedServices.length > 0 && (
                   <span className="text-xs text-muted-foreground">
-                    {selectedServices.length} selected
+                    {selectedServices.length} {t("formSubmission.selected")}
                   </span>
                 )}
               </div>
               {entityServicesLoading ? (
                 <p className="text-sm text-muted-foreground">
-                  Loading services...
+                  {t("formSubmission.loadingServices")}
                 </p>
               ) : entityServicesError ? (
                 <p className="text-sm text-destructive">
@@ -796,12 +797,12 @@ export function FormSubmission({
                 </p>
               ) : entityServices.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No services assigned to this entity.
+                  {t("formSubmission.noServicesAssigned")}
                 </p>
               ) : (
                 <>
                   <Input
-                    placeholder="Search services..."
+                    placeholder={t("formSubmission.searchServices")}
                     value={servicesQuery}
                     onChange={(e) => setServicesQuery(e.target.value)}
                     className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-[#EAF4FB] focus:border-[#EAF4FB]"
@@ -892,12 +893,14 @@ export function FormSubmission({
                                     htmlFor={`notes-${svc.id}`}
                                     className="text-xs"
                                   >
-                                    Notes
+                                    {t("formSubmission.notes")}
                                   </Label>
                                   <Textarea
                                     id={`notes-${svc.id}`}
                                     rows={2}
-                                    placeholder="Optional notes"
+                                    placeholder={t(
+                                      "formSubmission.optionalNotes"
+                                    )}
                                     value={current?.notes || ""}
                                     onChange={(e) => {
                                       const notes = e.target.value;
@@ -931,7 +934,7 @@ export function FormSubmission({
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Please fix the following errors before submitting:
+            {t("formSubmission.fixErrors")}
             <ul className="mt-2 list-disc list-inside">
               {Object.values(validationErrors).map((error, index) => (
                 <li key={index} className="text-sm">
@@ -991,11 +994,11 @@ export function FormSubmission({
           }
         >
           {submitLoading || gpsLoading ? (
-            <>Submitting...</>
+            <>{t("formSubmission.submitting")}</>
           ) : (
             <>
               <Send className="h-4 w-4 mr-2" />
-              Submit Form
+              {t("formSubmission.submitForm")}
             </>
           )}
         </Button>

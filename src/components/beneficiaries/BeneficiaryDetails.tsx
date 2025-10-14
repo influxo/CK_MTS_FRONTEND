@@ -98,6 +98,7 @@ import {
 } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 import { selectCurrentUser } from "../../store/slices/authSlice";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface BeneficiaryDetailsProps {
   onBack?: () => void;
@@ -167,6 +168,7 @@ const mockProjects = [
 ];
 
 export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddServiceDialogOpen, setIsAddServiceDialogOpen] = useState(false);
@@ -300,15 +302,8 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
 
   const handleEditSubmit = () => {
     setLocalValidationError(null);
-    if (
-      !editForm.firstName ||
-      !editForm.lastName ||
-      !editForm.gender ||
-      !editForm.status
-    ) {
-      setLocalValidationError(
-        "Please fill in all required fields: first name, last name, gender, status."
-      );
+    if (!editForm.firstName.trim() || !editForm.lastName.trim()) {
+      setLocalValidationError(t("beneficiaryDetails.validationError"));
       return;
     }
     if (!id) return;
@@ -358,7 +353,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
   if (detailLoading) {
     return (
       <div className="p-4 text-sm text-muted-foreground">
-        Loading beneficiary...
+        {t("beneficiaryDetails.loadingBeneficiary")}
       </div>
     );
   }
@@ -366,7 +361,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
     return <div className="p-4 text-sm text-red-600">{detailError}</div>;
   }
   if (!beneficiary) {
-    return <div>Beneficiary not found</div>;
+    return <div>{t("beneficiaryDetails.beneficiaryNotFound")}</div>;
   }
 
   return (
@@ -379,7 +374,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           onClick={onBack ?? (() => navigate("/beneficiaries"))}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Beneficiaries
+          {t("beneficiaryDetails.backToBeneficiaries")}
         </Button>
 
         <h2>{beneficiary.name}</h2>
@@ -396,15 +391,16 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           <DialogTrigger asChild>
             <Button className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white ml-auto">
               <Edit className="h-4 w-4 mr-2" />
-              Edit Profile
+              {t("beneficiaryDetails.editProfile")}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>Edit Beneficiary</DialogTitle>
+              <DialogTitle>
+                {t("beneficiaryDetails.editBeneficiary")}
+              </DialogTitle>
               <DialogDescription>
-                Update the beneficiary's information. Fields marked with * are
-                required.
+                {t("beneficiaryDetails.updateInformation")}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -420,7 +416,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               )}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="firstName" className="text-right">
-                  First Name *
+                  {t("beneficiaryDetails.firstNameRequired")}
                 </Label>
                 <Input
                   id="firstName"
@@ -431,7 +427,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="lastName" className="text-right">
-                  Last Name *
+                  {t("beneficiaryDetails.lastNameRequired")}
                 </Label>
                 <Input
                   id="lastName"
@@ -442,7 +438,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="dob" className="text-right">
-                  Date of Birth *
+                  {t("beneficiaryDetails.dateOfBirthRequired")}
                 </Label>
                 <Input
                   id="dob"
@@ -454,7 +450,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="nationalId" className="text-right">
-                  National ID
+                  {t("beneficiaryDetails.nationalId")}
                 </Label>
                 <Input
                   id="nationalId"
@@ -465,7 +461,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="phone" className="text-right">
-                  Phone
+                  {t("beneficiaryDetails.phone")}
                 </Label>
                 <Input
                   id="phone"
@@ -476,7 +472,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="email" className="text-right">
-                  Email
+                  {t("beneficiaryDetails.email")}
                 </Label>
                 <Input
                   id="email"
@@ -488,7 +484,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="address" className="text-right">
-                  Address
+                  {t("beneficiaryDetails.address")}
                 </Label>
                 <Input
                   id="address"
@@ -498,7 +494,9 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">Gender *</Label>
+                <Label className="text-right">
+                  {t("beneficiaryDetails.genderRequired")}
+                </Label>
                 <RadioGroup
                   className="col-span-3 flex gap-4"
                   value={editForm.gender}
@@ -508,21 +506,25 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="female" id="female" />
-                    <Label htmlFor="female">Female</Label>
+                    <Label htmlFor="female">
+                      {t("beneficiaryDetails.female")}
+                    </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="male" id="male" />
-                    <Label htmlFor="male">Male</Label>
+                    <Label htmlFor="male">{t("beneficiaryDetails.male")}</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="other" id="other" />
-                    <Label htmlFor="other">Other</Label>
+                    <Label htmlFor="other">
+                      {t("beneficiaryDetails.other")}
+                    </Label>
                   </div>
                 </RadioGroup>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="municipality" className="text-right">
-                  Municipality
+                  {t("beneficiaryDetails.municipality")}
                 </Label>
                 <Input
                   id="municipality"
@@ -533,7 +535,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="nationality" className="text-right">
-                  Nationality
+                  {t("beneficiaryDetails.nationality")}
                 </Label>
                 <Input
                   id="nationality"
@@ -544,7 +546,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="status" className="text-right">
-                  Status *
+                  {t("beneficiaryDetails.statusRequired")}
                 </Label>
                 <Select
                   value={editForm.status}
@@ -553,11 +555,17 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   }
                 >
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue
+                      placeholder={t("beneficiaryDetails.selectStatus")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="active">
+                      {t("beneficiaryDetails.active")}
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      {t("beneficiaryDetails.inactive")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -566,7 +574,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               <div className="flex items-center mr-auto">
                 <ShieldAlert className="h-4 w-4 mr-2 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">
-                  Personal data will be pseudonymized
+                  {t("beneficiaryDetails.personalDataPseudonymized")}
                 </span>
               </div>
               <Button
@@ -578,14 +586,16 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   dispatch(clearBeneficiaryUpdate());
                 }}
               >
-                Cancel
+                {t("beneficiaryDetails.cancel")}
               </Button>
               <Button
                 className="bg-[#0073e6] text-white"
                 onClick={handleEditSubmit}
                 disabled={updateLoading}
               >
-                {updateLoading ? "Saving..." : "Save Changes"}
+                {updateLoading
+                  ? t("beneficiaryDetails.saving")
+                  : t("beneficiaryDetails.saveChanges")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -598,20 +608,22 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               className="bg-[#0073e6] text-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
             >
               <Link className="h-4 w-4 mr-2" />
-              Remove Association
+              {t("beneficiaryDetails.removeAssociation")}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[520px]">
             <DialogHeader>
-              <DialogTitle>Remove Association</DialogTitle>
+              <DialogTitle>
+                {t("beneficiaryDetails.removeAssociation")}
+              </DialogTitle>
               <DialogDescription>
-                Select one entity to de-associate from this beneficiary.
+                {t("beneficiaryDetails.selectEntityToRemove")}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-3 py-2">
               {entitiesLoading && (
                 <div className="text-sm text-muted-foreground">
-                  Loading associations…
+                  {t("beneficiaryDetails.loadingAssociations")}
                 </div>
               )}
               {entitiesError && !entitiesLoading && (
@@ -619,7 +631,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               )}
               {!entitiesLoading && !entitiesError && entities.length === 0 && (
                 <div className="text-sm text-muted-foreground">
-                  No associations found.
+                  {t("beneficiaryDetails.noAssociationsFound")}
                 </div>
               )}
               {!entitiesLoading && !entitiesError && entities.length > 0 && (
@@ -663,7 +675,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 variant="outline"
                 onClick={() => setIsRemoveAssocOpen(false)}
               >
-                Cancel
+                {t("beneficiaryDetails.cancel")}
               </Button>
               <Button
                 className="bg-[#0073e6] text-white"
@@ -685,7 +697,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   } catch (_) {}
                 }}
               >
-                Remove
+                {t("beneficiaryDetails.remove")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -942,7 +954,9 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <ShieldAlert className="h-3.5 w-3.5" />
                     <span>{beneficiary.pseudoId}</span>
-                    <span className="text-xs">(Pseudonymized ID)</span>
+                    <span className="text-xs">
+                      ({t("beneficiaryDetails.pseudonymizedId")})
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
@@ -955,7 +969,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   <div className="flex items-center gap-2">
                     <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                     <span>
-                      Registered on{" "}
+                      {t("beneficiaryDetails.registeredOn")}{" "}
                       {new Date(
                         beneficiary.registrationDate
                       ).toLocaleDateString()}
@@ -966,24 +980,34 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               <div className="flex mt-10 flex-col gap-4 md:text-right">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Gender</span>
+                  <span className="text-muted-foreground">
+                    {t("beneficiaryDetails.gender")}
+                  </span>
                   <span className="text-lg font-medium">
                     {beneficiary.gender}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Age</span>
-                  <span className="ml-1">{beneficiary.age} years</span>
+                  <span className="text-muted-foreground">
+                    {t("beneficiaryDetails.age")}
+                  </span>
+                  <span className="ml-1">
+                    {beneficiary.age} {t("beneficiaryDetails.years")}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Home className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Household:</span>
+                  <span className="text-muted-foreground">
+                    {t("beneficiaryDetails.household")}
+                  </span>
                   <span className="ml-1">{beneficiary.household}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <ShieldAlert className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Vulnerability:</span>
+                  <span className="text-muted-foreground">
+                    {t("beneficiaryDetails.vulnerability")}
+                  </span>
                   <span className="ml-1">{beneficiary.vulnerabilityScore}</span>
                 </div>
               </div>
@@ -1007,7 +1031,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 activeTab === "overview" ? "border-[#2E343E]" : ""
               }`}
             >
-              Overview
+              {t("beneficiaryDetails.overview")}
             </TabsTrigger>
             <TabsTrigger
               value="services"
@@ -1015,7 +1039,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 activeTab === "services" ? "border-[#2E343E]" : ""
               }`}
             >
-              Service History
+              {t("beneficiaryDetails.serviceHistory")}
             </TabsTrigger>
             <TabsTrigger
               value="info"
@@ -1023,7 +1047,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 activeTab === "info" ? "border-[#2E343E]" : ""
               }`}
             >
-              Info
+              {t("beneficiaryDetails.info")}
             </TabsTrigger>
           </div>
         </TabsList>
@@ -1034,24 +1058,29 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
                 <CardHeader>
                   <CardTitle className="text-base">
-                    Beneficiary Summary
+                    {t("beneficiaryDetails.beneficiarySummary")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-5">
                   <div>
-                    <h4 className="font-medium mb-2">About</h4>
+                    <h4 className="font-medium mb-2">
+                      {t("beneficiaryDetails.about")}
+                    </h4>
                     <div className="bg-white/60 rounded-md p-3 text-sm">
                       <p className="text-muted-foreground">
-                        {beneficiary.notes || "No additional notes provided."}
+                        {beneficiary.notes ||
+                          t("beneficiaryDetails.noAdditionalNotes")}
                       </p>
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="font-medium mb-2">Current Projects</h4>
+                    <h4 className="font-medium mb-2">
+                      {t("beneficiaryDetails.currentProjects")}
+                    </h4>
                     {entitiesLoading && (
                       <div className="text-sm text-muted-foreground">
-                        Loading associated entities...
+                        {t("beneficiaryDetails.loadingAssociatedEntities")}
                       </div>
                     )}
                     {entitiesError && !entitiesLoading && (
@@ -1084,7 +1113,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                           </div>
                         ) : (
                           <div className="text-sm text-muted-foreground">
-                            No associated entities.
+                            {t("beneficiaryDetails.noAssociatedEntities")}
                           </div>
                         )}
                       </div>
@@ -1093,14 +1122,14 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
 
                   <div>
                     <h4 className="font-medium mb-2">
-                      Registration Information
+                      {t("beneficiaryDetails.registrationInformation")}
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                       <div className="flex items-center gap-2 bg-[#EDEDFF] rounded-md p-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <div className="text-xs text-muted-foreground">
-                            Registration Date
+                            {t("beneficiaryDetails.registrationDate")}
                           </div>
                           <div className="font-medium">
                             {new Date(
@@ -1113,7 +1142,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                         <User className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <div className="text-xs text-muted-foreground">
-                            Registered By
+                            {t("beneficiaryDetails.registeredBy")}
                           </div>
                           <div className="font-medium">
                             {beneficiary.registeredBy}
@@ -1124,7 +1153,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                         <Shield className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <div className="text-xs text-muted-foreground">
-                            ID
+                            {t("beneficiaryDetails.id")}
                           </div>
                           <div className="font-medium">{beneficiary.id}</div>
                         </div>
@@ -1133,7 +1162,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                         <ShieldAlert className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <div className="text-xs text-muted-foreground">
-                            Pseudonymized ID
+                            {t("beneficiaryDetails.pseudonymizedId")}
                           </div>
                           <div className="font-medium">
                             {beneficiary.pseudoId}
@@ -1147,21 +1176,23 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
 
               <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-base">Recent Services</CardTitle>
+                  <CardTitle className="text-base">
+                    {t("beneficiaryDetails.recentServices")}
+                  </CardTitle>
                   <Button
                     variant="ghost"
                     className="bg-[#E0F2FE] text-black  border-0"
                     size="sm"
                     onClick={() => setActiveTab("services")}
                   >
-                    View All
+                    {t("beneficiaryDetails.viewAll")}
                   </Button>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {servicesLoading && (
                       <div className="text-sm text-muted-foreground">
-                        Loading services...
+                        {t("beneficiaryDetails.loadingServices")}
                       </div>
                     )}
                     {servicesError && (
@@ -1201,7 +1232,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                       !servicesError &&
                       services.length === 0 && (
                         <div className="text-sm text-muted-foreground">
-                          No services recorded yet.
+                          {t("beneficiaryDetails.noServicesRecorded")}
                         </div>
                       )}
                   </div>
@@ -1212,7 +1243,9 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
             <div className="space-y-6">
               <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
                 <CardHeader>
-                  <CardTitle className="text-base">Service Summary</CardTitle>
+                  <CardTitle className="text-base">
+                    {t("beneficiaryDetails.serviceSummary")}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="text-center">
@@ -1222,7 +1255,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                         : deliveriesSummary?.totalDeliveries ?? 0}
                     </div>
                     <div className="text-muted-foreground">
-                      Total Services Received
+                      {t("beneficiaryDetails.totalServicesReceived")}
                     </div>
                   </div>
 
@@ -1235,7 +1268,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
-                        Unique Staff
+                        {t("beneficiaryDetails.uniqueStaff")}
                       </span>
                       <span>
                         {deliveriesSummaryLoading
@@ -1245,7 +1278,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
-                        Unique Services
+                        {t("beneficiaryDetails.uniqueServices")}
                       </span>
                       <span>
                         {deliveriesSummaryLoading
@@ -1259,7 +1292,9 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
 
               <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
                 <CardHeader>
-                  <CardTitle className="text-base">Data Protection</CardTitle>
+                  <CardTitle className="text-base">
+                    {t("beneficiaryDetails.dataProtection")}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
@@ -1268,18 +1303,16 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                     </div>
                     <div>
                       <div className="font-medium">
-                        Personal Data Protection
+                        {t("beneficiaryDetails.personalDataProtection")}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Sensitive data is pseudonymized
+                        {t("beneficiaryDetails.sensitiveDataPseudonymized")}
                       </div>
                     </div>
                   </div>
 
                   <div className="text-xs text-muted-foreground">
-                    Personal identifiable information is protected and masked
-                    with pseudonymized IDs in reports and exports. Access to
-                    full data is restricted based on user roles.
+                    {t("beneficiaryDetails.dataProtectionDescription")}
                   </div>
                 </CardContent>
               </Card>
@@ -1290,7 +1323,9 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
         <TabsContent value="services" className="pt-6">
           <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Service History</CardTitle>
+              <CardTitle className="text-base">
+                {t("beneficiaryDetails.serviceHistory")}
+              </CardTitle>
               {isSysOrSuperAdmin && (
                 <div className="flex gap-2">
                   <Button
@@ -1299,7 +1334,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                     className="bg-[#0073e6] text-white"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Export
+                    {t("beneficiaryDetails.export")}
                   </Button>
                 </div>
               )}
@@ -1308,15 +1343,17 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Service</TableHead>
-                    <TableHead>Staff's Name</TableHead>
-                    <TableHead>Staff's Email</TableHead>
+                    <TableHead>{t("beneficiaryDetails.date")}</TableHead>
+                    <TableHead>{t("beneficiaryDetails.category")}</TableHead>
+                    <TableHead>{t("beneficiaryDetails.service")}</TableHead>
+                    <TableHead>{t("beneficiaryDetails.staffName")}</TableHead>
+                    <TableHead>{t("beneficiaryDetails.staffEmail")}</TableHead>
                     {/* <TableHead>Location</TableHead> */}
-                    <TableHead>Entity</TableHead>
-                    <TableHead>Entity Type</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t("beneficiaryDetails.entity")}</TableHead>
+                    <TableHead>{t("beneficiaryDetails.entityType")}</TableHead>
+                    <TableHead className="text-right">
+                      {t("beneficiaryDetails.actions")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1324,7 +1361,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                     <TableRow>
                       <TableCell colSpan={7}>
                         <div className="text-sm text-muted-foreground">
-                          Loading services...
+                          {t("beneficiaryDetails.loadingServices")}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1379,8 +1416,8 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                               }
                               title={
                                 s.formResponseId
-                                  ? "View linked form submission"
-                                  : "No linked form submission"
+                                  ? t("beneficiaryDetails.viewLinkedForm")
+                                  : t("beneficiaryDetails.noLinkedForm")
                               }
                             >
                               <Eye className="h-4 w-4" />
@@ -1398,15 +1435,15 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem>
                                   <FileEdit className="h-4 w-4 mr-2" />
-                                  Edit
+                                  {t("beneficiaryDetails.edit")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <Download className="h-4 w-4 mr-2" />
-                                  Export
+                                  {t("beneficiaryDetails.export")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem className="text-destructive">
                                   <Trash className="h-4 w-4 mr-2" />
-                                  Delete
+                                  {t("beneficiaryDetails.delete")}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -1420,7 +1457,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                       <TableRow>
                         <TableCell colSpan={7}>
                           <div className="text-sm text-muted-foreground">
-                            No services recorded yet.
+                            {t("beneficiaryDetails.noServicesRecorded")}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1477,8 +1514,9 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           </Card>
           <div className="flex items-center justify-between mt-4 text-sm">
             <div className="text-muted-foreground">
-              Page {servicesMeta.page} of {servicesMeta.totalPages} •{" "}
-              {servicesMeta.totalItems} total
+              {t("beneficiaryDetails.page")} {servicesMeta.page}{" "}
+              {t("beneficiaryDetails.of")} {servicesMeta.totalPages} •{" "}
+              {servicesMeta.totalItems} {t("beneficiaryDetails.total")}
             </div>
             <div className="flex gap-2">
               <Button
@@ -1497,7 +1535,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   )
                 }
               >
-                Previous
+                {t("beneficiaryDetails.previous")}
               </Button>
               <Button
                 variant="outline"
@@ -1518,7 +1556,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   )
                 }
               >
-                Next
+                {t("beneficiaryDetails.next")}
               </Button>
             </div>
           </div>
@@ -1527,19 +1565,27 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
         <TabsContent value="info" className="pt-6">
           <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
             <CardHeader>
-              <CardTitle className="text-base">Info</CardTitle>
+              <CardTitle className="text-base">
+                {t("beneficiaryDetails.info")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="rounded-md overflow-hidden">
                 <Table>
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
-                      <TableHead>Blood Type</TableHead>
-                      <TableHead>Allergies</TableHead>
-                      <TableHead>Chronic Conditions</TableHead>
-                      <TableHead>Disabilities</TableHead>
-                      <TableHead>Medications</TableHead>
-                      <TableHead>Notes</TableHead>
+                      <TableHead>{t("beneficiaryDetails.bloodType")}</TableHead>
+                      <TableHead>{t("beneficiaryDetails.allergies")}</TableHead>
+                      <TableHead>
+                        {t("beneficiaryDetails.chronicConditions")}
+                      </TableHead>
+                      <TableHead>
+                        {t("beneficiaryDetails.disabilities")}
+                      </TableHead>
+                      <TableHead>
+                        {t("beneficiaryDetails.medications")}
+                      </TableHead>
+                      <TableHead>{t("beneficiaryDetails.notes")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody className="bg-[#F7F9FB] ">
