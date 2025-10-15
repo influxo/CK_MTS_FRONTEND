@@ -1,20 +1,23 @@
+import { toast } from "sonner";
 import getApiUrl from "../apiUrl";
 import axiosInstance from "../axiosInstance";
-import type { InviteUserRequest, InviteUserResponse, GetUserProjectsResponse } from "./userModels";
-
+import type {
+  InviteUserRequest,
+  InviteUserResponse,
+  GetUserProjectsResponse,
+} from "./userModels";
 
 /**
  * Authentication service for handling user authentication and profile management
  */
 class UserService {
   private baseUrl: string;
-  private authEndpoint: string = '/auth';
+  private authEndpoint: string = "/auth";
 
   constructor() {
     this.baseUrl = getApiUrl();
     this.authEndpoint = `${this.baseUrl}/users`;
   }
-
 
   /**
    * Invite a new user with specified roles
@@ -27,18 +30,31 @@ class UserService {
         `${this.authEndpoint}/invite`,
         userData
       );
-      
+      toast.success("Punëtori u ftua me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
       return response.data;
     } catch (error: any) {
       // Handle error response from server
+      toast.error("Diçka shkoi gabim", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
       if (error.response) {
         return error.response.data as InviteUserResponse;
       }
-      
+
       // Handle network or other errors
       return {
         success: false,
-        message: error.message || 'Failed to invite user. Please try again.'
+        message: error.message || "Failed to invite user. Please try again.",
       };
     }
   }
@@ -48,17 +64,50 @@ class UserService {
    */
   async getUserProjects(userId: string): Promise<GetUserProjectsResponse> {
     try {
-      const response = await axiosInstance.get<GetUserProjectsResponse>(
+      const response = await axiosInstance.get(
         `${this.authEndpoint}/${userId}/projects`
       );
-      return response.data;
+      const raw = response.data as any;
+      // Normalize backend shape: accept either { data: [...] } or { items: [...] }
+      if (Array.isArray(raw?.data)) {
+        return raw as GetUserProjectsResponse;
+      }
+      if (Array.isArray(raw?.items)) {
+        return {
+          success: !!raw.success,
+          message: raw.message,
+          data: raw.items,
+        } as GetUserProjectsResponse;
+      }
+      // Fallback safe shape
+      return {
+        success: !!raw?.success,
+        message: raw?.message ?? "Unexpected response shape",
+        data: Array.isArray(raw) ? raw : [],
+      } as GetUserProjectsResponse;
     } catch (error: any) {
       if (error.response) {
-        return error.response.data as GetUserProjectsResponse;
+        const raw = error.response.data as any;
+        // Normalize error responses too
+        if (Array.isArray(raw?.data)) {
+          return raw as GetUserProjectsResponse;
+        }
+        if (Array.isArray(raw?.items)) {
+          return {
+            success: !!raw.success,
+            message: raw.message,
+            data: raw.items,
+          } as GetUserProjectsResponse;
+        }
+        return {
+          success: false,
+          message: raw?.message || "Failed to fetch user projects",
+          data: [],
+        } as GetUserProjectsResponse;
       }
       return {
         success: false,
-        message: error.message || 'Failed to fetch user projects',
+        message: error.message || "Failed to fetch user projects",
         data: [],
       };
     }
@@ -69,14 +118,14 @@ class UserService {
    * @returns Boolean indicating if user is authenticated
    */
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('token');
+    return !!localStorage.getItem("token");
   }
 
   /**
    * Logout user
    */
   logout(): void {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     // Remove auth header
     this.removeAuthHeader();
   }
@@ -86,14 +135,14 @@ class UserService {
    * @param token JWT token
    */
   setAuthHeader(token: string): void {
-    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   }
 
   /**
    * Remove authentication header
    */
   removeAuthHeader(): void {
-    delete axiosInstance.defaults.headers.common['Authorization'];
+    delete axiosInstance.defaults.headers.common["Authorization"];
   }
 
   /**
@@ -101,7 +150,7 @@ class UserService {
    * This should be called when the app starts
    */
   initializeAuth(): void {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       this.setAuthHeader(token);
     }

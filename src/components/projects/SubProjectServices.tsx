@@ -47,12 +47,15 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import { Textarea } from "../ui/form/textarea";
+import { toast } from "sonner";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface SubProjectServicesProps {
   subProjectId: string;
 }
 
 export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const services = useSelector(selectEntityServices);
   const isLoading = useSelector(selectEntityServicesLoading);
@@ -75,31 +78,57 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
   const [search, setSearch] = useState("");
-  const filteredAllServices = useMemo(
-    () =>
-      allServices.filter(
-        (s) =>
-          s.name.toLowerCase().includes(search.toLowerCase()) ||
-          s.description.toLowerCase().includes(search.toLowerCase())
-      ),
-    [allServices, search]
+  // IDs of services already assigned to this sub-project (to exclude from modal)
+  const assignedIds = useMemo(
+    () => new Set((services || []).map((s) => s.id)),
+    [services]
   );
+
+  // Modal list filtered by search and excluding already assigned services
+  const filteredAllServices = useMemo(() => {
+    const q = search.toLowerCase();
+    return allServices.filter(
+      (s) =>
+        !assignedIds.has(s.id) &&
+        (s.name.toLowerCase().includes(q) ||
+          s.description.toLowerCase().includes(q))
+    );
+  }, [allServices, search, assignedIds]);
+
+  // Pagination state for assign modal
+  const [assignPage, setAssignPage] = useState(1);
+  const [assignLimit, setAssignLimit] = useState(10);
+  const assignTotalPages = useMemo(
+    () =>
+      Math.max(1, Math.ceil((filteredAllServices.length || 0) / assignLimit)),
+    [filteredAllServices.length, assignLimit]
+  );
+  const paginatedServices = useMemo(() => {
+    const start = (assignPage - 1) * assignLimit;
+    return filteredAllServices.slice(start, start + assignLimit);
+  }, [filteredAllServices, assignPage, assignLimit]);
 
   // Unassign dialog state
   const [isUnassignOpen, setIsUnassignOpen] = useState(false);
-  const [serviceToUnassign, setServiceToUnassign] = useState<Service | null>(null);
+  const [serviceToUnassign, setServiceToUnassign] = useState<Service | null>(
+    null
+  );
   const unassignLoading = useSelector(selectServiceUnassignLoading);
   const unassignError = useSelector(selectServiceUnassignError);
 
   useEffect(() => {
     if (subProjectId) {
-      dispatch(getEntityServices({ entityId: subProjectId, entityType: "subproject" }));
+      dispatch(
+        getEntityServices({ entityId: subProjectId, entityType: "subproject" })
+      );
     }
   }, [subProjectId, dispatch]);
 
   const refresh = () => {
     if (subProjectId) {
-      dispatch(getEntityServices({ entityId: subProjectId, entityType: "subproject" }));
+      dispatch(
+        getEntityServices({ entityId: subProjectId, entityType: "subproject" })
+      );
     }
   };
 
@@ -107,9 +136,17 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
   useEffect(() => {
     if (isAssignOpen) {
       setSelectedIds([]);
+      setAssignPage(1);
       dispatch(getAllServices({ page: 1, limit: 200 }));
     }
   }, [isAssignOpen, dispatch]);
+
+  // Keep page within bounds when dataset or page size changes
+  useEffect(() => {
+    if (assignPage > assignTotalPages) {
+      setAssignPage(assignTotalPages);
+    }
+  }, [assignTotalPages, assignPage]);
 
   const handleCreateAndAssign = async () => {
     if (!subProjectId) return;
@@ -117,12 +154,20 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
     setCreating(true);
     try {
       const res = await dispatch(
-        createService({ name: name.trim(), description: description.trim(), category: category.trim(), status })
+        createService({
+          name: name.trim(),
+          description: description.trim(),
+          category: category.trim(),
+          status,
+        })
       ).unwrap();
       const created = res.data;
       if (created?.id) {
         await dispatch(
-          assignServiceToEntity({ id: created.id, data: { entityId: subProjectId, entityType: "subproject" } })
+          assignServiceToEntity({
+            id: created.id,
+            data: { entityId: subProjectId, entityType: "subproject" },
+          })
         ).unwrap();
         refresh();
         setIsCreateOpen(false);
@@ -131,6 +176,13 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
         setCategory("");
         setStatus("active");
       }
+      toast.success("Shërbimi u shtua me sukses!", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
     } catch (e) {
       // errors handled by slice; keep here to stop spinner
     } finally {
@@ -150,11 +202,28 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
     try {
       if (selectedIds.length === 1) {
         await dispatch(
-          assignServiceToEntity({ id: selectedIds[0], data: { entityId: subProjectId, entityType: "subproject" } })
+          assignServiceToEntity({
+            id: selectedIds[0],
+            data: { entityId: subProjectId, entityType: "subproject" },
+          })
         ).unwrap();
+
+        //  If we got here, it's successful
+        toast.success("Shërbimi u shtua me sukses!", {
+          style: {
+            backgroundColor: "#d1fae5",
+            color: "#065f46",
+            border: "1px solid #10b981",
+          },
+        });
       } else {
         await dispatch(
-          assignServicesBatch({ entityId: subProjectId, entityType: "subproject", serviceIds: selectedIds, removeUnlisted: false })
+          assignServicesBatch({
+            entityId: subProjectId,
+            entityType: "subproject",
+            serviceIds: selectedIds,
+            removeUnlisted: false,
+          })
         ).unwrap();
       }
       refresh();
@@ -175,7 +244,10 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
     if (!subProjectId || !serviceToUnassign) return;
     try {
       await dispatch(
-        unassignServiceFromEntity({ id: serviceToUnassign.id, data: { entityId: subProjectId, entityType: "subproject" } })
+        unassignServiceFromEntity({
+          id: serviceToUnassign.id,
+          data: { entityId: subProjectId, entityType: "subproject" },
+        })
       ).unwrap();
       setIsUnassignOpen(false);
       setServiceToUnassign(null);
@@ -188,49 +260,92 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3>Services</h3>
+        <h3>{t('subProjectServices.title')}</h3>
         <div className="flex gap-2">
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#2B2B2B] text-white">Create Service</Button>
+              <Button
+                className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+              >
+                {t('subProjectServices.createService')}
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[560px]">
               <DialogHeader>
-                <DialogTitle>Create and Assign Service</DialogTitle>
+                <DialogTitle>{t('subProjectServices.createAndAssignTitle')}</DialogTitle>
                 <DialogDescription>
-                  Create a new service. It will be assigned to this sub-project automatically after creation.
+                  {t('subProjectServices.createAndAssignDescription')}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="svc-name" className="text-right">Name *</Label>
-                  <Input id="svc-name" className="col-span-3" value={name} onChange={(e) => setName(e.currentTarget.value)} />
+                  <Label htmlFor="svc-name" className="text-right">
+                    {t('subProjectServices.nameLabel')}
+                  </Label>
+                  <Input
+                    id="svc-name"
+                    className="col-span-3"
+                    value={name}
+                    onChange={(e) => setName(e.currentTarget.value)}
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="svc-category" className="text-right">Category *</Label>
-                  <Input id="svc-category" className="col-span-3" value={category} onChange={(e) => setCategory(e.currentTarget.value)} />
+                  <Label htmlFor="svc-category" className="text-right">
+                    {t('subProjectServices.categoryLabel')}
+                  </Label>
+                  <Input
+                    id="svc-category"
+                    className="col-span-3"
+                    value={category}
+                    onChange={(e) => setCategory(e.currentTarget.value)}
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-start gap-4">
-                  <Label htmlFor="svc-description" className="text-right pt-2">Description</Label>
-                  <Textarea id="svc-description" className="col-span-3" rows={3} value={description} onChange={(e) => setDescription(e.currentTarget.value)} />
+                  <Label htmlFor="svc-description" className="text-right pt-2">
+                    {t('subProjectServices.descriptionLabel')}
+                  </Label>
+                  <Textarea
+                    id="svc-description"
+                    className="col-span-3"
+                    rows={3}
+                    value={description}
+                    onChange={(e) => setDescription(e.currentTarget.value)}
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Status *</Label>
-                  <Select value={status} onValueChange={(v) => setStatus(v as "active" | "inactive")}>
+                  <Label className="text-right">{t('subProjectServices.statusLabel')}</Label>
+                  <Select
+                    value={status}
+                    onValueChange={(v) => setStatus(v as "active" | "inactive")}
+                  >
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder={t('subProjectServices.selectStatus')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="active">{t('subProjectServices.active')}</SelectItem>
+                      <SelectItem value="inactive">{t('subProjectServices.inactive')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={creating}>Cancel</Button>
-                <Button onClick={handleCreateAndAssign} disabled={creating || !name.trim() || !category.trim()}>
-                  {creating ? "Creating..." : "Create & Assign"}
+                <Button
+                  className="bg-[#E0F2FE] text-black border-0"
+                  variant="outline"
+                  onClick={() => setIsCreateOpen(false)}
+                  disabled={creating}
+                >
+                  {t('subProjectServices.cancel')}
+                </Button>
+                <Button
+                  className="bg-[#0073e6] text-white"
+                  onClick={handleCreateAndAssign}
+                  disabled={creating || !name.trim() || !category.trim()}
+                >
+                  {creating ? t('subProjectServices.creating') : t('subProjectServices.createAndAssign')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -238,34 +353,63 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
 
           <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">Assign Service</Button>
+              <Button
+                variant="outline"
+                className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+              >
+                {t('subProjectServices.assignService')}
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[720px]">
               <DialogHeader>
-                <DialogTitle>Assign Services to Sub-Project</DialogTitle>
+                <DialogTitle>{t('subProjectServices.assignServicesTitle')}</DialogTitle>
                 <DialogDescription>
-                  Select one or multiple services to assign to this sub-project.
+                  {t('subProjectServices.assignServicesDescription')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-3">
                 <div className="flex gap-3 items-center">
-                  <Input placeholder="Search services..." value={search} onChange={(e) => setSearch(e.currentTarget.value)} />
-                  <Button variant="outline" onClick={() => dispatch(getAllServices({ page: 1, limit: 200 }))} disabled={allLoading}>Reload</Button>
+                  <Input
+                    placeholder={t('subProjectServices.searchPlaceholder')}
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.currentTarget.value);
+                      setAssignPage(1);
+                    }}
+                  />
+                  <Button
+                    className="bg-[#E0F2FE] text-black border-0"
+                    variant="outline"
+                    onClick={() =>
+                      dispatch(getAllServices({ page: 1, limit: 200 }))
+                    }
+                    disabled={allLoading}
+                  >
+                    {t('subProjectServices.reload')}
+                  </Button>
                 </div>
-                {allLoading && <div className="text-sm text-muted-foreground">Loading services...</div>}
-                {allError && <div className="text-sm text-destructive">{allError}</div>}
+                {allLoading && (
+                  <div className="text-sm text-muted-foreground">
+                    {t('subProjectServices.loadingServices')}
+                  </div>
+                )}
+                {allError && (
+                  <div className="text-sm text-destructive">{allError}</div>
+                )}
                 <div className="rounded-md border max-h-[360px] overflow-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-[#E5ECF6]">
                       <TableRow>
-                        <TableHead className="w-[48px]"><span className="sr-only">Select</span></TableHead>
-                        <TableHead className="w-[320px]">Service</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className="w-[48px]">
+                          <span className="sr-only">Select</span>
+                        </TableHead>
+                        <TableHead className="w-[320px]">{t('subProjectServices.serviceColumn')}</TableHead>
+                        <TableHead>{t('subProjectServices.categoryColumn')}</TableHead>
+                        <TableHead>{t('subProjectServices.statusColumn')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredAllServices.map((svc) => (
+                      {paginatedServices.map((svc) => (
                         <TableRow key={svc.id} className="hover:bg-muted/40">
                           <TableCell>
                             <input
@@ -276,88 +420,192 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
                           </TableCell>
                           <TableCell>
                             <div className="font-medium">{svc.name}</div>
-                            <div className="text-sm text-muted-foreground line-clamp-1">{svc.description}</div>
+                            <div className="text-sm text-muted-foreground line-clamp-1">
+                              {svc.description}
+                            </div>
                           </TableCell>
-                          <TableCell><Badge variant="outline">{svc.category}</Badge></TableCell>
                           <TableCell>
-                            <Badge className={svc.status === "active" ? "bg-[#2E343E] text-white" : ""}>{svc.status}</Badge>
+                            <Badge
+                              variant="outline"
+                              className="border-0 bg-[#0073e6] text-white"
+                            >
+                              {svc.category}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={
+                                svc.status === "active"
+                                  ? "bg-[#DEF8EE] text-[#4AA785] border-0"
+                                  : ""
+                              }
+                            >
+                              {svc.status}
+                            </Badge>
                           </TableCell>
                         </TableRow>
                       ))}
                       {filteredAllServices.length === 0 && !allLoading && (
                         <TableRow>
                           <TableCell colSpan={4}>
-                            <div className="text-sm text-muted-foreground">No services found.</div>
+                            <div className="text-sm text-muted-foreground">
+                              {t('subProjectServices.noServicesFound')}
+                            </div>
                           </TableCell>
                         </TableRow>
                       )}
                     </TableBody>
                   </Table>
                 </div>
+                {/* Modal pagination controls */}
+                <div className="flex items-center justify-between flex-wrap gap-3 px-1">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>
+                      Page {assignPage} of {Math.max(assignTotalPages || 1, 1)}
+                    </span>
+                    <span className="hidden sm:inline">
+                      • Total {filteredAllServices.length} services
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAssignPage((p) => Math.max(1, p - 1))}
+                      disabled={assignPage <= 1}
+                      className="  bg-[#E0F2FE] border-0 text-black"
+                    >
+                      {t('subProjectServices.prev')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setAssignPage((p) => Math.min(assignTotalPages, p + 1))
+                      }
+                      disabled={
+                        assignTotalPages === 0 || assignPage >= assignTotalPages
+                      }
+                      className="bg-[#E0F2FE] border-0 text-black"
+                    >
+                      {t('subProjectServices.next')}
+                    </Button>
+                    <Select
+                      value={String(assignLimit)}
+                      onValueChange={(val) => {
+                        const newLimit = parseInt(val, 10) || 10;
+                        setAssignLimit(newLimit);
+                        setAssignPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="w-[120px] bg-[#E0F2FE] border-0 text-black">
+                        <SelectValue placeholder="Rows" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10 {t('subProjectServices.perPage')}</SelectItem>
+                        <SelectItem value="20">20 {t('subProjectServices.perPage')}</SelectItem>
+                        <SelectItem value="50">50 {t('subProjectServices.perPage')}</SelectItem>
+                        <SelectItem value="100">100 {t('subProjectServices.perPage')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAssignOpen(false)} disabled={assigning}>Cancel</Button>
-                <Button onClick={handleAssignSelected} disabled={assigning || selectedIds.length === 0}>
-                  {assigning ? "Assigning..." : selectedIds.length > 1 ? "Assign Selected (Batch)" : "Assign Selected"}
+                <Button
+                  className="bg-[#E0F2FE] border-0 text-black"
+                  variant="outline"
+                  onClick={() => setIsAssignOpen(false)}
+                  disabled={assigning}
+                >
+                  {t('subProjectServices.cancel')}
+                </Button>
+                <Button
+                  className="bg-[#0073e6] border-0 text-white "
+                  onClick={handleAssignSelected}
+                  disabled={assigning || selectedIds.length === 0}
+                >
+                  {assigning
+                    ? t('subProjectServices.assigning')
+                    : selectedIds.length > 1
+                    ? t('subProjectServices.assignSelectedBatch')
+                    : t('subProjectServices.assignSelected')}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
-
-          <Button variant="outline" onClick={refresh} disabled={isLoading}>
-            {isLoading ? "Refreshing..." : "Refresh"}
-          </Button>
         </div>
       </div>
 
       {isLoading && (
-        <div className="text-sm text-muted-foreground">Loading services...</div>
+        <div className="text-sm text-muted-foreground">{t('subProjectServices.loadingServices')}</div>
       )}
-      {error && (
-        <div className="text-sm text-destructive">{error}</div>
-      )}
+      {error && <div className="text-sm text-destructive">{error}</div>}
 
       {!isLoading && !error && services.length === 0 && (
-        <div className="text-sm text-muted-foreground">No services assigned to this sub-project.</div>
+        <div className="text-sm text-muted-foreground">
+          {t('subProjectServices.noServicesAssigned')}
+        </div>
       )}
 
       {services.length > 0 && (
         <div className="rounded-md border overflow-hidden">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-[#E5ECF6] text-black border-0">
               <TableRow>
-                <TableHead className="w-[280px]">Service</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[280px]">{t('subProjectServices.serviceColumn')}</TableHead>
+                <TableHead>{t('subProjectServices.categoryColumn')}</TableHead>
+                <TableHead>{t('subProjectServices.statusColumn')}</TableHead>
+                <TableHead>{t('subProjectServices.createdColumn')}</TableHead>
+                <TableHead>{t('subProjectServices.updatedColumn')}</TableHead>
+                <TableHead className="text-right">{t('subProjectServices.actionsColumn')}</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="bg-[#F7F9FB]">
               {services.map((svc) => (
                 <TableRow key={svc.id}>
                   <TableCell>
                     <div className="font-medium">{svc.name}</div>
-                    <div className="text-sm text-muted-foreground line-clamp-1">{svc.description}</div>
+                    <div className="text-sm text-muted-foreground line-clamp-1">
+                      {svc.description}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{svc.category}</Badge>
+                    <Badge
+                      variant="outline"
+                      className="bg-[#0073e6] text-white"
+                    >
+                      {svc.category}
+                    </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className={svc.status === "active" ? "bg-[#2E343E] text-white" : ""}>
+                    <Badge
+                      className={
+                        svc.status === "active"
+                          ? "bg-[#DEF8EE] text-[#4AA785]"
+                          : ""
+                      }
+                    >
                       {svc.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm">
-                    {svc.createdAt ? new Date(svc.createdAt).toLocaleDateString() : "—"}
+                    {svc.createdAt
+                      ? new Date(svc.createdAt).toLocaleDateString()
+                      : "—"}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {svc.updatedAt ? new Date(svc.updatedAt).toLocaleDateString() : "—"}
+                    {svc.updatedAt
+                      ? new Date(svc.updatedAt).toLocaleDateString()
+                      : "—"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" className="text-red-600" onClick={() => openUnassign(svc)}>
-                      Unassign
+                    <Button
+                      variant="outline"
+                      className="hover:bg-[#E0F2FE] text-black border-0"
+                      onClick={() => openUnassign(svc)}
+                    >
+                      {t('subProjectServices.unassign')}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -371,22 +619,30 @@ export function SubProjectServices({ subProjectId }: SubProjectServicesProps) {
       <Dialog open={isUnassignOpen} onOpenChange={setIsUnassignOpen}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>Unassign Service</DialogTitle>
+            <DialogTitle>{t('subProjectServices.unassignTitle')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to unassign {" "}
+              {t('subProjectServices.unassignDescription')}{" "}
               <span className="font-medium">{serviceToUnassign?.name}</span>{" "}
-              from this sub-project?
+              {t('subProjectServices.fromSubproject')}
             </DialogDescription>
           </DialogHeader>
           {unassignError && (
             <div className="text-sm text-destructive">{unassignError}</div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsUnassignOpen(false)} disabled={unassignLoading}>
-              Cancel
+            <Button
+              className="bg-[#E0F2FE] border-0 text-black"
+              onClick={() => setIsUnassignOpen(false)}
+              disabled={unassignLoading}
+            >
+              {t('subProjectServices.cancel')}
             </Button>
-            <Button onClick={handleConfirmUnassign} disabled={unassignLoading}>
-              {unassignLoading ? "Unassigning..." : "Unassign"}
+            <Button
+              className="bg-[#0073e6] border-0 text-white"
+              onClick={handleConfirmUnassign}
+              disabled={unassignLoading}
+            >
+              {unassignLoading ? t('subProjectServices.unassigning') : t('subProjectServices.unassign')}
             </Button>
           </DialogFooter>
         </DialogContent>

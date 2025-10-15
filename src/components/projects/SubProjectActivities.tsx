@@ -2,14 +2,37 @@ import { Download, FileEdit, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { Badge } from "../ui/data-display/badge";
-import { Button } from "../ui/button/button";
+import type { AppDispatch } from "../../store";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../ui/data-display/card";
+  createActivity,
+  fetchSubprojectActivities,
+  selectActivityError,
+  selectActivityIsLoading,
+  selectSubprojectActivities,
+  selectSubprojectActivitiesError,
+  selectSubprojectActivitiesLoading,
+} from "../../store/slices/activitySlice";
+import { Button } from "../ui/button/button";
+import { Badge } from "../ui/data-display/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/form/select";
+import { Textarea } from "../ui/form/textarea";
+import { Tabs, TabsContent } from "../ui/navigation/tabs";
 import {
   Dialog,
   DialogContent,
@@ -25,89 +48,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/overlay/dropdown-menu";
-import { Input } from "../ui/form/input";
-import { Label } from "../ui/form/label";
-import { Progress } from "../ui/feedback/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/form/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/data-display/table";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../ui/navigation/tabs";
-import { Textarea } from "../ui/form/textarea";
-import type { AppDispatch } from "../../store";
-import {
-  createActivity,
-  selectActivityIsLoading,
-  selectActivityError,
-  fetchSubprojectActivities,
-  selectSubprojectActivities,
-  selectSubprojectActivitiesLoading,
-  selectSubprojectActivitiesError,
-} from "../../store/slices/activitySlice";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface SubProjectActivitiesProps {
   subProjectId: string;
 }
 
-// Activities are loaded from API via Redux
-
-// Mock planned activities
-const mockPlannedActivities = [
-  {
-    id: "plan-001",
-    subProjectId: "sub-001",
-    title: "Community Health Education",
-    type: "Education",
-    frequency: "Weekly",
-    targetNumber: 12,
-    completed: 8,
-    description: "Regular health education sessions in community centers",
-    assignedTo: "Community Health Workers",
-  },
-  {
-    id: "plan-002",
-    subProjectId: "sub-001",
-    title: "Mobile Antenatal Clinics",
-    type: "Service Delivery",
-    frequency: "Bi-weekly",
-    targetNumber: 20,
-    completed: 10,
-    description: "Mobile clinics providing antenatal care services",
-    assignedTo: "Medical Teams",
-  },
-  {
-    id: "plan-003",
-    subProjectId: "sub-001",
-    title: "Staff Training Sessions",
-    type: "Training",
-    frequency: "Monthly",
-    targetNumber: 6,
-    completed: 3,
-    description:
-      "Training sessions for project staff and community health workers",
-    assignedTo: "Project Coordinators",
-  },
-];
-
 export function SubProjectActivities({
   subProjectId,
 }: SubProjectActivitiesProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("activities");
   const [isCreateActivityDialogOpen, setIsCreateActivityDialogOpen] =
     useState(false);
@@ -145,8 +95,7 @@ export function SubProjectActivities({
 
   // Filter activities from API for this sub-project
   const filteredActivities = activities.filter((activity) => {
-    const matchesSubProject =
-      activity.subprojectId === effectiveSubProjectId;
+    const matchesSubProject = activity.subprojectId === effectiveSubProjectId;
     const matchesSearch =
       activity.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (activity.description || "")
@@ -158,18 +107,13 @@ export function SubProjectActivities({
     return matchesSubProject && matchesSearch && matchesStatus;
   });
 
-  // Filter planned activities for this sub-project
-  const filteredPlannedActivities = mockPlannedActivities.filter(
-    (plan) => plan.subProjectId === subProjectId
-  );
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3>Activities</h3>
+          <h3>{t('subProjectActivities.title')}</h3>
           <p className="text-muted-foreground">
-            Manage and track project activities
+            {t('subProjectActivities.subtitle')}
           </p>
         </div>
         <Dialog
@@ -177,17 +121,21 @@ export function SubProjectActivities({
           onOpenChange={setIsCreateActivityDialogOpen}
         >
           <DialogTrigger asChild>
-            <Button className="bg-[#2E343E] text-white">
+            <Button
+              className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+            >
               <Plus className="h-4 w-4 mr-2" />
-              Record New Activity
+              {t('subProjectActivities.recordNewActivity')}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
-              <DialogTitle>Record New Activity</DialogTitle>
+              <DialogTitle>{t('subProjectActivities.dialogTitle')}</DialogTitle>
               <DialogDescription>
-                Enter details about a new activity conducted for this
-                sub-project.
+                {t('subProjectActivities.dialogDescription')}
               </DialogDescription>
             </DialogHeader>
             {createError && (
@@ -197,55 +145,55 @@ export function SubProjectActivities({
               {/* Model-based fields */}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="activity-name" className="text-right">
-                  Name *
+                  {t('subProjectActivities.nameLabel')}
                 </Label>
                 <Input
                   id="activity-name"
                   className="col-span-3"
-                  placeholder="Activity name"
+                  placeholder={t('subProjectActivities.namePlaceholder')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="activity-category" className="text-right">
-                  Category *
+                  {t('subProjectActivities.categoryLabel')}
                 </Label>
                 <Input
                   id="activity-category"
                   className="col-span-3"
-                  placeholder="Category (e.g., Shendetesi)"
+                  placeholder={t('subProjectActivities.categoryPlaceholder')}
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="activity-frequency" className="text-right">
-                  Frequency *
+                  {t('subProjectActivities.frequencyLabel')}
                 </Label>
                 <Select value={frequency} onValueChange={setFrequency}>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select frequency" />
+                    <SelectValue placeholder={t('subProjectActivities.selectFrequency')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                    <SelectItem value="daily">{t('subProjectActivities.daily')}</SelectItem>
+                    <SelectItem value="weekly">{t('subProjectActivities.weekly')}</SelectItem>
+                    <SelectItem value="monthly">{t('subProjectActivities.monthly')}</SelectItem>
+                    <SelectItem value="quarterly">{t('subProjectActivities.quarterly')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="activity-status" className="text-right">
-                  Status *
+                  {t('subProjectActivities.statusLabel')}
                 </Label>
                 <Select value={status} onValueChange={setStatus}>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder={t('subProjectActivities.selectStatus')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="active">{t('subProjectActivities.active')}</SelectItem>
+                    <SelectItem value="inactive">{t('subProjectActivities.inactive')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -254,24 +202,24 @@ export function SubProjectActivities({
                   htmlFor="activity-description"
                   className="text-right pt-2"
                 >
-                  Description
+                  {t('subProjectActivities.descriptionLabel')}
                 </Label>
                 <Textarea
                   id="activity-description"
                   className="col-span-3"
-                  placeholder="Brief description of the activity"
+                  placeholder={t('subProjectActivities.descriptionPlaceholder')}
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
-                <Label className="text-right pt-2">Reporting Fields</Label>
+                <Label className="text-right pt-2">{t('subProjectActivities.reportingFields')}</Label>
                 <div className="col-span-3 space-y-2">
                   {reportingFieldsRows.map((row, idx) => (
                     <div key={idx} className="flex gap-2 items-center">
                       <Input
-                        placeholder="Field key (e.g., beneficiaries)"
+                        placeholder={t('subProjectActivities.fieldKeyPlaceholder')}
                         value={row.key}
                         onChange={(e) => {
                           const next = [...reportingFieldsRows];
@@ -288,24 +236,24 @@ export function SubProjectActivities({
                         }}
                       >
                         <SelectTrigger className="w-[160px]">
-                          <SelectValue placeholder="Type" />
+                          <SelectValue placeholder={t('subProjectActivities.typePlaceholder')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="number">number</SelectItem>
-                          <SelectItem value="text">text</SelectItem>
-                          <SelectItem value="boolean">boolean</SelectItem>
-                          <SelectItem value="date">date</SelectItem>
-                          <SelectItem value="time">time</SelectItem>
-                          <SelectItem value="datetime">datetime</SelectItem>
-                          <SelectItem value="select">select</SelectItem>
+                          <SelectItem value="number">{t('subProjectActivities.number')}</SelectItem>
+                          <SelectItem value="text">{t('subProjectActivities.text')}</SelectItem>
+                          <SelectItem value="boolean">{t('subProjectActivities.boolean')}</SelectItem>
+                          <SelectItem value="date">{t('subProjectActivities.date')}</SelectItem>
+                          <SelectItem value="time">{t('subProjectActivities.time')}</SelectItem>
+                          <SelectItem value="datetime">{t('subProjectActivities.datetime')}</SelectItem>
+                          <SelectItem value="select">{t('subProjectActivities.select')}</SelectItem>
                           <SelectItem value="multiselect">
-                            multiselect
+                            {t('subProjectActivities.multiselect')}
                           </SelectItem>
                         </SelectContent>
                       </Select>
                       <Button
                         variant="ghost"
-                        className="text-destructive"
+                        className="hover:bg-[#E0F2FE] hover:text-black"
                         onClick={() => {
                           const next = reportingFieldsRows.filter(
                             (_, i) => i !== idx
@@ -313,12 +261,12 @@ export function SubProjectActivities({
                           setReportingFieldsRows(next);
                         }}
                       >
-                        Remove
+                        {t('subProjectActivities.remove')}
                       </Button>
                     </div>
                   ))}
                   <Button
-                    variant="outline"
+                    className="bg-[#E0F2FE] border-0 text-black"
                     onClick={() =>
                       setReportingFieldsRows([
                         ...reportingFieldsRows,
@@ -326,20 +274,21 @@ export function SubProjectActivities({
                       ])
                     }
                   >
-                    Add Field
+                    {t('subProjectActivities.addField')}
                   </Button>
                 </div>
               </div>
             </div>
             <DialogFooter>
               <Button
-                variant="outline"
+                className="bg-[#E0F2FE] border-0 text-black"
                 onClick={() => setIsCreateActivityDialogOpen(false)}
                 disabled={isCreating}
               >
-                Cancel
+                {t('subProjectActivities.cancel')}
               </Button>
               <Button
+                className="bg-[#0073e6] border-0 text-white"
                 onClick={async () => {
                   const reportingFields: Record<string, string> = {};
                   reportingFieldsRows
@@ -369,7 +318,9 @@ export function SubProjectActivities({
                     setIsCreateActivityDialogOpen(false);
                     // Refresh activities list
                     if (effectiveSubProjectId) {
-                      dispatch(fetchSubprojectActivities(effectiveSubProjectId));
+                      dispatch(
+                        fetchSubprojectActivities(effectiveSubProjectId)
+                      );
                     }
                   } catch (e) {
                     // error shown via createError
@@ -377,7 +328,7 @@ export function SubProjectActivities({
                 }}
                 disabled={isCreating}
               >
-                {isCreating ? "Saving..." : "Save Activity"}
+                {isCreating ? t('subProjectActivities.saving') : t('subProjectActivities.saveActivity')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -385,41 +336,26 @@ export function SubProjectActivities({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-2 bg-[#2E343E] bg-opacity-10 items-center">
-          <TabsTrigger
-            value="activities"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
-          >
-            Activities Log
-          </TabsTrigger>
-          <TabsTrigger
-            value="planned"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
-          >
-            Planned Activities
-          </TabsTrigger>
-        </TabsList>
-
         <TabsContent value="activities" className="pt-4">
           <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search activities..."
-                  className="pl-9 bg-black/5 border-0"
+                  placeholder={t('subProjectActivities.searchPlaceholder')}
+                  className="pl-9 bg-white border border-gray-100 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[160px] bg-black/5 border-0">
-                  <SelectValue placeholder="Status" />
+                <SelectTrigger className="w-[160px] bg-white border border-gray-100 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
+                  <SelectValue placeholder={t('subProjectActivities.statusFilter')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="all">{t('subProjectActivities.allStatus')}</SelectItem>
+                  <SelectItem value="active">{t('subProjectActivities.active')}</SelectItem>
+                  <SelectItem value="inactive">{t('subProjectActivities.inactive')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -432,13 +368,13 @@ export function SubProjectActivities({
           <Table className="rounded-md overflow-hidden ">
             <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
-                <TableHead className="w-[300px]">Activity</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Frequency</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[300px]">{t('subProjectActivities.activityColumn')}</TableHead>
+                <TableHead>{t('subProjectActivities.categoryColumn')}</TableHead>
+                <TableHead>{t('subProjectActivities.frequencyColumn')}</TableHead>
+                <TableHead>{t('subProjectActivities.statusColumn')}</TableHead>
+                <TableHead>{t('subProjectActivities.createdColumn')}</TableHead>
+                <TableHead>{t('subProjectActivities.updatedColumn')}</TableHead>
+                <TableHead className="text-right">{t('subProjectActivities.actionsColumn')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -446,7 +382,7 @@ export function SubProjectActivities({
                 <TableRow>
                   <TableCell colSpan={7}>
                     <span className="text-sm text-muted-foreground">
-                      Loading activities...
+                      {t('subProjectActivities.loadingActivities')}
                     </span>
                   </TableCell>
                 </TableRow>
@@ -460,16 +396,19 @@ export function SubProjectActivities({
                   </TableCell>
                 </TableRow>
               )}
-              {!listLoading && !listError && filteredActivities.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7}>
-                    <span className="text-sm text-muted-foreground">
-                      No activities found.
-                    </span>
-                  </TableCell>
-                </TableRow>
-              )}
-              {!listLoading && !listError &&
+              {!listLoading &&
+                !listError &&
+                filteredActivities.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7}>
+                      <span className="text-sm text-muted-foreground">
+                        {t('subProjectActivities.noActivitiesFound')}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                )}
+              {!listLoading &&
+                !listError &&
                 filteredActivities.map((activity) => (
                   <TableRow key={activity.id}>
                     <TableCell>
@@ -479,15 +418,27 @@ export function SubProjectActivities({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{activity.category}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{activity.frequency}</Badge>
+                      <Badge
+                        variant="outline"
+                        className="bg-[#0073e6] border-0 text-white"
+                      >
+                        {activity.category}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={activity.status === "active" ? "default" : "outline"}
-                        className="mt-1"
+                        variant="secondary"
+                        className="bg-[#E0F2FE] border-0"
+                      >
+                        {activity.frequency}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          activity.status === "active" ? "default" : "outline"
+                        }
+                        className="mt-1 text-[#4AA785] bg-[#DEF8EE]"
                       >
                         {activity.status}
                       </Badge>
@@ -505,11 +456,11 @@ export function SubProjectActivities({
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem>
                               <FileEdit className="h-4 w-4 mr-2" />
-                              Edit Activity
+                              {t('subProjectActivities.editActivity')}
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Download className="h-4 w-4 mr-2" />
-                              Export Details
+                              {t('subProjectActivities.exportDetails')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -519,77 +470,6 @@ export function SubProjectActivities({
                 ))}
             </TableBody>
           </Table>
-        </TabsContent>
-
-        <TabsContent value="planned" className="pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPlannedActivities.map((plan) => (
-              <Card key={plan.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between">
-                    <CardTitle className="text-base">{plan.title}</CardTitle>
-                    <Badge variant="outline">{plan.type}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    {plan.description}
-                  </p>
-
-                  <div>
-                    <div className="text-sm text-muted-foreground">
-                      Progress
-                    </div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm">
-                        {plan.completed} of {plan.targetNumber} completed
-                      </span>
-                      <span className="text-sm">
-                        {Math.round((plan.completed / plan.targetNumber) * 100)}
-                        %
-                      </span>
-                    </div>
-                    <Progress
-                      value={(plan.completed / plan.targetNumber) * 100}
-                      className="h-2"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <div className="text-muted-foreground">Frequency</div>
-                      <div>{plan.frequency}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Assigned To</div>
-                      <div>{plan.assignedTo}</div>
-                    </div>
-                  </div>
-
-                  {/* <div className="flex justify-end gap-2">
-                    <Button variant="outline" size="sm">
-                      View Schedule
-                    </Button>
-                    <Button size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Record Activity
-                    </Button>
-                  </div> */}
-                </CardContent>
-              </Card>
-            ))}
-
-            <Card className="border-dashed bg-[#F7F9FB] flex flex-col items-center justify-center p-6">
-              <div className="rounded-full border-dashed border-2 p-3 mb-3">
-                <Plus className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h4 className="mb-1">Create Activity Plan</h4>
-              <p className="text-sm text-muted-foreground text-center mb-3">
-                Define a scheduled activity to be repeated regularly
-              </p>
-              <Button className="bg-black/5">Create Plan</Button>
-            </Card>
-          </div>
         </TabsContent>
       </Tabs>
     </div>

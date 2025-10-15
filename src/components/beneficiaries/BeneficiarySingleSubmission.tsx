@@ -8,6 +8,9 @@ import {
   selectSelectedResponse,
   selectSelectedResponseError,
   selectSelectedResponseLoading,
+  fetchFormTemplateById,
+  selectSelectedTemplate,
+  selectSelectedTemplateLoading,
 } from "../../store/slices/formSlice";
 import { Button } from "../ui/button/button";
 import {
@@ -25,6 +28,8 @@ import {
   TableRow,
 } from "../ui/data-display/table";
 import { Badge } from "../ui/data-display/badge";
+import { MapContainer, Marker, TileLayer } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 
 export default function BeneficiarySingleSubmission() {
   const { id, formResponseId } = useParams<{
@@ -37,6 +42,8 @@ export default function BeneficiarySingleSubmission() {
   const response = useSelector(selectSelectedResponse);
   const loading = useSelector(selectSelectedResponseLoading);
   const error = useSelector(selectSelectedResponseError);
+  const selectedTemplate = useSelector(selectSelectedTemplate);
+  const selectedTemplateLoading = useSelector(selectSelectedTemplateLoading);
 
   useEffect(() => {
     if (formResponseId) {
@@ -44,10 +51,34 @@ export default function BeneficiarySingleSubmission() {
     }
   }, [dispatch, formResponseId]);
 
+  // Fetch the form template when the response is available
+  useEffect(() => {
+    if (!response) return;
+    const templateId = response.template?.id || (response as any)?.formTemplateId;
+    if (templateId) {
+      dispatch(fetchFormTemplateById({ id: templateId }));
+    }
+  }, [response, dispatch]);
+
   const fieldEntries = useMemo(() => {
     if (!response?.data) return [] as Array<[string, any]>;
     return Object.entries(response.data);
   }, [response]);
+
+  // Build mapping name -> label from the template schema
+  const labelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    const fields = (selectedTemplate as any)?.schema?.fields || [];
+    for (const f of fields) {
+      if (f?.name) map[f.name] = f.label || f.name;
+    }
+    return map;
+  }, [selectedTemplate]);
+
+  const position: [number, number] | null =
+    response?.latitude && response?.longitude
+      ? [Number(response.latitude), Number(response.longitude)]
+      : null;
 
   const formatLabel = (label: string) => {
     if (!label) return label;
@@ -121,6 +152,28 @@ export default function BeneficiarySingleSubmission() {
                 </div>
               </div>
 
+              {selectedTemplateLoading && (
+                <div className="text-sm text-muted-foreground">
+                  Loading form definition…
+                </div>
+              )}
+
+              {position && (
+                <div style={{ height: "300px", width: "100%" }}>
+                  <MapContainer
+                    center={position}
+                    zoom={13}
+                    style={{ height: "100%", width: "100%" }}
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    />
+                    <Marker position={position}></Marker>
+                  </MapContainer>
+                </div>
+              )}
+
               <Card className="bg-[#F7F9FB] border-0 ">
                 <CardHeader>
                   <CardTitle className="text-base">Submitted Data</CardTitle>
@@ -142,7 +195,7 @@ export default function BeneficiarySingleSubmission() {
                             aria-hidden="true"
                           ></span>
                           <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                            {formatLabel(key)}
+                            {labelMap[key] ?? formatLabel(key)}
                           </div>
                           <div className="mt-1 text-sm font-medium text-slate-900 break-words">
                             {typeof value === "object"

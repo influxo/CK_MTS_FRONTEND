@@ -15,9 +15,18 @@ import { Button } from "../ui/button/button";
 import { ScrollArea } from "../ui/layout/scroll-area";
 import { cn } from "../ui/utils/utils";
 import { useAuth } from "../../hooks/useAuth";
+import { useTranslation } from "../../hooks/useTranslation";
 import type { Project } from "../../services/projects/projectModels";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsError,
+  selectUserProjectsLoading,
+  selectUserProjectsTree,
+} from "../../store/slices/userProjectsSlice";
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -41,7 +50,11 @@ export function Sidebar({
 }: SidebarProps) {
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(false);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const dispatch = useDispatch<AppDispatch>();
+  const { logout, user, isLoading: authLoading } = useAuth();
+  const userProjectsTree = useSelector(selectUserProjectsTree);
+  const userProjectsLoading = useSelector(selectUserProjectsLoading);
+  const userProjectsError = useSelector(selectUserProjectsError);
 
   const location = useLocation();
   const matchProject = matchPath("/projects/:projectId", location.pathname);
@@ -51,52 +64,120 @@ export function Sidebar({
     if (onCloseMobile) onCloseMobile();
   };
 
-  const navItems = [
-    {
-      title: "Dashboard",
-      icon: <LayoutDashboard className="h-5 w-5" />,
-      to: "/dashboard",
-    },
-    {
-      title: "Projects",
-      icon: <FolderKanban className="h-5 w-5" />,
-      to: "/projects",
-    },
-    {
-      title: "Beneficiaries",
-      icon: <Users className="h-5 w-5" />,
-      to: "/beneficiaries",
-    },
-    {
-      title: "Forms",
-      icon: <ClipboardList className="h-5 w-5" />,
-      to: "/forms",
-    },
-    {
-      title: "Data Entry",
-      icon: <ClipboardList className="h-5 w-5" />,
-      to: "/data-entry",
-    },
-    {
-      title: "Reports",
-      icon: <BarChart3 className="h-5 w-5" />,
-      to: "/reports",
-    },
-    {
-      title: "Employees",
-      icon: <Users className="h-5 w-5" />,
-      to: "/employees",
-    },
-  ];
+  // Treat sidebar as collapsed only on small screens and when not in mobile-open overlay
+  const isCollapsed = collapsed && !mobileOpen;
+  
+  const { t } = useTranslation();
+
+  // Role helpers
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    // Accept a variety of backend-provided naming conventions
+    return normalizedRoles.some(
+      (r) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") || // matches "system administrator", "system-admin"
+        r.includes("super admin") // matches "super administrator", "super-admin"
+    );
+  }, [normalizedRoles]);
+  const isFieldOperator = useMemo(() => {
+    // Match common variants
+    return (
+      normalizedRoles.includes("field operator") ||
+      normalizedRoles.includes("field-operator") ||
+      normalizedRoles.includes("fieldoperator") ||
+      normalizedRoles.includes("field_op") ||
+      // Fallback: contains "field" and "operator"
+      normalizedRoles.some((r) => r.includes("field") && r.includes("operator"))
+    );
+  }, [normalizedRoles]);
+
+  // Build navigation items based on role
+  const fullNavItems = useMemo(
+    () => [
+      {
+        title: t('sidebar.dashboard'),
+        icon: <LayoutDashboard className="h-5 w-5" />,
+        to: "/dashboard",
+      },
+      {
+        title: t('sidebar.projects'),
+        icon: <FolderKanban className="h-5 w-5" />,
+        to: "/projects",
+      },
+      {
+        title: t('sidebar.beneficiaries'),
+        icon: <Users className="h-5 w-5" />,
+        to: "/beneficiaries",
+      },
+      {
+        title: t('sidebar.forms'),
+        icon: <ClipboardList className="h-5 w-5" />,
+        to: "/forms",
+      },
+      {
+        title: t('sidebar.dataEntry'),
+        icon: <ClipboardList className="h-5 w-5" />,
+        to: "/data-entry",
+      },
+      {
+        title: t('sidebar.reports'),
+        icon: <BarChart3 className="h-5 w-5" />,
+        to: "/reports",
+      },
+      {
+        title: t('sidebar.employees'),
+        icon: <Users className="h-5 w-5" />,
+        to: "/employees",
+      },
+    ],
+    [t]
+  );
+
+  const navItems = useMemo(() => {
+    if (isFieldOperator && !isSysOrSuperAdmin) {
+      // Field operators should see Dashboard and Data Entry only
+      return fullNavItems.filter((i) =>
+        [t('sidebar.dashboard'), t('sidebar.dataEntry')].includes(i.title)
+      );
+    }
+    return fullNavItems;
+  }, [fullNavItems, isFieldOperator, isSysOrSuperAdmin, t]);
+
+  // Load user's assigned projects if not admin
+  useEffect(() => {
+    if (!isSysOrSuperAdmin && user?.id) {
+      dispatch(fetchUserProjectsByUserId(String(user.id)));
+    }
+  }, [dispatch, isSysOrSuperAdmin, user?.id]);
+
+  type SimpleProject = { id: string; name: string };
+  const visibleProjects: SimpleProject[] = useMemo(() => {
+    if (isSysOrSuperAdmin) {
+      return (projects || []).map((p) => ({ id: p.id, name: p.name }));
+    }
+    return (userProjectsTree || []).map((p) => ({ id: p.id, name: p.name }));
+  }, [isSysOrSuperAdmin, projects, userProjectsTree]);
+
+  const isProjectsLoading = isSysOrSuperAdmin
+    ? !!projectsLoading
+    : !!userProjectsLoading;
+  const projectsErrMsg = isSysOrSuperAdmin ? projectsError : userProjectsError;
 
   return (
     <aside
       style={{
-        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.08)",
       }}
       className={cn(
-        "flex flex-col  bg-sidebar bg-white shadow-lg text-sidebar-foreground transition-all duration-300 ease-in-out",
-        collapsed ? "w-[70px]" : "w-[240px]",
+        "flex flex-col  bg-sidebar bg-[#F5F5F5] bg-opacity-20 shadow-lg text-sidebar-foreground transition-all duration-300 ease-in-out",
+        // Width behavior: full width overlay on small screens when mobileOpen; otherwise 70px/240px. Always 240px on lg.
+        mobileOpen ? "w-screen" : isCollapsed ? "w-[70px]" : "w-[240px]",
+        "lg:w-[240px]",
         "lg:relative fixed inset-y-0 left-0 z-50 lg:z-auto transform",
         mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         "lg:shadow-none",
@@ -106,17 +187,25 @@ export function Sidebar({
       <div
         className={cn(
           "flex h-16 items-center  px-4",
-          collapsed ? "justify-center" : "justify-between"
+          isCollapsed ? "justify-center" : "justify-between"
         )}
       >
-        {!collapsed && (
-          <NavLink to="/dashboard" className="flex items-center gap-2">
-            <PieChart className="h-6 w-6 text-sidebar-primary" />
-            <h1 className="font-semibold text-lg">CaritasMotherTeresa</h1>
-          </NavLink>
-        )}
-        {collapsed && !mobileOpen && (
-          <PieChart className="h-6 w-6 text-sidebar-primary" />
+        <NavLink
+          to="/dashboard"
+          className={cn(
+            "flex items-center gap-2",
+            // Hide brand on small screens when collapsed, but always show on lg
+            isCollapsed ? "hidden lg:flex" : "flex"
+          )}
+        >
+          <img
+            src="/images/logo.jpg"
+            alt="Caritas Mother Teresa"
+            className=" w-auto object-center h-20"
+          />
+        </NavLink>
+        {isCollapsed && !mobileOpen && (
+          <PieChart className="h-6 w-6 text-sidebar-primary lg:hidden" />
         )}
         {!mobileOpen ? (
           <Button
@@ -124,8 +213,8 @@ export function Sidebar({
             size="icon"
             onClick={onToggleCollapse}
             className={cn(
-              "text-sidebar-foreground/60 hover:text-sidebar-foreground",
-              collapsed && "hidden"
+              "text-sidebar-foreground/60 hover:text-sidebar-foreground lg:hidden",
+              isCollapsed && "hidden"
             )}
           >
             <ChevronLeft className="h-5 w-5" />
@@ -135,7 +224,7 @@ export function Sidebar({
             variant="ghost"
             size="icon"
             onClick={onCloseMobile}
-            className="text-sidebar-foreground/60 hover:text-sidebar-foreground"
+            className="text-sidebar-foreground/60 hover:text-sidebar-foreground lg:hidden"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -144,138 +233,181 @@ export function Sidebar({
 
       <ScrollArea className="flex-1 py-4">
         <nav className="flex flex-col gap-1 px-2">
-          {navItems.map((item) =>
-            item.title === "Projects" ? (
-              <div key={item.to}>
-                <button
-                  onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
-                  className={cn(
-                    "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors w-full text-left",
-                    "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-black before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
-                    isProjectsExpanded
-                      ? "text-black bg-black bg-opacity-5 before:scale-x-100"
-                      : "text-black hover:text-black hover:bg-black hover:bg-opacity-5 before:scale-x-0",
-                    collapsed && "justify-center px-2"
-                  )}
-                >
-                  <FolderKanban className="h-5 w-5" />
-                  {!collapsed && (
-                    <span className="ml-2 flex-1 text-left">Projects</span>
-                  )}
-                  {!collapsed && (
-                    <ChevronRight
-                      size={18}
+          {authLoading || !user ? (
+            <div className="px-2 py-2 text-xs text-gray-500">{t('sidebar.loadingMenu')}</div>
+          ) : (
+            <>
+              {navItems.map((item) =>
+                item.title === t('sidebar.projects') ? (
+                  <div key={item.to}>
+                    <button
+                      onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
                       className={cn(
-                        "ml-auto transition-transform duration-300",
-                        isProjectsExpanded && "rotate-90"
+                        "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors w-full text-left",
+                        "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-[#0073e6] before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
+                        isProjectsExpanded
+                          ? "text-blue bg-blue-900 bg-opacity-5 before:scale-x-100"
+                          : "text-black hover:text-black hover:bg-blue-100 hover:bg-opacity-5 before:scale-x-0",
+                        isCollapsed && "justify-center px-2"
                       )}
-                    />
-                  )}
-                </button>
-
-                <Collapsible.Root
-                  open={isProjectsExpanded}
-                  onOpenChange={setIsProjectsExpanded}
-                >
-                  <Collapsible.Content
-                    className={cn(
-                      "data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden",
-                      !collapsed && "ml-8 mt-1"
-                    )}
-                  >
-                    {projectsLoading && (
-                      <span className="text-xs text-gray-400">Loading...</span>
-                    )}
-                    {projectsError && (
-                      <span className="text-xs text-black">
-                        Error loading projects
+                    >
+                      <FolderKanban className="h-5 w-5" />
+                      <span
+                        className={cn(
+                          "ml-2 flex-1 text-left",
+                          isCollapsed && !mobileOpen ? "hidden" : "inline",
+                          "lg:inline"
+                        )}
+                      >
+                        {t('sidebar.projects')}
                       </span>
-                    )}
-                    {projects?.map((project) => {
-                      const isSelected = selectedProjectId === project.id;
+                      <ChevronRight
+                        size={18}
+                        className={cn(
+                          "ml-auto transition-transform duration-300",
+                          isProjectsExpanded && "rotate-90",
+                          isCollapsed && !mobileOpen ? "hidden" : "inline",
+                          "lg:inline"
+                        )}
+                      />
+                    </button>
 
-                      return (
-                        <div key={project.id} className="mb-1">
-                          <button
-                            onClick={() => {
-                              navigate(`/projects/${project.id}`);
-                              handleNavClick();
-                            }}
-                            className={cn(
-                              "flex items-center capitalize w-full text-left rounded-md px-2 py-1 text-sm transition-colors",
-                              isSelected
-                                ? "bg-black bg-opacity-5  text-black"
-                                : "text-black hover:bg-black hover:bg-opacity-5 hover:text-black"
-                            )}
-                          >
-                            {project.name}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </Collapsible.Content>
-                </Collapsible.Root>
-              </div>
-            ) : (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  cn(
-                    "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-black  before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
-                    isActive
-                      ? "text-black bg-black bg-opacity-5 before:scale-x-100"
-                      : "text-black hover:text-black hover:bg-black hover:bg-opacity-5 before:scale-x-0",
-                    collapsed && "justify-center px-2"
-                  )
-                }
-                onClick={handleNavClick}
-              >
-                {item.icon}
-                {!collapsed && <span className="ml-2">{item.title}</span>}
-              </NavLink>
-            )
+                    <Collapsible.Root
+                      open={isProjectsExpanded}
+                      onOpenChange={setIsProjectsExpanded}
+                    >
+                      <Collapsible.Content
+                        className={cn(
+                          "data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden",
+                          !isCollapsed && "ml-8 mt-1"
+                        )}
+                      >
+                        {isProjectsLoading && (
+                          <span className="text-xs text-gray-400">
+                            {t('common.loading')}
+                          </span>
+                        )}
+                        {projectsErrMsg && (
+                          <span className="text-xs text-black">
+                            {t('sidebar.errorLoadingProjects')}
+                          </span>
+                        )}
+                        {visibleProjects?.map((project) => {
+                          const isSelected = selectedProjectId === project.id;
+
+                          return (
+                            <div key={project.id} className="mb-1">
+                              <button
+                                onClick={() => {
+                                  navigate(`/projects/${project.id}`);
+                                  handleNavClick();
+                                }}
+                                className={cn(
+                                  "flex items-center capitalize w-full text-left rounded-md px-2 py-1 text-sm transition-colors",
+                                  isSelected
+                                    ? "bg-[#0073e6]   bg-opacity-5  text-black"
+                                    : "text-black hover:bg-[#0073e6] hover:bg-opacity-5 hover:text-black"
+                                )}
+                              >
+                                {project.name}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </Collapsible.Content>
+                    </Collapsible.Root>
+                  </div>
+                ) : (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      cn(
+                        "relative flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                        "before:absolute before:top-0 before:bottom-0 before:left-0 before:w-[4px] before:bg-[#0073e6]   before:origin-left before:scale-x-0 before:transition-transform before:duration-300 before:rounded-l-full",
+                        isActive
+                          ? "text-black bg-blue-900 bg-opacity-5 before:scale-x-100"
+                          : "text-black hover:text-black hover:bg-blue-200 hover:bg-opacity-5 before:scale-x-0",
+                        isCollapsed && "justify-center px-2"
+                      )
+                    }
+                    onClick={handleNavClick}
+                  >
+                    {item.icon}
+                    <span
+                      className={cn(
+                        "ml-2",
+                        isCollapsed && !mobileOpen ? "hidden" : "inline",
+                        "lg:inline"
+                      )}
+                    >
+                      {item.title}
+                    </span>
+                  </NavLink>
+                )
+              )}
+            </>
           )}
         </nav>
       </ScrollArea>
 
       <div className="mt-auto border-t p-4">
-        {!collapsed && (
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-2 w-2 rounded-full bg-green-500"></div>
-            <span className="text-xs text-sidebar-foreground/60">
-              System Online
-            </span>
-          </div>
-        )}
+        <div
+          className={cn(
+            "flex items-center gap-2 mb-2",
+            isCollapsed && !mobileOpen ? "hidden" : "flex",
+            "lg:flex"
+          )}
+        >
+          {/* <div className="h-2 w-2 rounded-full bg-green-500"></div>
+          <span className="text-xs text-sidebar-foreground/60">
+            System Online
+          </span> */}
+        </div>
 
         <Button
           variant="ghost"
           className={cn(
             "w-full justify-start font-normal text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-red-100 mb-2",
-            collapsed && "justify-center px-2"
+            isCollapsed && "justify-center px-2"
           )}
           onClick={logout}
         >
-          <LogOut className={cn("h-5 w-5", !collapsed && "mr-2")} />
-          {!collapsed && <span>Logout</span>}
+          <LogOut
+            className={cn(
+              "h-5 w-5",
+              (!isCollapsed || mobileOpen) && "mr-2",
+              "lg:mr-2"
+            )}
+          />
+          <span
+            className={cn(
+              isCollapsed && !mobileOpen ? "hidden" : "inline",
+              "lg:inline"
+            )}
+          >
+            {t('auth.logout')}
+          </span>
         </Button>
 
         <Button
           variant="ghost"
           className={cn(
-            "w-full justify-start font-normal text-sidebar-foreground/60 hover:text-sidebar-foreground",
-            collapsed && "justify-center px-2"
+            "w-full justify-start font-normal text-sidebar-foreground/60 hover:text-sidebar-foreground lg:hidden",
+            isCollapsed && "justify-center px-2"
           )}
           onClick={onToggleCollapse}
         >
-          {collapsed ? (
+          {isCollapsed ? (
             <ChevronRight className="h-5 w-5" />
           ) : (
             <ChevronLeft className="h-5 w-5 mr-2" />
           )}
-          {!collapsed && <span>Collapse</span>}
+          <span
+            className={cn(isCollapsed && !mobileOpen ? "hidden" : "inline")}
+          >
+            {t('sidebar.collapse')}
+          </span>
         </Button>
       </div>
     </aside>

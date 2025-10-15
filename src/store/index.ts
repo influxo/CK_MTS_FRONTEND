@@ -1,4 +1,4 @@
-import { configureStore } from "@reduxjs/toolkit";
+import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
 import projectsReducer from "./slices/projectsSlice";
 import subprojectsReducer from "./slices/subProjectSlice";
@@ -11,27 +11,38 @@ import userProjectsReducer from "./slices/userProjectsSlice";
 import serviceMetricsReducer from "./slices/serviceMetricsSlice";
 import kpiReducer from "./slices/kpiSlice";
 import demographicsReducer from "./slices/demographicsSlice";
+import { logoutUser } from "./slices/authSlice";
 import formsReducer from "./slices/formsSlice";
+import formReducer from "./slices/formSlice";
 
+const appReducer = combineReducers({
+  auth: authReducer,
+  projects: projectsReducer,
+  subprojects: subprojectsReducer,
+  forms: formsReducer,
+  form: formReducer,
+  employees: employeesReducer,
+  roles: rolesReducer,
+  activities: activitiesReducer,
+  beneficiaries: beneficiariesReducer,
+  services: servicesReducer,
+  userProjects: userProjectsReducer,
+  serviceMetrics: serviceMetricsReducer,
+  kpis: kpiReducer,
+  demographics: demographicsReducer,
+});
+
+// Root reducer that resets the state on logout
+const rootReducer = (state: any, action: any) => {
+  if (action.type === logoutUser.fulfilled.type) {
+    state = undefined; // reset entire redux state to initial slices
+  }
+  return appReducer(state, action);
+};
 
 // Configure the Redux store
 export const store = configureStore({
-  reducer: {
-    auth: authReducer,
-    projects: projectsReducer,
-    subprojects: subprojectsReducer,
-    forms: formsReducer,
-    employees: employeesReducer,
-    roles: rolesReducer,
-    activities: activitiesReducer,
-    beneficiaries: beneficiariesReducer,
-    services: servicesReducer,
-    userProjects: userProjectsReducer,
-    serviceMetrics: serviceMetricsReducer,
-    kpis: kpiReducer,
-    demographics: demographicsReducer,
-    // Add other reducers here as your app grows
-  },
+  reducer: rootReducer,
   // Add middleware or other configuration options here if needed
 });
 

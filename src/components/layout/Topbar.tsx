@@ -9,7 +9,7 @@ import {
   Settings,
   User,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -47,6 +47,8 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import { Textarea } from "../ui/form/textarea";
+import { LanguageSwitcher } from "../LanguageSwitcher";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface TopbarProps {
   title?: string;
@@ -60,6 +62,23 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(selectCurrentUser);
+
+  const { t } = useTranslation();
+
+  // Determine role
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
 
   const [formData, setFormData] = useState<CreateProjectRequest>({
     name: "",
@@ -133,12 +152,10 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
     }
   };
 
-  console.log("user from topbar", user);
-
   return (
     // <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
     <header
-      style={{ boxShadow: "0 1px 10px rgba(0, 0, 0, 0.1)" }}
+      style={{ boxShadow: "0 1px 4px rgba(0, 0, 0, 0.05)" }}
       className="sticky top-0 z-40 flex h-16 items-center bg-white gap-4 px-4 sm:px-6"
     >
       <div className="flex flex-1 items-center gap-4">
@@ -146,7 +163,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden"
+          className="lg:hidden"
           onClick={toggleMobileSidebar}
         >
           <Menu className="h-5 w-5" />
@@ -156,10 +173,10 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         {title && <h1 className="font-medium hidden sm:block">{title}</h1>}
 
         {/* Search */}
-        <div className="relative hidden sm:block max-w-[400px] w-full">
+        {/* <div className="relative hidden sm:block max-w-[400px] w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search..." className="pl-9 w-full bg-gray-100" />
-        </div>
+        </div> */}
       </div>
 
       <div className="flex items-center gap-3">
@@ -180,110 +197,131 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
 
         {/* No theme toggle - light mode only */}
 
+        {/* Language Switcher */}
+        <LanguageSwitcher />
+
         {/* Create Project */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#2E343E] text-white flex ">
-              <Plus className="h-4 w-4 mr-2 " />
-              Create Project
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]">
-            <DialogHeader>
-              <DialogTitle>Create New Project</DialogTitle>
-              <DialogDescription>
-                Enter the details for your new project. All fields marked with *
-                are required.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="title" className="text-right">
-                  Title *
-                </Label>
-                <Input
-                  id="title"
-                  name="name"
-                  className={`col-span-3 ${
-                    formErrors.name ? "border-red-500" : ""
-                  }`}
-                  placeholder="Project title"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                />
-                {formErrors.name && (
-                  <p className="text-red-500 text-sm col-span-3 col-start-2">
-                    {formErrors.name}
-                  </p>
-                )}
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="category" className="text-right">
-                  Category *
-                </Label>
-                <Input
-                  id="category"
-                  name="category"
-                  className={`col-span-3 ${
-                    formErrors.category ? "border-red-500" : ""
-                  }`}
-                  placeholder="Project Category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                />
-                {formErrors.category && (
-                  <p className="text-red-500 text-sm col-span-3 col-start-2">
-                    {formErrors.category}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">
-                  Status
-                </Label>
-                <Select
-                  defaultValue="active"
-                  value={formData.status}
-                  onValueChange={(value) => handleSelectField(value, "status")}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="description" className="text-right pt-2">
-                  Description
-                </Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  className="col-span-3"
-                  placeholder="Provide a description of the project"
-                  rows={3}
-                  value={formData.description}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <DialogFooter>
+        {isSysOrSuperAdmin && (
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          >
+            <DialogTrigger asChild>
               <Button
-                variant="outline"
-                onClick={() => setIsCreateDialogOpen(false)}
+                className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
               >
-                Cancel
+                <Plus className="h-4 w-4 mr-2" />
+                {t("createProject")}
               </Button>
-              <Button onClick={handleCreateProject}>Create Project</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[550px]">
+              <DialogHeader>
+                <DialogTitle>Krijo Projekt të ri</DialogTitle>
+                <DialogDescription>
+                  Shkruani detajet për projektin tuaj të ri. Të gjitha fushat e
+                  shënuara me * janë të detyrueshme.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">
+                    Titulli *
+                  </Label>
+                  <Input
+                    id="title"
+                    name="name"
+                    className={`col-span-3 border-0 bg-blue-50 ${
+                      formErrors.name ? "border-red-500" : ""
+                    }`}
+                    placeholder="Titulli i projektit"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                  />
+                  {formErrors.name && (
+                    <p className="text-red-500 text-sm col-span-3 col-start-2">
+                      {formErrors.name}
+                    </p>
+                  )}
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="category" className="text-right">
+                    Kategoria *
+                  </Label>
+                  <Input
+                    id="category"
+                    name="category"
+                    className={`col-span-3 border-0 bg-blue-50 ${
+                      formErrors.category ? "border-red-500" : ""
+                    }`}
+                    placeholder="Kategoria e projektit"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                  />
+                  {formErrors.category && (
+                    <p className="text-red-500 text-sm col-span-3 col-start-2">
+                      {formErrors.category}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">
+                    Statusi
+                  </Label>
+                  <Select
+                    defaultValue="active"
+                    value={formData.status}
+                    onValueChange={(value) =>
+                      handleSelectField(value, "status")
+                    }
+                  >
+                    <SelectTrigger className="col-span-3 bg-blue-50 border-0">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label htmlFor="description" className="text-right pt-2">
+                    Përshkrimi
+                  </Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    className="col-span-3 bg-blue-50 border-0"
+                    placeholder="Përshkrimi i projektit"
+                    rows={3}
+                    value={formData.description}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  className="bg-blue-100 border-0"
+                  variant="outline"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                >
+                  Dil
+                </Button>
+                <Button
+                  onClick={handleCreateProject}
+                  className="bg-[#0073e6] border-0 text-white"
+                >
+                  Shto Projektin
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
 
         {/* Notifications */}
         <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>

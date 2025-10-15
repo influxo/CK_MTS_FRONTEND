@@ -11,6 +11,9 @@ export interface CreateBeneficiaryRequest {
   gender: string;
   municipality: string;
   nationality: string;
+  ethnicity?: string;
+  residence?: string;
+  householdMembers?: number;
   status: string; // e.g., "active"
   // Optional medical and additional details
   details?: BeneficiaryDetails;
@@ -76,6 +79,9 @@ export interface BeneficiaryPIIEnc {
   genderEnc: BeneficiaryPIIEncField;
   municipalityEnc: BeneficiaryPIIEncField;
   nationalityEnc: BeneficiaryPIIEncField;
+  ethnicityEnc?: BeneficiaryPIIEncField;
+  residenceEnc?: BeneficiaryPIIEncField;
+  householdMembersEnc?: BeneficiaryPIIEncField;
 }
 
 export interface BeneficiaryPII {
@@ -89,6 +95,9 @@ export interface BeneficiaryPII {
   gender: string;
   municipality: string;
   nationality: string;
+  ethnicity?: string;
+  residence?: string;
+  householdMembers?: number;
 }
 
 export interface BeneficiaryListItem extends Beneficiary {
@@ -218,6 +227,18 @@ export interface GetBeneficiaryEntitiesResponse {
   message?: string;
 }
 
+// Remove association between beneficiary and an entity (DELETE /beneficiaries/{id}/entities)
+export interface RemoveBeneficiaryEntityAssociationRequest {
+  id: string; // beneficiary id (path)
+  entityId: string; // body
+  entityType: string; // body (e.g., "project" | "subproject")
+}
+
+export interface RemoveBeneficiaryEntityAssociationResponse {
+  success: boolean;
+  message?: string;
+}
+
 // Associate beneficiary to entities (POST /beneficiaries/{id}/entities)
 export interface BeneficiaryEntityAssociationItem {
   entityId: string;
@@ -241,5 +262,24 @@ export interface AssociateBeneficiaryToEntitiesResponse {
       id: string; // association/link id
     }>;
   };
+  message?: string;
+}
+
+// Service deliveries summary metrics (GET /services/metrics/deliveries/summary)
+// We only implement the beneficiaryId query for now
+export interface GetServiceDeliveriesSummaryRequest {
+  beneficiaryId?: string;
+}
+
+export interface ServiceDeliveriesSummaryData {
+  totalDeliveries: number;
+  uniqueBeneficiaries: number;
+  uniqueStaff: number;
+  uniqueServices: number;
+}
+
+export interface GetServiceDeliveriesSummaryResponse {
+  success: boolean;
+  data?: ServiceDeliveriesSummaryData;
   message?: string;
 }

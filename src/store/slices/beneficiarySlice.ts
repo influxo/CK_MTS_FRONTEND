@@ -21,6 +21,11 @@ import type {
   GetBeneficiariesByEntityResponse,
   AssociateBeneficiaryToEntitiesRequest,
   AssociateBeneficiaryToEntitiesResponse,
+  RemoveBeneficiaryEntityAssociationRequest,
+  RemoveBeneficiaryEntityAssociationResponse,
+  GetServiceDeliveriesSummaryRequest,
+  GetServiceDeliveriesSummaryResponse,
+  ServiceDeliveriesSummaryData,
 } from "../../services/beneficiaries/beneficiaryModels";
 
 interface BeneficiaryState {
@@ -78,6 +83,10 @@ interface BeneficiaryState {
   associateIsLoading: boolean;
   associateError: string | null;
   associateResult: AssociateBeneficiaryToEntitiesResponse["data"] | null;
+  // service deliveries summary metrics
+  deliveriesSummary: ServiceDeliveriesSummaryData | null;
+  deliveriesSummaryIsLoading: boolean;
+  deliveriesSummaryError: string | null;
 }
 
 const initialState: BeneficiaryState = {
@@ -135,6 +144,10 @@ const initialState: BeneficiaryState = {
   associateIsLoading: false,
   associateError: null,
   associateResult: null,
+  // service deliveries summary metrics
+  deliveriesSummary: null,
+  deliveriesSummaryIsLoading: false,
+  deliveriesSummaryError: null,
 };
 
 export const createBeneficiary = createAsyncThunk<
@@ -177,35 +190,29 @@ export const associateBeneficiaryToEntities = createAsyncThunk<
   AssociateBeneficiaryToEntitiesResponse,
   AssociateBeneficiaryToEntitiesRequest,
   { rejectValue: string }
->(
-  "beneficiaries/associateToEntities",
-  async (params, { rejectWithValue }) => {
-    const res = await beneficiaryService.associateBeneficiaryToEntities(params);
-    if (!res.success) {
-      return rejectWithValue(
-        res.message || "Failed to associate beneficiary to entities"
-      );
-    }
-    return res;
+>("beneficiaries/associateToEntities", async (params, { rejectWithValue }) => {
+  const res = await beneficiaryService.associateBeneficiaryToEntities(params);
+  if (!res.success) {
+    return rejectWithValue(
+      res.message || "Failed to associate beneficiary to entities"
+    );
   }
-);
+  return res;
+});
 
 export const fetchBeneficiariesByEntity = createAsyncThunk<
   GetBeneficiariesByEntityResponse,
   GetBeneficiariesByEntityRequest,
   { rejectValue: string }
->(
-  "beneficiaries/fetchByEntity",
-  async (params, { rejectWithValue }) => {
-    const res = await beneficiaryService.getBeneficiariesByEntity(params);
-    if (!res.success) {
-      return rejectWithValue(
-        res.message || "Failed to fetch beneficiaries by entity"
-      );
-    }
-    return res;
+>("beneficiaries/fetchByEntity", async (params, { rejectWithValue }) => {
+  const res = await beneficiaryService.getBeneficiariesByEntity(params);
+  if (!res.success) {
+    return rejectWithValue(
+      res.message || "Failed to fetch beneficiaries by entity"
+    );
   }
-);
+  return res;
+});
 
 export const updateBeneficiaryById = createAsyncThunk<
   UpdateBeneficiaryResponse,
@@ -223,16 +230,15 @@ export const fetchBeneficiaryServices = createAsyncThunk<
   GetBeneficiaryServicesResponse,
   GetBeneficiaryServicesRequest,
   { rejectValue: string }
->(
-  "beneficiaries/fetchServices",
-  async (params, { rejectWithValue }) => {
-    const res = await beneficiaryService.getBeneficiaryServices(params);
-    if (!res.success) {
-      return rejectWithValue(res.message || "Failed to fetch beneficiary services");
-    }
-    return res;
+>("beneficiaries/fetchServices", async (params, { rejectWithValue }) => {
+  const res = await beneficiaryService.getBeneficiaryServices(params);
+  if (!res.success) {
+    return rejectWithValue(
+      res.message || "Failed to fetch beneficiary services"
+    );
   }
-);
+  return res;
+});
 
 export const fetchBeneficiaryEntities = createAsyncThunk<
   GetBeneficiaryEntitiesResponse,
@@ -241,10 +247,49 @@ export const fetchBeneficiaryEntities = createAsyncThunk<
 >("beneficiaries/fetchEntities", async (params, { rejectWithValue }) => {
   const res = await beneficiaryService.getBeneficiaryEntities(params);
   if (!res.success) {
-    return rejectWithValue(res.message || "Failed to fetch beneficiary entities");
+    return rejectWithValue(
+      res.message || "Failed to fetch beneficiary entities"
+    );
   }
   return res;
 });
+
+export const removeBeneficiaryEntityAssociation = createAsyncThunk<
+  RemoveBeneficiaryEntityAssociationResponse,
+  RemoveBeneficiaryEntityAssociationRequest,
+  { rejectValue: string }
+>(
+  "beneficiaries/removeEntityAssociation",
+  async (params, { rejectWithValue }) => {
+    const res = await beneficiaryService.removeBeneficiaryEntityAssociation(
+      params
+    );
+    if (!res.success) {
+      return rejectWithValue(
+        res.message || "Failed to remove beneficiary entity association"
+      );
+    }
+    return res;
+  }
+);
+
+// Service deliveries summary metrics
+export const fetchServiceDeliveriesSummary = createAsyncThunk<
+  GetServiceDeliveriesSummaryResponse,
+  GetServiceDeliveriesSummaryRequest | undefined,
+  { rejectValue: string }
+>(
+  "beneficiaries/fetchServiceDeliveriesSummary",
+  async (params, { rejectWithValue }) => {
+    const res = await beneficiaryService.getServiceDeliveriesSummary(params);
+    if (!res.success) {
+      return rejectWithValue(
+        res.message || "Failed to fetch service deliveries summary"
+      );
+    }
+    return res;
+  }
+);
 
 export const deleteBeneficiaryById = createAsyncThunk<
   DeleteBeneficiaryResponse,
@@ -296,6 +341,11 @@ const beneficiarySlice = createSlice({
       state.associateIsLoading = false;
       state.associateError = null;
       state.associateResult = null;
+    },
+    clearServiceDeliveriesSummary(state) {
+      state.deliveriesSummary = null;
+      state.deliveriesSummaryIsLoading = false;
+      state.deliveriesSummaryError = null;
     },
   },
   extraReducers: (builder) => {
@@ -381,7 +431,11 @@ const beneficiarySlice = createSlice({
           action.payload.message || "Beneficiary updated successfully";
         state.updated = action.payload.data ?? null;
         // Optionally sync detail if the same record is open
-        if (state.detail && action.payload.data && state.detail.id === action.payload.data.id) {
+        if (
+          state.detail &&
+          action.payload.data &&
+          state.detail.id === action.payload.data.id
+        ) {
           state.detail = {
             ...state.detail,
             ...action.payload.data,
@@ -408,7 +462,8 @@ const beneficiarySlice = createSlice({
       })
       .addCase(fetchBeneficiaryServices.rejected, (state, action) => {
         state.servicesIsLoading = false;
-        state.servicesError = action.payload ?? "Failed to fetch beneficiary services";
+        state.servicesError =
+          action.payload ?? "Failed to fetch beneficiary services";
         state.services = [];
       })
       // entities
@@ -422,8 +477,24 @@ const beneficiarySlice = createSlice({
       })
       .addCase(fetchBeneficiaryEntities.rejected, (state, action) => {
         state.entitiesIsLoading = false;
-        state.entitiesError = action.payload ?? "Failed to fetch beneficiary entities";
+        state.entitiesError =
+          action.payload ?? "Failed to fetch beneficiary entities";
         state.entities = [];
+      })
+      // remove association: we only manage flags; caller should refetch entities
+      .addCase(removeBeneficiaryEntityAssociation.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        removeBeneficiaryEntityAssociation.fulfilled,
+        (state, _action) => {
+          state.isLoading = false;
+        }
+      )
+      .addCase(removeBeneficiaryEntityAssociation.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? "Failed to remove association";
       })
       // delete
       .addCase(deleteBeneficiaryById.pending, (state) => {
@@ -474,11 +545,34 @@ const beneficiarySlice = createSlice({
         state.associateError =
           action.payload ?? "Failed to associate beneficiary to entities";
         state.associateResult = null;
+      })
+      // service deliveries summary
+      .addCase(fetchServiceDeliveriesSummary.pending, (state) => {
+        state.deliveriesSummaryIsLoading = true;
+        state.deliveriesSummaryError = null;
+      })
+      .addCase(fetchServiceDeliveriesSummary.fulfilled, (state, action) => {
+        state.deliveriesSummaryIsLoading = false;
+        state.deliveriesSummary = action.payload.data ?? null;
+      })
+      .addCase(fetchServiceDeliveriesSummary.rejected, (state, action) => {
+        state.deliveriesSummaryIsLoading = false;
+        state.deliveriesSummaryError =
+          action.payload ?? "Failed to fetch service deliveries summary";
+        state.deliveriesSummary = null;
       });
   },
 });
 
-export const { clearBeneficiaryMessages, clearBeneficiaryList, clearBeneficiaryDetail, clearBeneficiaryUpdate, clearBeneficiaryDelete, clearBeneficiaryAssociation } = beneficiarySlice.actions;
+export const {
+  clearBeneficiaryMessages,
+  clearBeneficiaryList,
+  clearBeneficiaryDetail,
+  clearBeneficiaryUpdate,
+  clearBeneficiaryDelete,
+  clearBeneficiaryAssociation,
+  clearServiceDeliveriesSummary,
+} = beneficiarySlice.actions;
 
 export const selectBeneficiaryIsLoading = (state: {
   beneficiaries: BeneficiaryState;
@@ -496,91 +590,120 @@ export const selectCreatedBeneficiary = (state: {
   beneficiaries: BeneficiaryState;
 }) => state.beneficiaries.created;
 
-export const selectBeneficiaries = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.list;
+export const selectBeneficiaries = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.list;
 
-export const selectBeneficiariesLoading = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.listIsLoading;
+export const selectBeneficiariesLoading = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.listIsLoading;
 
-export const selectBeneficiariesError = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.listError;
+export const selectBeneficiariesError = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.listError;
 
-export const selectBeneficiariesPagination = (state: { beneficiaries: BeneficiaryState }) => ({
+export const selectBeneficiariesPagination = (state: {
+  beneficiaries: BeneficiaryState;
+}) => ({
   page: state.beneficiaries.page,
   limit: state.beneficiaries.limit,
   totalItems: state.beneficiaries.totalItems,
   totalPages: state.beneficiaries.totalPages,
 });
 
-export const selectBeneficiaryDetail = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.detail;
+export const selectBeneficiaryDetail = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.detail;
 
-export const selectBeneficiaryDetailLoading = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.detailIsLoading;
+export const selectBeneficiaryDetailLoading = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.detailIsLoading;
 
-export const selectBeneficiaryDetailError = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.detailError;
+export const selectBeneficiaryDetailError = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.detailError;
 
-export const selectBeneficiaryUpdateLoading = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.updateIsLoading;
+export const selectBeneficiaryUpdateLoading = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.updateIsLoading;
 
-export const selectBeneficiaryUpdateError = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.updateError;
+export const selectBeneficiaryUpdateError = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.updateError;
 
-export const selectBeneficiaryUpdateSuccessMessage = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.updateSuccessMessage;
+export const selectBeneficiaryUpdateSuccessMessage = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.updateSuccessMessage;
 
-export const selectUpdatedBeneficiary = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.updated;
+export const selectUpdatedBeneficiary = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.updated;
 
-export const selectBeneficiaryServices = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.services;
+export const selectBeneficiaryServices = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.services;
 
-export const selectBeneficiaryServicesLoading = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.servicesIsLoading;
+export const selectBeneficiaryServicesLoading = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.servicesIsLoading;
 
-export const selectBeneficiaryServicesError = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.servicesError;
+export const selectBeneficiaryServicesError = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.servicesError;
 
-export const selectBeneficiaryServicesMeta = (state: { beneficiaries: BeneficiaryState }) => ({
+export const selectBeneficiaryServicesMeta = (state: {
+  beneficiaries: BeneficiaryState;
+}) => ({
   page: state.beneficiaries.servicesPage,
   limit: state.beneficiaries.servicesLimit,
   totalItems: state.beneficiaries.servicesTotalItems,
   totalPages: state.beneficiaries.servicesTotalPages,
 });
 
-export const selectBeneficiaryEntities = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.entities;
+export const selectBeneficiaryEntities = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.entities;
 
-export const selectBeneficiaryEntitiesLoading = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.entitiesIsLoading;
+export const selectBeneficiaryEntitiesLoading = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.entitiesIsLoading;
 
-export const selectBeneficiaryEntitiesError = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.entitiesError;
+export const selectBeneficiaryEntitiesError = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.entitiesError;
 
-export const selectBeneficiaryDeleteLoading = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.deleteIsLoading;
+export const selectBeneficiaryDeleteLoading = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.deleteIsLoading;
 
-export const selectBeneficiaryDeleteError = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.deleteError;
+export const selectBeneficiaryDeleteError = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.deleteError;
 
-export const selectBeneficiaryDeleteSuccessMessage = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.deleteSuccessMessage;
+export const selectBeneficiaryDeleteSuccessMessage = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.deleteSuccessMessage;
 
-export const selectDeletedBeneficiary = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.deleted;
+export const selectDeletedBeneficiary = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.deleted;
 
 // by-entity selectors
-export const selectBeneficiariesByEntity = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.byEntityList;
+export const selectBeneficiariesByEntity = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.byEntityList;
 
-export const selectBeneficiariesByEntityLoading = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.byEntityIsLoading;
+export const selectBeneficiariesByEntityLoading = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.byEntityIsLoading;
 
-export const selectBeneficiariesByEntityError = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.byEntityError;
+export const selectBeneficiariesByEntityError = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.byEntityError;
 
-export const selectBeneficiariesByEntityPagination = (state: { beneficiaries: BeneficiaryState }) => ({
+export const selectBeneficiariesByEntityPagination = (state: {
+  beneficiaries: BeneficiaryState;
+}) => ({
   page: state.beneficiaries.byEntityPage,
   limit: state.beneficiaries.byEntityLimit,
   totalItems: state.beneficiaries.byEntityTotalItems,
@@ -588,13 +711,29 @@ export const selectBeneficiariesByEntityPagination = (state: { beneficiaries: Be
 });
 
 // association selectors
-export const selectBeneficiaryAssociateLoading = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.associateIsLoading;
+export const selectBeneficiaryAssociateLoading = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.associateIsLoading;
 
-export const selectBeneficiaryAssociateError = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.associateError;
+export const selectBeneficiaryAssociateError = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.associateError;
 
-export const selectBeneficiaryAssociateResult = (state: { beneficiaries: BeneficiaryState }) =>
-  state.beneficiaries.associateResult;
+export const selectBeneficiaryAssociateResult = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.associateResult;
+
+// service deliveries summary selectors
+export const selectServiceDeliveriesSummary = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.deliveriesSummary;
+
+export const selectServiceDeliveriesSummaryLoading = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.deliveriesSummaryIsLoading;
+
+export const selectServiceDeliveriesSummaryError = (state: {
+  beneficiaries: BeneficiaryState;
+}) => state.beneficiaries.deliveriesSummaryError;
 
 export default beneficiarySlice.reducer;

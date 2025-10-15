@@ -6,6 +6,7 @@ import {
   FileText,
   User,
 } from "lucide-react";
+import { useTranslation } from "../../hooks/useTranslation";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Button } from "../ui/button/button";
 import {
@@ -127,22 +128,23 @@ function getActivityIcon(type: string) {
 }
 
 export function ProjectActivity({ projectId }: ProjectActivityProps) {
+  const { t } = useTranslation();
   // Filter activities for this project
   const activities = mockActivities.filter(
     (activity) => activity.projectId === projectId
   );
 
   return (
-    <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
+    <Card className="bg-[#E5ECF6] border-0 drop-shadow-sm shadow-gray-50">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-base">Recent Activity</CardTitle>
+          <CardTitle className="text-base">{t('projectActivity.recentActivity')}</CardTitle>
           <Button
             variant="ghost"
             size="sm"
             className="h-7  text-black bg-black bg-opacity-5 "
           >
-            View All
+            {t('projectActivity.viewAll')}
           </Button>
         </div>
       </CardHeader>

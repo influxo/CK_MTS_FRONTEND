@@ -213,28 +213,28 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-[#2E343E] bg-opacity-10 items-center ">
+        <TabsList className="bg-[#E0F2FE] items-center ">
           <TabsTrigger
             value="saved-reports"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
           >
             Saved Reports
           </TabsTrigger>
           <TabsTrigger
             value="generate-report"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
           >
             Generate New Report
           </TabsTrigger>
           <TabsTrigger
             value="kpi-tracking"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
           >
             KPI Tracking
           </TabsTrigger>
           <TabsTrigger
             value="templates"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
           >
             Report Templates
           </TabsTrigger>
@@ -316,7 +316,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
               <div className="flex justify-between items-center">
                 <CardTitle className="text-base">Generate New Report</CardTitle>
                 <Button
-                  className="bg-[#2E343E] text-white border-0"
+                  className="bg-[#0073e6] text-white border-0"
                   variant="outline"
                   size="sm"
                   onClick={() => setShowTemplates(!showTemplates)}
@@ -345,7 +345,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                             <h4>{template.title}</h4>
                             <Badge
                               variant="outline"
-                              className="bg-[#2E343E] border-0 text-white"
+                              className="bg-[#0073e6] border-0 text-white"
                             >
                               {template.type}
                             </Badge>
@@ -369,7 +369,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                         value={selectedPeriod}
                         onValueChange={setSelectedPeriod}
                       >
-                        <SelectTrigger className="bg-black/5 text-black border-0">
+                        <SelectTrigger className="bg-white border text-black border-gray-100">
                           <SelectValue placeholder="Select time period" />
                         </SelectTrigger>
                         <SelectContent>
@@ -404,7 +404,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                         value={selectedFormat}
                         onValueChange={setSelectedFormat}
                       >
-                        <SelectTrigger className="bg-black/5 text-black border-0">
+                        <SelectTrigger className="bg-white border text-black border-gray-100">
                           <SelectValue placeholder="Select format" />
                         </SelectTrigger>
                         <SelectContent>
@@ -435,9 +435,9 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                     <div className="space-y-2">
                       <Label htmlFor="report-title">Report Title</Label>
                       <Input
-                        className="bg-black/5 border-0"
+                        className="bg-white border text-black border-gray-100"
                         id="report-title"
-                        placeholder="Enter a title for this report"
+                        placeholder="Enter a title for  this report"
                         defaultValue={`${
                           selectedReportType.charAt(0).toUpperCase() +
                           selectedReportType.slice(1)
@@ -458,7 +458,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                         value={selectedReportType}
                         onValueChange={setSelectedReportType}
                       >
-                        <SelectTrigger className="bg-black/5 border-0   ">
+                        <SelectTrigger className="bg-white border text-black border-gray-100">
                           <SelectValue
                             placeholder="Select report type"
                             className=""
@@ -490,7 +490,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                         value={selectedPeriod}
                         onValueChange={setSelectedPeriod}
                       >
-                        <SelectTrigger className="bg-black/5 border-0">
+                        <SelectTrigger className="bg-white border text-black border-gray-100">
                           <SelectValue placeholder="Select time period" />
                         </SelectTrigger>
                         <SelectContent>
@@ -525,7 +525,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                         value={selectedFormat}
                         onValueChange={setSelectedFormat}
                       >
-                        <SelectTrigger className="bg-black/5 border-0">
+                        <SelectTrigger className="bg-white border text-black border-gray-100">
                           <SelectValue placeholder="Select format" />
                         </SelectTrigger>
                         <SelectContent>
@@ -545,7 +545,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="include-summary"
-                          className="bg-black/10"
+                          className="bg-white border text-black border-gray-100"
                           defaultChecked
                         />
                         <label htmlFor="include-summary">
@@ -555,7 +555,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="include-activities"
-                          className="bg-black/10"
+                          className="bg-white border text-black border-gray-100"
                           defaultChecked
                         />
                         <label htmlFor="include-activities">
@@ -565,7 +565,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="include-beneficiaries"
-                          className="bg-black/10"
+                          className="bg-white border text-black border-gray-100"
                           defaultChecked
                         />
                         <label htmlFor="include-beneficiaries">
@@ -575,7 +575,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="include-kpis"
-                          className="bg-black/10"
+                          className="bg-white border text-black border-gray-100"
                           defaultChecked
                         />
                         <label htmlFor="include-kpis">KPI Progress</label>
@@ -583,7 +583,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="include-charts"
-                          className="bg-black/10"
+                          className="bg-white border text-black border-gray-100"
                           defaultChecked
                         />
                         <label htmlFor="include-charts">
@@ -593,7 +593,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                       <div className="flex items-center space-x-2">
                         <Checkbox
                           id="include-recommendations"
-                          className="bg-black/10"
+                          className="bg-white border text-black border-gray-100"
                         />
                         <label htmlFor="include-recommendations">
                           Recommendations
@@ -608,12 +608,12 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="bg-[#2E343E] text-white"
+                  className="bg-[#0073e6] text-white"
                 >
                   <Eye className="h-4 w-4 mr-2" />
                   Preview Report
                 </Button>
-                <Button size="lg" className="bg-[#2E343E] text-white">
+                <Button size="lg" className="bg-[#0073e6] text-white">
                   {selectedFormat === "pdf" ? (
                     <FileText className="h-4 w-4 mr-2" />
                   ) : selectedFormat === "excel" ? (
@@ -702,7 +702,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
               <p className="text-sm text-muted-foreground text-center mb-3">
                 Define a new key performance indicator to track
               </p>
-              <Button className="bg-black/10">Create KPI</Button>
+              <Button className="bg-[#E0F2FE]">Create KPI</Button>
             </Card>
           </div>
 
@@ -710,7 +710,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
             <Button
               variant="outline"
               size="sm"
-              className="bg-[#2E343E] text-white"
+              className="bg-[#0073e6] text-white"
             >
               <Eye className="h-4 w-4 mr-2" />
               View All KPIs
@@ -719,7 +719,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-[#2E343E] text-white"
+                className="bg-[#0073e6] text-white"
               >
                 <Printer className="h-4 w-4 mr-2" />
                 Print KPI Dashboard
@@ -727,7 +727,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-[#2E343E] text-white"
+                className="bg-[#0073e6] text-white"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Export KPI Data
@@ -744,7 +744,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                 Create, edit and use report templates for consistent reporting
               </p>
             </div>
-            <Button className="bg-[#2E343E] text-white">
+            <Button className="bg-[#0073e6] text-white">
               <Plus className="h-4 w-4 mr-2" />
               Create Template
             </Button>
@@ -752,7 +752,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {mockReportTemplates.map((template) => (
-              <Card key={template.id} className="bg-[#E5ECF6]">
+              <Card key={template.id} className="bg-[#F7F9FB] border-0">
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-base">
@@ -760,7 +760,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                     </CardTitle>
                     <Badge
                       variant="outline"
-                      className="bg-[#2E343E] text-white"
+                      className="bg-[#0073e6] border-0 text-white"
                     >
                       {template.type}
                     </Badge>
@@ -780,12 +780,12 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="bg-black/10 text-black"
+                      className="bg-[#E0F2FE] border-0 text-black"
                     >
                       <FileEdit className="h-4 w-4 mr-2" />
                       Edit
                     </Button>
-                    <Button size="sm" className="bg-[#2E343E] text-white">
+                    <Button size="sm" className="bg-[#0073e6] text-white">
                       Use Template
                     </Button>
                   </div>
@@ -801,7 +801,7 @@ export function SubProjectReports({ subProjectId }: SubProjectReportsProps) {
               <p className="text-sm text-muted-foreground text-center mb-3">
                 Design a custom report template for future use
               </p>
-              <Button className="bg-black/10 text-black">
+              <Button className="bg-[#E0F2FE] text-black">
                 Create Template
               </Button>
             </Card>

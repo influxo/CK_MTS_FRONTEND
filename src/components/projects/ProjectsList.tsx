@@ -50,6 +50,7 @@ import type {
 import projectService from "../../services/projects/projectService";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch } from "../../store";
+import { useTranslation } from "../../hooks/useTranslation";
 import {
   createProject,
   selectCreateSuccessMessage,
@@ -72,7 +73,7 @@ const mockProjects = [
     startDate: "2025-01-15",
     endDate: "2025-07-15",
     leads: ["Pal Baftijaj", "Alfred Pjetri"],
-    services: ["Sherbime Infermierore", ],
+    services: ["Sherbime Infermierore"],
     description:
       "Comprehensive healthcare services for underserved rural communities in the northern region.",
   },
@@ -158,7 +159,7 @@ interface ProjectsListProps {
 }
 
 export function ProjectsList({ projects }: ProjectsListProps) {
-
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [viewType, setViewType] = useState("grid");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -277,30 +278,29 @@ export function ProjectsList({ projects }: ProjectsListProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2>Projects</h2>
+          <h2>{t('projects.title')}</h2>
           <p className="text-muted-foreground">
-            Manage and monitor all projects and sub-projects
+            {t('projects.subtitle')}
           </p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-black text-white">
+            <Button className="bg-[#0272e3] text-white">
               <Plus className="h-4 w-4 mr-2" />
-              Create Project
+              {t('projects.createProject')}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
-              <DialogTitle>Create New Project</DialogTitle>
+              <DialogTitle>{t('projects.createNewProject')}</DialogTitle>
               <DialogDescription>
-                Enter the details for your new project. All fields marked with *
-                are required.
+                {t('projects.allFieldsRequired')}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="title" className="text-right">
-                  Title *
+                  {t('projects.projectTitle')} *
                 </Label>
                 <Input
                   id="title"
@@ -308,7 +308,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                   className={`col-span-3 ${
                     formErrors.name ? "border-red-500" : ""
                   }`}
-                  placeholder="Project title"
+                  placeholder={t('projects.enterProjectTitle')}
                   value={formData.name}
                   onChange={handleInputChange}
                 />
@@ -320,7 +320,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right">
-                  Category *
+                  {t('projects.projectCategory')} *
                 </Label>
                 <Input
                   id="category"
@@ -328,7 +328,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                   className={`col-span-3 ${
                     formErrors.category ? "border-red-500" : ""
                   }`}
-                  placeholder="Project Category"
+                  placeholder={t('projects.enterProjectCategory')}
                   value={formData.category}
                   onChange={handleInputChange}
                 />
@@ -365,7 +365,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
               </div> */}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="status" className="text-right">
-                  Status
+                  {t('projects.projectStatus')}
                 </Label>
                 <Select
                   defaultValue="active"
@@ -416,13 +416,13 @@ export function ProjectsList({ projects }: ProjectsListProps) {
               </div> */}
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="description" className="text-right pt-2">
-                  Description
+                  {t('projects.projectDescription')}
                 </Label>
                 <Textarea
                   id="description"
                   name="description"
                   className="col-span-3"
-                  placeholder="Provide a description of the project"
+                  placeholder={t('projects.provideDescription')}
                   rows={3}
                   value={formData.description}
                   onChange={handleInputChange}
@@ -434,9 +434,9 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                 variant="outline"
                 onClick={() => setIsCreateDialogOpen(false)}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
-              <Button onClick={handleCreateProject}>Create Project</Button>
+              <Button onClick={handleCreateProject}>{t('projects.createProject')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -447,32 +447,32 @@ export function ProjectsList({ projects }: ProjectsListProps) {
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search projects..."
-              className="pl-9"
+              placeholder={t('projects.searchProjects')}
+              className="pl-9 bg-black/5 border-0"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex gap-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-[130px] bg-black/5 border-0">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="all">{t('projects.allStatus')}</SelectItem>
+                <SelectItem value="active">{t('common.active')}</SelectItem>
+                <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
+                <SelectItem value="pending">{t('common.pending')}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[160px] bg-black/5 border-0">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="all">{t('common.allCategories')}</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category.toLowerCase()}>
                     {category}
@@ -486,26 +486,11 @@ export function ProjectsList({ projects }: ProjectsListProps) {
           value={viewType}
           onValueChange={setViewType}
           className="w-full sm:w-auto"
-        >
-          <TabsList className="grid w-full sm:w-[180px] grid-cols-2 bg-gray-200 rounded-full">
-            <TabsTrigger
-              value="grid"
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full transition-colors"
-            >
-              Grid View
-            </TabsTrigger>
-            <TabsTrigger
-              value="list"
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-full transition-colors"
-            >
-              List View
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        ></Tabs>
       </div>
 
       <div className="mt-6">
-        {viewType === "grid" ? (
+        {viewType === "list" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
               <Card key={project.id} className="overflow-hidden">
@@ -523,7 +508,10 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                               ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
                               : project.status === "pending"
                               ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
-                              : { backgroundColor: "rgba(28,28,28,0.05)", color: "rgba(28,28,28,0.4)" }
+                              : {
+                                  backgroundColor: "rgba(28,28,28,0.05)",
+                                  color: "rgba(28,28,28,0.4)",
+                                }
                           }
                         >
                           {project.status === "active"
@@ -561,7 +549,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                   <div className="mt-4 space-y-3">
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Progress</span>
+                        <span className="text-gray-500">{t('projects.progress')}</span>
                         {/* <span>{project.progress}%</span> */}
                         <span>50%</span>
                       </div>
@@ -575,24 +563,24 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                       <div className="flex items-center gap-1">
                         <CheckCircle className="h-4 w-4 text-muted-foreground" />
                         {/* <span>{project.subProjects} Sub-projects</span> */}
-                        <span>5 Sub-projects</span>
+                        <span>5 {t('projects.subProjects')}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-4 w-4 text-muted-foreground" />
                         {/* <span>{project.beneficiaries} Beneficiaries</span> */}
-                        <span>100 Beneficiaries</span>
+                        <span>100 {t('projects.beneficiaries')}</span>
                       </div>
                     </div>
                   </div>
                 </CardContent>
                 <CardFooter className="border-t pt-3 flex justify-between text-sm">
                   <div>
-                    <span className="text-muted-foreground">Start: </span>
+                    <span className="text-muted-foreground">{t('common.date')}: </span>
                     {/* {new Date(project.startDate).toLocaleDateString()} */}
                     {new Date(project.createdAt).toLocaleDateString()}
                   </div>
                   <div>
-                    <span className="text-muted-foreground">End: </span>
+                    <span className="text-muted-foreground">{t('projects.to')}: </span>
                     {/* {new Date(project.endDate).toLocaleDateString()} */}
                     {new Date(project.updatedAt).toLocaleDateString()}
                   </div>
@@ -603,7 +591,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
         ) : (
           <div className="rounded-md border overflow-hidden">
             <table className="w-full">
-              <thead>
+              <thead className="bg-[#E5ECF6]">
                 <tr className="bg-muted border-b">
                   <th className="text-left p-3 font-medium">Project Name</th>
                   <th className="text-left p-3 font-medium">Category</th>
@@ -614,7 +602,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                   <th className="text-left p-3 font-medium">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-[#F7F9FB]">
                 {/* {filteredProjects.map((project) => ( */}
                 {projects.map((project) => (
                   <tr key={project.id} className="border-b">
@@ -637,14 +625,17 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                             ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
                             : project.status === "pending"
                             ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
-                            : { backgroundColor: "rgba(28,28,28,0.05)", color: "rgba(28,28,28,0.4)" }
+                            : {
+                                backgroundColor: "rgba(28,28,28,0.05)",
+                                color: "rgba(28,28,28,0.4)",
+                              }
                         }
                       >
                         {project.status === "active"
-                          ? "Active"
+                          ? t('common.active')
                           : project.status === "pending"
-                          ? "Pending"
-                          : "Inactive"}
+                          ? t('common.pending')
+                          : t('common.inactive')}
                       </Badge>
                     </td>
                     <td className="p-3">
@@ -680,6 +671,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                     <td className="p-3">
                       <div className="flex gap-2">
                         <Button
+                          className="hover:bg-black/5 border-0"
                           size="sm"
                           variant="outline"
                           onClick={() => navigate(`/projects/${project.id}`)}
@@ -691,7 +683,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0"
+                              className="h-8 w-8 p-0 hover:bg-black/5 border-0"
                             >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>

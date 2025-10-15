@@ -17,7 +17,12 @@ import { useState } from "react";
 import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
 import { Calendar } from "../ui/data-display/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/data-display/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import { Checkbox } from "../ui/form/checkbox";
 import { Input } from "../ui/form/input";
 import { Label } from "../ui/form/label";
@@ -32,7 +37,12 @@ import {
 } from "../ui/form/select";
 import { Separator } from "../ui/layout/separator";
 import { Switch } from "../ui/form/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/navigation/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 
 // Mock data for projects
@@ -270,11 +280,19 @@ export function ReportGenerator({
           <h2>Generate Report: {reportConfig.name}</h2>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" disabled={isGenerating}>
+          <Button
+            className="bg-[#E0F2FE] text-black border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] "
+            variant="outline"
+            disabled={isGenerating}
+          >
             <Save className="h-4 w-4 mr-2" />
             Save as Template
           </Button>
-          <Button onClick={handleGenerateReport} disabled={isGenerating}>
+          <Button
+            className=" bg-[#0073e6] text-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+            onClick={handleGenerateReport}
+            disabled={isGenerating}
+          >
             {isGenerating ? (
               <>Generating...</>
             ) : (
@@ -289,7 +307,7 @@ export function ReportGenerator({
 
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-12 lg:col-span-4">
-          <Card>
+          <Card className="bg-[#F7F9FB] border-0">
             <CardHeader>
               <CardTitle className="text-base">Report Configuration</CardTitle>
             </CardHeader>
@@ -297,6 +315,7 @@ export function ReportGenerator({
               <div className="space-y-2">
                 <Label htmlFor="report-name">Report Name</Label>
                 <Input
+                  className="border bg-white border-gray-100"
                   id="report-name"
                   value={reportConfig.name}
                   onChange={(e) =>
@@ -317,7 +336,7 @@ export function ReportGenerator({
                     })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border bg-white border-gray-100">
                     <SelectValue placeholder="Select report type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -339,7 +358,7 @@ export function ReportGenerator({
                     setReportConfig({ ...reportConfig, level: value })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border bg-white border-gray-100">
                     <SelectValue placeholder="Select report level" />
                   </SelectTrigger>
                   <SelectContent>
@@ -361,7 +380,7 @@ export function ReportGenerator({
                       setReportConfig({ ...reportConfig, scope: value })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="border bg-white border-gray-100">
                       <SelectValue placeholder="Select project" />
                     </SelectTrigger>
                     <SelectContent>
@@ -384,7 +403,7 @@ export function ReportGenerator({
                       setReportConfig({ ...reportConfig, scope: value })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="border bg-white border-gray-100">
                       <SelectValue placeholder="Select sub-project" />
                     </SelectTrigger>
                     <SelectContent>
@@ -406,7 +425,7 @@ export function ReportGenerator({
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-start text-left font-normal"
+                      className="w-full justify-start text-left font-normal border bg-white border-gray-100"
                     >
                       <CalendarIcon className="h-4 w-4 mr-2" />
                       {formattedDateRange}
@@ -440,7 +459,7 @@ export function ReportGenerator({
               <Separator />
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between ">
                   <Label htmlFor="report-schedule">Schedule Report</Label>
                   <Switch
                     id="report-schedule"
@@ -452,7 +471,7 @@ export function ReportGenerator({
                 </div>
 
                 {reportConfig.scheduled && (
-                  <div className="space-y-4 p-3 border rounded-md">
+                  <div className="space-y-4 p-3 border-0 rounded-md bg-[#E3F5FF] ">
                     <div className="space-y-2">
                       <Label>Frequency</Label>
                       <RadioGroup

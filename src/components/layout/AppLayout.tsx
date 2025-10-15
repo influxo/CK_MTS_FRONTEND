@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "../../hooks/useTranslation";
 import {
   fetchProjects,
   selectAllProjects,
@@ -10,17 +11,13 @@ import {
   selectProjectsLoading,
 } from "../../store/slices/projectsSlice";
 import type { AppDispatch } from "../../store";
+import { selectCurrentUser } from "../../store/slices/authSlice";
 
 const AppLayout = () => {
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
-    null
-  );
-  const [selectedSubProjectId, setSelectedSubProjectId] = useState<
-    string | null
-  >(null);
-  const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState<
-    string | null
-  >(null);
+  const { t } = useTranslation();
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedSubProjectId, setSelectedSubProjectId] = useState<string | null>(null);
+  const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [_isMobile, setIsMobile] = useState(false);
@@ -30,12 +27,20 @@ const AppLayout = () => {
   const getPageTitle = () => {
     const path = location.pathname;
     if (path.startsWith("/projects")) {
-      return selectedSubProjectId ? "Sub-Project Details" : "Projects";
+      return selectedSubProjectId ? t('subProjects.subProjectDetails') : t('projects.title');
     } else if (path.startsWith("/beneficiaries")) {
-      return selectedBeneficiaryId ? "Beneficiary Details" : "Beneficiaries";
+      return selectedBeneficiaryId ? t('beneficiaries.beneficiaryDetails') : t('beneficiaries.title');
+    } else if (path.startsWith("/employees")) {
+      return t('employees.title');
+    } else if (path.startsWith("/forms")) {
+      return t('forms.title');
+    } else if (path.startsWith("/data-entry")) {
+      return t('dataEntry.title');
+    } else if (path.startsWith("/reports")) {
+      return t('reports.title');
     }
     return path === "/dashboard"
-      ? "Dashboard"
+      ? t('dashboard.title')
       : path.charAt(1).toUpperCase() + path.slice(2);
   };
 
@@ -57,12 +62,28 @@ const AppLayout = () => {
   const projects = useSelector(selectAllProjects);
   const isLoading = useSelector(selectProjectsLoading);
   const error = useSelector(selectProjectsError);
+  const user = useSelector(selectCurrentUser);
+
+  // Role helpers to determine whether to load all projects
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
 
   useEffect(() => {
-    if (projects.length === 0) {
+    if (isSysOrSuperAdmin && projects.length === 0) {
       dispatch(fetchProjects());
     }
-  }, [dispatch, projects.length]);
+  }, [dispatch, projects.length, isSysOrSuperAdmin]);
 
   return (
     <div className="flex h-screen bg-white">
@@ -76,7 +97,12 @@ const AppLayout = () => {
         projectsError={error}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div
+        className={
+          "flex-1 flex flex-col overflow-hidden " +
+          (mobileSidebarOpen ? "hidden lg:flex" : "")
+        }
+      >
         <Topbar
           title={getPageTitle()}
           toggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
@@ -97,7 +123,7 @@ const AppLayout = () => {
         </main>
 
         <footer className="border-t p-4 text-center text-sm text-muted-foreground">
-          2025 CaritasMotherTeresa. All rights reserved.
+          {new Date().getFullYear()} CaritasMotherTeresa. {t('footer.copyright').split('2025 CaritasMotherTeresa. ')[1]}
         </footer>
       </div>
     </div>

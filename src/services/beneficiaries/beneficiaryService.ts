@@ -14,15 +14,21 @@ import type {
   GetBeneficiaryServicesResponse,
   GetBeneficiaryEntitiesRequest,
   GetBeneficiaryEntitiesResponse,
+  RemoveBeneficiaryEntityAssociationRequest,
+  RemoveBeneficiaryEntityAssociationResponse,
   GetBeneficiariesByEntityRequest,
   GetBeneficiariesByEntityResponse,
   AssociateBeneficiaryToEntitiesRequest,
   AssociateBeneficiaryToEntitiesResponse,
+  GetServiceDeliveriesSummaryRequest,
+  GetServiceDeliveriesSummaryResponse,
 } from "./beneficiaryModels";
+import { toast } from "sonner";
 
 class BeneficiaryService {
   private baseUrl = getApiUrl();
   private beneficiaryEndpoint = `${this.baseUrl}/beneficiaries`;
+  private serviceEndpoint = `${this.baseUrl}/services`;
 
   async createBeneficiary(
     req: CreateBeneficiaryRequest
@@ -34,6 +40,13 @@ class BeneficiaryService {
       );
       return response.data;
     } catch (error: any) {
+      toast.error("Diçka shkoi gabim. ", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
       if (error?.response) {
         return error.response.data as CreateBeneficiaryResponse;
       }
@@ -49,18 +62,27 @@ class BeneficiaryService {
   ): Promise<AssociateBeneficiaryToEntitiesResponse> {
     const { id, links } = params;
     try {
-      const response = await axiosInstance.post<AssociateBeneficiaryToEntitiesResponse>(
-        `${this.beneficiaryEndpoint}/${id}/entities`,
-        links
-      );
+      const response =
+        await axiosInstance.post<AssociateBeneficiaryToEntitiesResponse>(
+          `${this.beneficiaryEndpoint}/${id}/entities`,
+          links
+        );
       return response.data;
     } catch (error: any) {
+      toast.error("Diçka shkoi gabim. ", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
       if (error?.response) {
         return error.response.data as AssociateBeneficiaryToEntitiesResponse;
       }
       return {
         success: false,
-        message: error?.message || "Failed to associate beneficiary to entities",
+        message:
+          error?.message || "Failed to associate beneficiary to entities",
       } as AssociateBeneficiaryToEntitiesResponse;
     }
   }
@@ -70,18 +92,19 @@ class BeneficiaryService {
   ): Promise<GetBeneficiariesByEntityResponse> {
     const { entityId, entityType, status, page, limit } = params;
     try {
-      const response = await axiosInstance.get<GetBeneficiariesByEntityResponse>(
-        `${this.beneficiaryEndpoint}/by-entity`,
-        {
-          params: {
-            entityId,
-            entityType,
-            status,
-            page,
-            limit,
-          },
-        }
-      );
+      const response =
+        await axiosInstance.get<GetBeneficiariesByEntityResponse>(
+          `${this.beneficiaryEndpoint}/by-entity`,
+          {
+            params: {
+              entityId,
+              entityType,
+              status,
+              page,
+              limit,
+            },
+          }
+        );
       return response.data;
     } catch (error: any) {
       if (error?.response) {
@@ -150,8 +173,22 @@ class BeneficiaryService {
         `${this.beneficiaryEndpoint}/${id}`,
         req
       );
+      toast.success("Përfituesi u modifikua me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
       return response.data;
     } catch (error: any) {
+      toast.error("Diçka shkoi gabim. ", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
       if (error?.response) {
         return error.response.data as UpdateBeneficiaryResponse;
       }
@@ -169,6 +206,13 @@ class BeneficiaryService {
       );
       return response.data;
     } catch (error: any) {
+      toast.error("Diçka shkoi gabim. ", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
       if (error?.response) {
         return error.response.data as DeleteBeneficiaryResponse;
       }
@@ -251,6 +295,69 @@ class BeneficiaryService {
         data: [],
         message: error?.message || "Failed to fetch beneficiary entities",
       } as GetBeneficiaryEntitiesResponse;
+    }
+  }
+
+  async removeBeneficiaryEntityAssociation(
+    params: RemoveBeneficiaryEntityAssociationRequest
+  ): Promise<RemoveBeneficiaryEntityAssociationResponse> {
+    const { id, entityId, entityType } = params;
+    try {
+      const response = await (axiosInstance as any).delete(
+        `${this.beneficiaryEndpoint}/${id}/entities`,
+        { data: { entityId, entityType } }
+      );
+      toast.success("Asociimi u fshi me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      toast.error("Diçka shkoi gabim. ", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
+      if (error?.response) {
+        return error.response
+          .data as RemoveBeneficiaryEntityAssociationResponse;
+      }
+      return {
+        success: false,
+        message:
+          error?.message || "Failed to remove beneficiary entity association",
+      } as RemoveBeneficiaryEntityAssociationResponse;
+    }
+  }
+
+  // Service deliveries summary metrics
+  async getServiceDeliveriesSummary(
+    params?: GetServiceDeliveriesSummaryRequest
+  ): Promise<GetServiceDeliveriesSummaryResponse> {
+    try {
+      const response =
+        await axiosInstance.get<GetServiceDeliveriesSummaryResponse>(
+          `${this.serviceEndpoint}/metrics/deliveries/summary`,
+          {
+            params: {
+              beneficiaryId: params?.beneficiaryId,
+            },
+          }
+        );
+      return response.data;
+    } catch (error: any) {
+      if (error?.response) {
+        return error.response.data as GetServiceDeliveriesSummaryResponse;
+      }
+      return {
+        success: false,
+        message: error?.message || "Failed to fetch service deliveries summary",
+      } as GetServiceDeliveriesSummaryResponse;
     }
   }
 }

@@ -1,10 +1,35 @@
 import { MoreHorizontal, Plus, Search, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Button } from "../ui/button/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
-import { Button } from "../ui/button/button";
 
+import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "../../hooks/useTranslation";
+import type { AppDispatch, RootState } from "../../store";
+import {
+  fetchEmployees,
+  selectAllEmployees,
+} from "../../store/slices/employeesSlice";
+import {
+  assignUserToSubProject,
+  fetchSubProjectUsers,
+  removeUserFromSubProject,
+  selectAssignedSubProjectUsers,
+  selectAssignedSubProjectUsersError,
+  selectAssignedSubProjectUsersLoading,
+} from "../../store/slices/subProjectSlice";
 import { Card, CardContent } from "../ui/data-display/card";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/form/select";
+import { Tabs, TabsContent } from "../ui/navigation/tabs";
 import {
   Dialog,
   DialogContent,
@@ -20,41 +45,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/overlay/dropdown-menu";
-import { Input } from "../ui/form/input";
-import { Label } from "../ui/form/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/form/select";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../ui/navigation/tabs";
-import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch, RootState } from "../../store";
-import {
-  fetchSubProjectUsers,
-  selectAssignedSubProjectUsers,
-  selectAssignedSubProjectUsersLoading,
-  selectAssignedSubProjectUsersError,
-  removeUserFromSubProject,
-  assignUserToSubProject,
-} from "../../store/slices/subProjectSlice";
-import { selectAllEmployees } from "../../store/slices/employeesSlice";
 
 interface SubProjectTeamProps {
   subProjectId: string;
+  hasFullAccess: boolean;
 }
 
 // Team members are fetched from Redux via fetchSubProjectUsers
 
 // Assignment uses employees list from Redux (see selectAllEmployees)
-export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
+export function SubProjectTeam({
+  subProjectId,
+  hasFullAccess,
+}: SubProjectTeamProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("team-members");
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -81,10 +85,27 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
   };
 
   useEffect(() => {
-    if (subProjectId) {
+    if (subProjectId && hasFullAccess) {
       dispatch(fetchSubProjectUsers({ subProjectId }));
     }
-  }, [subProjectId, dispatch]);
+  }, [subProjectId, dispatch, hasFullAccess]);
+
+  // Ensure employees list is available when opening assignment dialog
+  useEffect(() => {
+    if (isAssignDialogOpen) {
+      dispatch(fetchEmployees());
+    }
+  }, [dispatch, isAssignDialogOpen]);
+
+  // Exclude already assigned members from modal options
+  const assignedIds = useMemo(
+    () => new Set((users || []).map((u) => u.id)),
+    [users]
+  );
+  const employeesForSelect = useMemo(
+    () => (employees || []).filter((emp) => !assignedIds.has(emp.id)),
+    [employees, assignedIds]
+  );
 
   const handleAssignMember = async () => {
     if (!selectedMemberId) return;
@@ -130,39 +151,43 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3>Sub-Project Team</h3>
+          <h3>{t("subProjectTeam.title")}</h3>
           <p className="text-muted-foreground">
-            Manage team members assigned to this sub-project
+            {t("subProjectTeam.subtitle")}
           </p>
         </div>
         <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#2E343E] text-white">
+            <Button className="bg-[#0073e6] text-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
               <Plus className="h-4 w-4 mr-2" />
-              Assign Member
+              {t("subProjectTeam.assignMember")}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[450px]">
             <DialogHeader>
-              <DialogTitle>Assign Team Member</DialogTitle>
+              <DialogTitle>
+                {t("subProjectTeam.assignTeamMemberTitle")}
+              </DialogTitle>
               <DialogDescription>
-                Assign a team member to this sub-project and define their role.
+                {t("subProjectTeam.assignTeamMemberDescription")}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="member" className="text-right">
-                  Member
+                  {t("subProjectTeam.memberLabel")}
                 </Label>
                 <Select
                   value={selectedMemberId}
                   onValueChange={(v) => setSelectedMemberId(v)}
                 >
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select team member" />
+                    <SelectValue
+                      placeholder={t("subProjectTeam.selectTeamMember")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {employees.map((emp) => {
+                    {employeesForSelect.map((emp) => {
                       const fullName =
                         `${emp.firstName ?? ""} ${emp.lastName ?? ""}`.trim() ||
                         "N/A";
@@ -182,7 +207,7 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
                               </AvatarFallback>
                             </Avatar>
                             <span className="text-sm">{fullName}</span>
-                            <Badge variant="secondary" className="text-[10px]">
+                            <Badge variant="secondary" className="text-[10px] ">
                               {emp.email}
                             </Badge>
                           </div>
@@ -202,13 +227,18 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
             </div>
             <DialogFooter>
               <Button
+                className="bg-[#E0F2FE] border-0 "
                 variant="outline"
                 onClick={() => setIsAssignDialogOpen(false)}
               >
-                Cancel
+                {t("subProjectTeam.cancel")}
               </Button>
-              <Button disabled={!selectedMemberId} onClick={handleAssignMember}>
-                Assign Member
+              <Button
+                className="bg-[#0073e6] border-0 text-white"
+                disabled={!selectedMemberId}
+                onClick={handleAssignMember}
+              >
+                {t("subProjectTeam.assignMember")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -216,14 +246,14 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-[#2E343E] bg-opacity-10 items-center">
+        {/* <TabsList className="bg-[#2E343E] bg-opacity-10 items-center">
           <TabsTrigger
             value="team-members"
             className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
           >
             Team Members
           </TabsTrigger>
-        </TabsList>
+        </TabsList> */}
 
         <TabsContent value="team-members" className="pt-4">
           <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
@@ -231,21 +261,29 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2.5  top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search team members..."
-                  className="pl-9 bg-black/5 border-0"
+                  placeholder={t("subProjectTeam.searchPlaceholder")}
+                  className="pl-9 bg-white border border-gray-100 "
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <div className="flex gap-3">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[130px] bg-black/5 border-0">
-                    <SelectValue placeholder="Status" />
+                  <SelectTrigger className="w-[130px] border-0 bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
+                    <SelectValue
+                      placeholder={t("subProjectTeam.statusFilter")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="all">
+                      {t("subProjectTeam.allStatus")}
+                    </SelectItem>
+                    <SelectItem value="active">
+                      {t("subProjectTeam.active")}
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      {t("subProjectTeam.inactive")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -253,10 +291,14 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
           </div>
 
           {loading && (
-            <div className="p-4 text-sm">Loading team members...</div>
+            <div className="p-4 text-sm">
+              {t("subProjectTeam.loadingTeamMembers")}
+            </div>
           )}
           {error && (
-            <div className="p-4 text-sm text-red-500">Error: {error}</div>
+            <div className="p-4 text-sm text-red-500">
+              {t("subProjectTeam.error")}: {error}
+            </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -281,7 +323,7 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
                                 ? "default"
                                 : "secondary"
                             }
-                            className="text-xs"
+                            className="text-xs text-[#4AA785] bg-[#DEF8EE] "
                           >
                             {member.status}
                           </Badge>
@@ -299,13 +341,17 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Send Message</DropdownMenuItem>
+                        <DropdownMenuItem>
+                          {t("subProjectTeam.viewDetails")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          {t("subProjectTeam.sendMessage")}
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => onRemove(member.id)}
                         >
-                          Remove from Sub-Project
+                          {t("subProjectTeam.removeFromSubProject")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -315,11 +361,11 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-destructive"
+                      className="bg-[#E0F2FE]"
                       onClick={() => onRemove(member.id)}
                     >
                       <X className="h-4 w-4 mr-2" />
-                      Remove
+                      {t("subProjectTeam.remove")}
                     </Button>
                   </div>
                 </CardContent>
@@ -330,15 +376,15 @@ export function SubProjectTeam({ subProjectId }: SubProjectTeamProps) {
               <div className="rounded-full border-dashed border-2 p-3 mb-3">
                 <Plus className="h-6 w-6 text-muted-foreground" />
               </div>
-              <h4 className="mb-1">Add Team Member</h4>
+              <h4 className="mb-1">{t("subProjectTeam.addTeamMember")}</h4>
               <p className="text-sm text-muted-foreground text-center mb-3">
-                Assign a new team member to this sub-project
+                {t("subProjectTeam.assignNewMember")}
               </p>
               <Button
-                className="bg-black/5"
+                className="bg-[#E0F2FE]"
                 onClick={() => setIsAssignDialogOpen(true)}
               >
-                Assign Member
+                {t("subProjectTeam.assignMember")}
               </Button>
             </Card>
           </div>

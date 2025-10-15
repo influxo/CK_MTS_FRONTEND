@@ -1,5 +1,5 @@
 import {
-  AlignLeft,
+  AlertCircle,
   ArrowLeft,
   Calendar,
   CheckSquare,
@@ -8,22 +8,37 @@ import {
   FileText,
   Grip,
   Hash,
-  ListChecks,
+  Loader2,
   Plus,
-  Radio,
   Save,
   Settings,
-  ToggleLeft,
   Trash,
   Type,
-  Upload,
   X,
-  Loader2,
-  AlertCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge } from "../ui/data-display/badge";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "../../store";
+import { useTranslation } from "../../hooks/useTranslation";
+import {
+  fetchFormById,
+  selectCurrentForm,
+} from "../../store/slices/formsSlice";
+import {
+  fetchProjects,
+  selectAllProjects,
+} from "../../store/slices/projectsSlice";
+import {
+  fetchSubProjectsByProjectId,
+  selectAllSubprojects,
+} from "../../store/slices/subProjectSlice";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsTree,
+} from "../../store/slices/userProjectsSlice";
 import { Button } from "../ui/button/button";
+import { Badge } from "../ui/data-display/badge";
 import {
   Card,
   CardContent,
@@ -31,6 +46,23 @@ import {
   CardTitle,
 } from "../ui/data-display/card";
 import { Checkbox } from "../ui/form/checkbox";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/form/select";
+import { Switch } from "../ui/form/switch";
+import { Separator } from "../ui/layout/separator";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 import {
   Dialog,
   DialogContent,
@@ -39,50 +71,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/overlay/dialog";
-import { Input } from "../ui/form/input";
-import { Label } from "../ui/form/label";
-import { ScrollArea } from "../ui/layout/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/form/select";
-import { Separator } from "../ui/layout/separator";
-import { Switch } from "../ui/form/switch";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../ui/navigation/tabs";
-import { Textarea } from "../ui/form/textarea";
 import { FormField } from "./FormField";
-import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch } from "../../store";
-import {
-  fetchProjects,
-  selectAllProjects,
-} from "../../store/slices/projectsSlice";
-import { fetchSubProjectsByProjectId, selectAllSubprojects } from "../../store/slices/subProjectSlice";
-import { fetchFormById, selectCurrentForm } from "../../store/slices/formsSlice";
+import subProjectService from "../../services/subprojects/subprojectService";
 
-// Field types available for forms
-const fieldTypes = [
-  { id: "text", name: "Text", icon: <Type className="h-4 w-4" /> },
-  { id: "number", name: "Number", icon: <Hash className="h-4 w-4" /> },
-  { id: "date", name: "Date", icon: <Calendar className="h-4 w-4" /> },
+// Field types available for forms - will be translated dynamically
+const getFieldTypes = (t: any) => [
+  { id: "text", name: t("forms.text"), icon: <Type className="h-4 w-4" /> },
+  { id: "number", name: t("forms.number"), icon: <Hash className="h-4 w-4" /> },
+  { id: "date", name: t("forms.date"), icon: <Calendar className="h-4 w-4" /> },
   {
     id: "checkbox",
-    name: "Checkbox",
+    name: t("forms.checkbox"),
     icon: <CheckSquare className="h-4 w-4" />,
   },
   {
     id: "dropdown",
-    name: "Dropdown",
+    name: t("forms.dropdown"),
     icon: <ChevronDown className="h-4 w-4" />,
-  }
+  },
 ];
 interface FormBuilderProps {
   formId?: string;
@@ -134,11 +140,26 @@ export function FormBuilder({
   isSaving = false,
   error,
 }: FormBuilderProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const projects = useSelector(selectAllProjects);
   const subProjects = useSelector(selectAllSubprojects);
   const formToEdit = useSelector(selectCurrentForm);
   const isEditing = !!formId;
+  const user = useSelector(selectCurrentUser);
+  const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
+
+  // Normalize roles and detect sys/super admin
+  const normalizedRoles = (user?.roles || []).map(
+    (r: any) => r.name?.toLowerCase?.() || ""
+  );
+  const isSysOrSuperAdmin = normalizedRoles.some(
+    (r: string) =>
+      r === "sysadmin" ||
+      r === "superadmin" ||
+      r.includes("system admin") ||
+      r.includes("super admin")
+  );
 
   const [formData, setFormData] = useState<FormData>({
     id: "",
@@ -150,11 +171,15 @@ export function FormBuilder({
     fields: [],
   });
 
+  // Role-aware: fetch either all projects (admin) or assigned projects (others)
   useEffect(() => {
-    if (formId) {
+    if (!user?.id) return;
+    if (isSysOrSuperAdmin) {
       dispatch(fetchProjects());
+    } else {
+      dispatch(fetchUserProjectsByUserId(String(user.id)));
     }
-  }, [dispatch, formId]);
+  }, [dispatch, user?.id, isSysOrSuperAdmin]);
 
   useEffect(() => {
     if (formId) {
@@ -164,7 +189,11 @@ export function FormBuilder({
 
   useEffect(() => {
     if (formToEdit && formId) {
-      const projectId = formToEdit.entityAssociations[0].entityId;
+      const assoc = (formToEdit as any).entityAssociations?.[0] as
+        | { entityId: string; entityType?: string }
+        | undefined;
+      const assocEntityId = assoc?.entityId || "";
+      const assocEntityType = (assoc?.entityType || "project").toLowerCase();
 
       const fields = formToEdit.schema.fields.map((field, index) => ({
         id: `field-${Date.now()}-${index}`,
@@ -175,19 +204,56 @@ export function FormBuilder({
         helpText: field.helpText,
         validations: field.validations,
         required: field.required,
-        options: field.options?.map((opt) => ({ value: opt, label: opt })) || [],
+        options:
+          field.options?.map((opt) => ({ value: opt, label: opt })) || [],
       }));
 
-      setFormData({
-        id: formToEdit.id,
-        name: formToEdit.name,
-        description: formToEdit.description || "",
-        category: formToEdit.category || "",
-        status: formToEdit.status || "draft",
-        version: formToEdit.version || "0.1",
-        fields: fields,
-        project: projectId,
-      });
+      // Set includeBeneficiaries state from the form data
+      setIncludeBeneficiaries(formToEdit.includeBeneficiaries ?? true);
+
+      if (assocEntityType === "subproject" && assocEntityId) {
+        (async () => {
+          try {
+            const res = await subProjectService.getSubProjectById({
+              id: assocEntityId,
+            });
+            const projectId =
+              (res.success && (res.data as any)?.projectId) || "";
+            setFormData({
+              id: formToEdit.id,
+              name: formToEdit.name,
+              description: formToEdit.description || "",
+              category: formToEdit.category || "",
+              status: formToEdit.status || "draft",
+              version: formToEdit.version || "0.1",
+              fields: fields,
+              project: projectId,
+              subProject: assocEntityId,
+            });
+            if (projectId) {
+              dispatch(fetchSubProjectsByProjectId({ projectId }));
+            }
+          } catch {
+            // Fallback: set only subproject
+            setFormData((prev) => ({ ...prev, subProject: assocEntityId }));
+          }
+        })();
+      } else {
+        const projectId = assocEntityId;
+        setFormData({
+          id: formToEdit.id,
+          name: formToEdit.name,
+          description: formToEdit.description || "",
+          category: formToEdit.category || "",
+          status: formToEdit.status || "draft",
+          version: formToEdit.version || "0.1",
+          fields: fields,
+          project: projectId,
+        });
+        if (projectId) {
+          dispatch(fetchSubProjectsByProjectId({ projectId }));
+        }
+      }
     }
   }, [formToEdit, formId]);
 
@@ -195,6 +261,37 @@ export function FormBuilder({
   const [isAddFieldDialogOpen, setIsAddFieldDialogOpen] = useState(false);
   const [showFormJson, setShowFormJson] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [includeBeneficiaries, setIncludeBeneficiaries] = useState(true);
+
+  // Get translated field types
+  const fieldTypes = getFieldTypes(t);
+
+  // Build projects list for UI based on role
+  const projectsForUi = isSysOrSuperAdmin
+    ? projects
+    : (userProjectsTree || []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        description: p.description || "",
+        category: p.category || "",
+        status: "active" as const,
+        createdAt: p.createdAt || "",
+        updatedAt: p.updatedAt || "",
+      }));
+
+  // Allowed subproject IDs for non-admin users under the selected project
+  const allowedSubprojectIds = (() => {
+    if (isSysOrSuperAdmin) return new Set<string>();
+    try {
+      const proj = (userProjectsTree || []).find(
+        (p: any) => p.id === formData.project
+      );
+      const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
+      return new Set<string>(ids);
+    } catch {
+      return new Set<string>();
+    }
+  })();
 
   // Handle form field selection
   const handleFieldSelect = (fieldId: string) => {
@@ -219,9 +316,7 @@ export function FormBuilder({
       ...(fieldType === "text" && { placeholder: "Enter text" }),
       ...(fieldType === "textarea" && { placeholder: "Enter longer text" }),
       ...(fieldType === "number" && { placeholder: "Enter number" }),
-      ...((fieldType === "dropdown" ||
-        fieldType === "radio" ||
-        fieldType === "checkbox") && {
+      ...(fieldType === "dropdown" && {
         options: [{ value: "option1", label: "Option 1" }],
       }),
     };
@@ -243,7 +338,6 @@ export function FormBuilder({
         field.id === fieldId ? { ...field, ...updates } : field
       ),
     }));
-
   };
 
   // Delete a field
@@ -267,7 +361,7 @@ export function FormBuilder({
       entities: [
         {
           id: formData.subProject ? formData.subProject : formData.project,
-          type: "project",
+          type: formData.subProject ? "subproject" : "project",
         },
       ],
       schema: {
@@ -283,7 +377,10 @@ export function FormBuilder({
                 required: field.required || false,
                 helpText: field.helpText,
                 validations: field.validations,
-                options: field.options?.map((opt) => opt.value) || [],
+                options:
+                  field.type === "dropdown"
+                    ? field.options?.map((opt) => opt.value) || []
+                    : [],
               }))
             : [
                 // Default field if no fields are added
@@ -296,6 +393,7 @@ export function FormBuilder({
                 },
               ],
       },
+      includeBeneficiaries: includeBeneficiaries,
     };
 
     onSave(formattedData);
@@ -307,7 +405,7 @@ export function FormBuilder({
   );
 
   const handleChangeProject = (projectId: string) => {
-    setFormData({ ...formData, project: projectId, subProject: '' });
+    setFormData({ ...formData, project: projectId, subProject: "" });
 
     if (projectId) {
       dispatch(fetchSubProjectsByProjectId({ projectId }));
@@ -322,33 +420,44 @@ export function FormBuilder({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={onBack}>
+          <Button
+            variant="outline"
+            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+            size="sm"
+            onClick={onBack}
+          >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Forms
+            {t("forms.backToForms")}
           </Button>
           <h2>
-            {isEditing ? "Edit Form" : "Create Form"}: {formData.name}
+            {isEditing ? t("forms.editFormTitle") : t("forms.createFormTitle")}:{" "}
+            {formData.name}
           </h2>
           {isEditing && <Badge variant="outline">v{formData.version}</Badge>}
         </div>
         <div className="flex gap-2">
           <Button
+            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
             variant="outline"
             onClick={() => setPreviewMode(!previewMode)}
           >
             <Eye className="h-4 w-4 mr-2" />
-            {previewMode ? "Exit Preview" : "Preview"}
+            {previewMode ? t("forms.exitPreview") : t("forms.preview")}
           </Button>
-          <Button onClick={handleSaveForm} disabled={isSaving}>
+          <Button
+            className="bg-[#0073e6] text-white border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+            onClick={handleSaveForm}
+            disabled={isSaving}
+          >
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {t("forms.saving")}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Save Form
+                {t("forms.saveForm")}
               </>
             )}
           </Button>
@@ -358,16 +467,21 @@ export function FormBuilder({
       {!previewMode ? (
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 lg:col-span-8">
-            <Card className="mb-6">
+            <Card className="mb-6 bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Form Builder</CardTitle>
+                <CardTitle className="text-base">
+                  {t("forms.formBuilder")}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="form-name">Form Name *</Label>
+                      <Label htmlFor="form-name">
+                        {t("forms.formNameRequired")}
+                      </Label>
                       <Input
+                        className="bg-white border-gray-100 border"
                         id="form-name"
                         value={formData.name}
                         onChange={(e) =>
@@ -377,16 +491,18 @@ export function FormBuilder({
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="form-project">Project *</Label>
+                      <Label htmlFor="form-project">
+                        {t("forms.projectRequired")}
+                      </Label>
                       <Select
                         value={formData.project}
                         onValueChange={handleChangeProject}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a project" />
+                        <SelectTrigger className="bg-white border-gray-100 border">
+                          <SelectValue placeholder={t("forms.selectProject")} />
                         </SelectTrigger>
                         <SelectContent>
-                          {projects.map((project) => (
+                          {projectsForUi.map((project) => (
                             <SelectItem key={project.id} value={project.id}>
                               {project.name}
                             </SelectItem>
@@ -400,29 +516,63 @@ export function FormBuilder({
                         <div className="space-y-2"></div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="form-project">Sub Project</Label>
+                          <Label htmlFor="form-project">
+                            {t("forms.subProject")}
+                          </Label>
                           <Select
                             value={formData.subProject}
                             onValueChange={handleChangeSubProject}
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a subproject" />
+                            <SelectTrigger className="bg-white border-gray-100 border">
+                              <SelectValue
+                                placeholder={t("forms.selectASubproject")}
+                              />
                             </SelectTrigger>
                             <SelectContent>
-                              {subProjects.map((subProject) => (
-                                <SelectItem key={subProject.id} value={subProject.id}>
-                                  {subProject.name}
-                                </SelectItem>
-                              ))}
+                              {subProjects
+                                .filter(
+                                  (sp) => sp.projectId === formData.project
+                                )
+                                .filter((sp) =>
+                                  isSysOrSuperAdmin
+                                    ? true
+                                    : allowedSubprojectIds.size === 0
+                                    ? false
+                                    : allowedSubprojectIds.has(sp.id)
+                                )
+                                .map((subProject) => (
+                                  <SelectItem
+                                    key={subProject.id}
+                                    value={subProject.id}
+                                  >
+                                    {subProject.name}
+                                  </SelectItem>
+                                ))}
                             </SelectContent>
                           </Select>
                         </div>
                       </>
                     )}
                   </div>
-                  <div className="space-y-2">
+                  <div className="grid gap-2">
+                    <Label>{t("forms.includeBeneficiaries")}</Label>
+                    <div className="flex items-center gap-3">
+                      <Switch
+                        checked={includeBeneficiaries}
+                        onCheckedChange={setIncludeBeneficiaries}
+                        aria-label={t("forms.includeBeneficiaries")}
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {includeBeneficiaries
+                          ? t("forms.enabled")
+                          : t("forms.disabled")}
+                      </span>
+                    </div>
+                  </div>
+                  {/* <div className="space-y-2">
                     <Label htmlFor="form-description">Description</Label>
                     <Textarea
+                      className="bg-[#EAF4FB] border-0"
                       id="form-description"
                       value={formData.description}
                       onChange={(e) =>
@@ -433,29 +583,31 @@ export function FormBuilder({
                       }
                       rows={2}
                     />
-                  </div>
+                  </div> */}
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="mb-6 bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <CardTitle className="text-base">Form Fields</CardTitle>
+                <CardTitle className="text-base">
+                  {t("forms.formFields")}
+                </CardTitle>
                 <Dialog
                   open={isAddFieldDialogOpen}
                   onOpenChange={setIsAddFieldDialogOpen}
                 >
                   <DialogTrigger asChild>
-                    <Button size="sm">
+                    {/* <Button size="sm" className="bg-[#E0F2FE] border-0">
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Field
-                    </Button>
+                      {t('forms.addField')}
+                    </Button> */}
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                      <DialogTitle>Add Field</DialogTitle>
+                      <DialogTitle>{t("forms.addField")}</DialogTitle>
                       <DialogDescription>
-                        Select a field type to add to your form.
+                        {t("forms.selectFieldType")}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid grid-cols-2 gap-3 py-4">
@@ -467,7 +619,7 @@ export function FormBuilder({
                           onClick={() => handleAddField(fieldType.id)}
                         >
                           <div className="mr-2">{fieldType.icon}</div>
-                          <span>{fieldType.name}</span>
+                          <span className="">{fieldType.name}</span>
                         </Button>
                       ))}
                     </div>
@@ -476,15 +628,18 @@ export function FormBuilder({
               </CardHeader>
               <CardContent>
                 {formData.fields.length === 0 ? (
-                  <div className="text-center py-8 border border-dashed rounded-md">
+                  <div className="text-center  py-8 border bg-[#E3F5FF] border-dashed rounded-md">
                     <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                    <h3 className="text-lg mb-2">No fields added yet</h3>
+                    <h3 className="text-lg mb-2">{t("forms.noFieldsYet")}</h3>
                     <p className="text-muted-foreground mb-4">
-                      Start building your form by adding fields
+                      {t("forms.startBuildingForm")}
                     </p>
-                    <Button onClick={() => setIsAddFieldDialogOpen(true)}>
+                    <Button
+                      onClick={() => setIsAddFieldDialogOpen(true)}
+                      className="bg-[#E0F2FE] border-0"
+                    >
                       <Plus className="h-4 w-4 mr-2" />
-                      Add First Field
+                      {t("forms.addFirstField")}
                     </Button>
                   </div>
                 ) : (
@@ -492,7 +647,7 @@ export function FormBuilder({
                     {formData.fields.map((field) => (
                       <div
                         key={field.id}
-                        className={`border rounded-md p-3 flex items-center gap-3 cursor-pointer ${
+                        className={` bg-[#E3F5FF] rounded-md p-3 flex items-center gap-3 cursor-pointer ${
                           selectedField === field.id
                             ? "border-primary bg-muted/30"
                             : ""
@@ -510,7 +665,7 @@ export function FormBuilder({
                                 variant="outline"
                                 className="text-destructive border-destructive ml-2"
                               >
-                                Required
+                                {t("forms.requiredBadge")}
                               </Badge>
                             )}
                           </div>
@@ -530,11 +685,11 @@ export function FormBuilder({
                     ))}
                     <Button
                       variant="outline"
-                      className="w-full border-dashed"
+                      className="w-full border-dashed  bg-[#E0F2FE]"
                       onClick={() => setIsAddFieldDialogOpen(true)}
                     >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Field
+                      <Plus className="h-4 w-4 mr-2 " />
+                      {t("forms.addField")}
                     </Button>
                   </div>
                 )}
@@ -545,18 +700,25 @@ export function FormBuilder({
           <div className="col-span-12 lg:col-span-4">
             <div className="sticky top-6">
               <Tabs defaultValue="properties" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="properties">Field Properties</TabsTrigger>
-                  <TabsTrigger value="form-settings">Form Settings</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-1 bg-[#EAF4FB]">
+                  <TabsTrigger
+                    value="properties"
+                    className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
+                  >
+                    {t("forms.fieldProperties")}
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="properties">
-                  <Card>
+                  <Card className=" bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
                     <CardContent className="p-6">
                       {selectedFieldData ? (
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label htmlFor="field-label">Field Label</Label>
+                            <Label htmlFor="field-label">
+                              {t("forms.fieldLabelInput")}
+                            </Label>
                             <Input
+                              className="bg-white border-gray-100 border"
                               id="field-label"
                               value={selectedFieldData.label}
                               onChange={(e) =>
@@ -566,25 +728,6 @@ export function FormBuilder({
                               }
                             />
                           </div>
-
-                          {(selectedFieldData.type === "text" ||
-                            selectedFieldData.type === "textarea" ||
-                            selectedFieldData.type === "number") && (
-                            <div className="space-y-2">
-                              <Label htmlFor="field-placeholder">
-                                Placeholder
-                              </Label>
-                              <Input
-                                id="field-placeholder"
-                                value={selectedFieldData.placeholder || ""}
-                                onChange={(e) =>
-                                  handleFieldUpdate(selectedField!, {
-                                    placeholder: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                          )}
 
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2">
@@ -598,32 +741,17 @@ export function FormBuilder({
                                 }
                               />
                               <Label htmlFor="field-required">
-                                Required Field
+                                {t("forms.requiredField")}
                               </Label>
                             </div>
                           </div>
 
-                          <div className="space-y-2">
-                            <Label htmlFor="field-help-text">Help Text</Label>
-                            <Textarea
-                              id="field-help-text"
-                              value={selectedFieldData.helpText || ""}
-                              onChange={(e) =>
-                                handleFieldUpdate(selectedField!, {
-                                  helpText: e.target.value,
-                                })
-                              }
-                              placeholder="Add helpful information for this field"
-                              rows={2}
-                            />
-                          </div>
-                          {(selectedFieldData?.type === "dropdown" ||
-                            selectedFieldData?.type === "radio" ||
-                            selectedFieldData?.type === "checkbox") && (
+                          {selectedFieldData?.type === "dropdown" && (
                             <div className="space-y-2">
                               <div className="flex justify-between items-center">
-                                <Label>Options</Label>
+                                <Label>{t("forms.options")}</Label>
                                 <Button
+                                  className="hover:bg-[#E0F2FE]"
                                   variant="outline"
                                   size="sm"
                                   onClick={() => {
@@ -646,7 +774,7 @@ export function FormBuilder({
                                   }}
                                 >
                                   <Plus className="h-4 w-4 mr-1" />
-                                  Add Option
+                                  {t("forms.addOption")}
                                 </Button>
                               </div>
                               <div className="space-y-2 border rounded-md p-3">
@@ -698,260 +826,31 @@ export function FormBuilder({
                             </div>
                           )}
 
-                          {selectedFieldData.type === "number" && (
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="field-min">Min Value</Label>
-                                <Input
-                                  id="field-min"
-                                  type="number"
-                                  value={
-                                    selectedFieldData.validations?.min || ""
-                                  }
-                                  onChange={(e) => {
-                                    const validations =
-                                      selectedFieldData.validations || {};
-                                    handleFieldUpdate(selectedField!, {
-                                      validations: {
-                                        ...validations,
-                                        min: e.target.value
-                                          ? Number(e.target.value)
-                                          : undefined,
-                                      },
-                                    });
-                                  }}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="field-max">Max Value</Label>
-                                <Input
-                                  id="field-max"
-                                  type="number"
-                                  value={
-                                    selectedFieldData.validations?.max || ""
-                                  }
-                                  onChange={(e) => {
-                                    const validations =
-                                      selectedFieldData.validations || {};
-                                    handleFieldUpdate(selectedField!, {
-                                      validations: {
-                                        ...validations,
-                                        max: e.target.value
-                                          ? Number(e.target.value)
-                                          : undefined,
-                                      },
-                                    });
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          {(selectedFieldData.type === "text" ||
-                            selectedFieldData.type === "textarea") && (
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="field-min-length">
-                                  Min Length
-                                </Label>
-                                <Input
-                                  id="field-min-length"
-                                  type="number"
-                                  value={
-                                    selectedFieldData.validations?.minLength ||
-                                    ""
-                                  }
-                                  onChange={(e) => {
-                                    const validations =
-                                      selectedFieldData.validations || {};
-                                    handleFieldUpdate(selectedField!, {
-                                      validations: {
-                                        ...validations,
-                                        minLength: e.target.value
-                                          ? Number(e.target.value)
-                                          : undefined,
-                                      },
-                                    });
-                                  }}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="field-max-length">
-                                  Max Length
-                                </Label>
-                                <Input
-                                  id="field-max-length"
-                                  type="number"
-                                  value={
-                                    selectedFieldData.validations?.maxLength ||
-                                    ""
-                                  }
-                                  onChange={(e) => {
-                                    const validations =
-                                      selectedFieldData.validations || {};
-                                    handleFieldUpdate(selectedField!, {
-                                      validations: {
-                                        ...validations,
-                                        maxLength: e.target.value
-                                          ? Number(e.target.value)
-                                          : undefined,
-                                      },
-                                    });
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          )}
-
                           <Separator />
 
                           <div className="pt-2">
                             <Button
                               variant="outline"
-                              className="w-full"
+                              className="w-full bg-[#E0F2FE] border-0 "
                               size="sm"
                               onClick={() => handleDeleteField(selectedField!)}
                             >
                               <Trash className="h-4 w-4 mr-2" />
-                              Delete Field
+                              {t("forms.deleteField")}
                             </Button>
                           </div>
                         </div>
                       ) : (
                         <div className="text-center py-6">
                           <Settings className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                          <h3 className="text-lg mb-2">No Field Selected</h3>
+                          <h3 className="text-lg mb-2">
+                            {t("forms.noFieldSelected")}
+                          </h3>
                           <p className="text-muted-foreground mb-4">
-                            Select a field to edit its properties
+                            {t("forms.selectFieldToEdit")}
                           </p>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                <TabsContent value="form-settings">
-                  <Card>
-                    <CardContent className="p-6 space-y-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="form-status">Form Status</Label>
-                        <Select
-                          value={formData.status}
-                          onValueChange={(value: any) =>
-                            setFormData({ ...formData, status: value })
-                          }
-                        >
-                          <SelectTrigger id="form-status">
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="archived">Archived</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Associated Projects</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a project" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {/* {mockProjects.map((project) => (
-                              <SelectItem key={project.id} value={project.id}>
-                                {project.title}
-                              </SelectItem>
-                            ))} */}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Associated Sub-Projects</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a sub-project" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {/* {mockProjects.flatMap((project) =>
-                              project.subProjects.map((subProject) => (
-                                <SelectItem
-                                  key={subProject.id}
-                                  value={subProject.id}
-                                >
-                                  {subProject.title} ({project.title})
-                                </SelectItem>
-                              ))
-                            )} */}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="version-control">
-                            Version Control
-                          </Label>
-                          <div className="flex items-center space-x-2">
-                            <Label
-                              htmlFor="version-control"
-                              className="text-muted-foreground text-sm"
-                            >
-                              Enabled
-                            </Label>
-                            <Switch id="version-control" />
-                          </div>
-                        </div>
-                        {isEditing && (
-                          <div className="border rounded-md p-3 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">Current Version</span>
-                              <Badge variant="outline">
-                                v{formData.version}
-                              </Badge>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full"
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Create New Version
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-2 pt-2">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="show-json">Show Form JSON</Label>
-                          <Switch
-                            id="show-json"
-                            checked={showFormJson}
-                            onCheckedChange={setShowFormJson}
-                          />
-                        </div>
-
-                        {showFormJson && (
-                          <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                            <pre className="text-xs font-mono">
-                              {JSON.stringify(formData, null, 2)}
-                            </pre>
-                          </ScrollArea>
-                        )}
-                      </div>
-
-                      <div className="pt-2">
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          onClick={handleSaveForm}
-                        >
-                          <Save className="h-4 w-4 mr-2" />
-                          Save Form
-                        </Button>
-                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -960,7 +859,7 @@ export function FormBuilder({
           </div>
         </div>
       ) : (
-        <Card>
+        <Card className="bg-[#F7F9FB] border-0">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
               <CardTitle>{formData.name}</CardTitle>
@@ -968,9 +867,12 @@ export function FormBuilder({
                 {formData.description}
               </p>
             </div>
-            <Button variant="outline" onClick={() => setPreviewMode(false)}>
-              {/* <Edit className="h-4 w-4 mr-2" /> */}
-              Edit Form
+            <Button
+              className="bg-[#E0F2FE] border-0"
+              variant="outline"
+              onClick={() => setPreviewMode(false)}
+            >
+              {t("forms.editFormMode")}
             </Button>
           </CardHeader>
           <CardContent className="pt-6">
@@ -978,10 +880,13 @@ export function FormBuilder({
               {formData.fields.map((field) => (
                 <FormField key={field.id} field={field} />
               ))}
-
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline">Cancel</Button>
-                <Button>Submit Form</Button>
+                <Button variant="outline" className="bg-[#E0F2FE] border-0">
+                  {t("forms.cancel")}
+                </Button>
+                <Button className="bg-[#0073e6] text-white">
+                  {t("forms.submitForm")}
+                </Button>
               </div>
             </div>
           </CardContent>

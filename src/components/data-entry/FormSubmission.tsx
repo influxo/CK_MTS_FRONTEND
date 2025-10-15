@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button/button";
 import { Card, CardContent, CardHeader } from "../ui/data-display/card";
+import { Checkbox } from "../ui/form/checkbox";
 import { Input } from "../ui/form/input";
-import { Textarea } from "../ui/form/textarea";
+import { Label } from "../ui/form/label";
+import { RadioGroup, RadioGroupItem } from "../ui/form/radio-group";
 import {
   Select,
   SelectContent,
@@ -10,27 +12,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/form/select";
-import { Checkbox } from "../ui/form/checkbox";
-import { RadioGroup, RadioGroupItem } from "../ui/form/radio-group";
-import { Label } from "../ui/form/label";
+import { Textarea } from "../ui/form/textarea";
 
-import { Save, Send, Clock, AlertCircle } from "lucide-react";
-import { Progress } from "../ui/feedback/progress";
-import { Alert, AlertDescription } from "../ui/feedback/alert";
+import { AlertCircle, Send } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
+import { useAuth } from "../../hooks/useAuth";
+import { useTranslation } from "../../hooks/useTranslation";
+import type {
+  FormTemplate,
+  ServicePayload,
+} from "../../services/forms/formModels";
 import type { AppDispatch } from "../../store";
 import {
-  submitFormResponse,
-  selectFormSubmitLoading,
+  fetchBeneficiariesByEntityForForm,
+  selectFormBeneficiariesByEntity,
+  selectFormBeneficiariesByEntityError,
+  selectFormBeneficiariesByEntityLoading,
   selectFormSubmitError,
+  selectFormSubmitLoading,
+  submitFormResponse,
 } from "../../store/slices/formSlice";
-import type { FormTemplate } from "../../services/forms/formModels";
-import { MapPin } from "lucide-react";
+import {
+  getEntityServices,
+  selectEntityServices,
+  selectEntityServicesError,
+  selectEntityServicesLoading,
+} from "../../store/slices/serviceSlice";
 import {
   enqueueSubmission,
   flushQueue,
   peekQueue,
 } from "../../utils/offlineQueue";
+import { Alert, AlertDescription } from "../ui/feedback/alert";
+import { Progress } from "../ui/feedback/progress";
 
 interface DynamicFormSubmissionProps {
   template?: FormTemplate;
@@ -58,7 +72,10 @@ const mapFieldType = (t: string | undefined) => {
     case "radio":
       return "radio";
     case "checkbox":
+      // API single boolean checkbox
+      return "checkbox";
     case "checkbox-group":
+      // For potential multi-select checkbox groups
       return "checkbox-group";
     default:
       return "text";
@@ -74,9 +91,21 @@ export function FormSubmission({
   onBack,
   onSubmissionComplete,
 }: DynamicFormSubmissionProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const submitLoading = useSelector(selectFormSubmitLoading);
   const submitError = useSelector(selectFormSubmitError);
+  const byEntityBeneficiaries = useSelector(selectFormBeneficiariesByEntity);
+  const byEntityBeneficiariesLoading = useSelector(
+    selectFormBeneficiariesByEntityLoading
+  );
+  const byEntityBeneficiariesError = useSelector(
+    selectFormBeneficiariesByEntityError
+  );
+  const entityServices = useSelector(selectEntityServices);
+  const entityServicesLoading = useSelector(selectEntityServicesLoading);
+  const entityServicesError = useSelector(selectEntityServicesError);
+  const { user } = useAuth();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isDraft, setIsDraft] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
@@ -92,6 +121,15 @@ export function FormSubmission({
   const [syncing, setSyncing] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
   const [localNotice, setLocalNotice] = useState<string | null>(null);
+  // Track selected services for this submission
+  const [selectedServices, setSelectedServices] = useState<
+    Array<{
+      serviceId: string;
+      notes?: string;
+    }>
+  >([]);
+  // Query to filter a potentially large services list
+  const [servicesQuery, setServicesQuery] = useState("");
   const isMobileOrTablet =
     typeof navigator !== "undefined" &&
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -114,7 +152,11 @@ export function FormSubmission({
       }
     : null;
   const formStructure = dynamicFormStructure;
-
+  useEffect(() => {
+    if (template) {
+      console.log(template);
+    }
+  }, [template]);
   const requestGps = async (): Promise<{ lat: number; lng: number }> => {
     setGpsError(null);
     setGpsLoading(true);
@@ -158,10 +200,8 @@ export function FormSubmission({
         // Provide clearer guidance for offline devices without GPS hardware
         const offline = typeof navigator !== "undefined" && !navigator.onLine;
         const errMsg = offline
-          ? "Offline geolocation is not available on this device. Use a tablet/phone with built-in GPS or re-enable internet to assist location."
-          : e2?.message ||
-            e?.message ||
-            "Failed to retrieve GPS location. Please enable location services and grant permission.";
+          ? t("formSubmission.gpsOfflineError")
+          : e2?.message || e?.message || t("formSubmission.gpsPermissionError");
         setGpsError(errMsg);
         throw e2;
       }
@@ -169,6 +209,29 @@ export function FormSubmission({
       setGpsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Load beneficiaries linked to the provided entity context (only if includeBeneficiaries is true)
+    if (entityId && entityType && template?.includeBeneficiaries) {
+      dispatch(
+        fetchBeneficiariesByEntityForForm({
+          entityId,
+          entityType,
+          page: 1,
+          limit: 50,
+        })
+      );
+    }
+    // Load services assigned to this entity for selection in delivery section
+    if (entityId && entityType) {
+      dispatch(
+        getEntityServices({
+          entityId,
+          entityType: entityType as any as "project" | "subproject",
+        })
+      );
+    }
+  }, [dispatch, entityId, entityType, template?.includeBeneficiaries]);
 
   useEffect(() => {
     // Calculate progress based on filled required fields
@@ -233,8 +296,8 @@ export function FormSubmission({
         if (!gps) {
           const offline = typeof navigator !== "undefined" && !navigator.onLine;
           const errMsg = offline
-            ? "Offline geolocation is not available on this device. Use a tablet/phone with built-in GPS or re-enable internet to assist location."
-            : err?.message || "Unable to watch position.";
+            ? t("formSubmission.gpsOfflineError")
+            : err?.message || t("formSubmission.gpsPositionError");
           setGpsError(errMsg);
         }
       },
@@ -248,11 +311,11 @@ export function FormSubmission({
     return (
       <div className="text-center py-12">
         <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="font-medium mb-2">Form not found</h3>
+        <h3 className="font-medium mb-2">{t("formSubmission.formNotFound")}</h3>
         <p className="text-muted-foreground mb-4">
-          The requested form could not be loaded.
+          {t("formSubmission.formNotLoaded")}
         </p>
-        <Button onClick={onBack}>Go Back</Button>
+        <Button onClick={onBack}>{t("formSubmission.goBack")}</Button>
       </div>
     );
   }
@@ -284,7 +347,9 @@ export function FormSubmission({
           value === "" ||
           (Array.isArray(value) && value.length === 0)
         ) {
-          errors[field.id] = `${field.label} is required`;
+          errors[field.id] = `${field.label} ${t(
+            "formSubmission.fieldRequired"
+          )}`;
         }
       }
     });
@@ -317,20 +382,32 @@ export function FormSubmission({
             coords = { lat: 0, lng: 0 };
           }
         }
+        const { beneficiaryId: selectedBeneficiaryId, ...restFormData } =
+          formData;
+        // Build services payload from selected services state
+        const submissionTimeIso = new Date().toISOString();
+        const servicesPayload: ServicePayload[] = selectedServices.map((s) => ({
+          serviceId: s.serviceId,
+          deliveredAt: submissionTimeIso,
+          staffUserId: String(user?.id ?? ""),
+          ...(s.notes ? { notes: s.notes } : {}),
+        }));
         const payload = {
           entityId,
           entityType,
-          data: formData,
+          ...(selectedBeneficiaryId
+            ? { beneficiaryId: selectedBeneficiaryId }
+            : {}),
+          data: restFormData,
           latitude: coords.lat,
           longitude: coords.lng,
+          ...(servicesPayload.length > 0 ? { services: servicesPayload } : {}),
         };
 
         if (!isOnline) {
           enqueueSubmission(template.id, payload);
           setQueueCount(peekQueue().length);
-          setLocalNotice(
-            "Submission saved offline. It will sync automatically when you're back online."
-          );
+          setLocalNotice(t("formSubmission.submissionSavedOffline"));
           onSubmissionComplete();
           return;
         }
@@ -346,9 +423,7 @@ export function FormSubmission({
           // On failure (likely network), save offline
           enqueueSubmission(template.id, payload);
           setQueueCount(peekQueue().length);
-          setLocalNotice(
-            "Network issue detected. Submission saved offline and will auto-sync."
-          );
+          setLocalNotice(t("formSubmission.networkIssueOffline"));
           onSubmissionComplete();
         }
       } catch (e) {
@@ -360,11 +435,10 @@ export function FormSubmission({
   };
 
   const renderField = (field: any) => {
-    const value = formData[field.id] || "";
+    const value = formData[field.id] ?? "";
     const hasError = validationErrors[field.id];
 
     switch (field.type) {
-      case "text":
       case "number":
         return (
           <div key={field.id} className="space-y-2">
@@ -374,14 +448,41 @@ export function FormSubmission({
             </Label>
             <Input
               id={field.id}
-              type={field.type}
+              type="number"
+              placeholder={field.placeholder}
+              value={value}
+              onChange={(e) => {
+                const raw = e.target.value;
+                // Keep empty string if user clears input, else parse to number
+                const parsed = raw === "" ? "" : Number(raw);
+                handleFieldChange(field.id, parsed);
+              }}
+              className={
+                hasError
+                  ? "border-destructive"
+                  : " bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+              }
+            />
+            {hasError && <p className="text-sm text-destructive">{hasError}</p>}
+          </div>
+        );
+      case "text":
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}{" "}
+              {field.required && <span className="text-destructive">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              type="text"
               placeholder={field.placeholder}
               value={value}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               className={
                 hasError
                   ? "border-destructive"
-                  : " bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+                  : " bg-[#EAF4FB]  border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
               }
             />
             {hasError && <p className="text-sm text-destructive">{hasError}</p>}
@@ -437,7 +538,7 @@ export function FormSubmission({
               onValueChange={(val) => handleFieldChange(field.id, val)}
             >
               <SelectTrigger className={hasError ? "border-destructive" : ""}>
-                <SelectValue placeholder="Select an option" />
+                <SelectValue placeholder={t("formSubmission.selectAnOption")} />
               </SelectTrigger>
               <SelectContent>
                 {field.options?.map((option: string) => (
@@ -469,6 +570,27 @@ export function FormSubmission({
                 </div>
               ))}
             </RadioGroup>
+            {hasError && <p className="text-sm text-destructive">{hasError}</p>}
+          </div>
+        );
+
+      case "checkbox":
+        // Single boolean checkbox
+        return (
+          <div key={field.id} className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id={field.id}
+                checked={!!formData[field.id]}
+                onCheckedChange={(checked) =>
+                  handleFieldChange(field.id, checked === true)
+                }
+              />
+              <Label htmlFor={field.id}>
+                {field.label}{" "}
+                {field.required && <span className="text-destructive">*</span>}
+              </Label>
+            </div>
             {hasError && <p className="text-sm text-destructive">{hasError}</p>}
           </div>
         );
@@ -530,75 +652,9 @@ export function FormSubmission({
         </div>
       </div>
 
-      {/* Location & connectivity status */}
-      {/* <div className="flex items-center bg-[#E5ECF6] rounded-md p-2  gap-2 text-sm text-muted-foreground">
-        <MapPin className="h-4 w-4" />
-        {gps ? (
-          <span>
-            Location captured: {gps.lat.toFixed(5)}, {gps.lng.toFixed(5)}
-          </span>
-        ) : (
-          <>
-            <span>
-              {isMobileOrTablet
-                ? "Location required for submission."
-                : "Location optional on this device."}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={requestGps}
-              disabled={gpsLoading}
-            >
-              {gpsLoading ? "Detecting..." : "Get GPS"}
-            </Button>
-          </>
-        )}
-        <span>•</span>
-        <span className="font-semibold text-[#E3F5FF]">
-          {isOnline ? "Online" : "Offline"}
-        </span>
-        {queueCount > 0 && (
-          <>
-            <span>•</span>
-            <span>{queueCount} queued</span>
-            {isOnline && (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={syncing}
-                onClick={async () => {
-                  try {
-                    setSyncing(true);
-                    await flushQueue(async (templateId, payload) => {
-                      await (
-                        dispatch(
-                          submitFormResponse({ templateId, payload })
-                        ) as any
-                      ).unwrap();
-                    });
-                  } finally {
-                    setQueueCount(peekQueue().length);
-                    setSyncing(false);
-                  }
-                }}
-              >
-                {syncing ? "Syncing..." : "Sync Now"}
-              </Button>
-            )}
-          </>
-        )}
-      </div> */}
-
-      {/* Context Information removed (legacy). */}
-
-      {/* Progress Indicator */}
-
-      {/* Form Fields */}
-
       <Card className="border-0 bg-white">
         <CardHeader>
-          <h3>Form Details</h3>
+          <h3>{t("formSubmission.formDetails")}</h3>
 
           <div className="flex items-center justify-end ">
             <span className="text-sm  text-muted-foreground">
@@ -609,6 +665,200 @@ export function FormSubmission({
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* Beneficiary selector (based on entity context and includeBeneficiaries flag) */}
+          {entityId && entityType && template?.includeBeneficiaries && (
+            <div className="space-y-2">
+              <Label htmlFor="beneficiaryId">
+                {t("formSubmission.beneficiary")}
+              </Label>
+              <Select
+                value={formData["beneficiaryId"] || ""}
+                onValueChange={(val) => handleFieldChange("beneficiaryId", val)}
+                disabled={byEntityBeneficiariesLoading}
+              >
+                <SelectTrigger className="bg-white border border-gray-100 ">
+                  <SelectValue
+                    placeholder={
+                      byEntityBeneficiariesLoading
+                        ? t("formSubmission.loadingBeneficiaries")
+                        : t("formSubmission.selectBeneficiary")
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {byEntityBeneficiaries.map((b) => {
+                    const label = (b as any)?.pii
+                      ? `${(b as any).pii.firstName || ""} ${
+                          (b as any).pii.lastName || ""
+                        }`.trim() ||
+                        b.pseudonym ||
+                        b.id
+                      : b.pseudonym || b.id;
+                    return (
+                      <SelectItem key={b.id} value={b.id}>
+                        {label}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              {byEntityBeneficiariesError && (
+                <p className="text-sm text-destructive">
+                  {byEntityBeneficiariesError}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Services selection (from assigned services to entity) */}
+          {entityId && entityType && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>{t("formSubmission.servicesDelivered")}</Label>
+                {selectedServices.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {selectedServices.length} {t("formSubmission.selected")}
+                  </span>
+                )}
+              </div>
+              {entityServicesLoading ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("formSubmission.loadingServices")}
+                </p>
+              ) : entityServicesError ? (
+                <p className="text-sm text-destructive">
+                  {entityServicesError}
+                </p>
+              ) : entityServices.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("formSubmission.noServicesAssigned")}
+                </p>
+              ) : (
+                <>
+                  <Input
+                    placeholder={t("formSubmission.searchServices")}
+                    value={servicesQuery}
+                    onChange={(e) => setServicesQuery(e.target.value)}
+                    className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-[#EAF4FB] focus:border-[#EAF4FB]"
+                  />
+                  {/* Selected chips */}
+                  {selectedServices.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedServices.map((s) => {
+                        const svc = entityServices.find(
+                          (x) => x.id === s.serviceId
+                        );
+                        if (!svc) return null;
+                        return (
+                          <div
+                            key={s.serviceId}
+                            className="px-2 py-1 rounded-full bg-[#E5ECF6] text-xs flex items-center gap-2"
+                          >
+                            <span>{svc.name}</span>
+                            <button
+                              type="button"
+                              className="text-muted-foreground hover:text-destructive"
+                              onClick={() =>
+                                setSelectedServices((prev) =>
+                                  prev.filter(
+                                    (it) => it.serviceId !== s.serviceId
+                                  )
+                                )
+                              }
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {/* Services list */}
+                  <div className="max-h-64 overflow-auto rounded-md border border-black/10">
+                    <div className="divide-y">
+                      {entityServices
+                        .filter((svc) =>
+                          svc.name
+                            .toLowerCase()
+                            .includes(servicesQuery.toLowerCase())
+                        )
+                        .map((svc) => {
+                          const isChecked = selectedServices.some(
+                            (s) => s.serviceId === svc.id
+                          );
+                          const current = selectedServices.find(
+                            (s) => s.serviceId === svc.id
+                          );
+                          return (
+                            <div
+                              key={svc.id}
+                              className="p-3 bg-white  border-gray-100 border-0 "
+                            >
+                              <div className="flex items-center gap-3">
+                                <Checkbox
+                                  className="bg-white border"
+                                  id={`svc-${svc.id}`}
+                                  checked={isChecked}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedServices((prev) => [
+                                        ...prev,
+                                        { serviceId: svc.id, notes: "" },
+                                      ]);
+                                    } else {
+                                      setSelectedServices((prev) =>
+                                        prev.filter(
+                                          (s) => s.serviceId !== svc.id
+                                        )
+                                      );
+                                    }
+                                  }}
+                                />
+                                <Label
+                                  htmlFor={`svc-${svc.id}`}
+                                  className="font-medium "
+                                >
+                                  {svc.name}
+                                </Label>
+                              </div>
+                              {isChecked && (
+                                <div className="mt-2 ml-6">
+                                  <Label
+                                    htmlFor={`notes-${svc.id}`}
+                                    className="text-xs"
+                                  >
+                                    {t("formSubmission.notes")}
+                                  </Label>
+                                  <Textarea
+                                    id={`notes-${svc.id}`}
+                                    rows={2}
+                                    placeholder={t(
+                                      "formSubmission.optionalNotes"
+                                    )}
+                                    value={current?.notes || ""}
+                                    onChange={(e) => {
+                                      const notes = e.target.value;
+                                      setSelectedServices((prev) =>
+                                        prev.map((s) =>
+                                          s.serviceId === svc.id
+                                            ? { ...s, notes }
+                                            : s
+                                        )
+                                      );
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           {formStructure.fields.map(renderField)}
         </CardContent>
       </Card>
@@ -618,7 +868,7 @@ export function FormSubmission({
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Please fix the following errors before submitting:
+            {t("formSubmission.fixErrors")}
             <ul className="mt-2 list-disc list-inside">
               {Object.values(validationErrors).map((error, index) => (
                 <li key={index} className="text-sm">
@@ -651,9 +901,9 @@ export function FormSubmission({
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 justify-end">
-        <Button
+        {/* <Button
           variant="outline"
-          className="w-full bg-black/10 text-black sm:w-auto"
+          className="w-full bg-blue-200 text-blue-900 border-0 sm:w-auto"
           onClick={handleSaveDraft}
           disabled={isDraft}
         >
@@ -665,10 +915,10 @@ export function FormSubmission({
               Save Draft
             </>
           )}
-        </Button>
+        </Button> */}
 
         <Button
-          className="w-full bg-[#2E343E] text-white sm:w-auto"
+          className="w-full bg-[#0073e6] text-white sm:w-auto"
           onClick={handleSubmit}
           disabled={
             submitLoading ||
@@ -678,11 +928,11 @@ export function FormSubmission({
           }
         >
           {submitLoading || gpsLoading ? (
-            <>Submitting...</>
+            <>{t("formSubmission.submitting")}</>
           ) : (
             <>
               <Send className="h-4 w-4 mr-2" />
-              Submit Form
+              {t("formSubmission.submitForm")}
             </>
           )}
         </Button>

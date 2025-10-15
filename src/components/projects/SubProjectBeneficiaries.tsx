@@ -37,6 +37,7 @@ import {
 } from "../ui/overlay/dropdown-menu";
 import { Input } from "../ui/form/input";
 import { Label } from "../ui/form/label";
+import { RadioGroup, RadioGroupItem } from "../ui/form/radio-group";
 import {
   Select,
   SelectContent,
@@ -220,6 +221,9 @@ export function SubProjectBeneficiaries({
   const [selectedBeneficiaries, setSelectedBeneficiaries] = useState<string[]>(
     []
   );
+  const [ethnicity, setEthnicity] = useState("");
+  const [residence, setResidence] = useState<"rural" | "urban">("rural");
+  const [householdMembers, setHouseholdMembers] = useState<string>("");
 
   // Filter beneficiaries for this sub-project
   const filteredBeneficiaries = mockBeneficiaries.filter((beneficiary) => {
@@ -261,6 +265,8 @@ export function SubProjectBeneficiaries({
       setSelectedBeneficiaries([...selectedBeneficiaries, id]);
     }
   };
+
+  //       IMPORTANT: QEKY COMPONENT NUK O E PERDORUN
 
   return (
     <div className="space-y-6">
@@ -347,6 +353,58 @@ export function SubProjectBeneficiaries({
                   id="beneficiary-location"
                   className="col-span-3"
                   placeholder="Village or community"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="ethnicity" className="text-right">
+                  Ethnicity
+                </Label>
+                <Select value={ethnicity} onValueChange={setEthnicity}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select ethnicity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Shqiptar">Shqiptar</SelectItem>
+                    <SelectItem value="Serb">Serb</SelectItem>
+                    <SelectItem value="Boshnjak">Boshnjak</SelectItem>
+                    <SelectItem value="Turk">Turk</SelectItem>
+                    <SelectItem value="Ashkali">Ashkali</SelectItem>
+                    <SelectItem value="Rom">Rom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">Residence</Label>
+                <RadioGroup
+                  className="col-span-3 flex gap-6"
+                  value={residence}
+                  onValueChange={(val) =>
+                    setResidence(val as "rural" | "urban")
+                  }
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="rural" id="residence-rural" />
+                    <Label htmlFor="residence-rural">Rural</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="urban" id="residence-urban" />
+                    <Label htmlFor="residence-urban">Urban</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="householdMembers" className="text-right">
+                  Household Members
+                </Label>
+                <Input
+                  id="householdMembers"
+                  type="number"
+                  min={0}
+                  step={1}
+                  className="col-span-3"
+                  placeholder="Enter number of household members"
+                  value={householdMembers}
+                  onChange={(e) => setHouseholdMembers(e.target.value)}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">

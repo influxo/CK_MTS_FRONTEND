@@ -1,3 +1,28 @@
+export interface GetFormTemplatesRequest {
+  projectId?: string; // uuid string
+  subprojectId?: string; // uuid string
+  activityId?: string; // uuid string
+  entityType?: string; // example: "project" | "subproject" | "activity"
+  page?: number;
+  limit?: number;
+}
+
+// Pagination model used in list responses
+export interface Pagination {
+  page: number;
+  limit: number;
+  totalPages: number;
+  totalCount: number;
+}
+
+export interface GetFormTemplatesResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    templates: FormTemplate[];
+    pagination: Pagination;
+  };
+}
 export interface FormFieldOption {
   value: string;
   label: string;
@@ -50,14 +75,17 @@ export interface FormSchema {
 export interface FormTemplate {
   id: string;
   name: string;
+  programId: string;
   description?: string;
   category?: string;
   status?: string;
   version?: string;
+  includeBeneficiaries?: boolean;
   entityAssociations: EntityReference[];
   schema: FormSchema;
   updatedAt?: string;
   createdAt?: string;
+  deletedAt?: string;
 }
 
 export interface FormTemplatePagination {
@@ -87,6 +115,13 @@ export interface GetFormTemplateByIdResponse {
   data: FormTemplate;
 }
 
+export interface ServicePayload {
+  serviceId: string;
+  deliveredAt: string;
+  staffUserId: string;
+  notes?: string;
+}
+
 // Request for submitting a form
 export interface FormSubmissionRequest {
   /**
@@ -98,6 +133,9 @@ export interface FormSubmissionRequest {
    * UUID of the entity (project, subproject, or activity) this submission belongs to
    */
   entityId: string;
+
+  // beneficiary id
+  beneficiaryId?: string;
 
   /**
    * The entity type this form is associated with
@@ -116,6 +154,7 @@ export interface FormSubmissionRequest {
    */
   latitude: number;
   longitude: number;
+  services?: ServicePayload[];
 }
 
 // Data returned when a form is successfully submitted
@@ -127,6 +166,7 @@ export interface FormSubmissionData {
   entityId: string;
   entityType: string;
   submittedBy: string;
+  beneficiaryId?: string;
   data: Record<string, any>;
   latitude: string; // API returns these as strings
   longitude: string;
@@ -208,6 +248,47 @@ export interface GetFormResponseByIdResponse {
   message?: string;
   data: FormResponseData;
 }
+
+// List form responses by entity (project, subproject, activity)
+export interface GetFormResponsesByEntityRequest {
+  entityId: string;
+  entityType: "project" | "subproject" | "activity";
+  templateId?: string;
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GetFormResponsesByEntityResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    items: FormResponseData[];
+    pagination: Pagination;
+  };
+}
+
+// Global list of form responses (no required entity)
+export interface GetAllFormResponsesRequest {
+  templateId?: string;
+  entityId?: string;
+  entityType?: "project" | "subproject" | "activity";
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GetAllFormResponsesResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    items: FormResponseData[];
+    pagination: Pagination;
+  };
+}
+
 export interface GetFormsResponse extends ApiResponse<FormTemplate[]> {}
 export interface GetFormResponse extends ApiResponse<FormTemplate> {}
 export interface CreateFormRequest

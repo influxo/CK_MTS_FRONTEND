@@ -11,6 +11,7 @@ import {
   selectSelectedTemplate,
   selectSelectedTemplateError,
   selectSelectedTemplateLoading,
+  selectFormTemplatesPagination,
 } from "../store/slices/formSlice";
 import { Card } from "../components/ui/data-display/card";
 import { Button } from "../components/ui/button/button";
@@ -26,8 +27,22 @@ import {
 import { Alert, AlertDescription } from "../components/ui/feedback/alert";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { FormSubmission } from "../components/data-entry/FormSubmission";
+import { useAuth } from "../hooks/useAuth";
+import { useTranslation } from "../hooks/useTranslation";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsTree,
+} from "../store/slices/userProjectsSlice";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/form/select";
 
 export function DataEntryTemplates() {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -35,11 +50,65 @@ export function DataEntryTemplates() {
   const projectId = searchParams.get("projectId") ?? undefined;
   const subprojectId = searchParams.get("subprojectId") ?? undefined;
 
-  const isValid = !!projectId || !!subprojectId;
+  const { user } = useAuth();
+  const userProjectsTree = useSelector(selectUserProjectsTree);
+
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
+
+  // Load user projects if needed
+  useEffect(() => {
+    if (!isSysOrSuperAdmin && user?.id) {
+      dispatch(fetchUserProjectsByUserId(String(user.id)));
+    }
+  }, [dispatch, isSysOrSuperAdmin, user?.id]);
+
+  // Build allowed sets for non-admins
+  const allowedProjectIds = useMemo(() => {
+    if (isSysOrSuperAdmin) return null; // admins have access to all
+    return new Set((userProjectsTree || []).map((p) => p.id));
+  }, [isSysOrSuperAdmin, userProjectsTree]);
+
+  const allowedSubprojectIds = useMemo(() => {
+    if (isSysOrSuperAdmin) return null;
+    const ids: string[] = [];
+    (userProjectsTree || []).forEach((p) => {
+      (p.subprojects || []).forEach((sp) => ids.push(sp.id));
+    });
+    return new Set(ids);
+  }, [isSysOrSuperAdmin, userProjectsTree]);
+
+  const hasParam = !!projectId || !!subprojectId;
+  const hasAccess = useMemo(() => {
+    if (!hasParam) return false;
+    if (isSysOrSuperAdmin) return true;
+    if (projectId) return allowedProjectIds?.has(projectId) ?? false;
+    if (subprojectId) return allowedSubprojectIds?.has(subprojectId) ?? false;
+    return false;
+  }, [
+    hasParam,
+    isSysOrSuperAdmin,
+    projectId,
+    subprojectId,
+    allowedProjectIds,
+    allowedSubprojectIds,
+  ]);
 
   const loading = useSelector(selectFormTemplatesLoading);
   const error = useSelector(selectFormTemplatesError);
   const templates = useSelector(selectFormTemplates);
+  const pagination = useSelector(selectFormTemplatesPagination);
   const selectedTemplate = useSelector(selectSelectedTemplate);
   const selectedTemplateLoading = useSelector(selectSelectedTemplateLoading);
   const selectedTemplateError = useSelector(selectSelectedTemplateError);
@@ -48,8 +117,12 @@ export function DataEntryTemplates() {
     null
   );
 
+  // Pagination state and loader
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
+
   useEffect(() => {
-    if (!isValid) return;
+    if (!hasAccess) return;
 
     const entityType = projectId ? "project" : "subproject";
     dispatch(
@@ -57,11 +130,11 @@ export function DataEntryTemplates() {
         projectId,
         subprojectId,
         entityType,
-        page: 1,
-        limit: 50,
+        page,
+        limit,
       })
     );
-  }, [dispatch, projectId, subprojectId, isValid]);
+  }, [dispatch, projectId, subprojectId, hasAccess, page, limit]);
 
   // When a template is selected, fetch its full schema
   useEffect(() => {
@@ -71,12 +144,31 @@ export function DataEntryTemplates() {
   }, [dispatch, selectedTemplateId]);
 
   const pageTitle = useMemo(() => {
-    if (projectId) return "Templates for Project";
-    if (subprojectId) return "Templates for Subproject";
-    return "Templates";
-  }, [projectId, subprojectId]);
+    if (projectId) return t("dataEntryTemplates.templatesForProject");
+    if (subprojectId) return t("dataEntryTemplates.templatesForSubproject");
+    return t("dataEntryTemplates.templates");
+  }, [projectId, subprojectId, t]);
 
-  if (!isValid) {
+  // Build numbered pagination tokens (compact with ellipsis)
+  const pageTokens = useMemo(() => {
+    const total = Math.max(pagination?.totalPages || 1, 1);
+    const current = Math.min(Math.max(pagination?.page || 1, 1), total);
+    const tokens: Array<number | string> = [];
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) tokens.push(i);
+      return tokens;
+    }
+    const left = Math.max(2, current - 1);
+    const right = Math.min(total - 1, current + 1);
+    tokens.push(1);
+    if (left > 2) tokens.push("left-ellipsis");
+    for (let i = left; i <= right; i++) tokens.push(i);
+    if (right < total - 1) tokens.push("right-ellipsis");
+    tokens.push(total);
+    return tokens;
+  }, [pagination]);
+
+  if (!hasParam) {
     return (
       <div className="space-y-4">
         <Button
@@ -85,12 +177,31 @@ export function DataEntryTemplates() {
           onClick={() => navigate("/data-entry")}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Data Entry
+          {t("dataEntryTemplates.backToDataEntry")}
         </Button>
         <Alert variant="destructive">
           <AlertDescription>
-            Missing required parameter. Provide either projectId or subprojectId
-            in the URL.
+            {t("dataEntryTemplates.missingParameter")}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <div className="space-y-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/data-entry")}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          {t("dataEntryTemplates.backToDataEntry")}
+        </Button>
+        <Alert variant="destructive">
+          <AlertDescription>
+            {t("dataEntryTemplates.noAccess")}
           </AlertDescription>
         </Alert>
       </div>
@@ -109,6 +220,7 @@ export function DataEntryTemplates() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Button
+          className="hover:bg-[#E0F2FE] border-0"
           variant="outline"
           size="sm"
           onClick={() =>
@@ -118,18 +230,19 @@ export function DataEntryTemplates() {
           }
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back
+          {t("dataEntryTemplates.back")}
         </Button>
         <div>
           <h2>{pageTitle}</h2>
           <div className="text-sm text-muted-foreground">
             {projectId ? (
               <>
-                projectId: <Badge variant="outline">{projectId}</Badge>
+                {t("dataEntryTemplates.projectId")}{" "}
+                <Badge variant="outline">{projectId}</Badge>
               </>
             ) : (
               <>
-                subprojectId:{" "}
+                {t("dataEntryTemplates.subprojectId")}{" "}
                 <Badge
                   variant="outline"
                   className="bg-black/5 text-black border-0"
@@ -146,7 +259,8 @@ export function DataEntryTemplates() {
         <div className="p-4">
           {loading && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading templates...
+              <Loader2 className="h-4 w-4 animate-spin" />{" "}
+              {t("dataEntryTemplates.loadingTemplates")}
             </div>
           )}
 
@@ -163,9 +277,9 @@ export function DataEntryTemplates() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Version</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead>{t("dataEntryTemplates.name")}</TableHead>
+                        <TableHead>{t("dataEntryTemplates.version")}</TableHead>
+                        <TableHead>{t("dataEntryTemplates.actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -178,7 +292,7 @@ export function DataEntryTemplates() {
                           <TableCell>
                             <div className="flex gap-2 justify-end">
                               <Button
-                                className="hover:bg-black/10 border-0"
+                                className="hover:bg-[#E0F2FE] border-0"
                                 size="sm"
                                 variant={
                                   selectedTemplateId === tpl.id
@@ -188,8 +302,8 @@ export function DataEntryTemplates() {
                                 onClick={() => setSelectedTemplateId(tpl.id)}
                               >
                                 {selectedTemplateId === tpl.id
-                                  ? "Selected"
-                                  : "Select"}
+                                  ? t("dataEntryTemplates.selected")
+                                  : t("dataEntryTemplates.select")}
                               </Button>
                             </div>
                           </TableCell>
@@ -201,19 +315,122 @@ export function DataEntryTemplates() {
                             colSpan={3}
                             className="text-center text-muted-foreground"
                           >
-                            No templates found for this selection.
+                            {t("dataEntryTemplates.noTemplatesFound")}
                           </TableCell>
                         </TableRow>
                       )}
                     </TableBody>
                   </Table>
+                  {/* Pagination Controls */}
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>
+                        {t("dataEntryTemplates.page")} {pagination?.page || 1}{" "}
+                        {t("dataEntryTemplates.of")}{" "}
+                        {Math.max(pagination?.totalPages || 1, 1)}
+                      </span>
+                      <span className="hidden sm:inline">
+                        • {t("dataEntryTemplates.total")}{" "}
+                        {pagination?.totalCount || 0}{" "}
+                        {t("dataEntryTemplates.records")}
+                      </span>
+                      <div className="flex items-center gap-2 ml-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          disabled={loading || (pagination?.page || 1) <= 1}
+                          className="bg-[#E0F2FE]"
+                        >
+                          {t("dataEntryTemplates.prev")}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPage((p) => p + 1)}
+                          disabled={
+                            loading ||
+                            (pagination?.totalPages || 0) === 0 ||
+                            (pagination?.page || 1) >=
+                              (pagination?.totalPages || 1)
+                          }
+                          className="bg-[#E0F2FE]"
+                        >
+                          {t("dataEntryTemplates.next")}
+                        </Button>
+                        <div className="flex items-center gap-1 ml-2">
+                          {pageTokens.map((tok, idx) =>
+                            typeof tok === "number" ? (
+                              <Button
+                                key={`p-${tok}`}
+                                variant="outline"
+                                size="sm"
+                                className={
+                                  tok === (pagination?.page || 1)
+                                    ? "bg-[#0073e6] text-white border-0"
+                                    : "bg-white"
+                                }
+                                onClick={() =>
+                                  tok !== (pagination?.page || 1) &&
+                                  setPage(tok)
+                                }
+                                disabled={loading}
+                                aria-current={
+                                  tok === (pagination?.page || 1)
+                                    ? "page"
+                                    : undefined
+                                }
+                              >
+                                {tok}
+                              </Button>
+                            ) : (
+                              <span
+                                key={`${tok}-${idx}`}
+                                className="px-1 text-muted-foreground"
+                              >
+                                …
+                              </span>
+                            )
+                          )}
+                        </div>
+                        <Select
+                          value={String(limit)}
+                          onValueChange={(val) => {
+                            const newLimit = parseInt(val, 10) || 50;
+                            setLimit(newLimit);
+                            setPage(1);
+                          }}
+                        >
+                          <SelectTrigger className="w-[120px] bg-[#E0F2FE] border-0 text-black">
+                            <SelectValue
+                              placeholder={t("dataEntryTemplates.rows")}
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="10">
+                              {t("dataEntryTemplates.perPage10")}
+                            </SelectItem>
+                            <SelectItem value="20">
+                              {t("dataEntryTemplates.perPage20")}
+                            </SelectItem>
+                            <SelectItem value="50">
+                              {t("dataEntryTemplates.perPage50")}
+                            </SelectItem>
+                            <SelectItem value="100">
+                              {t("dataEntryTemplates.perPage100")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
                 </>
               ) : (
                 <div className="space-y-4">
                   {selectedTemplateLoading && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" /> Loading
-                      template...
+                      <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                      {t("dataEntryTemplates.loadingTemplate")}
                     </div>
                   )}
                   {!selectedTemplateLoading && selectedTemplateError && (

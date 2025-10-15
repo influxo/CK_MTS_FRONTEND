@@ -1,6 +1,7 @@
-export type TimeUnit = 'day' | 'week' | 'month' | 'quarter' | 'year';
-export type GroupField = 'service' | 'user' | 'beneficiary';
-export type GroupedByKey = 'serviceId' | 'staffUserId' | 'beneficiaryId' | null;
+export type TimeUnit = "day" | "week" | "month" | "quarter" | "year";
+export type GroupField = "service" | "user" | "beneficiary";
+export type GroupedByKey = "serviceId" | "staffUserId" | "beneficiaryId" | null;
+export type MetricType = "submissions" | "serviceDeliveries" | "uniqueBeneficiaries";
 
 export interface DeliveriesFilters {
   serviceId?: string;
@@ -8,15 +9,18 @@ export interface DeliveriesFilters {
   staffUserId?: string;
   beneficiaryId?: string;
   entityId?: string;
-  entityType?: 'project' | 'subproject' | 'activity';
+  entityType?: "project" | "subproject" | "activity";
   formResponseId?: string;
+  formTemplateId?: string;
+  formTemplateIds?: string[];
   startDate?: string; // ISO date
-  endDate?: string;   // ISO date
+  endDate?: string; // ISO date
 }
 
 export interface DeliveriesSeriesParams extends DeliveriesFilters {
   groupBy?: TimeUnit;
   groupField?: GroupField;
+  metric?: MetricType;
 }
 
 export interface DeliveriesSummaryData {
@@ -40,10 +44,24 @@ export interface DeliveriesSeriesItem {
   beneficiaryId?: string;
 }
 
+// Optional extra data some APIs may return alongside the series
+export interface MostFrequentService {
+  serviceId: string;
+  name: string;
+  count: number;
+}
+
 export interface DeliveriesSeriesResponse {
   success: boolean;
   message?: string;
   items: DeliveriesSeriesItem[];
   granularity: TimeUnit;
   groupedBy: GroupedByKey;
+  // Optional extras if provided by the API
+  summary?: {
+    totalSubmissions?: number;
+    totalServiceDeliveries?: number;
+    totalUniqueBeneficiaries?: number;
+  };
+  mostFrequentServices?: MostFrequentService[];
 }

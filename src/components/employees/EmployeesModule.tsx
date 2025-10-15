@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { AccountSetup } from "./AccountSetup";
@@ -7,10 +7,12 @@ import { InviteEmployee } from "./InviteEmployee";
 import type { AppDispatch } from "../../store";
 import {
   fetchEmployees,
+  fetchMyTeamEmployees,
   selectAllEmployees,
   selectEmployeesError,
   selectEmployeesLoading,
 } from "../../store/slices/employeesSlice";
+import { selectCurrentUser } from "../../store/slices/authSlice";
 
 type EmployeeView = "list" | "invite" | "setup";
 
@@ -25,10 +27,36 @@ export function EmployeesModule() {
   const employees = useSelector(selectAllEmployees);
   const isLoading = useSelector(selectEmployeesLoading);
   const error = useSelector(selectEmployeesError);
+  const user = useSelector(selectCurrentUser);
+
+  const hasFetchedRef = useRef(false);
+
+  // Determine if user is sys or super admin
+  const normalizedRoles = useMemo(
+    () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [user?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
 
   useEffect(() => {
-    dispatch(fetchEmployees());
-  }, [dispatch]);
+    if (hasFetchedRef.current) return;
+    if (!user || !Array.isArray(user.roles) || user.roles.length === 0) return;
+
+    hasFetchedRef.current = true;
+    if (isSysOrSuperAdmin) {
+      dispatch(fetchEmployees());
+    } else {
+      dispatch(fetchMyTeamEmployees());
+    }
+  }, [dispatch, isSysOrSuperAdmin, user]);
   // Handle when an employee is selected from the list -> navigate to details route
   const handleEmployeeSelect = (employeeId: string) => {
     navigate(`/employees/${employeeId}`);

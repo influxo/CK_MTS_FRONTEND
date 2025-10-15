@@ -47,12 +47,15 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import { Textarea } from "../ui/form/textarea";
+import { toast } from "sonner";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface ProjectServicesProps {
   projectId: string;
 }
 
 export function ProjectServices({ projectId }: ProjectServicesProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const services = useSelector(selectEntityServices);
   const isLoading = useSelector(selectEntityServicesLoading);
@@ -75,15 +78,35 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
   const [search, setSearch] = useState("");
-  const filteredAllServices = useMemo(
-    () =>
-      allServices.filter(
-        (s) =>
-          s.name.toLowerCase().includes(search.toLowerCase()) ||
-          s.description.toLowerCase().includes(search.toLowerCase())
-      ),
-    [allServices, search]
+  // IDs of services already assigned to this project (to exclude from modal)
+  const assignedIds = useMemo(
+    () => new Set((services || []).map((s) => s.id)),
+    [services]
   );
+
+  // Modal list filtered by search and excluding already assigned services
+  const filteredAllServices = useMemo(() => {
+    const q = search.toLowerCase();
+    return allServices.filter(
+      (s) =>
+        !assignedIds.has(s.id) &&
+        (s.name.toLowerCase().includes(q) ||
+          s.description.toLowerCase().includes(q))
+    );
+  }, [allServices, search, assignedIds]);
+
+  // Pagination state for assign modal
+  const [assignPage, setAssignPage] = useState(1);
+  const [assignLimit, setAssignLimit] = useState(10);
+  const assignTotalPages = useMemo(
+    () =>
+      Math.max(1, Math.ceil((filteredAllServices.length || 0) / assignLimit)),
+    [filteredAllServices.length, assignLimit]
+  );
+  const paginatedServices = useMemo(() => {
+    const start = (assignPage - 1) * assignLimit;
+    return filteredAllServices.slice(start, start + assignLimit);
+  }, [filteredAllServices, assignPage, assignLimit]);
 
   // Unassign dialog state
   const [isUnassignOpen, setIsUnassignOpen] = useState(false);
@@ -135,15 +158,25 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
   useEffect(() => {
     if (isAssignOpen) {
       setSelectedIds([]);
+      setAssignPage(1);
       dispatch(getAllServices({ page: 1, limit: 200 }));
     }
   }, [isAssignOpen, dispatch]);
 
+  // Keep page within bounds when dataset or page size changes
+  useEffect(() => {
+    if (assignPage > assignTotalPages) {
+      setAssignPage(assignTotalPages);
+    }
+  }, [assignTotalPages, assignPage]);
+
   const handleCreateAndAssign = async () => {
     if (!projectId) return;
     if (!name.trim() || !category.trim() || !status) return;
+
     setCreating(true);
     try {
+      // Create service
       const res = await dispatch(
         createService({
           name: name.trim(),
@@ -152,23 +185,44 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
           status,
         })
       ).unwrap();
+
       const created = res.data;
+
       if (created?.id) {
+        // Assign service to project
         await dispatch(
           assignServiceToEntity({
             id: created.id,
             data: { entityId: projectId, entityType: "project" },
           })
         ).unwrap();
+
+        // Refresh UI + reset fields
         refresh();
         setIsCreateOpen(false);
         setName("");
         setDescription("");
         setCategory("");
         setStatus("active");
+
+        //  Success toast
+        toast.success("Shërbimi u shtua me sukses!", {
+          style: {
+            backgroundColor: "#d1fae5",
+            color: "#065f46",
+            border: "1px solid #10b981",
+          },
+        });
       }
     } catch (e) {
-      // errors handled by slice; keep here to stop spinner
+      //  Any failure (create or assign) ends up here
+      toast.error("Diçka dështoi gjate shtimit te shërbimit", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
     } finally {
       setCreating(false);
     }
@@ -191,6 +245,14 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
             data: { entityId: projectId, entityType: "project" },
           })
         ).unwrap();
+
+        toast.success("Shërbimi u shtua me sukses!", {
+          style: {
+            backgroundColor: "#d1fae5",
+            color: "#065f46",
+            border: "1px solid #10b981",
+          },
+        });
       } else {
         await dispatch(
           assignServicesBatch({
@@ -213,86 +275,95 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3>Services</h3>
+        <h3>{t('projectServices.services')}</h3>
         <div className="flex gap-2">
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#2B2B2B] text-white">
-                Create Service
+              <Button
+                className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+              >
+                {t('projectServices.createService')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[560px]">
               <DialogHeader>
-                <DialogTitle>Create and Assign Service</DialogTitle>
+                <DialogTitle>{t('projectServices.createAndAssignService')}</DialogTitle>
                 <DialogDescription>
-                  Create a new service. It will be assigned to this project
-                  automatically after creation.
+                  {t('projectServices.createServiceDesc')}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="svc-name" className="text-right">
-                    Name *
+                    {t('projectServices.name')}
                   </Label>
                   <Input
                     id="svc-name"
-                    className="col-span-3"
+                    className="col-span-3 border border-[#C6CBCB]"
                     value={name}
                     onChange={(e) => setName(e.currentTarget.value)}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="svc-category" className="text-right">
-                    Category *
+                    {t('projectServices.category')}
                   </Label>
                   <Input
                     id="svc-category"
-                    className="col-span-3"
+                    className="col-span-3 border border-[#C6CBCB]"
                     value={category}
                     onChange={(e) => setCategory(e.currentTarget.value)}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-start gap-4">
                   <Label htmlFor="svc-description" className="text-right pt-2">
-                    Description
+                    {t('projectServices.description')}
                   </Label>
                   <Textarea
                     id="svc-description"
-                    className="col-span-3"
+                    className="col-span-3 border border-[#C6CBCB]"
                     rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.currentTarget.value)}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Status *</Label>
+                  <Label className="text-right">{t('projectServices.status')}</Label>
                   <Select
                     value={status}
                     onValueChange={(v) => setStatus(v as "active" | "inactive")}
                   >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select status" />
+                    <SelectTrigger className="col-span-3 border border-[#C6CBCB]">
+                      <SelectValue placeholder={t('projectServices.selectStatus')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="active">{t('projectServices.active')}</SelectItem>
+                      <SelectItem value="inactive">{t('projectServices.inactive')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <DialogFooter>
                 <Button
+                  className="bg-blue-200 border-0"
                   variant="outline"
                   onClick={() => setIsCreateOpen(false)}
                   disabled={creating}
                 >
-                  Cancel
+                  {t('projectServices.cancel')}
                 </Button>
                 <Button
+                  className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
                   onClick={handleCreateAndAssign}
                   disabled={creating || !name.trim() || !category.trim()}
                 >
-                  {creating ? "Creating..." : "Create & Assign"}
+                  {creating ? t('projectServices.creating') : t('projectServices.createAndAssign')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -300,35 +371,45 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
 
           <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">Assign Service</Button>
+              <Button
+                variant="outline"
+                className="bg-[#E0F2FE] border-0  transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+              >
+                {t('projectServices.assignService')}
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[720px]">
               <DialogHeader>
-                <DialogTitle>Assign Services to Project</DialogTitle>
+                <DialogTitle>{t('projectServices.assignServicesToProject')}</DialogTitle>
                 <DialogDescription>
-                  Select one or multiple services to assign to this project.
+                  {t('projectServices.assignServicesDesc')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-3">
                 <div className="flex gap-3 items-center">
                   <Input
-                    placeholder="Search services..."
+                    placeholder={t('projectServices.searchServices')}
                     value={search}
-                    onChange={(e) => setSearch(e.currentTarget.value)}
+                    onChange={(e) => {
+                      setSearch(e.currentTarget.value);
+                      setAssignPage(1);
+                    }}
                   />
                   <Button
+                    className="bg-blue-200 border-0"
                     variant="outline"
                     onClick={() =>
                       dispatch(getAllServices({ page: 1, limit: 200 }))
                     }
                     disabled={allLoading}
                   >
-                    Reload
+                    {t('projectServices.reload')}
                   </Button>
                 </div>
                 {allLoading && (
                   <div className="text-sm text-muted-foreground">
-                    Loading services...
+                    {t('projectServices.loadingServices')}
                   </div>
                 )}
                 {allError && (
@@ -336,21 +417,22 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                 )}
                 <div className="rounded-md border max-h-[360px] overflow-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-[#EDEEFC]">
                       <TableRow>
                         <TableHead className="w-[48px]">
                           <span className="sr-only">Select</span>
                         </TableHead>
-                        <TableHead className="w-[320px]">Service</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className="w-[320px]">{t('projectServices.service')}</TableHead>
+                        <TableHead>{t('projectServices.category')}</TableHead>
+                        <TableHead>{t('projectServices.status')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredAllServices.map((svc) => (
+                      {paginatedServices.map((svc) => (
                         <TableRow key={svc.id} className="hover:bg-muted/40">
                           <TableCell>
                             <input
+                              className=""
                               type="checkbox"
                               checked={selectedIds.includes(svc.id)}
                               onChange={() => toggleSelect(svc.id)}
@@ -363,13 +445,18 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{svc.category}</Badge>
+                            <Badge
+                              variant="outline"
+                              className="bg-[#0073e6] text-white border-0"
+                            >
+                              {svc.category}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge
                               className={
                                 svc.status === "active"
-                                  ? "bg-[#2E343E] text-white"
+                                  ? "bg-[#DEF8EE] text-[#4AA785] border-0"
                                   : ""
                               }
                             >
@@ -382,7 +469,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                         <TableRow>
                           <TableCell colSpan={4}>
                             <div className="text-sm text-muted-foreground">
-                              No services found.
+                              {t('projectServices.noServicesFound')}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -390,24 +477,82 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                     </TableBody>
                   </Table>
                 </div>
+                {/* Modal pagination controls */}
+                <div className="flex items-center justify-between flex-wrap gap-3 px-1">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>
+                      {t('projectServices.page')} {assignPage} {t('projectServices.of')} {Math.max(assignTotalPages || 1, 1)}
+                    </span>
+                    <span className="hidden sm:inline">
+                      • {t('projectServices.total')} {filteredAllServices.length} {t('projectServices.servicesLabel')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAssignPage((p) => Math.max(1, p - 1))}
+                      disabled={assignPage <= 1}
+                      className="bg-white"
+                    >
+                      {t('projectServices.prev')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setAssignPage((p) => Math.min(assignTotalPages, p + 1))
+                      }
+                      disabled={
+                        assignTotalPages === 0 || assignPage >= assignTotalPages
+                      }
+                      className="bg-white"
+                    >
+                      {t('projectServices.next')}
+                    </Button>
+                    <Select
+                      value={String(assignLimit)}
+                      onValueChange={(val) => {
+                        const newLimit = parseInt(val, 10) || 10;
+                        setAssignLimit(newLimit);
+                        setAssignPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="w-[120px] bg-black/5 border-0 text-black">
+                        <SelectValue placeholder="Rows" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">{t('projectServices.perPage10')}</SelectItem>
+                        <SelectItem value="20">{t('projectServices.perPage20')}</SelectItem>
+                        <SelectItem value="50">{t('projectServices.perPage50')}</SelectItem>
+                        <SelectItem value="100">{t('projectServices.perPage100')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
               <DialogFooter>
                 <Button
+                  className="bg-blue-200 border-0"
                   variant="outline"
                   onClick={() => setIsAssignOpen(false)}
                   disabled={assigning}
                 >
-                  Cancel
+                  {t('projectServices.cancel')}
                 </Button>
                 <Button
+                  className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
                   onClick={handleAssignSelected}
                   disabled={assigning || selectedIds.length === 0}
                 >
                   {assigning
-                    ? "Assigning..."
+                    ? t('projectServices.assigning')
                     : selectedIds.length > 1
-                    ? "Assign Selected (Batch)"
-                    : "Assign Selected"}
+                    ? t('projectServices.assignSelectedBatch')
+                    : t('projectServices.assignSelected')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -420,30 +565,30 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
       </div>
 
       {isLoading && (
-        <div className="text-sm text-muted-foreground">Loading services...</div>
+        <div className="text-sm text-muted-foreground">{t('projectServices.loadingServices')}</div>
       )}
       {error && <div className="text-sm text-destructive">{error}</div>}
 
       {!isLoading && !error && services.length === 0 && (
         <div className="text-sm text-muted-foreground">
-          No services assigned to this project.
+          {t('projectServices.noServicesAssigned')}
         </div>
       )}
 
       {services.length > 0 && (
         <div className="rounded-md border overflow-hidden">
           <Table>
-            <TableHeader>
+            <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
-                <TableHead className="w-[280px]">Service</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[280px]">{t('projectServices.service')}</TableHead>
+                <TableHead>{t('projectServices.category')}</TableHead>
+                <TableHead>{t('projectServices.status')}</TableHead>
+                <TableHead>{t('projectServices.created')}</TableHead>
+                <TableHead>{t('projectServices.updated')}</TableHead>
+                <TableHead className="text-right">{t('projectServices.actions')}</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="bg-[#F7F9FB]">
               {services.map((svc) => (
                 <TableRow key={svc.id}>
                   <TableCell>
@@ -453,12 +598,19 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{svc.category}</Badge>
+                    <Badge
+                      variant="outline"
+                      className="bg-[#0073e6] text-white border-0"
+                    >
+                      {svc.category}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge
                       className={
-                        svc.status === "active" ? "bg-[#2E343E] text-white" : ""
+                        svc.status === "active"
+                          ? "bg-[#DEF8EE] text-[#4AA785]"
+                          : ""
                       }
                     >
                       {svc.status}
@@ -477,10 +629,10 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                   <TableCell className="text-right">
                     <Button
                       variant="outline"
-                      className="text-red-600"
+                      className="hover:bg-blue-100 border-0"
                       onClick={() => openUnassign(svc)}
                     >
-                      Unassign
+                      {t('projectServices.unassign')}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -494,11 +646,11 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
       <Dialog open={isUnassignOpen} onOpenChange={setIsUnassignOpen}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>Unassign Service</DialogTitle>
+            <DialogTitle>{t('projectServices.unassignService')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to unassign{" "}
+              {t('projectServices.unassignConfirm')}{" "}
               <span className="font-medium">{serviceToUnassign?.name}</span>{" "}
-              from this project?
+              {t('projectServices.fromThisProject')}
             </DialogDescription>
           </DialogHeader>
           {unassignError && (
@@ -510,10 +662,10 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
               onClick={() => setIsUnassignOpen(false)}
               disabled={unassignLoading}
             >
-              Cancel
+              {t('projectServices.cancel')}
             </Button>
             <Button onClick={handleConfirmUnassign} disabled={unassignLoading}>
-              {unassignLoading ? "Unassigning..." : "Unassign"}
+              {unassignLoading ? t('projectServices.unassigning') : t('projectServices.unassign')}
             </Button>
           </DialogFooter>
         </DialogContent>
