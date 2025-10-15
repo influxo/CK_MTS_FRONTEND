@@ -38,11 +38,6 @@ import {
   selectEntityServicesError,
   selectEntityServicesLoading,
 } from "../../store/slices/serviceSlice";
-import {
-  enqueueSubmission,
-  flushQueue,
-  peekQueue,
-} from "../../utils/offlineQueue";
 import { Alert, AlertDescription } from "../ui/feedback/alert";
 import { Progress } from "../ui/feedback/progress";
 
@@ -107,7 +102,7 @@ export function FormSubmission({
   const entityServicesError = useSelector(selectEntityServicesError);
   const { user } = useAuth();
   const [formData, setFormData] = useState<Record<string, any>>({});
-  const [isDraft, setIsDraft] = useState(false);
+
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
@@ -115,12 +110,7 @@ export function FormSubmission({
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
-  const [isOnline, setIsOnline] = useState<boolean>(
-    typeof navigator !== "undefined" ? navigator.onLine : true
-  );
-  const [syncing, setSyncing] = useState(false);
-  const [queueCount, setQueueCount] = useState(0);
-  const [localNotice, setLocalNotice] = useState<string | null>(null);
+
   // Track selected services for this submission
   const [selectedServices, setSelectedServices] = useState<
     Array<{
@@ -234,54 +224,40 @@ export function FormSubmission({
   }, [dispatch, entityId, entityType, template?.includeBeneficiaries]);
 
   useEffect(() => {
-    // Calculate progress based on filled required fields
+    // Calculate progress based on ALL fields (required and non-required) + beneficiary
     if (!formStructure) return;
 
-    const requiredFields =
-      formStructure.fields.filter((field) => field.required) || [];
-    const filledRequiredFields = requiredFields.filter((field) => {
+    // Count all form fields
+    const allFields = formStructure.fields || [];
+    const filledFields = allFields.filter((field) => {
       const value = formData[field.id];
-      return value !== undefined && value !== "" && value !== null;
+      return (
+        value !== undefined &&
+        value !== "" &&
+        value !== null &&
+        !(Array.isArray(value) && value.length === 0)
+      );
     });
 
+    // Count total items and filled items
+    let totalItems = allFields.length;
+    let filledItems = filledFields.length;
+
+    // Include beneficiary in count if includeBeneficiaries is true
+    if (template?.includeBeneficiaries) {
+      totalItems += 1;
+      if (formData["beneficiaryId"]) {
+        filledItems += 1;
+      }
+    }
+
     const progressPercent =
-      requiredFields.length > 0
-        ? (filledRequiredFields.length / requiredFields.length) * 100
-        : 0;
+      totalItems > 0 ? (filledItems / totalItems) * 100 : 100; // If no fields, form is 100% complete
 
     setProgress(progressPercent);
-  }, [formData, formStructure]);
+  }, [formData, formStructure, template?.includeBeneficiaries]);
 
   // Watch online/offline and try to flush queue when online
-  useEffect(() => {
-    const updateOnline = () => setIsOnline(true);
-    const updateOffline = () => setIsOnline(false);
-    window.addEventListener("online", updateOnline);
-    window.addEventListener("offline", updateOffline);
-    // initialize queue count and attempt flush if online
-    setQueueCount(peekQueue().length);
-    if (navigator.onLine) {
-      (async () => {
-        try {
-          setSyncing(true);
-          await flushQueue(async (templateId, payload) => {
-            await (
-              dispatch(submitFormResponse({ templateId, payload })) as any
-            ).unwrap();
-          });
-        } catch (_) {
-          // keep remaining in queue
-        } finally {
-          setQueueCount(peekQueue().length);
-          setSyncing(false);
-        }
-      })();
-    }
-    return () => {
-      window.removeEventListener("online", updateOnline);
-      window.removeEventListener("offline", updateOffline);
-    };
-  }, [dispatch]);
 
   // Continuously watch GPS for smoother UX and better accuracy
   useEffect(() => {
@@ -358,12 +334,31 @@ export function FormSubmission({
     return Object.keys(errors).length === 0;
   };
 
-  const handleSaveDraft = async () => {
-    setIsDraft(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsDraft(false);
-    // Show success message
+  // Check if form is ready to submit (all required fields + beneficiary if needed)
+  const isFormReadyToSubmit = () => {
+    // Check if all required fields are filled
+    const requiredFields = formStructure.fields.filter(
+      (field) => field.required
+    );
+    const allRequiredFieldsFilled = requiredFields.every((field) => {
+      const value = formData[field.id];
+      return (
+        value !== undefined &&
+        value !== "" &&
+        value !== null &&
+        !(Array.isArray(value) && value.length === 0)
+      );
+    });
+
+    // If includeBeneficiaries is true, check if a beneficiary is selected
+    const beneficiaryRequired = template?.includeBeneficiaries;
+    const beneficiarySelected = formData["beneficiaryId"];
+
+    if (beneficiaryRequired && !beneficiarySelected) {
+      return false;
+    }
+
+    return allRequiredFieldsFilled;
   };
 
   const handleSubmit = async () => {
@@ -404,14 +399,6 @@ export function FormSubmission({
           ...(servicesPayload.length > 0 ? { services: servicesPayload } : {}),
         };
 
-        if (!isOnline) {
-          enqueueSubmission(template.id, payload);
-          setQueueCount(peekQueue().length);
-          setLocalNotice(t("formSubmission.submissionSavedOffline"));
-          onSubmissionComplete();
-          return;
-        }
-
         try {
           await (
             dispatch(
@@ -421,14 +408,11 @@ export function FormSubmission({
           onSubmissionComplete();
         } catch (e) {
           // On failure (likely network), save offline
-          enqueueSubmission(template.id, payload);
-          setQueueCount(peekQueue().length);
-          setLocalNotice(t("formSubmission.networkIssueOffline"));
-          onSubmissionComplete();
+          console.error("Submit failed: ", e);
         }
       } catch (e) {
         // submitError selector will show the error alert
-        console.error("Submit failed", e);
+        console.error("Submit failed: ", e);
       }
       return;
     }
@@ -670,6 +654,7 @@ export function FormSubmission({
             <div className="space-y-2">
               <Label htmlFor="beneficiaryId">
                 {t("formSubmission.beneficiary")}
+                <span className="text-destructive"> *</span>
               </Label>
               <Select
                 value={formData["beneficiaryId"] || ""}
@@ -887,11 +872,7 @@ export function FormSubmission({
           <AlertDescription>{submitError}</AlertDescription>
         </Alert>
       )}
-      {localNotice && (
-        <Alert>
-          <AlertDescription>{localNotice}</AlertDescription>
-        </Alert>
-      )}
+
       {gpsError && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -922,9 +903,9 @@ export function FormSubmission({
           onClick={handleSubmit}
           disabled={
             submitLoading ||
+            // (isMobileOrTablet && gpsLoading) ||
             gpsLoading ||
-            (isMobileOrTablet && !gps) ||
-            progress < 100
+            !isFormReadyToSubmit()
           }
         >
           {submitLoading || gpsLoading ? (

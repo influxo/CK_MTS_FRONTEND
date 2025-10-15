@@ -1210,7 +1210,9 @@
   },
   "profile": {
     "title": "My Profile",
+    "back": "Back",
     "profileTab": "Profile",
+    "personalInformation": "Personal Information",
     "securityTab": "Security",
     "firstName": "First Name",
     "lastName": "Last Name",

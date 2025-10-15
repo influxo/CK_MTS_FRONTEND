@@ -1,72 +1,62 @@
 import {
   Calendar,
   Eye,
-  FileCheck,
-  FileEdit,
   FileSpreadsheet,
   FileText,
   Filter,
-  Link,
   MapPin,
-  MoreHorizontal,
   Plus,
   Search,
   ShieldAlert,
   SlidersHorizontal,
-  Trash,
   User,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "sonner";
+import { useTranslation } from "../../hooks/useTranslation";
+import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
 import type { AppDispatch, RootState } from "../../store";
+import { selectCurrentUser } from "../../store/slices/authSlice";
 import {
+  associateBeneficiaryToEntities,
+  clearBeneficiaryMessages,
   createBeneficiary,
   fetchBeneficiaries,
+  fetchBeneficiariesByEntity,
   selectBeneficiaries,
+  selectBeneficiariesByEntity,
+  selectBeneficiariesByEntityError,
+  selectBeneficiariesByEntityLoading,
+  selectBeneficiariesByEntityPagination,
   selectBeneficiariesError,
   selectBeneficiariesLoading,
-  selectBeneficiaryIsLoading,
-  selectBeneficiaryError,
-  selectBeneficiaryCreateSuccessMessage,
-  clearBeneficiaryMessages,
-  associateBeneficiaryToEntities,
-  selectBeneficiaryAssociateLoading,
-  fetchBeneficiariesByEntity,
-  selectBeneficiariesByEntity,
-  selectBeneficiariesByEntityLoading,
-  selectBeneficiariesByEntityError,
   selectBeneficiariesPagination,
-  selectBeneficiariesByEntityPagination,
+  selectBeneficiaryAssociateLoading,
+  selectBeneficiaryCreateSuccessMessage,
+  selectBeneficiaryError,
+  selectBeneficiaryIsLoading,
 } from "../../store/slices/beneficiarySlice";
 import { fetchProjects } from "../../store/slices/projectsSlice";
 import { fetchAllSubProjects } from "../../store/slices/subProjectSlice";
-import { selectCurrentUser } from "../../store/slices/authSlice";
 import {
   fetchUserProjectsByUserId,
   selectUserProjectsTree,
 } from "../../store/slices/userProjectsSlice";
-import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
+import { Button } from "../ui/button/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
-import { Button } from "../ui/button/button";
 import { Card, CardContent } from "../ui/data-display/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
 import { Checkbox } from "../ui/form/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/overlay/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/overlay/dropdown-menu";
 import { Input } from "../ui/form/input";
 import { Label } from "../ui/form/label";
 import { RadioGroup, RadioGroupItem } from "../ui/form/radio-group";
@@ -78,15 +68,14 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/data-display/table";
-import { toast } from "sonner";
-import { useTranslation } from "../../hooks/useTranslation";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/overlay/dialog";
 interface BeneficiariesListProps {
   onBeneficiarySelect: (beneficiaryId: string) => void;
 }
@@ -1744,12 +1733,13 @@ export function BeneficiariesList({
             {filteredBeneficiaries.map((beneficiary) => (
               <TableRow key={beneficiary.id}>
                 <TableCell>
-                  <Checkbox
+                  {/* Ktu munet me ardh Checkbox per single/bulk operation */}
+                  {/* <Checkbox
                     checked={selectedBeneficiaries.includes(beneficiary.id)}
                     onCheckedChange={() =>
                       handleSelectBeneficiary(beneficiary.id)
                     }
-                  />
+                  /> */}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-3">
@@ -1829,35 +1819,6 @@ export function BeneficiariesList({
                       <Eye className="h-4 w-4 mr-2 " />
                       {t("beneficiaries.view")}
                     </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          // variant="ghost"
-                          // size="sm"
-                          className="h-8 w-8 p-0 hover:bg-[#E0F2FE] border-0"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <FileEdit className="h-4 w-4 mr-2" />
-                          {t("beneficiaries.edit")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Link className="h-4 w-4 mr-2" />
-                          {t("beneficiaries.associate")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <FileCheck className="h-4 w-4 mr-2" />
-                          {t("beneficiaries.recordService")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash className="h-4 w-4 mr-2" />
-                          {t("beneficiaries.delete")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
                 </TableCell>
               </TableRow>

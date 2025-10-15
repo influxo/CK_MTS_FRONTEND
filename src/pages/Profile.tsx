@@ -20,11 +20,14 @@ import {
   TabsList,
   TabsTrigger,
 } from "../components/ui/navigation/tabs";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 export function Profile() {
   const { t } = useTranslation();
   const { user, isLoading, error, getProfile } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) {
@@ -59,12 +62,21 @@ export function Profile() {
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
-      <div className="flex items-center justify-between">
-        <h2>{t('profile.title')}</h2>
+      <div className="flex items-center space-x-4">
+        <Button
+          variant="outline"
+          className=" border-0 bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]"
+          size="sm"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          {t("profile.back")}
+        </Button>
+        <h2>{t("profile.title")}</h2>
       </div>
 
       {isLoading && (
-        <div className="p-4 rounded border bg-white">{t('common.loading')}</div>
+        <div className="p-4 rounded border bg-white">{t("common.loading")}</div>
       )}
 
       {error && (
@@ -87,14 +99,16 @@ export function Profile() {
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">{t('common.status')}</span>
+                  <span className="text-muted-foreground">
+                    {t("common.status")}
+                  </span>
                   {user.status === "active" ? (
                     <Badge className="bg-green-100 text-green-800">
-                      {t('common.active')}
+                      {t("common.active")}
                     </Badge>
                   ) : user.status === "invited" ? (
                     <Badge className="bg-amber-100 text-amber-800">
-                      {t('common.pending')}
+                      {t("common.pending")}
                     </Badge>
                   ) : user.status ? (
                     <Badge className="bg-gray-100 text-gray-800">
@@ -105,7 +119,9 @@ export function Profile() {
                   )}
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">{t('common.role')}</span>
+                  <span className="text-muted-foreground">
+                    {t("common.role")}
+                  </span>
                   <Badge variant="outline">
                     {user.roles?.[0]?.name ?? "N/A"}
                   </Badge>
@@ -114,11 +130,11 @@ export function Profile() {
                   <span className="text-muted-foreground">Two-Factor Auth</span>
                   {user.twoFactorEnabled ? (
                     <Badge className="bg-green-100 text-green-800">
-                      {t('common.enabled')}
+                      {t("common.enabled")}
                     </Badge>
                   ) : (
                     <Badge className="bg-amber-100 text-amber-800">
-                      {t('common.disabled')}
+                      {t("common.disabled")}
                     </Badge>
                   )}
                 </div>
@@ -133,7 +149,7 @@ export function Profile() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground">
-                    {t('profile.lastActive')}:
+                    {t("profile.lastActive")}:
                   </span>
                   <span>{formatDateTime(user.lastLogin)}</span>
                 </div>
@@ -149,13 +165,13 @@ export function Profile() {
                   value="profile"
                   className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
                 >
-                  {t('profile.profileTab')}
+                  {t("profile.profileTab")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="security"
                   className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
                 >
-                  {t('profile.securityTab')}
+                  {t("profile.securityTab")}
                 </TabsTrigger>
               </TabsList>
 
@@ -163,13 +179,15 @@ export function Profile() {
                 <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
                   <CardHeader>
                     <CardTitle className="text-lg">
-                      {t('profile.personalInformation')}
+                      {t("profile.personalInformation")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="firstName">{t('profile.firstName')}</Label>
+                        <Label htmlFor="firstName">
+                          {t("profile.firstName")}
+                        </Label>
                         <Input
                           id="firstName"
                           value={user.firstName ?? ""}
@@ -178,7 +196,9 @@ export function Profile() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="lastName">{t('profile.lastName')}</Label>
+                        <Label htmlFor="lastName">
+                          {t("profile.lastName")}
+                        </Label>
                         <Input
                           id="lastName"
                           value={user.lastName ?? ""}
@@ -187,7 +207,7 @@ export function Profile() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email">{t('profile.email')}</Label>
+                        <Label htmlFor="email">{t("profile.email")}</Label>
                         <Input
                           id="email"
                           type="email"
@@ -206,7 +226,7 @@ export function Profile() {
                         />
                       </div>
                       <div className="space-y-2 md:col-span-2">
-                        <Label>{t('profile.role')}</Label>
+                        <Label>{t("profile.role")}</Label>
                         <div className="flex flex-wrap gap-2">
                           {user.roles?.length ? (
                             user.roles.map((r) => (
@@ -220,7 +240,7 @@ export function Profile() {
                             ))
                           ) : (
                             <span className="text-sm text-gray-600">
-                              {t('profile.noRole')}
+                              {t("profile.noRole")}
                             </span>
                           )}
                         </div>
@@ -233,8 +253,12 @@ export function Profile() {
               <TabsContent value="security" className="space-y-6 pt-6">
                 <Card className="bg-[#F7F9FB] border-0 drop-shadow-sm shadow-gray-50">
                   <CardHeader>
-                    <CardTitle className="text-lg">{t('profile.securityTab')}</CardTitle>
-                    <CardDescription>{t('profile.securityDetails')}</CardDescription>
+                    <CardTitle className="text-lg">
+                      {t("profile.securityTab")}
+                    </CardTitle>
+                    <CardDescription>
+                      {t("profile.securityDetails")}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -248,7 +272,7 @@ export function Profile() {
                       </div>
                       <div className="space-y-1">
                         <div className="text-sm text-muted-foreground">
-                          {t('profile.lastActive')}
+                          {t("profile.lastActive")}
                         </div>
                         <div className="text-sm font-medium">
                           {formatDateTime(user.lastLogin)}
@@ -261,7 +285,7 @@ export function Profile() {
                         className="bg-black/10 text-black"
                         disabled
                       >
-                        {t('profile.manage2FA')}
+                        {t("profile.manage2FA")}
                       </Button>
                     </div>
                   </CardContent>
@@ -273,7 +297,9 @@ export function Profile() {
       )}
 
       {!isLoading && !user && !error && (
-        <div className="p-4 rounded border bg-white">{t('profile.noProfileData')}</div>
+        <div className="p-4 rounded border bg-white">
+          {t("profile.noProfileData")}
+        </div>
       )}
     </div>
   );
