@@ -994,7 +994,7 @@ export function ProjectDetails() {
 
   return (
     <div className="space-y-6 ">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button
           variant="outline"
           className=" border-0 bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]"
@@ -1004,7 +1004,7 @@ export function ProjectDetails() {
           <ArrowLeft className="h-4 w-4 mr-1" />
           {t("projectDetails.back")}
         </Button>
-        <h2 className="text-3xl font-semibold capitalize">
+        <h2 className="order-2 basis-full text-3xl font-semibold capitalize">
           {enhancedProject.title}
         </h2>
 
@@ -1013,7 +1013,7 @@ export function ProjectDetails() {
             <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="ml-auto bg-[#0073e6] border-0 text-white transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]"
+                className="order-1 ml-auto bg-[#0073e6] border-0 text-white transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]"
               >
                 <FileEdit className="h-4 w-4 mr-2" />
                 {t("projectDetails.updateProject")}
@@ -1269,7 +1269,7 @@ export function ProjectDetails() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full bg-[#E3F5FF]  pt-3 drop-shadow-sm shadow-gray-50   mt-4 h-auto">
-          <div className="flex gap-4">
+          <div className="flex gap-4  overflow-x-auto whitespace-nowrap scrollbar-hide">
             <TabsTrigger
               value="overview"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
@@ -1335,8 +1335,8 @@ export function ProjectDetails() {
               <div className="col-span-2 space-y-6">
                 {/* Overview Filters */}
                 <h1>{t("projectDetails.overview")}</h1>
-                <div className="flex flex-col gap-2 justify-between">
-                  <div className="flex flex-wrap items-center gap-3 ">
+                <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 w-full md:gap-6">
+                  <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 w-full md:w-auto">
                     {/* Subproject selector */}
                     <Select
                       value={selectedSubProjectId || "all"}
@@ -1348,7 +1348,7 @@ export function ProjectDetails() {
                         setFormTemplateIdLocal(undefined);
                       }}
                     >
-                      <SelectTrigger className="w-[220px] bg-white border-gray-100 hover:scale-[1.02] hover:-translate-y-[1px]">
+                      <SelectTrigger className="w-full md:w-[220px] bg-white border-gray-100 hover:scale-[1.02] hover:-translate-y-[1px]">
                         <SelectValue
                           placeholder={t("projectDetails.subprojects")}
                         />
@@ -1372,7 +1372,7 @@ export function ProjectDetails() {
                       value={timePreset}
                       onValueChange={onTimePresetChange}
                     >
-                      <SelectTrigger className="w-[200px] bg-white p-2 rounded-md border-gray-100 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                      <SelectTrigger className="w-full md:w-[200px] bg-white p-2 rounded-md border-gray-100 transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
                         <SelectValue
                           placeholder={t("projectDetails.timePeriod")}
                         />
@@ -1397,7 +1397,7 @@ export function ProjectDetails() {
                       variant="outline"
                       size="sm"
                       onClick={() => setShowMoreLocal((s) => !s)}
-                      className="bg-[#E0F2FE] text-black border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+                      className="w-full md:w-auto bg-[#E0F2FE] text-black border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
                     >
                       <Filter className="h-4 w-4 mr-2" />
                       {showMoreLocal
@@ -1414,7 +1414,7 @@ export function ProjectDetails() {
                           value={metricLocal}
                           onValueChange={(v) => setMetricLocal(v as any)}
                         >
-                          <SelectTrigger className="w-[220px]  border-gray-100 p-2 rounded-md  transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
+                          <SelectTrigger className="w-full md:w-[220px] bg-white border-gray-100 p-2 rounded-md transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
                             <SelectValue
                               placeholder={t("projectDetails.metric")}
                             />
@@ -1440,7 +1440,7 @@ export function ProjectDetails() {
                             setServiceIdLocal(id || undefined);
                           }}
                         >
-                          <SelectTrigger className="w-[200px] border-gray-100 hover:scale-[1.02] hover:-translate-y-[1px]">
+                          <SelectTrigger className="w-full md:w-[220px] bg-white border-gray-100 p-2 rounded-md transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
                             <SelectValue
                               placeholder={t("projectDetails.service")}
                             />
@@ -1465,7 +1465,7 @@ export function ProjectDetails() {
                             setFormTemplateIdLocal(id || undefined);
                           }}
                         >
-                          <SelectTrigger className="w-[200px] border-gray-100 hover:scale-[1.02] hover:-translate-y-[1px]">
+                          <SelectTrigger className="w-full md:w-[220px] bg-white border-gray-100 p-2 rounded-md transition-transform duration-200 ease-in-out hover:scale-[1.02] hover:-translate-y-[1px]">
                             <SelectValue
                               placeholder={t("projectDetails.formTemplate")}
                             />
@@ -1483,12 +1483,10 @@ export function ProjectDetails() {
                         </Select>
 
                         {/* Granularity dropdown */}
-                        <div className="relative">
+                        <div className="relative w-full md:w-auto">
                           <button
                             onClick={() => setFiltersOpen((s) => !s)}
-                            className="px-3 py-1.5 rounded-md text-sm  flex items-center gap-2 bg-[#E0F2FE] text-black border-0 
-             transition-transform duration-200 ease-in-out 
-             hover:scale-105 hover:-translate-y-[1px]"
+                            className="w-full px-3 py-2 rounded-md text-sm flex items-center gap-2 bg-[#E0F2FE] text-black border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
                           >
                             <span>
                               {" "}
@@ -1509,7 +1507,7 @@ export function ProjectDetails() {
                             </svg>
                           </button>
                           {filtersOpen && (
-                            <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-10">
+                            <div className="absolute left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg p-1 z-10">
                               <ul className="py-1">
                                 {[
                                   "day",
