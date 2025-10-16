@@ -825,7 +825,7 @@ export function BeneficiariesList({
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 w-full sm:flex-row">
             <Select
               value={statusFilter}
               onValueChange={(val) => {
@@ -833,7 +833,7 @@ export function BeneficiariesList({
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[130px] bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black">
+              <SelectTrigger className="w-full sm:w-[130px] bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -854,7 +854,7 @@ export function BeneficiariesList({
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[220px] bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black">
+              <SelectTrigger className="w-full sm:w-[220px] bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
@@ -876,7 +876,7 @@ export function BeneficiariesList({
               }}
               disabled={filterProjectId === "all"}
             >
-              <SelectTrigger className="w-[240px] bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black">
+              <SelectTrigger className="w-full sm:w-[240px] bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Subproject" />
               </SelectTrigger>
@@ -895,7 +895,7 @@ export function BeneficiariesList({
             <Button
               type="button"
               variant="outline"
-              className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black"
+              className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black w-full sm:w-auto"
               onClick={() => setShowAdvancedFilters((v) => !v)}
               title={
                 showAdvancedFilters
