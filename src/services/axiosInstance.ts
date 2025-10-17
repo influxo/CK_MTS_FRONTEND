@@ -43,14 +43,19 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
 
     // Handle 401 Unauthorized errors (token expired)
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    if (error.response?.status === 401 && !(originalRequest as any)._retry) {
+      (originalRequest as any)._retry = true;
 
-      // Only redirect if not already on login page to prevent infinite loop
+      // Only redirect to login if the failed request was authenticated
+      const headers = (originalRequest && originalRequest.headers) || {} as any;
+      const hasAuthHeader =
+        Boolean((headers as any)["Authorization"]) || Boolean((headers as any)["authorization"]);
+
+      // Define public routes where we should not force a redirect
       const currentPath = window.location.pathname;
-      const isLoginPage = currentPath === '/login' || currentPath === '/';
+      const isPublicPath = ["/", "/login", "/accept-invitation"].includes(currentPath);
 
-      if (!isLoginPage) {
+      if (hasAuthHeader && !isPublicPath) {
         localStorage.removeItem("token");
         window.location.href = "/login";
       }
