@@ -1,6 +1,20 @@
 import { ArrowLeft, Check, Copy, Info, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import type { InviteUserRequest } from "../../services/users/userModels";
+import userService from "../../services/users/userService";
+import type { AppDispatch, RootState } from "../../store";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { fetchProjects } from "../../store/slices/projectsSlice";
+import { fetchRoles } from "../../store/slices/roleSlice";
+import { fetchAllSubProjects } from "../../store/slices/subProjectSlice";
+import {
+  fetchUserProjectsByUserId,
+  selectUserProjectsTree,
+} from "../../store/slices/userProjectsSlice";
 import { Button } from "../ui/button/button";
+import { Badge } from "../ui/data-display/badge";
 import {
   Card,
   CardContent,
@@ -14,29 +28,15 @@ import { Label } from "../ui/form/label";
 import {
   Select,
   SelectContent,
-  SelectLabel,
   SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "../ui/form/select";
-import { Separator } from "../ui/layout/separator";
-import { Switch } from "../ui/form/switch";
 import { Textarea } from "../ui/form/textarea";
-import userService from "../../services/users/userService";
-import { toast } from "react-hot-toast";
-import type { InviteUserRequest } from "../../services/users/userModels";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchRoles } from "../../store/slices/roleSlice";
-import { fetchProjects } from "../../store/slices/projectsSlice";
-import { fetchAllSubProjects } from "../../store/slices/subProjectSlice";
-import { selectCurrentUser } from "../../store/slices/authSlice";
-import {
-  fetchUserProjectsByUserId,
-  selectUserProjectsTree,
-} from "../../store/slices/userProjectsSlice";
-import type { AppDispatch, RootState } from "../../store";
-import { Badge } from "../ui/data-display/badge";
+import { Separator } from "../ui/layout/separator";
+import { useTranslation } from "../../hooks/useTranslation";
 
 // Projects and subprojects are now fetched from API via Redux slices
 
@@ -51,6 +51,7 @@ export function InviteEmployee({
   onBack,
   onInviteCreated,
 }: InviteEmployeeProps) {
+  const { t } = useTranslation();
   // State for the invite form
   const [inviteData, setInviteData] = useState({
     firstName: "",
@@ -117,9 +118,7 @@ export function InviteEmployee({
     );
   }, [normalizedRoles]);
   const isProgramManager = useMemo(() => {
-    return normalizedRoles.some((r: string) =>
-      r.includes("program manager")
-    );
+    return normalizedRoles.some((r: string) => r.includes("program manager"));
   }, [normalizedRoles]);
   const isSubProjectManager = useMemo(() => {
     return normalizedRoles.some(
@@ -135,7 +134,12 @@ export function InviteEmployee({
   const projectAccessLoading = useMemo(() => {
     if (isSysOrSuperAdmin) return projectsLoading || subprojectsLoading;
     return (userProjectsTree || []).length === 0;
-  }, [isSysOrSuperAdmin, projectsLoading, subprojectsLoading, userProjectsTree?.length]);
+  }, [
+    isSysOrSuperAdmin,
+    projectsLoading,
+    subprojectsLoading,
+    userProjectsTree?.length,
+  ]);
 
   useEffect(() => {
     // Fetch roles always
@@ -205,7 +209,9 @@ export function InviteEmployee({
 
   // Ensure selected role remains valid for current user's allowed options
   useEffect(() => {
-    const allowed = new Set((rolesForSelect || []).map((r: any) => String(r.id)));
+    const allowed = new Set(
+      (rolesForSelect || []).map((r: any) => String(r.id))
+    );
     if (inviteData.role && !allowed.has(String(inviteData.role))) {
       setInviteData((prev) => ({ ...prev, role: "" }));
     }
@@ -216,11 +222,23 @@ export function InviteEmployee({
     if (isSysOrSuperAdmin) return projects;
     // Program/Subproject Managers: assigned only
     if (isProgramManager || isSubProjectManager) {
-      return (userProjectsTree || []).map((p: any) => ({ id: p.id, name: p.name }));
+      return (userProjectsTree || []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+      }));
     }
     // Default: assigned if present
-    return (userProjectsTree || []).map((p: any) => ({ id: p.id, name: p.name }));
-  }, [isSysOrSuperAdmin, isProgramManager, isSubProjectManager, projects, userProjectsTree]);
+    return (userProjectsTree || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+    }));
+  }, [
+    isSysOrSuperAdmin,
+    isProgramManager,
+    isSubProjectManager,
+    projects,
+    userProjectsTree,
+  ]);
 
   // Helper: get subprojects for a project respecting role
   const getSubprojectsForProject = (projectId: string) => {
@@ -256,11 +274,6 @@ export function InviteEmployee({
   // Handle expiration change
   const handleExpirationChange = (value: string) => {
     setInviteData((prev) => ({ ...prev, expiration: value }));
-  };
-
-  // Handle send copy toggle
-  const handleSendCopyToggle = (checked: boolean) => {
-    setInviteData((prev) => ({ ...prev, sendCopy: checked }));
   };
 
   // Handle project selection
@@ -393,44 +406,48 @@ export function InviteEmployee({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={onBack}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="hover:bg-[#E0F2FE] border-0"
+            onClick={onBack}
+          >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Employees
+            {t('employees.goBack')}
           </Button>
-          <h2>Invite Employee</h2>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
           <CardHeader>
-            <CardTitle>Invite Details</CardTitle>
+            <CardTitle>{t('employees.inviteNewEmployee')}</CardTitle>
             <CardDescription>
-              Enter the details for the new employee invitation.
+              {t('employees.addDetailsToInvite')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">{t('auth.firstName')}</Label>
                   <Input
-                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                    className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                     id="firstName"
                     name="firstName"
-                    placeholder="Enter first name"
+                    placeholder={t('employees.enterFirstName')}
                     value={inviteData.firstName}
                     onChange={handleInputChange}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">{t('auth.lastName')}</Label>
                   <Input
-                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                    className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                     id="lastName"
                     name="lastName"
-                    placeholder="Enter last name"
+                    placeholder={t('employees.enterLastName')}
                     value={inviteData.lastName}
                     onChange={handleInputChange}
                     required
@@ -439,13 +456,13 @@ export function InviteEmployee({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">{t('common.email')}</Label>
                 <Input
-                  className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                  className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="Enter email address"
+                  placeholder={t('employees.enterEmailAddress')}
                   value={inviteData.email}
                   onChange={handleInputChange}
                   required
@@ -453,34 +470,40 @@ export function InviteEmployee({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
+                <Label htmlFor="role">{t('common.role')}</Label>
                 <Select
                   value={inviteData.role}
                   onValueChange={handleRoleChange}
                 >
-                  <SelectTrigger disabled={rolesLoading || !!rolesError}>
+                  <SelectTrigger
+                    className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                    disabled={rolesLoading || !!rolesError}
+                  >
                     <SelectValue
                       placeholder={
                         rolesLoading
-                          ? "Loading roles..."
+                          ? t('employees.processing')
                           : rolesError
-                          ? "Failed to load roles"
-                          : "Select a role"
+                          ? t('employees.somethingWentWrong')
+                          : t('employees.selectRole')
                       }
                     />
                   </SelectTrigger>
                   <SelectContent>
                     {rolesLoading && (
                       <SelectGroup>
-                        <SelectLabel>Loading...</SelectLabel>
+                        <SelectLabel>{t('employees.processing')}</SelectLabel>
                       </SelectGroup>
                     )}
                     {!rolesLoading && rolesError && (
                       <SelectGroup>
-                        <SelectLabel>Error loading roles</SelectLabel>
+                        <SelectLabel>{t('employees.somethingWentWrong')}</SelectLabel>
                       </SelectGroup>
                     )}
-                    {!rolesLoading && !rolesError && rolesForSelect && rolesForSelect.length > 0
+                    {!rolesLoading &&
+                    !rolesError &&
+                    rolesForSelect &&
+                    rolesForSelect.length > 0
                       ? rolesForSelect.map((role: any) => (
                           <SelectItem key={role.id} value={String(role.id)}>
                             {role.name}
@@ -489,7 +512,9 @@ export function InviteEmployee({
                       : !rolesLoading &&
                         !rolesError && (
                           <SelectGroup>
-                            <SelectLabel>No roles available</SelectLabel>
+                            <SelectLabel>
+                              {t('employees.noRolesAvailable')}
+                            </SelectLabel>
                           </SelectGroup>
                         )}
                   </SelectContent>
@@ -497,12 +522,12 @@ export function InviteEmployee({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="message">Personal Message</Label>
+                <Label htmlFor="message">{t('employees.personalMessage')}</Label>
                 <Textarea
-                  className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                  className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                   id="message"
                   name="message"
-                  placeholder="Add a personal message to the invitation email"
+                  placeholder={t('employees.addPersonalMessage')}
                   value={inviteData.message}
                   onChange={handleInputChange}
                   rows={3}
@@ -512,15 +537,15 @@ export function InviteEmployee({
               <Separator />
 
               <div className="space-y-2">
-                <Label>Project Access</Label>
+                <Label>{t('employees.projectAccess')}</Label>
                 <div className="mt-4 space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    Select specific projects and sub-projects:
+                    {t('employees.selectSpecificProjects')}
                   </p>
 
                   {projectAccessLoading ? (
                     <div className="text-sm text-muted-foreground px-1">
-                      Loading projects...
+                      {t('employees.processing')}
                     </div>
                   ) : projectsError || subprojectsError ? (
                     <div className="text-sm text-red-500 px-1">
@@ -533,7 +558,9 @@ export function InviteEmployee({
                           <Checkbox
                             id={project.id}
                             checked={selectedProjects.includes(project.id)}
-                            onCheckedChange={() => handleProjectToggle(project.id)}
+                            onCheckedChange={() =>
+                              handleProjectToggle(project.id)
+                            }
                           />
                           <Label htmlFor={project.id} className="font-medium">
                             {project.name}
@@ -576,7 +603,7 @@ export function InviteEmployee({
                     ))
                   ) : (
                     <div className="text-sm text-muted-foreground px-1">
-                      No projects available
+                      {t('employees.noProjectsAvailable')}
                     </div>
                   )}
                 </div>
@@ -585,61 +612,47 @@ export function InviteEmployee({
               <Separator />
 
               <div className="space-y-2">
-                <Label htmlFor="expiration">Invitation Expiration</Label>
+                <Label htmlFor="expiration">{t('employees.invitationExpiry')}</Label>
                 <Select
                   value={inviteData.expiration}
                   onValueChange={handleExpirationChange}
                 >
-                  <SelectTrigger className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  ">
+                  <SelectTrigger className="bg-white border border-gray-100 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  ">
                     <SelectValue placeholder="Select expiration period" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="3">3 days</SelectItem>
-                    <SelectItem value="7">7 days</SelectItem>
-                    <SelectItem value="14">14 days</SelectItem>
-                    <SelectItem value="30">30 days</SelectItem>
+                    <SelectItem value="3">3 {t('employees.days')}</SelectItem>
+                    <SelectItem value="7">7 {t('employees.days')}</SelectItem>
+                    <SelectItem value="14">14 {t('employees.days')}</SelectItem>
+                    <SelectItem value="30">30 {t('employees.days')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="sendCopy"
-                  checked={inviteData.sendCopy}
-                  onCheckedChange={handleSendCopyToggle}
-                />
-                {/* <Label
-                  htmlFor="sendCopy"
-                  className="font-normal bg-black/5 p-2 rounded-md"
-                >
-                  Send me a copy of the invitation
-                </Label> */}
-              </div>
-
               <div className="flex justify-between">
                 <Button
-                  className="bg-black/10 hover:bg-black/20 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+                  className="bg-[#E0F2FE]  border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
                   type="button"
                   variant="outline"
                   onClick={onBack}
                   disabled={isLoading}
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
+                  {t('employees.goBack')}
                 </Button>
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-2/2 bg-[#0073e6] text-white"
                   disabled={isLoading || !isFormValid}
                 >
                   {isLoading ? (
-                    "Sending Invitation..."
+                    t('employees.sending')
                   ) : isSubmitted ? (
-                    "Invitation Sent"
+                    t('employees.invitationSent')
                   ) : (
                     <>
                       <UserPlus className="mr-2 h-4 w-4" />
-                      Send Invitation
+                      {t('employees.sendInvitation')}
                     </>
                   )}
                 </Button>
@@ -651,7 +664,7 @@ export function InviteEmployee({
         <div className="space-y-6">
           <Card className="bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
             <CardHeader>
-              <CardTitle>Invitation Preview</CardTitle>
+              <CardTitle>{t('employees.invitePreview')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="bg-[#E3F5FF] rounded-md p-4 ">
@@ -661,13 +674,13 @@ export function InviteEmployee({
                   </div>
                   <div>
                     <h4 className="font-medium">
-                      Invitation to CaritasMotherTeresa
+                      {t('employees.invitationFor')}
                     </h4>
                   </div>
                 </div>
 
                 <p className="text-sm mb-3">
-                  You've been invited to join CaritasMotherTeresa as
+                  {t('employees.youAreInvited')}
                   {selectedRoleName ? (
                     <Badge className="ml-1">{selectedRoleName}</Badge>
                   ) : (
@@ -683,8 +696,7 @@ export function InviteEmployee({
 
                 <div className="border rounded p-3 bg-card text-sm mb-3">
                   <p>
-                    Click the button below to accept the invitation and set up
-                    your account.
+                    {t('employees.clickToAccept')}
                   </p>
                 </div>
 
@@ -692,14 +704,14 @@ export function InviteEmployee({
                   <Button
                     type="button"
                     size="sm"
-                    className="w-full bg-[#2E343E] text-white"
+                    className="w-full bg-[#0073e6] text-white"
                   >
-                    Accept Invitation
+                    {t('employees.acceptInvitation')}
                   </Button>
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  This invitation will expire in {inviteData.expiration} days.
+                  {t('employees.expiresIn')} {inviteData.expiration} {t('employees.days')}.
                 </p>
               </div>
             </CardContent>
@@ -707,30 +719,28 @@ export function InviteEmployee({
 
           <Card className="bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
             <CardHeader>
-              <CardTitle>Information</CardTitle>
+              <CardTitle>{t('employees.additionalInfo')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-2">
                 <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <p className="text-sm text-muted-foreground">
-                  New employees will need to set up their account and create a
-                  password when they accept the invitation.
+                  {t('employees.newEmployeesWillNeed')}
                 </p>
               </div>
 
-              <div className="flex items-start gap-2">
+              {/* <div className="flex items-start gap-2">
                 <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <p className="text-sm text-muted-foreground">
                   You can resend invitations or cancel them at any time from the
                   Employees page.
                 </p>
-              </div>
+              </div> */}
 
               <div className="flex items-start gap-2">
                 <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <p className="text-sm text-muted-foreground">
-                  Permissions are based on the assigned role, but can be
-                  customized after the user accepts the invitation.
+                  {t('employees.accessBasedOnRole')}
                 </p>
               </div>
             </CardContent>
@@ -741,17 +751,15 @@ export function InviteEmployee({
               <CardHeader>
                 <CardTitle className="text-green-600 dark:text-green-400 flex items-center gap-2">
                   <Check className="h-5 w-5" />
-                  Invitation Sent
+                  {t('employees.invitationSent')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm">
-                  The invitation has been sent to {inviteData.email}.
-                </p>
+                <p className="text-sm">{t('employees.inviteSentTo')} {inviteData.email}.</p>
 
                 <div className="border rounded-md p-3 space-y-2">
                   <Label className="text-xs text-muted-foreground">
-                    Invitation Link
+                    {t('employees.invitationLink')}
                   </Label>
                   <div className="flex items-center gap-2">
                     <Input value={inviteLink} readOnly className="text-xs" />
@@ -770,7 +778,7 @@ export function InviteEmployee({
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    You can share this link manually if needed.
+                    {t('employees.shareManually')}
                   </p>
                 </div>
               </CardContent>

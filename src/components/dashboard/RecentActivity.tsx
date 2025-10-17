@@ -6,8 +6,10 @@ import {
 } from "../ui/data-display/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
+import { useTranslation } from "../../hooks/useTranslation";
 
 export function RecentActivity() {
+  const { t } = useTranslation();
   const activities = [
     {
       user: "Sarah Johnson",
@@ -64,51 +66,51 @@ export function RecentActivity() {
       case "completion":
         return (
           <Badge variant="secondary" className="text-green-700 bg-green-100">
-            Completed
+            {t('dashboard.completed')}
           </Badge>
         );
       case "creation":
         return (
           <Badge variant="secondary" className="text-blue-700 bg-blue-100">
-            Created
+            {t('dashboard.created')}
           </Badge>
         );
       case "update":
         return (
           <Badge variant="secondary" className="text-amber-700 bg-amber-100">
-            Updated
+            {t('dashboard.updated')}
           </Badge>
         );
       case "assignment":
         return (
           <Badge variant="secondary" className="text-purple-700 bg-purple-100">
-            Assigned
+            {t('dashboard.assigned')}
           </Badge>
         );
       case "submission":
         return (
           <Badge variant="secondary" className="text-cyan-700 bg-cyan-100">
-            Submitted
+            {t('dashboard.submitted')}
           </Badge>
         );
       case "export":
-        return <Badge variant="outline">Exported</Badge>;
+        return <Badge variant="outline">{t('dashboard.exported')}</Badge>;
       default:
-        return <Badge variant="outline">Activity</Badge>;
+        return <Badge variant="outline">{t('dashboard.unknown_activity')}</Badge>;
     }
   };
 
   return (
     <Card className="bg-[#F7F9FB]      drop-shadow-sm shadow-gray-50 border-0">
       <CardHeader>
-        <CardTitle>Recent Activity</CardTitle>
+        <CardTitle>{t('dashboard.recentActivity')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {activities.map((activity, index) => (
             <div key={index} className="flex items-start space-x-3">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="" alt={activity.user} />
+                <AvatarImage src={`https://example.com/${activity.avatar}.jpg`} alt={activity.user} />
                 <AvatarFallback className="text-xs">
                   {activity.avatar}
                 </AvatarFallback>

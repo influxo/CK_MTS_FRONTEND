@@ -44,7 +44,11 @@ import {
   selectAssignedUsersLoading,
   removeUserFromProject,
 } from "../../store/slices/projectsSlice";
-import { fetchEmployees, selectAllEmployees } from "../../store/slices/employeesSlice";
+import {
+  fetchEmployees,
+  selectAllEmployees,
+} from "../../store/slices/employeesSlice";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface ProjectTeamProps {
   projectId: string;
@@ -61,6 +65,7 @@ export function ProjectTeam({
   isProgramManager,
   hasFullAccess,
 }: ProjectTeamProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState("");
@@ -125,7 +130,7 @@ export function ProjectTeam({
     <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-base">Project Team</CardTitle>
+          <CardTitle className="text-base">{t('projectTeam.projectTeam')}</CardTitle>
           {(isSysOrSuperAdmin || isProgramManager) && (
             <Dialog
               open={isAssignDialogOpen}
@@ -140,27 +145,27 @@ export function ProjectTeam({
              hover:scale-[1.02] hover:-translate-y-[1px]"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Assign Member
+                  {t('projectTeam.assignMember')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                  <DialogTitle>Assign Member to Project</DialogTitle>
+                  <DialogTitle>{t('projectTeam.assignMemberToProject')}</DialogTitle>
                   <DialogDescription>
-                    Select a team member and role for this project.
+                    {t('projectTeam.selectMemberDesc')}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="member" className="text-right">
-                      Member
+                      {t('projectTeam.member')}
                     </Label>
                     <Select
                       value={selectedMemberId}
                       onValueChange={(v) => setSelectedMemberId(v)}
                     >
                       <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Select a member" />
+                        <SelectValue placeholder={t('projectTeam.selectMember')} />
                       </SelectTrigger>
                       <SelectContent>
                         {employeesForSelect.map((emp) => {
@@ -203,7 +208,7 @@ export function ProjectTeam({
                     variant="outline"
                     onClick={() => setIsAssignDialogOpen(false)}
                   >
-                    Cancel
+                    {t('projectTeam.cancel')}
                   </Button>
                   <Button
                     className="bg-[#0073e6] text-white flex items-center
@@ -213,7 +218,7 @@ export function ProjectTeam({
                     disabled={!selectedMemberId}
                     onClick={handleAssignMember}
                   >
-                    Assign Member
+                    {t('projectTeam.assignMember')}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -224,7 +229,7 @@ export function ProjectTeam({
       <CardContent>
         {isLoading ? (
           <div className="py-4 text-sm text-muted-foreground">
-            Loading team…
+            {t('projectTeam.loadingTeam')}
           </div>
         ) : error ? (
           <div className="py-4 text-sm text-destructive">{error}</div>
@@ -232,10 +237,10 @@ export function ProjectTeam({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[280px]">Member</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[80px] text-right">Actions</TableHead>
+                <TableHead className="w-[280px]">{t('projectTeam.member')}</TableHead>
+                <TableHead>{t('projectTeam.email')}</TableHead>
+                <TableHead>{t('projectTeam.status')}</TableHead>
+                <TableHead className="w-[80px] text-right">{t('projectTeam.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -245,7 +250,7 @@ export function ProjectTeam({
                     colSpan={4}
                     className="text-center text-muted-foreground"
                   >
-                    No team members assigned yet.
+                    {t('projectTeam.noTeamMembers')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -279,7 +284,10 @@ export function ProjectTeam({
                       </TableCell>
                       <TableCell>{u.email}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="capitalize">
+                        <Badge
+                          variant="outline"
+                          className="capitalize text-[#4AA785] bg-[#DEF8EE] border-0"
+                        >
                           {u.status || "unknown"}
                         </Badge>
                       </TableCell>

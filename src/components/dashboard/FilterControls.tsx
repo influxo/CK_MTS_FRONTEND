@@ -30,9 +30,11 @@ import {
 import { fetchForms, selectAllForms } from "../../store/slices/formsSlice";
 import formTemplatesApi from "../../services/forms/formServices";
 import { selectCurrentUser } from "../../store/slices/authSlice";
+import { useTranslation } from "../../hooks/useTranslation";
 import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
 
 export function FilterControls({ projects }: { projects: Project[] }) {
+  const { t } = useTranslation();
   const dispatch: any = useDispatch();
   const subprojects = useSelector(selectAllSubprojects);
   const subprojectsLoading = useSelector(selectSubprojectsLoading);
@@ -62,7 +64,8 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   // Local paginated templates state (do not change global forms slice)
   const [templatesOptions, setTemplatesOptions] = React.useState<any[]>([]);
   const [templatesPage, setTemplatesPage] = React.useState<number>(1);
-  const [templatesTotalPages, setTemplatesTotalPages] = React.useState<number>(1);
+  const [templatesTotalPages, setTemplatesTotalPages] =
+    React.useState<number>(1);
 
   // Role-aware: Sub-Project Manager only sees assigned subprojects for selected project
   const user = useSelector(selectCurrentUser);
@@ -82,7 +85,9 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   }, [normalizedRoles]);
   const allowedSubprojectIds = React.useMemo(() => {
     try {
-      const proj = (userProjectsTree || []).find((p: any) => p.id === projectId);
+      const proj = (userProjectsTree || []).find(
+        (p: any) => p.id === projectId
+      );
       const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
       return new Set<string>(ids);
     } catch {
@@ -136,11 +141,15 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           setTemplatesTotalPages(Number(data.pagination?.totalPages || 1));
         } else {
           // Fallback to redux state
-          setTemplatesOptions((formsState as any)?.templates || (formsState as any) || []);
+          setTemplatesOptions(
+            (formsState as any)?.templates || (formsState as any) || []
+          );
           setTemplatesTotalPages(1);
         }
       } catch (e) {
-        setTemplatesOptions((formsState as any)?.templates || (formsState as any) || []);
+        setTemplatesOptions(
+          (formsState as any)?.templates || (formsState as any) || []
+        );
         setTemplatesTotalPages(1);
       }
     };
@@ -213,17 +222,17 @@ export function FilterControls({ projects }: { projects: Project[] }) {
 
   return (
     <div className="flex flex-col  bg-[#F7F9FB]   drop-shadow-sm shadow-gray-50 gap-4 mb-6 p-4 bg-card rounded-lg ">
-      <div className="flex flex-wrap gap-4 items-center">
+      <div className="flex flex-row flex-wrap gap-4 items-center w-full">
         <Select value={projectId || "all"} onValueChange={onProjectChange}>
           <SelectTrigger
-            className="w-[200px] bg-white p-2 rounded-md border-0
+            className="w-full md:w-[180px] bg-white p-2 rounded-md  border-gray-100
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px] "
           >
-            <SelectValue placeholder="Select Project" />
+            <SelectValue placeholder={t("common.selectProject")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Projects</SelectItem>
+            <SelectItem value="all">{t("common.allProjects")}</SelectItem>
             {projects.map((project) => (
               <SelectItem key={project.id} value={project.id}>
                 {project.name}
@@ -238,17 +247,19 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           disabled={!projectId}
         >
           <SelectTrigger
-            className="w-[180px] bg-white border-0 border-gray-100 p-2 rounded-md 
+            className="w-full md:w-[180px] bg-white border-0 border-gray-100 p-2 rounded-md 
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px] "
           >
-            <SelectValue placeholder="Select Subproject" />
+            <SelectValue placeholder={t("subProjects.selectSubProject")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Subprojects</SelectItem>
+            <SelectItem value="all">
+              {t("subProjectsDetails.allSubProjects")}
+            </SelectItem>
             {subprojectsLoading ? (
               <SelectItem value="loading" disabled>
-                Loading...
+                {t("common.loading")}
               </SelectItem>
             ) : (
               subprojects
@@ -276,25 +287,34 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           <Filter className="h-4 w-4 mr-2" />
           {showMore ? "Hide Filters" : "More Filters"}
         </Button>
-
       </div>
       {showMore && (
-        <div className="mt-2 p-3 rounded-md bg-white/60 border border-gray-100">
-          <div className="flex flex-wrap gap-4 items-center">
+        <div className="  rounded-md   border-gray-100">
+          <div className="flex flex-col md:flex-row flex-wrap gap-4 items-stretch md:items-center">
             <Select value={timePreset} onValueChange={onTimePresetChange}>
               <SelectTrigger
-                className="w-[200px] bg-white p-2 rounded-md border-0
+                className="w-full md:w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
-                <SelectValue placeholder="Time Period" />
+                <SelectValue placeholder={t("dashboard.timePeriod")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all-period">All Period</SelectItem>
-                <SelectItem value="last-7-days">Last 7 days</SelectItem>
-                <SelectItem value="last-30-days">Last 30 days</SelectItem>
-                <SelectItem value="last-90-days">Last 90 days</SelectItem>
-                <SelectItem value="custom">Custom range</SelectItem>
+                <SelectItem value="all-period">
+                  {t("dashboard.allPeriod")}
+                </SelectItem>
+                <SelectItem value="last-7-days">
+                  {t("dashboard.last7Days")}
+                </SelectItem>
+                <SelectItem value="last-30-days">
+                  {t("dashboard.last30Days")}
+                </SelectItem>
+                <SelectItem value="last-90-days">
+                  {t("dashboard.last90Days")}
+                </SelectItem>
+                <SelectItem value="custom">
+                  {t("dashboard.customRange")}
+                </SelectItem>
               </SelectContent>
             </Select>
 
@@ -307,16 +327,18 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               }}
             >
               <SelectTrigger
-                className="w-[200px] bg-white p-2 rounded-md border-0
+                className="w-full md:w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
-                <SelectValue placeholder="Metric" />
+                <SelectValue placeholder={t("dashboard.metric")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="submissions">Submissions</SelectItem>
+                <SelectItem value="submissions">
+                  {t("dashboard.submissions")}
+                </SelectItem>
                 <SelectItem value="serviceDeliveries">
-                  Service Deliveries
+                  {t("dashboard.serviceDeliveries")}
                 </SelectItem>
                 <SelectItem value="uniqueBeneficiaries">
                   Unique Beneficiaries
@@ -351,14 +373,16 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               }}
             >
               <SelectTrigger
-                className="w-[220px] bg-white p-2 rounded-md border-0
+                className="w-full md:w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
-                <SelectValue placeholder="Service" />
+                <SelectValue placeholder={t("dashboard.service")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Services</SelectItem>
+                <SelectItem value="all">
+                  {t("dashboard.allServices")}
+                </SelectItem>
                 {servicesForSelect.map((s: any) => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.name}
@@ -367,15 +391,21 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                 {/* Pagination controls for global services (not when scoped to entity) */}
                 {!projectId && !subprojectId && (
                   <>
-                    <SelectItem value="__svc_prev__" disabled={(servicesCurrentPage || 1) <= 1}>
+                    <SelectItem
+                      value="__svc_prev__"
+                      disabled={(servicesCurrentPage || 1) <= 1}
+                    >
                       ◀ Prev Page
                     </SelectItem>
                     <SelectItem value="__svc_info__" disabled>
-                      Page {servicesCurrentPage || 1} of {servicesTotalPages || 1}
+                      Page {servicesCurrentPage || 1} of{" "}
+                      {servicesTotalPages || 1}
                     </SelectItem>
                     <SelectItem
                       value="__svc_next__"
-                      disabled={(servicesCurrentPage || 1) >= (servicesTotalPages || 1)}
+                      disabled={
+                        (servicesCurrentPage || 1) >= (servicesTotalPages || 1)
+                      }
                     >
                       Next Page ▶
                     </SelectItem>
@@ -405,14 +435,16 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               }}
             >
               <SelectTrigger
-                className="w-[220px] bg-white p-2 rounded-md border-0
+                className="w-full md:w-[180px] bg-white p-2 rounded-md border-0
                  transition-transform duration-200 ease-in-out
                  hover:scale-[1.02] hover:-translate-y-[1px] "
               >
-                <SelectValue placeholder="Form Template" />
+                <SelectValue placeholder={t("dashboard.formTemplate")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Templates</SelectItem>
+                <SelectItem value="all">
+                  {t("dashboard.allTemplates")}
+                </SelectItem>
                 {(templatesOptions || []).map((t: any) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}
@@ -425,7 +457,10 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                 <SelectItem value="__tpl_info__" disabled>
                   Page {templatesPage} of {templatesTotalPages || 1}
                 </SelectItem>
-                <SelectItem value="__tpl_next__" disabled={templatesPage >= (templatesTotalPages || 1)}>
+                <SelectItem
+                  value="__tpl_next__"
+                  disabled={templatesPage >= (templatesTotalPages || 1)}
+                >
                   Next Page ▶
                 </SelectItem>
               </SelectContent>
@@ -433,8 +468,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           </div>
         </div>
       )}
-
-      <div className="flex gap-4 justify-end">
+      <div className="flex gap-4 justify-end w-full">
         <Button
           variant="outline"
           size="sm"
@@ -446,6 +480,19 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           Export
         </Button>
       </div>
+
+      {/* <div className="flex gap-4 justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          className="bg-[#0073e6] text-white border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px]"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export
+        </Button>
+      </div> */}
     </div>
   );
 }

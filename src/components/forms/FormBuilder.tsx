@@ -19,6 +19,7 @@ import {
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch } from "../../store";
+import { useTranslation } from "../../hooks/useTranslation";
 import {
   fetchFormById,
   selectCurrentForm,
@@ -73,19 +74,19 @@ import {
 import { FormField } from "./FormField";
 import subProjectService from "../../services/subprojects/subprojectService";
 
-// Field types available for forms
-const fieldTypes = [
-  { id: "text", name: "Text", icon: <Type className="h-4 w-4" /> },
-  { id: "number", name: "Number", icon: <Hash className="h-4 w-4" /> },
-  { id: "date", name: "Date", icon: <Calendar className="h-4 w-4" /> },
+// Field types available for forms - will be translated dynamically
+const getFieldTypes = (t: any) => [
+  { id: "text", name: t("forms.text"), icon: <Type className="h-4 w-4" /> },
+  { id: "number", name: t("forms.number"), icon: <Hash className="h-4 w-4" /> },
+  { id: "date", name: t("forms.date"), icon: <Calendar className="h-4 w-4" /> },
   {
     id: "checkbox",
-    name: "Checkbox",
+    name: t("forms.checkbox"),
     icon: <CheckSquare className="h-4 w-4" />,
   },
   {
     id: "dropdown",
-    name: "Dropdown",
+    name: t("forms.dropdown"),
     icon: <ChevronDown className="h-4 w-4" />,
   },
 ];
@@ -139,6 +140,7 @@ export function FormBuilder({
   isSaving = false,
   error,
 }: FormBuilderProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const projects = useSelector(selectAllProjects);
   const subProjects = useSelector(selectAllSubprojects);
@@ -206,11 +208,17 @@ export function FormBuilder({
           field.options?.map((opt) => ({ value: opt, label: opt })) || [],
       }));
 
+      // Set includeBeneficiaries state from the form data
+      setIncludeBeneficiaries(formToEdit.includeBeneficiaries ?? true);
+
       if (assocEntityType === "subproject" && assocEntityId) {
         (async () => {
           try {
-            const res = await subProjectService.getSubProjectById({ id: assocEntityId });
-            const projectId = (res.success && (res.data as any)?.projectId) || "";
+            const res = await subProjectService.getSubProjectById({
+              id: assocEntityId,
+            });
+            const projectId =
+              (res.success && (res.data as any)?.projectId) || "";
             setFormData({
               id: formToEdit.id,
               name: formToEdit.name,
@@ -255,6 +263,9 @@ export function FormBuilder({
   const [previewMode, setPreviewMode] = useState(false);
   const [includeBeneficiaries, setIncludeBeneficiaries] = useState(true);
 
+  // Get translated field types
+  const fieldTypes = getFieldTypes(t);
+
   // Build projects list for UI based on role
   const projectsForUi = isSysOrSuperAdmin
     ? projects
@@ -272,7 +283,9 @@ export function FormBuilder({
   const allowedSubprojectIds = (() => {
     if (isSysOrSuperAdmin) return new Set<string>();
     try {
-      const proj = (userProjectsTree || []).find((p: any) => p.id === formData.project);
+      const proj = (userProjectsTree || []).find(
+        (p: any) => p.id === formData.project
+      );
       const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
       return new Set<string>(ids);
     } catch {
@@ -380,6 +393,7 @@ export function FormBuilder({
                 },
               ],
       },
+      includeBeneficiaries: includeBeneficiaries,
     };
 
     onSave(formattedData);
@@ -406,38 +420,44 @@ export function FormBuilder({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={onBack}>
+          <Button
+            variant="outline"
+            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+            size="sm"
+            onClick={onBack}
+          >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Forms
+            {t("forms.backToForms")}
           </Button>
           <h2>
-            {isEditing ? "Edit Form" : "Create Form"}: {formData.name}
+            {isEditing ? t("forms.editFormTitle") : t("forms.createFormTitle")}:{" "}
+            {formData.name}
           </h2>
           {isEditing && <Badge variant="outline">v{formData.version}</Badge>}
         </div>
         <div className="flex gap-2">
           <Button
-            className="bg-blue-200 text-blue-900 border-0"
+            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
             variant="outline"
             onClick={() => setPreviewMode(!previewMode)}
           >
             <Eye className="h-4 w-4 mr-2" />
-            {previewMode ? "Exit Preview" : "Preview"}
+            {previewMode ? t("forms.exitPreview") : t("forms.preview")}
           </Button>
           <Button
-            className="bg-[#0073e6] text-white border-0"
+            className="bg-[#0073e6] text-white border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
             onClick={handleSaveForm}
             disabled={isSaving}
           >
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {t("forms.saving")}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Save Form
+                {t("forms.saveForm")}
               </>
             )}
           </Button>
@@ -449,15 +469,19 @@ export function FormBuilder({
           <div className="col-span-12 lg:col-span-8">
             <Card className="mb-6 bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Form Builder</CardTitle>
+                <CardTitle className="text-base">
+                  {t("forms.formBuilder")}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="form-name">Form Name *</Label>
+                      <Label htmlFor="form-name">
+                        {t("forms.formNameRequired")}
+                      </Label>
                       <Input
-                        className="bg-[#EAF4FB] border-0"
+                        className="bg-white border-gray-100 border"
                         id="form-name"
                         value={formData.name}
                         onChange={(e) =>
@@ -467,13 +491,15 @@ export function FormBuilder({
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="form-project">Project *</Label>
+                      <Label htmlFor="form-project">
+                        {t("forms.projectRequired")}
+                      </Label>
                       <Select
                         value={formData.project}
                         onValueChange={handleChangeProject}
                       >
-                        <SelectTrigger className="bg-[#EAF4FB] border-0">
-                          <SelectValue placeholder="Select a project" />
+                        <SelectTrigger className="bg-white border-gray-100 border">
+                          <SelectValue placeholder={t("forms.selectProject")} />
                         </SelectTrigger>
                         <SelectContent>
                           {projectsForUi.map((project) => (
@@ -490,17 +516,23 @@ export function FormBuilder({
                         <div className="space-y-2"></div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="form-project">Sub Project</Label>
+                          <Label htmlFor="form-project">
+                            {t("forms.subProject")}
+                          </Label>
                           <Select
                             value={formData.subProject}
                             onValueChange={handleChangeSubProject}
                           >
-                            <SelectTrigger className="bg-[#EAF4FB] border-0">
-                              <SelectValue placeholder="Select a subproject" />
+                            <SelectTrigger className="bg-white border-gray-100 border">
+                              <SelectValue
+                                placeholder={t("forms.selectASubproject")}
+                              />
                             </SelectTrigger>
                             <SelectContent>
                               {subProjects
-                                .filter((sp) => sp.projectId === formData.project)
+                                .filter(
+                                  (sp) => sp.projectId === formData.project
+                                )
                                 .filter((sp) =>
                                   isSysOrSuperAdmin
                                     ? true
@@ -523,15 +555,17 @@ export function FormBuilder({
                     )}
                   </div>
                   <div className="grid gap-2">
-                    <Label>Include Beneficiaries</Label>
+                    <Label>{t("forms.includeBeneficiaries")}</Label>
                     <div className="flex items-center gap-3">
                       <Switch
                         checked={includeBeneficiaries}
                         onCheckedChange={setIncludeBeneficiaries}
-                        aria-label="Include Beneficiaries"
+                        aria-label={t("forms.includeBeneficiaries")}
                       />
                       <span className="text-sm text-muted-foreground">
-                        {includeBeneficiaries ? "Enabled" : "Disabled"}
+                        {includeBeneficiaries
+                          ? t("forms.enabled")
+                          : t("forms.disabled")}
                       </span>
                     </div>
                   </div>
@@ -556,25 +590,24 @@ export function FormBuilder({
 
             <Card className="mb-6 bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <CardTitle className="text-base">Form Fields</CardTitle>
+                <CardTitle className="text-base">
+                  {t("forms.formFields")}
+                </CardTitle>
                 <Dialog
                   open={isAddFieldDialogOpen}
                   onOpenChange={setIsAddFieldDialogOpen}
                 >
                   <DialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      className="bg-blue-200 text-blue-900 border-0"
-                    >
+                    {/* <Button size="sm" className="bg-[#E0F2FE] border-0">
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Field
-                    </Button>
+                      {t('forms.addField')}
+                    </Button> */}
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                      <DialogTitle>Add Field</DialogTitle>
+                      <DialogTitle>{t("forms.addField")}</DialogTitle>
                       <DialogDescription>
-                        Select a field type to add to your form.
+                        {t("forms.selectFieldType")}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid grid-cols-2 gap-3 py-4">
@@ -597,16 +630,16 @@ export function FormBuilder({
                 {formData.fields.length === 0 ? (
                   <div className="text-center  py-8 border bg-[#E3F5FF] border-dashed rounded-md">
                     <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                    <h3 className="text-lg mb-2">No fields added yet</h3>
+                    <h3 className="text-lg mb-2">{t("forms.noFieldsYet")}</h3>
                     <p className="text-muted-foreground mb-4">
-                      Start building your form by adding fields
+                      {t("forms.startBuildingForm")}
                     </p>
                     <Button
                       onClick={() => setIsAddFieldDialogOpen(true)}
-                      className="bg-blue-200 text-blue-900 border-0"
+                      className="bg-[#E0F2FE] border-0"
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      Add First Field
+                      {t("forms.addFirstField")}
                     </Button>
                   </div>
                 ) : (
@@ -632,7 +665,7 @@ export function FormBuilder({
                                 variant="outline"
                                 className="text-destructive border-destructive ml-2"
                               >
-                                Required
+                                {t("forms.requiredBadge")}
                               </Badge>
                             )}
                           </div>
@@ -652,11 +685,11 @@ export function FormBuilder({
                     ))}
                     <Button
                       variant="outline"
-                      className="w-full border-dashed bg-blue-200 text-blue-900"
+                      className="w-full border-dashed  bg-[#E0F2FE]"
                       onClick={() => setIsAddFieldDialogOpen(true)}
                     >
-                      <Plus className="h-4 w-4 mr-2 text-blue-900" />
-                      Add Field
+                      <Plus className="h-4 w-4 mr-2 " />
+                      {t("forms.addField")}
                     </Button>
                   </div>
                 )}
@@ -672,7 +705,7 @@ export function FormBuilder({
                     value="properties"
                     className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
                   >
-                    Field Properties
+                    {t("forms.fieldProperties")}
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="properties">
@@ -681,9 +714,11 @@ export function FormBuilder({
                       {selectedFieldData ? (
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label htmlFor="field-label">Field Label</Label>
+                            <Label htmlFor="field-label">
+                              {t("forms.fieldLabelInput")}
+                            </Label>
                             <Input
-                              className="bg-[#EAF4FB] border-0"
+                              className="bg-white border-gray-100 border"
                               id="field-label"
                               value={selectedFieldData.label}
                               onChange={(e) =>
@@ -694,28 +729,31 @@ export function FormBuilder({
                             />
                           </div>
 
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="field-required"
-                                checked={selectedFieldData.required}
-                                onCheckedChange={(checked: any) =>
-                                  handleFieldUpdate(selectedField!, {
-                                    required: !!checked,
-                                  })
-                                }
-                              />
-                              <Label htmlFor="field-required">
-                                Required Field
-                              </Label>
+                          {selectedFieldData?.type !== "checkbox" && (
+                            <div className="space-y-2">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id="field-required"
+                                  checked={selectedFieldData.required}
+                                  onCheckedChange={(checked: any) =>
+                                    handleFieldUpdate(selectedField!, {
+                                      required: !!checked,
+                                    })
+                                  }
+                                />
+                                <Label htmlFor="field-required">
+                                  {t("forms.requiredField")}
+                                </Label>
+                              </div>
                             </div>
-                          </div>
+                          )}
 
                           {selectedFieldData?.type === "dropdown" && (
                             <div className="space-y-2">
                               <div className="flex justify-between items-center">
-                                <Label>Options</Label>
+                                <Label>{t("forms.options")}</Label>
                                 <Button
+                                  className="hover:bg-[#E0F2FE]"
                                   variant="outline"
                                   size="sm"
                                   onClick={() => {
@@ -738,7 +776,7 @@ export function FormBuilder({
                                   }}
                                 >
                                   <Plus className="h-4 w-4 mr-1" />
-                                  Add Option
+                                  {t("forms.addOption")}
                                 </Button>
                               </div>
                               <div className="space-y-2 border rounded-md p-3">
@@ -795,21 +833,23 @@ export function FormBuilder({
                           <div className="pt-2">
                             <Button
                               variant="outline"
-                              className="w-full bg-blue-200 border-0 text-blue-900"
+                              className="w-full bg-[#E0F2FE] border-0 "
                               size="sm"
                               onClick={() => handleDeleteField(selectedField!)}
                             >
                               <Trash className="h-4 w-4 mr-2" />
-                              Delete Field
+                              {t("forms.deleteField")}
                             </Button>
                           </div>
                         </div>
                       ) : (
                         <div className="text-center py-6">
                           <Settings className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                          <h3 className="text-lg mb-2">No Field Selected</h3>
+                          <h3 className="text-lg mb-2">
+                            {t("forms.noFieldSelected")}
+                          </h3>
                           <p className="text-muted-foreground mb-4">
-                            Select a field to edit its properties
+                            {t("forms.selectFieldToEdit")}
                           </p>
                         </div>
                       )}
@@ -821,7 +861,7 @@ export function FormBuilder({
           </div>
         </div>
       ) : (
-        <Card>
+        <Card className="bg-[#F7F9FB] border-0">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
               <CardTitle>{formData.name}</CardTitle>
@@ -829,8 +869,12 @@ export function FormBuilder({
                 {formData.description}
               </p>
             </div>
-            <Button variant="outline" onClick={() => setPreviewMode(false)}>
-              Edit Form
+            <Button
+              className="bg-[#E0F2FE] border-0"
+              variant="outline"
+              onClick={() => setPreviewMode(false)}
+            >
+              {t("forms.editFormMode")}
             </Button>
           </CardHeader>
           <CardContent className="pt-6">
@@ -839,10 +883,12 @@ export function FormBuilder({
                 <FormField key={field.id} field={field} />
               ))}
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline" className="bg-blue-200">
-                  Cancel
+                <Button variant="outline" className="bg-[#E0F2FE] border-0">
+                  {t("forms.cancel")}
                 </Button>
-                <Button className="bg-[#0073e6] text-white">Submit Form</Button>
+                <Button className="bg-[#0073e6] text-white">
+                  {t("forms.submitForm")}
+                </Button>
               </div>
             </div>
           </CardContent>

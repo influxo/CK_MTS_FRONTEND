@@ -6,10 +6,12 @@ import {
 } from "../ui/data-display/card";
 import { useDispatch, useSelector } from "react-redux";
 import React from "react";
+import { useTranslation } from "../../hooks/useTranslation";
 import { fetchKpis, fetchKpiValueWithFilters, selectKpis } from "../../store/slices/kpiSlice";
 import { selectMetricsFilters } from "../../store/slices/serviceMetricsSlice";
 
 export function KpiHighlights() {
+  const { t } = useTranslation();
   const dispatch: any = useDispatch();
   const { items, values, loading, error } = useSelector(selectKpis);
   const filters = useSelector(selectMetricsFilters);
@@ -36,17 +38,17 @@ export function KpiHighlights() {
   return (
     <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
       <CardHeader>
-        <CardTitle>Key Performance Indicators</CardTitle>
+        <CardTitle>{t('dashboard.kpiHighlights')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {loading && (
-          <div className="text-sm text-muted-foreground">Loading KPIs...</div>
+          <div className="text-sm text-muted-foreground">{t('common.loading')}</div>
         )}
         {error && (
           <div className="text-sm text-destructive">{error}</div>
         )}
         {!loading && !error && items.length === 0 && (
-          <div className="text-sm text-muted-foreground">No KPIs configured.</div>
+          <div className="text-sm text-muted-foreground">{t('dashboard.noKpisConfigured')}</div>
         )}
         {!loading && !error &&
           items.slice(0, 4).map((kpi) => {

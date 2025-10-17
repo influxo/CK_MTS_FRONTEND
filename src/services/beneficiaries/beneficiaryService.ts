@@ -14,6 +14,8 @@ import type {
   GetBeneficiaryServicesResponse,
   GetBeneficiaryEntitiesRequest,
   GetBeneficiaryEntitiesResponse,
+  RemoveBeneficiaryEntityAssociationRequest,
+  RemoveBeneficiaryEntityAssociationResponse,
   GetBeneficiariesByEntityRequest,
   GetBeneficiariesByEntityResponse,
   AssociateBeneficiaryToEntitiesRequest,
@@ -293,6 +295,43 @@ class BeneficiaryService {
         data: [],
         message: error?.message || "Failed to fetch beneficiary entities",
       } as GetBeneficiaryEntitiesResponse;
+    }
+  }
+
+  async removeBeneficiaryEntityAssociation(
+    params: RemoveBeneficiaryEntityAssociationRequest
+  ): Promise<RemoveBeneficiaryEntityAssociationResponse> {
+    const { id, entityId, entityType } = params;
+    try {
+      const response = await (axiosInstance as any).delete(
+        `${this.beneficiaryEndpoint}/${id}/entities`,
+        { data: { entityId, entityType } }
+      );
+      toast.success("Asociimi u fshi me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      toast.error("Diçka shkoi gabim. ", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
+      if (error?.response) {
+        return error.response
+          .data as RemoveBeneficiaryEntityAssociationResponse;
+      }
+      return {
+        success: false,
+        message:
+          error?.message || "Failed to remove beneficiary entity association",
+      } as RemoveBeneficiaryEntityAssociationResponse;
     }
   }
 

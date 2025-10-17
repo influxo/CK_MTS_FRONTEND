@@ -1,5 +1,6 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "../../hooks/useTranslation";
 import {
   Bar,
   BarChart,
@@ -22,6 +23,7 @@ import type { RootState } from "../../store";
 import { loadDemographics } from "../../store/slices/demographicsSlice";
 
 export function BeneficiaryDemographics() {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { loading, error, data } = useSelector(
     (s: RootState) => s.demographics
@@ -57,7 +59,7 @@ export function BeneficiaryDemographics() {
   return (
     <>
       {loading && (
-        <div className="text-sm text-gray-500">Loading demographics…</div>
+        <div className="text-sm text-gray-500">{t('common.loading')}</div>
       )}
       {error && !loading && <div className="text-sm text-red-600">{error}</div>}
       {!loading && !error && (
@@ -65,7 +67,7 @@ export function BeneficiaryDemographics() {
           {/* Age Distribution - Pie Card (ReportViewer style) */}
           <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
             <CardHeader>
-              <CardTitle className="text-base">Age Distribution</CardTitle>
+              <CardTitle className="text-base">{t('dashboard.ageDistribution')}</CardTitle>
             </CardHeader>
             <CardContent className="p-6 h-[300px] flex items-center justify-center">
               {agePieData.length === 0 ? (
@@ -90,7 +92,7 @@ export function BeneficiaryDemographics() {
                       </Pie>
                       <Tooltip
                         formatter={(value: number, _name: any, entry: any) => [
-                          `${value} beneficiaries`,
+                          `${value} ${t('dashboard.beneficiaries')}`,
                           `Age "${entry?.payload?.name}"`,
                         ]}
                       />
@@ -119,11 +121,11 @@ export function BeneficiaryDemographics() {
           {/* Gender Distribution - Bar Card (ReportViewer style) */}
           <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
             <CardHeader>
-              <CardTitle className="text-base">Gender Distribution</CardTitle>
+              <CardTitle className="text-base">{t('dashboard.genderDistribution')}</CardTitle>
             </CardHeader>
             <CardContent className="p-6 h-[300px]">
               {genderBarData.length === 0 ? (
-                <div className="text-xs text-gray-500">No data</div>
+                <div className="text-xs text-gray-500">{t('common.noData')}</div>
               ) : (
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={genderBarData}>

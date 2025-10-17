@@ -6,7 +6,7 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import Login from "./pages/auth/Login";
 import ResetPassword from "./pages/auth/ResetPassword";
 import { Beneficiaries } from "./pages/Beneficiaries";
-import { Dashboard } from "./pages/Dashboard";
+import Dashboard from "./pages/Dashboard";
 import { Employees } from "./pages/Employees";
 import { Forms } from "./pages/Forms";
 import { Projects } from "./pages/Projects";

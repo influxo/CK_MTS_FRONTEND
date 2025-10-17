@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { SubProjectSelection } from "../components/data-entry/SubProjectSelection";
 import type { AppDispatch } from "../store";
+import { useTranslation } from "../hooks/useTranslation";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProjects } from "../store/slices/projectsSlice";
 import { fetchAllSubProjects } from "../store/slices/subProjectSlice";
@@ -33,6 +34,7 @@ interface DataEntryModuleProps {}
 // TODO: ksajna i vyn my bo check ma mire!!!
 
 export function DataEntry({}: DataEntryModuleProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const [activeTab, setActiveTab] = useState<"entry" | "history">("entry");
   const [entityType, setEntityType] = useState<"project" | "subproject">(
@@ -92,24 +94,24 @@ export function DataEntry({}: DataEntryModuleProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2>Data Entry</h2>
+          <h2>{t('dataEntry.title')}</h2>
           <p className="text-muted-foreground">
-            Submit forms or view submission history
+            {t('dataEntry.subtitle')}
           </p>
         </div>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <TabsList className="bg-[#2E343E] bg-opacity-10 items-center ">
+          <TabsList className="bg-[#E0F2FE]  items-center ">
             <TabsTrigger
               value="entry"
-              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+              className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
-              Data Entry
+              {t('dataEntry.dataEntryTab')}
             </TabsTrigger>
             <TabsTrigger
               value="history"
-              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
+              className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
-              Submission History
+              {t('dataEntry.submissionHistoryTab')}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -122,7 +124,7 @@ export function DataEntry({}: DataEntryModuleProps) {
 
         <TabsContent value="history">
           <Card className="drop-shadow-sm shadow-gray-50 border-0">
-            <CardContent className="p-4 space-y-4">
+            <CardContent className=" space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <Select
                   value={entityType}
@@ -131,12 +133,12 @@ export function DataEntry({}: DataEntryModuleProps) {
                     setSelectedEntityId("");
                   }}
                 >
-                  <SelectTrigger className="w-full sm:w-[200px]">
-                    <SelectValue placeholder="Entity Type" />
+                  <SelectTrigger className="w-full sm:w-[200px] border border-gray-100 bg-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
+                    <SelectValue placeholder={t('dataEntry.entityType')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="project">Project</SelectItem>
-                    <SelectItem value="subproject">Subproject</SelectItem>
+                    <SelectItem value="project">{t('dataEntry.project')}</SelectItem>
+                    <SelectItem value="subproject">{t('dataEntry.subproject')}</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -145,8 +147,8 @@ export function DataEntry({}: DataEntryModuleProps) {
                     value={selectedEntityId}
                     onValueChange={setSelectedEntityId}
                   >
-                    <SelectTrigger className="w-full sm:w-[260px]">
-                      <SelectValue placeholder="Select a project" />
+                    <SelectTrigger className="w-full sm:w-[260px] border border-gray-100 bg-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
+                      <SelectValue placeholder={t('dataEntry.selectProject')} />
                     </SelectTrigger>
                     <SelectContent>
                       {allowedProjects.map((p: any) => (
@@ -161,8 +163,8 @@ export function DataEntry({}: DataEntryModuleProps) {
                     value={selectedEntityId}
                     onValueChange={setSelectedEntityId}
                   >
-                    <SelectTrigger className="w-full sm:w-[260px]">
-                      <SelectValue placeholder="Select a subproject" />
+                    <SelectTrigger className="w-full sm:w-[260px] border border-gray-100 bg-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]   ">
+                      <SelectValue placeholder={t('dataEntry.selectSubproject')} />
                     </SelectTrigger>
                     <SelectContent>
                       {allowedSubprojects.map((sp: any) => (
@@ -177,11 +179,11 @@ export function DataEntry({}: DataEntryModuleProps) {
 
               <div>
                 <div className="mb-3 text-sm text-muted-foreground">
-                  Showing submissions for
+                  {t('dataEntry.showingSubmissionsFor')}
                   <Badge variant="outline" className="ml-2">
                     {selectedEntityId
                       ? `${entityType} • ${selectedEntityId}`
-                      : "All"}
+                      : t('dataEntry.all')}
                   </Badge>
                 </div>
                 <SubmissionHistory

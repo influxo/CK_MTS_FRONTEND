@@ -48,12 +48,14 @@ import {
 } from "../ui/form/select";
 import { Textarea } from "../ui/form/textarea";
 import { toast } from "sonner";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface ProjectServicesProps {
   projectId: string;
 }
 
 export function ProjectServices({ projectId }: ProjectServicesProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const services = useSelector(selectEntityServices);
   const isLoading = useSelector(selectEntityServicesLoading);
@@ -273,7 +275,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3>Services</h3>
+        <h3>{t('projectServices.services')}</h3>
         <div className="flex gap-2">
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
@@ -283,75 +285,75 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
               >
-                Create Service
+                {t('projectServices.createService')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[560px]">
               <DialogHeader>
-                <DialogTitle>Create and Assign Service</DialogTitle>
+                <DialogTitle>{t('projectServices.createAndAssignService')}</DialogTitle>
                 <DialogDescription>
-                  Create a new service. It will be assigned to this project
-                  automatically after creation.
+                  {t('projectServices.createServiceDesc')}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="svc-name" className="text-right">
-                    Name *
+                    {t('projectServices.name')}
                   </Label>
                   <Input
                     id="svc-name"
-                    className="col-span-3"
+                    className="col-span-3 border border-[#C6CBCB]"
                     value={name}
                     onChange={(e) => setName(e.currentTarget.value)}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="svc-category" className="text-right">
-                    Category *
+                    {t('projectServices.category')}
                   </Label>
                   <Input
                     id="svc-category"
-                    className="col-span-3"
+                    className="col-span-3 border border-[#C6CBCB]"
                     value={category}
                     onChange={(e) => setCategory(e.currentTarget.value)}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-start gap-4">
                   <Label htmlFor="svc-description" className="text-right pt-2">
-                    Description
+                    {t('projectServices.description')}
                   </Label>
                   <Textarea
                     id="svc-description"
-                    className="col-span-3"
+                    className="col-span-3 border border-[#C6CBCB]"
                     rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.currentTarget.value)}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Status *</Label>
+                  <Label className="text-right">{t('projectServices.status')}</Label>
                   <Select
                     value={status}
                     onValueChange={(v) => setStatus(v as "active" | "inactive")}
                   >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select status" />
+                    <SelectTrigger className="col-span-3 border border-[#C6CBCB]">
+                      <SelectValue placeholder={t('projectServices.selectStatus')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="active">{t('projectServices.active')}</SelectItem>
+                      <SelectItem value="inactive">{t('projectServices.inactive')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <DialogFooter>
                 <Button
+                  className="bg-blue-200 border-0"
                   variant="outline"
                   onClick={() => setIsCreateOpen(false)}
                   disabled={creating}
                 >
-                  Cancel
+                  {t('projectServices.cancel')}
                 </Button>
                 <Button
                   className="bg-[#0073e6] text-white flex items-center
@@ -361,7 +363,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                   onClick={handleCreateAndAssign}
                   disabled={creating || !name.trim() || !category.trim()}
                 >
-                  {creating ? "Creating..." : "Create & Assign"}
+                  {creating ? t('projectServices.creating') : t('projectServices.createAndAssign')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -371,22 +373,23 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
             <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="bg-black/10 hover:bg-black/20"
+                className="bg-[#E0F2FE] border-0  transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
               >
-                Assign Service
+                {t('projectServices.assignService')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[720px]">
               <DialogHeader>
-                <DialogTitle>Assign Services to Project</DialogTitle>
+                <DialogTitle>{t('projectServices.assignServicesToProject')}</DialogTitle>
                 <DialogDescription>
-                  Select one or multiple services to assign to this project.
+                  {t('projectServices.assignServicesDesc')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-3">
                 <div className="flex gap-3 items-center">
                   <Input
-                    placeholder="Search services..."
+                    placeholder={t('projectServices.searchServices')}
                     value={search}
                     onChange={(e) => {
                       setSearch(e.currentTarget.value);
@@ -394,18 +397,19 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                     }}
                   />
                   <Button
+                    className="bg-blue-200 border-0"
                     variant="outline"
                     onClick={() =>
                       dispatch(getAllServices({ page: 1, limit: 200 }))
                     }
                     disabled={allLoading}
                   >
-                    Reload
+                    {t('projectServices.reload')}
                   </Button>
                 </div>
                 {allLoading && (
                   <div className="text-sm text-muted-foreground">
-                    Loading services...
+                    {t('projectServices.loadingServices')}
                   </div>
                 )}
                 {allError && (
@@ -413,14 +417,14 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                 )}
                 <div className="rounded-md border max-h-[360px] overflow-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-[#EDEEFC]">
                       <TableRow>
                         <TableHead className="w-[48px]">
                           <span className="sr-only">Select</span>
                         </TableHead>
-                        <TableHead className="w-[320px]">Service</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className="w-[320px]">{t('projectServices.service')}</TableHead>
+                        <TableHead>{t('projectServices.category')}</TableHead>
+                        <TableHead>{t('projectServices.status')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -428,6 +432,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                         <TableRow key={svc.id} className="hover:bg-muted/40">
                           <TableCell>
                             <input
+                              className=""
                               type="checkbox"
                               checked={selectedIds.includes(svc.id)}
                               onChange={() => toggleSelect(svc.id)}
@@ -440,13 +445,18 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{svc.category}</Badge>
+                            <Badge
+                              variant="outline"
+                              className="bg-[#0073e6] text-white border-0"
+                            >
+                              {svc.category}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge
                               className={
                                 svc.status === "active"
-                                  ? "bg-[#2E343E] text-white"
+                                  ? "bg-[#DEF8EE] text-[#4AA785] border-0"
                                   : ""
                               }
                             >
@@ -459,7 +469,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                         <TableRow>
                           <TableCell colSpan={4}>
                             <div className="text-sm text-muted-foreground">
-                              No services found.
+                              {t('projectServices.noServicesFound')}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -471,10 +481,10 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                 <div className="flex items-center justify-between flex-wrap gap-3 px-1">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span>
-                      Page {assignPage} of {Math.max(assignTotalPages || 1, 1)}
+                      {t('projectServices.page')} {assignPage} {t('projectServices.of')} {Math.max(assignTotalPages || 1, 1)}
                     </span>
                     <span className="hidden sm:inline">
-                      • Total {filteredAllServices.length} services
+                      • {t('projectServices.total')} {filteredAllServices.length} {t('projectServices.servicesLabel')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -485,7 +495,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                       disabled={assignPage <= 1}
                       className="bg-white"
                     >
-                      Prev
+                      {t('projectServices.prev')}
                     </Button>
                     <Button
                       variant="outline"
@@ -498,7 +508,7 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                       }
                       className="bg-white"
                     >
-                      Next
+                      {t('projectServices.next')}
                     </Button>
                     <Select
                       value={String(assignLimit)}
@@ -512,10 +522,10 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                         <SelectValue placeholder="Rows" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="10">10 / page</SelectItem>
-                        <SelectItem value="20">20 / page</SelectItem>
-                        <SelectItem value="50">50 / page</SelectItem>
-                        <SelectItem value="100">100 / page</SelectItem>
+                        <SelectItem value="10">{t('projectServices.perPage10')}</SelectItem>
+                        <SelectItem value="20">{t('projectServices.perPage20')}</SelectItem>
+                        <SelectItem value="50">{t('projectServices.perPage50')}</SelectItem>
+                        <SelectItem value="100">{t('projectServices.perPage100')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -523,11 +533,12 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
               </div>
               <DialogFooter>
                 <Button
+                  className="bg-blue-200 border-0"
                   variant="outline"
                   onClick={() => setIsAssignOpen(false)}
                   disabled={assigning}
                 >
-                  Cancel
+                  {t('projectServices.cancel')}
                 </Button>
                 <Button
                   className="bg-[#0073e6] text-white flex items-center
@@ -538,10 +549,10 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                   disabled={assigning || selectedIds.length === 0}
                 >
                   {assigning
-                    ? "Assigning..."
+                    ? t('projectServices.assigning')
                     : selectedIds.length > 1
-                    ? "Assign Selected (Batch)"
-                    : "Assign Selected"}
+                    ? t('projectServices.assignSelectedBatch')
+                    : t('projectServices.assignSelected')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -554,13 +565,13 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
       </div>
 
       {isLoading && (
-        <div className="text-sm text-muted-foreground">Loading services...</div>
+        <div className="text-sm text-muted-foreground">{t('projectServices.loadingServices')}</div>
       )}
       {error && <div className="text-sm text-destructive">{error}</div>}
 
       {!isLoading && !error && services.length === 0 && (
         <div className="text-sm text-muted-foreground">
-          No services assigned to this project.
+          {t('projectServices.noServicesAssigned')}
         </div>
       )}
 
@@ -569,12 +580,12 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
           <Table>
             <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
-                <TableHead className="w-[280px]">Service</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[280px]">{t('projectServices.service')}</TableHead>
+                <TableHead>{t('projectServices.category')}</TableHead>
+                <TableHead>{t('projectServices.status')}</TableHead>
+                <TableHead>{t('projectServices.created')}</TableHead>
+                <TableHead>{t('projectServices.updated')}</TableHead>
+                <TableHead className="text-right">{t('projectServices.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="bg-[#F7F9FB]">
@@ -618,10 +629,10 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
                   <TableCell className="text-right">
                     <Button
                       variant="outline"
-                      className="hover:bg-black/10 border-0"
+                      className="hover:bg-blue-100 border-0"
                       onClick={() => openUnassign(svc)}
                     >
-                      Unassign
+                      {t('projectServices.unassign')}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -635,11 +646,11 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
       <Dialog open={isUnassignOpen} onOpenChange={setIsUnassignOpen}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>Unassign Service</DialogTitle>
+            <DialogTitle>{t('projectServices.unassignService')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to unassign{" "}
+              {t('projectServices.unassignConfirm')}{" "}
               <span className="font-medium">{serviceToUnassign?.name}</span>{" "}
-              from this project?
+              {t('projectServices.fromThisProject')}
             </DialogDescription>
           </DialogHeader>
           {unassignError && (
@@ -651,10 +662,10 @@ export function ProjectServices({ projectId }: ProjectServicesProps) {
               onClick={() => setIsUnassignOpen(false)}
               disabled={unassignLoading}
             >
-              Cancel
+              {t('projectServices.cancel')}
             </Button>
             <Button onClick={handleConfirmUnassign} disabled={unassignLoading}>
-              {unassignLoading ? "Unassigning..." : "Unassign"}
+              {unassignLoading ? t('projectServices.unassigning') : t('projectServices.unassign')}
             </Button>
           </DialogFooter>
         </DialogContent>

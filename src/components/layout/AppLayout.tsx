@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "../../hooks/useTranslation";
 import {
   fetchProjects,
   selectAllProjects,
@@ -13,6 +14,7 @@ import type { AppDispatch } from "../../store";
 import { selectCurrentUser } from "../../store/slices/authSlice";
 
 const AppLayout = () => {
+  const { t } = useTranslation();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedSubProjectId, setSelectedSubProjectId] = useState<string | null>(null);
   const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState<string | null>(null);
@@ -25,12 +27,20 @@ const AppLayout = () => {
   const getPageTitle = () => {
     const path = location.pathname;
     if (path.startsWith("/projects")) {
-      return selectedSubProjectId ? "Sub-Project Details" : "Projects";
+      return selectedSubProjectId ? t('subProjects.subProjectDetails') : t('projects.title');
     } else if (path.startsWith("/beneficiaries")) {
-      return selectedBeneficiaryId ? "Beneficiary Details" : "Beneficiaries";
+      return selectedBeneficiaryId ? t('beneficiaries.beneficiaryDetails') : t('beneficiaries.title');
+    } else if (path.startsWith("/employees")) {
+      return t('employees.title');
+    } else if (path.startsWith("/forms")) {
+      return t('forms.title');
+    } else if (path.startsWith("/data-entry")) {
+      return t('dataEntry.title');
+    } else if (path.startsWith("/reports")) {
+      return t('reports.title');
     }
     return path === "/dashboard"
-      ? "Dashboard"
+      ? t('dashboard.title')
       : path.charAt(1).toUpperCase() + path.slice(2);
   };
 
@@ -113,7 +123,7 @@ const AppLayout = () => {
         </main>
 
         <footer className="border-t p-4 text-center text-sm text-muted-foreground">
-          2025 CaritasMotherTeresa. All rights reserved.
+          {new Date().getFullYear()} CaritasMotherTeresa. {t('footer.copyright').split('2025 CaritasMotherTeresa. ')[1]}
         </footer>
       </div>
     </div>

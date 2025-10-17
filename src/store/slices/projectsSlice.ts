@@ -5,6 +5,8 @@ import type {
   GetProjectsResponse,
   CreateProjectRequest,
   CreateProjectResponse,
+  UpdateProjectRequest,
+  UpdateProjectResponse,
   AssignUserToProjectRequest,
   AssignUserToProjectResponse,
   GetProjectUsersResponse,
@@ -28,6 +30,7 @@ interface ProjectsState {
   isLoading: boolean;
   error: string | null;
   createSuccessMessage: string | null;
+  updateSuccessMessage: string | null;
   assignUserSuccessMessage: string | null;
   removeUserSuccessMessage: string | null;
   assignedUsers: AssignedProjectUser[];
@@ -57,6 +60,7 @@ const initialState: ProjectsState = {
   isLoading: false,
   error: null,
   createSuccessMessage: null,
+  updateSuccessMessage: null,
   assignUserSuccessMessage: null,
   removeUserSuccessMessage: null,
   assignedUsers: [],
@@ -104,6 +108,18 @@ export const createProject = createAsyncThunk<
   return response;
 });
 
+export const updateProject = createAsyncThunk<
+  UpdateProjectResponse,
+  { id: string; body: UpdateProjectRequest },
+  { rejectValue: string }
+>("projects/updateProject", async ({ id, body }, { rejectWithValue }) => {
+  const response = await projectService.updateProject(id, body);
+  if (!response.success) {
+    return rejectWithValue(response.message || "Failed to update project");
+  }
+  return response;
+});
+
 export const assignUserToProject = createAsyncThunk<
   AssignUserToProjectResponse,
   AssignUserToProjectRequest,
@@ -111,7 +127,9 @@ export const assignUserToProject = createAsyncThunk<
 >("projects/assignUser", async (req, { rejectWithValue }) => {
   const response = await projectService.assignUserToProject(req);
   if (!response.success) {
-    return rejectWithValue(response.message || "Failed to assign user to project");
+    return rejectWithValue(
+      response.message || "Failed to assign user to project"
+    );
   }
   return response;
 });
@@ -213,6 +231,7 @@ const projectsSlice = createSlice({
   reducers: {
     clearProjectMessages(state) {
       state.createSuccessMessage = null;
+      state.updateSuccessMessage = null;
       state.error = null;
       state.assignUserSuccessMessage = null;
       state.removeUserSuccessMessage = null;
@@ -251,6 +270,30 @@ const projectsSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload ?? "Failed to create project";
       })
+      // updateProject
+      .addCase(updateProject.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+        state.updateSuccessMessage = null;
+      })
+      .addCase(updateProject.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (action.payload.data) {
+          const updated = action.payload.data;
+          const idx = state.projects.findIndex((p) => p.id === updated.id);
+          if (idx !== -1) {
+            state.projects[idx] = updated;
+          } else {
+            // if project not in list, push it to keep store consistent
+            state.projects.push(updated);
+          }
+          state.updateSuccessMessage = "Project updated successfully";
+        }
+      })
+      .addCase(updateProject.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? "Failed to update project";
+      })
       // assign user to project
       .addCase(assignUserToProject.pending, (state) => {
         state.isLoading = true;
@@ -259,7 +302,8 @@ const projectsSlice = createSlice({
       })
       .addCase(assignUserToProject.fulfilled, (state) => {
         state.isLoading = false;
-        state.assignUserSuccessMessage = "User assigned to project successfully";
+        state.assignUserSuccessMessage =
+          "User assigned to project successfully";
       })
       .addCase(assignUserToProject.rejected, (state, action) => {
         state.isLoading = false;
@@ -276,7 +320,8 @@ const projectsSlice = createSlice({
       })
       .addCase(fetchProjectUsers.rejected, (state, action) => {
         state.assignedUsersLoading = false;
-        state.assignedUsersError = action.payload ?? "Failed to fetch project users";
+        state.assignedUsersError =
+          action.payload ?? "Failed to fetch project users";
       })
       // remove user from project
       .addCase(removeUserFromProject.pending, (state) => {
@@ -314,7 +359,8 @@ const projectsSlice = createSlice({
       })
       .addCase(fetchProjectDeliveriesSummary.rejected, (state, action) => {
         state.metrics.summary.loading = false;
-        state.metrics.summary.error = action.payload || "Failed to fetch project deliveries summary";
+        state.metrics.summary.error =
+          action.payload || "Failed to fetch project deliveries summary";
       })
       // project metrics: series
       .addCase(fetchProjectDeliveriesSeries.pending, (state) => {
@@ -338,7 +384,8 @@ const projectsSlice = createSlice({
       })
       .addCase(fetchProjectDeliveriesSeries.rejected, (state, action) => {
         state.metrics.series.loading = false;
-        state.metrics.series.error = action.payload || "Failed to fetch project deliveries series";
+        state.metrics.series.error =
+          action.payload || "Failed to fetch project deliveries series";
       });
   },
 });
@@ -363,15 +410,18 @@ export const selectRemoveUserSuccessMessage = (state: {
 
 export const selectAssignedUsers = (state: { projects: ProjectsState }) =>
   state.projects.assignedUsers;
-export const selectAssignedUsersLoading = (state: { projects: ProjectsState }) =>
-  state.projects.assignedUsersLoading;
+export const selectAssignedUsersLoading = (state: {
+  projects: ProjectsState;
+}) => state.projects.assignedUsersLoading;
 export const selectAssignedUsersError = (state: { projects: ProjectsState }) =>
   state.projects.assignedUsersError;
 
 // Project metrics selectors
-export const selectProjectMetricsSummary = (state: { projects: ProjectsState }) =>
-  state.projects.metrics.summary;
-export const selectProjectMetricsSeries = (state: { projects: ProjectsState }) =>
-  state.projects.metrics.series;
+export const selectProjectMetricsSummary = (state: {
+  projects: ProjectsState;
+}) => state.projects.metrics.summary;
+export const selectProjectMetricsSeries = (state: {
+  projects: ProjectsState;
+}) => state.projects.metrics.series;
 
 export default projectsSlice.reducer;

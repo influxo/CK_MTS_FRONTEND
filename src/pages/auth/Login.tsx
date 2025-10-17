@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { Form, useNavigate, useLocation } from "react-router-dom";
+import { Form, useLocation, useNavigate } from "react-router-dom";
 import caritas from "../../../public/images/caritas.jpg";
 import logo from "../../../public/images/logo.jpg";
 // import donation from "../../../public/images/donation.jpg";
 // import volunteer from "../../../public/images/volunteer.jpg";
-import { useAuth } from "../../hooks/useAuth";
+import { Eye, EyeOff } from "lucide-react";
+import donation from "../../../public/images/donation.jpg";
+import volunteer from "../../../public/images/volunteer.jpg";
+import { Button } from "../../components/ui/button/button";
 import {
   Card,
   CardContent,
@@ -13,24 +16,22 @@ import {
   CardHeader,
   CardTitle,
 } from "../../components/ui/data-display/card";
-import { Alert, AlertDescription } from "../../components/ui/feedback/alert";
-import { Label } from "../../components/ui/form/label";
-import { Input } from "../../components/ui/form/input";
-import { Button } from "../../components/ui/button/button";
-import { Eye, EyeOff } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   type CarouselApi,
 } from "../../components/ui/data-display/carousel";
-import reactLogo from "../../assets/react.svg";
-import donation from "../../../public/images/donation.jpg";
-import volunteer from "../../../public/images/volunteer.jpg";
+import { Alert, AlertDescription } from "../../components/ui/feedback/alert";
+import { Input } from "../../components/ui/form/input";
+import { Label } from "../../components/ui/form/label";
+import { useAuth } from "../../hooks/useAuth";
+import { useTranslation } from "../../hooks/useTranslation";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const {
     login,
     isAuthenticated,
@@ -124,10 +125,10 @@ const Login = () => {
           <Card className="w-full border-0 max-w-md">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold text-center">
-                Login
+                {t('auth.login')}
               </CardTitle>
               <CardDescription className="text-center">
-                Enter your credentials to access your account
+                {t('auth.loginSubtitle')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -141,7 +142,7 @@ const Login = () => {
               )}
               <Form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Email</Label>
+                  <Label>{t('common.email')}</Label>
                   <Input
                     className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                     id="email"
@@ -156,12 +157,12 @@ const Login = () => {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label>Password</Label>
+                    <Label>{t('common.password')}</Label>
                     <a
                       href="/forgot-password"
                       className="text-sm text-[#00a6ff]  "
                     >
-                      Forgot password?
+                      {t('auth.forgotPassword')}
                     </a>
                   </div>
                   <div className="relative">
@@ -195,13 +196,13 @@ const Login = () => {
                   className="w-full bg-[#2E343E] text-white"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Signing in..." : "Sign in"}
+                  {isLoading ? t('auth.loggingIn') : t('auth.logIn')}
                 </Button>
               </Form>
             </CardContent>
             <CardFooter className="flex justify-center">
               <p className="text-sm text-gray-500">
-                Don't have an account? Contact your administrator.
+                {t('auth.noAccount')}
               </p>
             </CardFooter>
           </Card>

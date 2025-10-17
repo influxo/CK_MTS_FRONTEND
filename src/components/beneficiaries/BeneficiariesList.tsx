@@ -1,72 +1,62 @@
 import {
   Calendar,
   Eye,
-  FileCheck,
-  FileEdit,
   FileSpreadsheet,
   FileText,
   Filter,
-  Link,
   MapPin,
-  MoreHorizontal,
   Plus,
   Search,
   ShieldAlert,
   SlidersHorizontal,
-  Trash,
   User,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "sonner";
+import { useTranslation } from "../../hooks/useTranslation";
+import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
 import type { AppDispatch, RootState } from "../../store";
+import { selectCurrentUser } from "../../store/slices/authSlice";
 import {
+  associateBeneficiaryToEntities,
+  clearBeneficiaryMessages,
   createBeneficiary,
   fetchBeneficiaries,
+  fetchBeneficiariesByEntity,
   selectBeneficiaries,
+  selectBeneficiariesByEntity,
+  selectBeneficiariesByEntityError,
+  selectBeneficiariesByEntityLoading,
+  selectBeneficiariesByEntityPagination,
   selectBeneficiariesError,
   selectBeneficiariesLoading,
-  selectBeneficiaryIsLoading,
-  selectBeneficiaryError,
-  selectBeneficiaryCreateSuccessMessage,
-  clearBeneficiaryMessages,
-  associateBeneficiaryToEntities,
-  selectBeneficiaryAssociateLoading,
-  fetchBeneficiariesByEntity,
-  selectBeneficiariesByEntity,
-  selectBeneficiariesByEntityLoading,
-  selectBeneficiariesByEntityError,
   selectBeneficiariesPagination,
-  selectBeneficiariesByEntityPagination,
+  selectBeneficiaryAssociateLoading,
+  selectBeneficiaryCreateSuccessMessage,
+  selectBeneficiaryError,
+  selectBeneficiaryIsLoading,
 } from "../../store/slices/beneficiarySlice";
 import { fetchProjects } from "../../store/slices/projectsSlice";
 import { fetchAllSubProjects } from "../../store/slices/subProjectSlice";
-import { selectCurrentUser } from "../../store/slices/authSlice";
 import {
   fetchUserProjectsByUserId,
   selectUserProjectsTree,
 } from "../../store/slices/userProjectsSlice";
-import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
+import { Button } from "../ui/button/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
-import { Button } from "../ui/button/button";
 import { Card, CardContent } from "../ui/data-display/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
 import { Checkbox } from "../ui/form/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/overlay/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/overlay/dropdown-menu";
 import { Input } from "../ui/form/input";
 import { Label } from "../ui/form/label";
 import { RadioGroup, RadioGroupItem } from "../ui/form/radio-group";
@@ -78,14 +68,14 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-  } from "../ui/data-display/table";
-import { toast } from "sonner";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/overlay/dialog";
 interface BeneficiariesListProps {
   onBeneficiarySelect: (beneficiaryId: string) => void;
 }
@@ -259,6 +249,7 @@ const mockBeneficiaries = [
 export function BeneficiariesList({
   onBeneficiarySelect,
 }: BeneficiariesListProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   // Global list selectors
   const allBeneficiaries = useSelector(selectBeneficiaries);
@@ -756,6 +747,11 @@ export function BeneficiariesList({
       const payload: CreateBeneficiaryRequest = hasAnyDetails
         ? {
             ...form,
+            ethnicity: ethnicity.trim() || undefined,
+            residence: isUrban ? "Urban" : "Rural",
+            householdMembers: householdMembers.trim()
+              ? parseInt(householdMembers.trim(), 10)
+              : undefined,
             details: {
               allergies: allergiesFinal,
               disabilities: disabilitiesFinal,
@@ -765,7 +761,14 @@ export function BeneficiariesList({
               notes: notesInput.trim() || undefined,
             },
           }
-        : form;
+        : {
+            ...form,
+            ethnicity: ethnicity.trim() || undefined,
+            residence: isUrban ? "Urban" : "Rural",
+            householdMembers: householdMembers.trim()
+              ? parseInt(householdMembers.trim(), 10)
+              : undefined,
+          };
 
       const createRes = await dispatch(createBeneficiary(payload)).unwrap();
       const newId = createRes?.data?.id;
@@ -811,661 +814,18 @@ export function BeneficiariesList({
     <div className="space-y-6">
       {/* ... (rest of the code remains the same) */}
 
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogTrigger asChild>
-          <Button className="bg-[#0073e6] text-white">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Beneficiary
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add New Beneficiary</DialogTitle>
-            <DialogDescription>
-              Enter the details of the beneficiary you want to add to the
-              system.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="firstName" className="text-right">
-                First Name *
-              </Label>
-              <Input
-                id="firstName"
-                className="col-span-3"
-                placeholder="Enter first name"
-                value={form.firstName}
-                onChange={(e) =>
-                  setForm({ ...form, firstName: e.target.value })
-                }
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="lastName" className="text-right">
-                Last Name *
-              </Label>
-              <Input
-                id="lastName"
-                className="col-span-3"
-                placeholder="Enter last name"
-                value={form.lastName}
-                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">Gender *</Label>
-              <RadioGroup
-                className="col-span-3 flex gap-4"
-                value={form.gender}
-                onValueChange={(val) => setForm({ ...form, gender: val })}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="female" id="female" />
-                  <Label htmlFor="female">Female</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="male" id="male" />
-                  <Label htmlFor="male">Male</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="other" id="other" />
-                  <Label htmlFor="other">Other</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="dob" className="text-right">
-                Date of Birth *
-              </Label>
-              <Input
-                id="dob"
-                type="date"
-                className="col-span-3"
-                value={form.dob}
-                onChange={(e) => setForm({ ...form, dob: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="nationalId" className="text-right">
-                National ID *
-              </Label>
-              <Input
-                id="nationalId"
-                className="col-span-3"
-                placeholder="Enter national ID"
-                value={form.nationalId}
-                onChange={(e) =>
-                  setForm({ ...form, nationalId: e.target.value })
-                }
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="phone" className="text-right">
-                Phone
-              </Label>
-              <Input
-                id="phone"
-                className="col-span-3"
-                placeholder="Enter phone number"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                className="col-span-3"
-                placeholder="Enter email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="address" className="text-right">
-                Address
-              </Label>
-              <Input
-                id="address"
-                className="col-span-3"
-                placeholder="Enter address"
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="municipality" className="text-right">
-                Municipality
-              </Label>
-              <Input
-                id="municipality"
-                className="col-span-3"
-                placeholder="Enter municipality"
-                value={form.municipality}
-                onChange={(e) =>
-                  setForm({ ...form, municipality: e.target.value })
-                }
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="nationality" className="text-right">
-                Nationality
-              </Label>
-              <Input
-                id="nationality"
-                className="col-span-3"
-                placeholder="Enter nationality"
-                value={form.nationality}
-                onChange={(e) =>
-                  setForm({ ...form, nationality: e.target.value })
-                }
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="ethnicity" className="text-right">
-                Ethnicity
-              </Label>
-              <Select value={ethnicity} onValueChange={setEthnicity}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select ethnicity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Shqiptar">Shqiptar</SelectItem>
-                  <SelectItem value="Serb">Serb</SelectItem>
-                  <SelectItem value="Boshnjak">Boshnjak</SelectItem>
-                  <SelectItem value="Turk">Turk</SelectItem>
-                  <SelectItem value="Ashkali">Ashkali</SelectItem>
-                  <SelectItem value="Rom">Rom</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">Residence</Label>
-              <RadioGroup
-                className="col-span-3 flex gap-6"
-                value={isUrban ? "urban" : "rural"}
-                onValueChange={(val) => setIsUrban(val === "urban")}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="rural" id="residence-rural" />
-                  <Label htmlFor="residence-rural">Rural</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="urban" id="residence-urban" />
-                  <Label htmlFor="residence-urban">Urban</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="householdMembers" className="text-right">
-                Household Members
-              </Label>
-              <Input
-                id="householdMembers"
-                type="number"
-                min={0}
-                step={1}
-                className="col-span-3"
-                placeholder="Enter number of household members"
-                value={householdMembers}
-                onChange={(e) => setHouseholdMembers(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="status" className="text-right">
-                Status *
-              </Label>
-              <Select
-                value={form.status}
-                onValueChange={(val) => setForm({ ...form, status: val })}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Extended medical/details section */}
-            <div className="border-t pt-2 mt-2">
-              <div className="text-sm font-medium mb-2">Additional Details</div>
-              <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                <Label htmlFor="allergies" className="text-right">
-                  Allergies
-                </Label>
-                <div className="col-span-3 space-y-2">
-                  <div className="flex gap-2">
-                    <Input
-                      id="allergies"
-                      placeholder="Type and press Enter"
-                      value={allergiesInput}
-                      onChange={(e) => setAllergiesInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addItem(allergiesInput, allergies, setAllergies);
-                          setAllergiesInput("");
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        addItem(allergiesInput, allergies, setAllergies);
-                        setAllergiesInput("");
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-1" /> Add
-                    </Button>
-                  </div>
-                  {allergies.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {allergies.map((a, idx) => (
-                        <div
-                          key={`${a}-${idx}`}
-                          className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
-                        >
-                          <span>{a}</span>
-                          <button
-                            type="button"
-                            className="hover:text-red-600"
-                            onClick={() =>
-                              removeItemAt(idx, allergies, setAllergies)
-                            }
-                            aria-label={`Remove ${a}`}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                <Label htmlFor="disabilities" className="text-right">
-                  Disabilities
-                </Label>
-                <div className="col-span-3 space-y-2">
-                  <div className="flex gap-2">
-                    <Input
-                      id="disabilities"
-                      placeholder="Type and press Enter"
-                      value={disabilitiesInput}
-                      onChange={(e) => setDisabilitiesInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addItem(
-                            disabilitiesInput,
-                            disabilities,
-                            setDisabilities
-                          );
-                          setDisabilitiesInput("");
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        addItem(
-                          disabilitiesInput,
-                          disabilities,
-                          setDisabilities
-                        );
-                        setDisabilitiesInput("");
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-1" /> Add
-                    </Button>
-                  </div>
-                  {disabilities.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {disabilities.map((d, idx) => (
-                        <div
-                          key={`${d}-${idx}`}
-                          className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
-                        >
-                          <span>{d}</span>
-                          <button
-                            type="button"
-                            className="hover:text-red-600"
-                            onClick={() =>
-                              removeItemAt(idx, disabilities, setDisabilities)
-                            }
-                            aria-label={`Remove ${d}`}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                <Label htmlFor="chronicConditions" className="text-right">
-                  Chronic Conditions
-                </Label>
-                <div className="col-span-3 space-y-2">
-                  <div className="flex gap-2">
-                    <Input
-                      id="chronicConditions"
-                      placeholder="Type and press Enter"
-                      value={chronicConditionsInput}
-                      onChange={(e) =>
-                        setChronicConditionsInput(e.target.value)
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addItem(
-                            chronicConditionsInput,
-                            chronicConditions,
-                            setChronicConditions
-                          );
-                          setChronicConditionsInput("");
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        addItem(
-                          chronicConditionsInput,
-                          chronicConditions,
-                          setChronicConditions
-                        );
-                        setChronicConditionsInput("");
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-1" /> Add
-                    </Button>
-                  </div>
-                  {chronicConditions.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {chronicConditions.map((c, idx) => (
-                        <div
-                          key={`${c}-${idx}`}
-                          className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
-                        >
-                          <span>{c}</span>
-                          <button
-                            type="button"
-                            className="hover:text-red-600"
-                            onClick={() =>
-                              removeItemAt(
-                                idx,
-                                chronicConditions,
-                                setChronicConditions
-                              )
-                            }
-                            aria-label={`Remove ${c}`}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                <Label htmlFor="medications" className="text-right">
-                  Medications
-                </Label>
-                <div className="col-span-3 space-y-2">
-                  <div className="flex gap-2">
-                    <Input
-                      id="medications"
-                      placeholder="Type and press Enter"
-                      value={medicationsInput}
-                      onChange={(e) => setMedicationsInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addItem(
-                            medicationsInput,
-                            medications,
-                            setMedications
-                          );
-                          setMedicationsInput("");
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        addItem(medicationsInput, medications, setMedications);
-                        setMedicationsInput("");
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-1" /> Add
-                    </Button>
-                  </div>
-                  {medications.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {medications.map((m, idx) => (
-                        <div
-                          key={`${m}-${idx}`}
-                          className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
-                        >
-                          <span>{m}</span>
-                          <button
-                            type="button"
-                            className="hover:text-red-600"
-                            onClick={() =>
-                              removeItemAt(idx, medications, setMedications)
-                            }
-                            aria-label={`Remove ${m}`}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                <Label htmlFor="bloodType" className="text-right">
-                  Blood Type
-                </Label>
-                <Input
-                  id="bloodType"
-                  className="col-span-3"
-                  placeholder="e.g. O+"
-                  value={bloodTypeInput}
-                  onChange={(e) => setBloodTypeInput(e.target.value)}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="notes" className="text-right mt-2">
-                  Notes
-                </Label>
-                <textarea
-                  id="notes"
-                  className="col-span-3 bg-white border border-input rounded-md p-2 min-h-[70px]"
-                  placeholder="Any special notes..."
-                  value={notesInput}
-                  onChange={(e) => setNotesInput(e.target.value)}
-                />
-              </div>
-              <div className="text-[11px] text-muted-foreground mt-2">
-                Add each item individually using the field above. Press Enter or
-                click Add.
-              </div>
-            </div>
-
-            {/* Project Associations */}
-            <div className="border-t pt-4 mt-4">
-              <div className="space-y-2">
-                <Label>Project Associations</Label>
-                <div className="mt-4 space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Select specific projects and sub-projects:
-                  </p>
-
-                  {projectsLoading || subprojectsLoading ? (
-                    <div className="text-sm text-muted-foreground px-1">
-                      Loading projects...
-                    </div>
-                  ) : projectsError || subprojectsError ? (
-                    <div className="text-sm text-red-500 px-1">
-                      {projectsError || subprojectsError}
-                    </div>
-                  ) : projectsForModal && projectsForModal.length > 0 ? (
-                    projectsForModal.map((project: any) => (
-                      <div key={project.id} className="border rounded-md p-4">
-                        <div className="flex items-center space-x-2 mb-4">
-                          <Checkbox
-                            id={`proj-${project.id}`}
-                            checked={selectedProjects.includes(project.id)}
-                            onCheckedChange={() => {
-                              setSelectedProjects((prev) => {
-                                if (prev.includes(project.id)) {
-                                  const subProjectsForProject =
-                                    subprojectsForModalByProjectId[
-                                      project.id
-                                    ] || [];
-                                  const subIds = subProjectsForProject.map(
-                                    (sp) => sp.id
-                                  );
-                                  setSelectedSubProjects((prevSubs) =>
-                                    prevSubs.filter(
-                                      (spId) => !subIds.includes(spId)
-                                    )
-                                  );
-                                  return prev.filter((p) => p !== project.id);
-                                } else {
-                                  return [...prev, project.id];
-                                }
-                              });
-                            }}
-                          />
-                          <Label
-                            htmlFor={`proj-${project.id}`}
-                            className="font-medium"
-                          >
-                            {project.name}
-                          </Label>
-                        </div>
-
-                        <div className="pl-6 border-l ml-2 space-y-2">
-                          {(
-                            subprojectsForModalByProjectId[project.id] || []
-                          ).map((subProject) => (
-                            <div
-                              key={subProject.id}
-                              className="flex items-center space-x-2"
-                            >
-                              <Checkbox
-                                id={`sub-${subProject.id}`}
-                                checked={selectedSubProjects.includes(
-                                  subProject.id
-                                )}
-                                onCheckedChange={() => {
-                                  setSelectedSubProjects((prev) => {
-                                    if (prev.includes(subProject.id)) {
-                                      return prev.filter(
-                                        (sp) => sp !== subProject.id
-                                      );
-                                    } else {
-                                      if (
-                                        !selectedProjects.includes(project.id)
-                                      ) {
-                                        setSelectedProjects((prevProjects) => [
-                                          ...prevProjects,
-                                          project.id,
-                                        ]);
-                                      }
-                                      return [...prev, subProject.id];
-                                    }
-                                  });
-                                }}
-                                disabled={
-                                  !selectedProjects.includes(project.id)
-                                }
-                              />
-                              <Label
-                                htmlFor={`sub-${subProject.id}`}
-                                className="font-normal"
-                              >
-                                {subProject.name}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-sm text-muted-foreground px-1">
-                      No projects available
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {createError && (
-              <div className="col-span-4 text-red-600 text-sm">
-                {createError}
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <div className="flex items-center mr-auto">
-              <ShieldAlert className="h-4 w-4 mr-2 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">
-                Personal data will be pseudonymized
-              </span>
-            </div>
-            <Button
-              onClick={() => {
-                setIsAddDialogOpen(false);
-                resetForm();
-                dispatch(clearBeneficiaryMessages());
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateSubmit}
-              disabled={createLoading || associateLoading}
-            >
-              {createLoading
-                ? "Creating..."
-                : associateLoading
-                ? "Associating..."
-                : "Add Beneficiary"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       <div className="flex flex-col lg:flex-row gap-4 justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground " />
             <Input
               placeholder="Search beneficiaries..."
-              className="pl-9 bg-black/5 border-0"
+              className="pl-9 bg-white border border-gray-100"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 w-full sm:flex-row">
             <Select
               value={statusFilter}
               onValueChange={(val) => {
@@ -1473,14 +833,16 @@ export function BeneficiariesList({
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[130px] bg-black/5 border-0 text-black">
+              <SelectTrigger className="w-full sm:w-[130px] bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="all">
+                  {t("beneficiaries.allStatus")}
+                </SelectItem>
+                <SelectItem value="active">{t("common.active")}</SelectItem>
+                <SelectItem value="inactive">{t("common.inactive")}</SelectItem>
               </SelectContent>
             </Select>
             <Select
@@ -1492,12 +854,12 @@ export function BeneficiariesList({
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[220px] bg-black/5 border-0 text-black">
+              <SelectTrigger className="w-full sm:w-[220px] bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Projects</SelectItem>
+                <SelectItem value="all">{t("common.allProjects")}</SelectItem>
                 {projectsForSelect.map((project: any) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
@@ -1514,12 +876,14 @@ export function BeneficiariesList({
               }}
               disabled={filterProjectId === "all"}
             >
-              <SelectTrigger className="w-[240px] bg-black/5 border-0 text-black">
+              <SelectTrigger className="w-full sm:w-[240px] bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Subproject" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Subprojects</SelectItem>
+                <SelectItem value="all">
+                  {t("subProjectsDetails.allSubProjects")}
+                </SelectItem>
                 {subprojectsForSelect.map((sp) => (
                   <SelectItem key={sp.id} value={sp.id}>
                     {sp.name}
@@ -1531,7 +895,7 @@ export function BeneficiariesList({
             <Button
               type="button"
               variant="outline"
-              className="bg-black/5 border-0 text-black"
+              className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black w-full sm:w-auto"
               onClick={() => setShowAdvancedFilters((v) => !v)}
               title={
                 showAdvancedFilters
@@ -1548,14 +912,685 @@ export function BeneficiariesList({
           <div className="flex gap-2">
             {selectedBeneficiaries.length > 0 && (
               <Button
-                className="bg-gray-50"
+                className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black"
                 // variant="outline"
               >
-                Bulk Actions ({selectedBeneficiaries.length})
+                {t("beneficiaries.bulkActions")} ({selectedBeneficiaries.length}
+                )
               </Button>
             )}
           </div>
         </div>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              {t("beneficiaries.addBeneficiary")}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{t("beneficiaries.addNewBeneficiary")}</DialogTitle>
+              <DialogDescription>
+                {t("beneficiaries.enterBeneficiaryDetails")}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="firstName" className="text-right">
+                  {t("beneficiaries.firstName")} *
+                </Label>
+                <Input
+                  id="firstName"
+                  className="col-span-3"
+                  placeholder={t("beneficiaries.enterFirstName")}
+                  value={form.firstName}
+                  onChange={(e) =>
+                    setForm({ ...form, firstName: e.target.value })
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="lastName" className="text-right">
+                  {t("beneficiaries.lastName")} *
+                </Label>
+                <Input
+                  id="lastName"
+                  className="col-span-3"
+                  placeholder={t("beneficiaries.enterLastName")}
+                  value={form.lastName}
+                  onChange={(e) =>
+                    setForm({ ...form, lastName: e.target.value })
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">
+                  {t("beneficiaries.gender")} *
+                </Label>
+                <RadioGroup
+                  className="col-span-3 flex gap-4"
+                  value={form.gender}
+                  onValueChange={(val) => setForm({ ...form, gender: val })}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="female" id="female" />
+                    <Label htmlFor="female">{t("beneficiaries.female")}</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="male" id="male" />
+                    <Label htmlFor="male">{t("beneficiaries.male")}</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="other" id="other" />
+                    <Label htmlFor="other">{t("beneficiaries.other")}</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="dob" className="text-right">
+                  {t("beneficiaries.dateOfBirth")} *
+                </Label>
+                <Input
+                  id="dob"
+                  type="date"
+                  className="col-span-3"
+                  value={form.dob}
+                  onChange={(e) => setForm({ ...form, dob: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="nationalId" className="text-right">
+                  {t("beneficiaries.nationalId")} *
+                </Label>
+                <Input
+                  id="nationalId"
+                  className="col-span-3"
+                  placeholder={t("beneficiaries.enterNationalId")}
+                  value={form.nationalId}
+                  onChange={(e) =>
+                    setForm({ ...form, nationalId: e.target.value })
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="phone" className="text-right">
+                  {t("beneficiaries.phone")}
+                </Label>
+                <Input
+                  id="phone"
+                  className="col-span-3"
+                  placeholder={t("beneficiaries.enterPhoneNumber")}
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">
+                  {t("beneficiaries.email")}
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  className="col-span-3"
+                  placeholder={t("beneficiaries.enterEmail")}
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="address" className="text-right">
+                  {t("beneficiaries.address")}
+                </Label>
+                <Input
+                  id="address"
+                  className="col-span-3"
+                  placeholder={t("beneficiaries.enterAddress")}
+                  value={form.address}
+                  onChange={(e) =>
+                    setForm({ ...form, address: e.target.value })
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="municipality" className="text-right">
+                  {t("beneficiaries.municipality")}
+                </Label>
+                <Input
+                  id="municipality"
+                  className="col-span-3"
+                  placeholder={t("beneficiaries.enterMunicipality")}
+                  value={form.municipality}
+                  onChange={(e) =>
+                    setForm({ ...form, municipality: e.target.value })
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="nationality" className="text-right">
+                  {t("beneficiaries.nationality")}
+                </Label>
+                <Input
+                  id="nationality"
+                  className="col-span-3"
+                  placeholder={t("beneficiaries.enterNationality")}
+                  value={form.nationality}
+                  onChange={(e) =>
+                    setForm({ ...form, nationality: e.target.value })
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="ethnicity" className="text-right">
+                  {t("beneficiaries.ethnicity")}
+                </Label>
+                <Select value={ethnicity} onValueChange={setEthnicity}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue
+                      placeholder={t("beneficiaries.selectEthnicity")}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Shqiptar">Shqiptar</SelectItem>
+                    <SelectItem value="Serb">Serb</SelectItem>
+                    <SelectItem value="Boshnjak">Boshnjak</SelectItem>
+                    <SelectItem value="Turk">Turk</SelectItem>
+                    <SelectItem value="Ashkali">Ashkali</SelectItem>
+                    <SelectItem value="Rom">Rom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">
+                  {t("beneficiaries.residence")}
+                </Label>
+                <RadioGroup
+                  className="col-span-3 flex gap-6"
+                  value={isUrban ? "urban" : "rural"}
+                  onValueChange={(val) => setIsUrban(val === "urban")}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="rural" id="residence-rural" />
+                    <Label htmlFor="residence-rural">
+                      {t("beneficiaries.rural")}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="urban" id="residence-urban" />
+                    <Label htmlFor="residence-urban">
+                      {t("beneficiaries.urban")}
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="householdMembers" className="text-right">
+                  {t("beneficiaries.householdMembers")}
+                </Label>
+                <Input
+                  id="householdMembers"
+                  type="number"
+                  min={0}
+                  step={1}
+                  className="col-span-3"
+                  placeholder={t("beneficiaries.enterHouseholdMembers")}
+                  value={householdMembers}
+                  onChange={(e) => setHouseholdMembers(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">
+                  {t("common.status")} *
+                </Label>
+                <Select
+                  value={form.status}
+                  onValueChange={(val) => setForm({ ...form, status: val })}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue
+                      placeholder={t("beneficiaries.selectStatus")}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">{t("common.active")}</SelectItem>
+                    <SelectItem value="inactive">
+                      {t("common.inactive")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Extended medical/details section */}
+              <div className="border-t pt-2 mt-2">
+                <div className="text-sm font-medium mb-2">
+                  {t("beneficiaries.additionalDetails")}
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                  <Label htmlFor="allergies" className="text-right">
+                    {t("beneficiaries.allergies")}
+                  </Label>
+                  <div className="col-span-3 space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        id="allergies"
+                        placeholder={t("beneficiaries.typeAndPressEnter")}
+                        value={allergiesInput}
+                        onChange={(e) => setAllergiesInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addItem(allergiesInput, allergies, setAllergies);
+                            setAllergiesInput("");
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          addItem(allergiesInput, allergies, setAllergies);
+                          setAllergiesInput("");
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />{" "}
+                        {t("beneficiaries.add")}
+                      </Button>
+                    </div>
+                    {allergies.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {allergies.map((a, idx) => (
+                          <div
+                            key={`${a}-${idx}`}
+                            className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                          >
+                            <span>{a}</span>
+                            <button
+                              type="button"
+                              className="hover:text-red-600"
+                              onClick={() =>
+                                removeItemAt(idx, allergies, setAllergies)
+                              }
+                              aria-label={`Remove ${a}`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                  <Label htmlFor="disabilities" className="text-right">
+                    {t("common.disabilities")}
+                  </Label>
+                  <div className="col-span-3 space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        id="disabilities"
+                        placeholder={t("beneficiaries.typeAndPressEnter")}
+                        value={disabilitiesInput}
+                        onChange={(e) => setDisabilitiesInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addItem(
+                              disabilitiesInput,
+                              disabilities,
+                              setDisabilities
+                            );
+                            setDisabilitiesInput("");
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          addItem(
+                            disabilitiesInput,
+                            disabilities,
+                            setDisabilities
+                          );
+                          setDisabilitiesInput("");
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />{" "}
+                        {t("beneficiaries.add")}
+                      </Button>
+                    </div>
+                    {disabilities.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {disabilities.map((d, idx) => (
+                          <div
+                            key={`${d}-${idx}`}
+                            className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                          >
+                            <span>{d}</span>
+                            <button
+                              type="button"
+                              className="hover:text-red-600"
+                              onClick={() =>
+                                removeItemAt(idx, disabilities, setDisabilities)
+                              }
+                              aria-label={`Remove ${d}`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                  <Label htmlFor="chronicConditions" className="text-right">
+                    {t("beneficiaries.chronicConditions")}
+                  </Label>
+                  <div className="col-span-3 space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        id="chronicConditions"
+                        placeholder={t("beneficiaries.typeAndPressEnter")}
+                        value={chronicConditionsInput}
+                        onChange={(e) =>
+                          setChronicConditionsInput(e.target.value)
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addItem(
+                              chronicConditionsInput,
+                              chronicConditions,
+                              setChronicConditions
+                            );
+                            setChronicConditionsInput("");
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          addItem(
+                            chronicConditionsInput,
+                            chronicConditions,
+                            setChronicConditions
+                          );
+                          setChronicConditionsInput("");
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />{" "}
+                        {t("beneficiaries.add")}
+                      </Button>
+                    </div>
+                    {chronicConditions.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {chronicConditions.map((c, idx) => (
+                          <div
+                            key={`${c}-${idx}`}
+                            className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                          >
+                            <span>{c}</span>
+                            <button
+                              type="button"
+                              className="hover:text-red-600"
+                              onClick={() =>
+                                removeItemAt(
+                                  idx,
+                                  chronicConditions,
+                                  setChronicConditions
+                                )
+                              }
+                              aria-label={`Remove ${c}`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                  <Label htmlFor="medications" className="text-right">
+                    {t("beneficiaries.medications")}
+                  </Label>
+                  <div className="col-span-3 space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        id="medications"
+                        placeholder={t("beneficiaries.typeAndPressEnter")}
+                        value={medicationsInput}
+                        onChange={(e) => setMedicationsInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addItem(
+                              medicationsInput,
+                              medications,
+                              setMedications
+                            );
+                            setMedicationsInput("");
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          addItem(
+                            medicationsInput,
+                            medications,
+                            setMedications
+                          );
+                          setMedicationsInput("");
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-1" />{" "}
+                        {t("beneficiaries.add")}
+                      </Button>
+                    </div>
+                    {medications.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {medications.map((m, idx) => (
+                          <div
+                            key={`${m}-${idx}`}
+                            className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                          >
+                            <span>{m}</span>
+                            <button
+                              type="button"
+                              className="hover:text-red-600"
+                              onClick={() =>
+                                removeItemAt(idx, medications, setMedications)
+                              }
+                              aria-label={`Remove ${m}`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                  <Label htmlFor="bloodType" className="text-right">
+                    {t("beneficiaries.bloodType")}
+                  </Label>
+                  <Input
+                    id="bloodType"
+                    className="col-span-3"
+                    placeholder={t("beneficiaries.egBloodType")}
+                    value={bloodTypeInput}
+                    onChange={(e) => setBloodTypeInput(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label htmlFor="notes" className="text-right mt-2">
+                    {t("beneficiaries.notes")}
+                  </Label>
+                  <textarea
+                    id="notes"
+                    className="col-span-3 bg-white border border-input rounded-md p-2 min-h-[70px]"
+                    placeholder={t("beneficiaries.anySpecialNotes")}
+                    value={notesInput}
+                    onChange={(e) => setNotesInput(e.target.value)}
+                  />
+                </div>
+                <div className="text-[11px] text-muted-foreground mt-2">
+                  {t("beneficiaries.addEachItemInstruction")}
+                </div>
+              </div>
+
+              {/* Project Associations */}
+              <div className="border-t pt-4 mt-4">
+                <div className="space-y-2">
+                  <Label>{t("beneficiaries.projectAssociations")}</Label>
+                  <div className="mt-4 space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      {t("beneficiaries.selectProjectsSubprojects")}
+                    </p>
+
+                    {projectsLoading || subprojectsLoading ? (
+                      <div className="text-sm text-muted-foreground px-1">
+                        {t("beneficiaries.loadingProjects")}
+                      </div>
+                    ) : projectsError || subprojectsError ? (
+                      <div className="text-sm text-red-500 px-1">
+                        {projectsError || subprojectsError}
+                      </div>
+                    ) : projectsForModal && projectsForModal.length > 0 ? (
+                      projectsForModal.map((project: any) => (
+                        <div key={project.id} className="border rounded-md p-4">
+                          <div className="flex items-center space-x-2 mb-4">
+                            <Checkbox
+                              id={`proj-${project.id}`}
+                              checked={selectedProjects.includes(project.id)}
+                              onCheckedChange={() => {
+                                setSelectedProjects((prev) => {
+                                  if (prev.includes(project.id)) {
+                                    const subProjectsForProject =
+                                      subprojectsForModalByProjectId[
+                                        project.id
+                                      ] || [];
+                                    const subIds = subProjectsForProject.map(
+                                      (sp) => sp.id
+                                    );
+                                    setSelectedSubProjects((prevSubs) =>
+                                      prevSubs.filter(
+                                        (spId) => !subIds.includes(spId)
+                                      )
+                                    );
+                                    return prev.filter((p) => p !== project.id);
+                                  } else {
+                                    return [...prev, project.id];
+                                  }
+                                });
+                              }}
+                            />
+                            <Label
+                              htmlFor={`proj-${project.id}`}
+                              className="font-medium"
+                            >
+                              {project.name}
+                            </Label>
+                          </div>
+
+                          <div className="pl-6 border-l ml-2 space-y-2">
+                            {(
+                              subprojectsForModalByProjectId[project.id] || []
+                            ).map((subProject) => (
+                              <div
+                                key={subProject.id}
+                                className="flex items-center space-x-2"
+                              >
+                                <Checkbox
+                                  id={`sub-${subProject.id}`}
+                                  checked={selectedSubProjects.includes(
+                                    subProject.id
+                                  )}
+                                  onCheckedChange={() => {
+                                    setSelectedSubProjects((prev) => {
+                                      if (prev.includes(subProject.id)) {
+                                        return prev.filter(
+                                          (sp) => sp !== subProject.id
+                                        );
+                                      } else {
+                                        if (
+                                          !selectedProjects.includes(project.id)
+                                        ) {
+                                          setSelectedProjects(
+                                            (prevProjects) => [
+                                              ...prevProjects,
+                                              project.id,
+                                            ]
+                                          );
+                                        }
+                                        return [...prev, subProject.id];
+                                      }
+                                    });
+                                  }}
+                                  disabled={
+                                    !selectedProjects.includes(project.id)
+                                  }
+                                />
+                                <Label
+                                  htmlFor={`sub-${subProject.id}`}
+                                  className="font-normal"
+                                >
+                                  {subProject.name}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-muted-foreground px-1">
+                        {t("beneficiaries.noProjectsAvailable")}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {createError && (
+                <div className="col-span-4 text-red-600 text-sm">
+                  {createError}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <div className="flex items-center mr-auto">
+                <ShieldAlert className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">
+                  {t("beneficiaries.personalDataPseudonymized")}
+                </span>
+              </div>
+              <Button
+                onClick={() => {
+                  setIsAddDialogOpen(false);
+                  resetForm();
+                  dispatch(clearBeneficiaryMessages());
+                }}
+              >
+                {t("beneficiaries.cancel")}
+              </Button>
+              <Button
+                onClick={handleCreateSubmit}
+                disabled={createLoading || associateLoading}
+              >
+                {createLoading
+                  ? t("beneficiaries.creating")
+                  : associateLoading
+                  ? t("beneficiaries.associating")
+                  : t("beneficiaries.addBeneficiary")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {showAdvancedFilters && (
@@ -1563,59 +1598,75 @@ export function BeneficiariesList({
           <CardContent className="py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <Label>Location</Label>
+                <Label>{t("beneficiaries.location")}</Label>
                 <Select>
-                  <SelectTrigger className="mt-2 bg-black/5 border-0 text-black">
-                    <SelectValue placeholder="All locations" />
+                  <SelectTrigger className="mt-2 bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black">
+                    <SelectValue
+                      placeholder={t("beneficiaries.allLocations")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    <SelectItem value="northern">Northern District</SelectItem>
-                    <SelectItem value="eastern">Eastern Region</SelectItem>
-                    <SelectItem value="southern">Southern Province</SelectItem>
-                    <SelectItem value="western">Western District</SelectItem>
-                    <SelectItem value="central">Central Region</SelectItem>
+                    <SelectItem value="all">
+                      {t("beneficiaries.allLocationsOption")}
+                    </SelectItem>
+                    <SelectItem value="northern">
+                      {t("beneficiaries.northernDistrict")}
+                    </SelectItem>
+                    <SelectItem value="eastern">
+                      {t("beneficiaries.easternRegion")}
+                    </SelectItem>
+                    <SelectItem value="southern">
+                      {t("beneficiaries.southernProvince")}
+                    </SelectItem>
+                    <SelectItem value="western">
+                      {t("beneficiaries.westernDistrict")}
+                    </SelectItem>
+                    <SelectItem value="central">
+                      {t("beneficiaries.centralRegion")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Age Range</Label>
+                <Label>{t("beneficiaries.ageRange")}</Label>
                 <div className="grid grid-cols-2 gap-2 mt-2 ">
                   <Input
                     type="number"
-                    placeholder="Min age"
-                    className="bg-black/5 border-0"
+                    placeholder={t("beneficiaries.minAge")}
+                    className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black"
                   />
                   <Input
                     type="number"
-                    placeholder="Max age"
-                    className="bg-black/5 border-0"
+                    placeholder={t("beneficiaries.maxAge")}
+                    className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black"
                   />
                 </div>
               </div>
               <div>
-                <Label>Registration Date</Label>
+                <Label>{t("beneficiaries.registrationDate")}</Label>
                 <div className="grid grid-cols-2 gap-2 mt-2 ">
                   <Input
                     type="date"
-                    placeholder="From"
-                    className="bg-black/5 border-0"
+                    placeholder={t("beneficiaries.from")}
+                    className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black"
                   />
                   <Input
                     type="date"
-                    placeholder="To"
-                    className="bg-black/5 border-0"
+                    placeholder={t("beneficiaries.to")}
+                    className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black"
                   />
                 </div>
               </div>
               <div>
-                <Label>Tags</Label>
+                <Label>{t("beneficiaries.tags")}</Label>
                 <Select value={tagFilter} onValueChange={setTagFilter}>
-                  <SelectTrigger className="mt-2 bg-black/5 border-0 text-black">
-                    <SelectValue placeholder="All tags" />
+                  <SelectTrigger className="mt-2 bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black">
+                    <SelectValue placeholder={t("beneficiaries.allTags")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Tags</SelectItem>
+                    <SelectItem value="all">
+                      {t("beneficiaries.allTagsOption")}
+                    </SelectItem>
                     {uniqueTags.map((tag) => (
                       <SelectItem key={tag} value={tag}>
                         {tag.replace("-", " ")}
@@ -1629,11 +1680,13 @@ export function BeneficiariesList({
               <Button
                 //  variant="outline"
                 // size="sm"
-                className="mr-2 bg-black/10"
+                className="mr-2 bg-[#E0F2FE]"
               >
-                Reset Filters
+                {t("common.resetFilters")}
               </Button>
-              <Button className="bg-[#2E343E] text-white">Apply Filters</Button>
+              <Button className="bg-[#0073e6] text-white">
+                {t("common.applyFilters")}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -1642,7 +1695,7 @@ export function BeneficiariesList({
       <div className="rounded-md border overflow-hidden">
         {listLoading && (
           <div className="p-4 text-sm text-muted-foreground">
-            Loading beneficiaries...
+            {t("beneficiaries.loadingBeneficiaries")}
           </div>
         )}
         {listError && !listLoading && (
@@ -1661,25 +1714,32 @@ export function BeneficiariesList({
                   onCheckedChange={handleSelectAll}
                 />
               </TableHead>
-              <TableHead className="w-[250px]">Beneficiary</TableHead>
-              <TableHead>Gender/DOB</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Municipality/Nationality</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Registration</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="w-[250px]">
+                {t("beneficiaries.beneficiary")}
+              </TableHead>
+              <TableHead>{t("beneficiaries.genderDob")}</TableHead>
+              <TableHead>{t("common.status")}</TableHead>
+              <TableHead>
+                {t("beneficiaries.municipalityNationality")}
+              </TableHead>
+              <TableHead>{t("beneficiaries.contact")}</TableHead>
+              <TableHead>{t("beneficiaries.registration")}</TableHead>
+              <TableHead className="text-right">
+                {t("common.actions")}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="bg-[#F7F9FB]">
             {filteredBeneficiaries.map((beneficiary) => (
               <TableRow key={beneficiary.id}>
                 <TableCell>
-                  <Checkbox
+                  {/* Ktu munet me ardh Checkbox per single/bulk operation */}
+                  {/* <Checkbox
                     checked={selectedBeneficiaries.includes(beneficiary.id)}
                     onCheckedChange={() =>
                       handleSelectBeneficiary(beneficiary.id)
                     }
-                  />
+                  /> */}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-3">
@@ -1726,7 +1786,8 @@ export function BeneficiariesList({
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    Nationality: {beneficiary.nationality || "—"}
+                    {t("beneficiaries.nationalityLabel")}{" "}
+                    {beneficiary.nationality || "—"}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -1750,43 +1811,14 @@ export function BeneficiariesList({
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button
-                      className="hover:bg-black/10 border-0"
+                      className="hover:bg-[#E0F2FE] border-0"
                       // variant="outline"
                       // size="sm"
                       onClick={() => onBeneficiarySelect(beneficiary.id)}
                     >
                       <Eye className="h-4 w-4 mr-2 " />
-                      View
+                      {t("beneficiaries.view")}
                     </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          // variant="ghost"
-                          // size="sm"
-                          className="h-8 w-8 p-0 hover:bg-black/10 border-0"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <FileEdit className="h-4 w-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Link className="h-4 w-4 mr-2" />
-                          Associate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <FileCheck className="h-4 w-4 mr-2" />
-                          Record Service
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
                 </TableCell>
               </TableRow>
@@ -1798,9 +1830,11 @@ export function BeneficiariesList({
       {filteredBeneficiaries.length === 0 && !listLoading && (
         <div className="text-center py-10 border rounded-lg">
           <User className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <h3 className="text-lg mb-2">No beneficiaries found</h3>
+          <h3 className="text-lg mb-2">
+            {t("beneficiaries.noBeneficiariesFound")}
+          </h3>
           <p className="text-muted-foreground">
-            Try adjusting your filters or search criteria.
+            {t("beneficiaries.tryAdjustingFilters")}
           </p>
         </div>
       )}
@@ -1808,11 +1842,13 @@ export function BeneficiariesList({
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>
-            Page {activePagination.page} of{" "}
+            {t("beneficiaries.pageOf")} {activePagination.page}{" "}
+            {t("beneficiaries.of")}{" "}
             {Math.max(activePagination.totalPages || 1, 1)}
           </span>
           <span className="hidden sm:inline">
-            • Total {activePagination.totalItems} records
+            • {t("beneficiaries.total")} {activePagination.totalItems}{" "}
+            {t("beneficiaries.records")}
           </span>
           <div className="flex items-center gap-2 ml-2">
             <Button
@@ -1822,7 +1858,7 @@ export function BeneficiariesList({
               disabled={listLoading || activePagination.page <= 1}
               className="bg-white"
             >
-              Prev
+              {t("beneficiaries.prev")}
             </Button>
             <Button
               variant="outline"
@@ -1835,7 +1871,7 @@ export function BeneficiariesList({
               }
               className="bg-white"
             >
-              Next
+              {t("beneficiaries.next")}
             </Button>
             <div className="flex items-center gap-1 ml-2">
               {pageTokens.map((tok, idx) =>
@@ -1846,7 +1882,7 @@ export function BeneficiariesList({
                     size="sm"
                     className={
                       tok === activePagination.page
-                        ? "bg-[#2E343E] text-white border-0"
+                        ? "bg-[#0073e6] text-white border-0"
                         : "bg-white"
                     }
                     onClick={() =>
@@ -1877,14 +1913,22 @@ export function BeneficiariesList({
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[120px] bg-black/5 border-0 text-black">
-                <SelectValue placeholder="Rows" />
+              <SelectTrigger className="w-[120px] bg-[#E0F2FE] border-0 text-black">
+                <SelectValue placeholder={t("beneficiaries.rows")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="10">10 / page</SelectItem>
-                <SelectItem value="20">20 / page</SelectItem>
-                <SelectItem value="50">50 / page</SelectItem>
-                <SelectItem value="100">100 / page</SelectItem>
+                <SelectItem value="10">
+                  10 {t("beneficiaries.perPage")}
+                </SelectItem>
+                <SelectItem value="20">
+                  20 {t("beneficiaries.perPage")}
+                </SelectItem>
+                <SelectItem value="50">
+                  50 {t("beneficiaries.perPage")}
+                </SelectItem>
+                <SelectItem value="100">
+                  100 {t("beneficiaries.perPage")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1893,18 +1937,18 @@ export function BeneficiariesList({
           <Button
             variant="outline"
             size="sm"
-            className="bg-[#2E343E] text-white"
+            className="bg-[#0073e6] text-white"
           >
             <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Export to Excel
+            {t("beneficiaries.exportToExcel")}
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="bg-[#2E343E] text-white"
+            className="bg-[#0073e6] text-white"
           >
             <FileText className="h-4 w-4 mr-2" />
-            Export to PDF
+            {t("beneficiaries.exportToPdf")}
           </Button>
         </div>
       </div>

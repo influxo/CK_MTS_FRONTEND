@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button/button";
+import { useTranslation } from "../../hooks/useTranslation";
 import {
   Card,
   CardContent,
@@ -92,6 +93,7 @@ export function SubmissionHistory({
   entityType,
   onBack,
 }: SubmissionHistoryProps) {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
 
   const items = useSelector(selectResponses) as any;
@@ -217,15 +219,17 @@ export function SubmissionHistory({
         <Button
           variant="outline"
           size="sm"
-          className="bg-black text-white"
+          className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-black"
           onClick={onBack}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Forms
+          {t("dataEntry.backToForms")}
         </Button>
         <div>
-          <h2>Submission History</h2>
-          <p className="text-muted-foreground">View completed submissions</p>
+          <h2>{t("dataEntry.submissionHistory")}</h2>
+          <p className="text-muted-foreground">
+            {t("dataEntry.viewCompletedSubmissions")}
+          </p>
         </div>
       </div>
 
@@ -234,20 +238,20 @@ export function SubmissionHistory({
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by form, submitter, beneficiary..."
-            className="pl-9 bg-black/5 border-0"
+            placeholder={t("dataEntry.searchByFormSubmitter")}
+            className="pl-9 border-gray-100 bg-white border"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <Select value={templateFilter} onValueChange={setTemplateFilter}>
-            <SelectTrigger className="w-full bg-black/5 border-0 sm:w-[220px]">
+            <SelectTrigger className="w-full bg-white border-gray-100 border sm:w-[220px] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
               <Filter className="h-4 w-4 mr-2 " />
-              <SelectValue placeholder="Template" />
+              <SelectValue placeholder={t("dataEntry.template")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Templates</SelectItem>
+              <SelectItem value="all">{t("dataEntry.allTemplates")}</SelectItem>
               {templateOptions.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
                   {t.name}
@@ -264,8 +268,8 @@ export function SubmissionHistory({
                 setPage(1);
                 setFromDate(e.target.value);
               }}
-              className="w-[160px] bg-black/5 border-0"
-              placeholder="From"
+              className="w-[160px] border-gray-100 bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+              placeholder={t("dataEntry.from")}
             />
             <Input
               type="date"
@@ -274,8 +278,8 @@ export function SubmissionHistory({
                 setPage(1);
                 setToDate(e.target.value);
               }}
-              className="w-[160px] bg-black/5 border-0"
-              placeholder="To"
+              className="w-[160px] border-gray-100 bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+              placeholder={t("dataEntry.to")}
             />
           </div>
 
@@ -286,19 +290,19 @@ export function SubmissionHistory({
               setLimit(Number(v));
             }}
           >
-            <SelectTrigger className="w-full sm:w-[120px] bg-black/5 border-0">
-              <SelectValue placeholder="Page size" />
+            <SelectTrigger className="w-full sm:w-[120px] border-gray-100 bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
+              <SelectValue placeholder={t("dataEntry.pageSize")} />
             </SelectTrigger>
             <SelectContent>
               {[10, 20, 50, 100].map((n) => (
                 <SelectItem key={n} value={String(n)}>
-                  {n} / page
+                  {n} {t("dataEntry.perPage")}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Button
-            className="bg-black/5 hover:bg-black/10"
+            className="bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] "
             variant="ghost"
             onClick={() => {
               setTemplateFilter("all");
@@ -309,7 +313,7 @@ export function SubmissionHistory({
               setSearchQuery("");
             }}
           >
-            Reset
+            {t("dataEntry.reset")}
           </Button>
         </div>
       </div>
@@ -318,8 +322,8 @@ export function SubmissionHistory({
         <CardHeader className="py-3 px-4">
           {loading && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading
-              submissions...
+              <Loader2 className="h-4 w-4 animate-spin" />{" "}
+              {t("dataEntry.loadingSubmissions")}
             </div>
           )}
           {!loading && error && (
@@ -331,11 +335,13 @@ export function SubmissionHistory({
             <Table>
               <TableHeader className="bg-[#e4ebf6]">
                 <TableRow>
-                  <TableHead>Form</TableHead>
-                  <TableHead>Beneficiary</TableHead>
-                  <TableHead>Submitted</TableHead>
-                  <TableHead>Submitted By</TableHead>
-                  <TableHead className="w-[70px]">Actions</TableHead>
+                  <TableHead>{t("dataEntry.form")}</TableHead>
+                  <TableHead>{t("dataEntry.beneficiary")}</TableHead>
+                  <TableHead>{t("dataEntry.submitted")}</TableHead>
+                  <TableHead>{t("dataEntry.submittedBy")}</TableHead>
+                  <TableHead className="w-[70px]">
+                    {t("dataEntry.actions")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="bg-[#f8f9fb]">
@@ -388,15 +394,15 @@ export function SubmissionHistory({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 hover:bg-black/5"
+                            className="h-8 w-8 p-0 hover:bg-[#E0F2FE]"
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleView(r.id)}>
-                            <Eye className="h-4 w-4 mr-2 hover:bg-black/5" />{" "}
-                            View
+                            <Eye className="h-4 w-4 mr-2 hover:bg-[#E0F2FE]" />{" "}
+                            {t("dataEntry.view")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -409,7 +415,7 @@ export function SubmissionHistory({
                       colSpan={5}
                       className="text-center py-8 text-muted-foreground"
                     >
-                      No submissions found
+                      {t("dataEntry.noSubmissionsFound")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -422,10 +428,12 @@ export function SubmissionHistory({
             <div className="py-3">
               <Pager>
                 <PaginationContent>
-                  <PaginationItem className="hover:bg-black/5">
+                  <PaginationItem className="hover:bg-[#E0F2FE] rounded-lg">
                     <PaginationPrevious
                       className={
-                        !canPrev ? "pointer-events-none opacity-50" : ""
+                        !canPrev
+                          ? "pointer-events-none opacity-50 text-black"
+                          : ""
                       }
                       onClick={(e) => {
                         e.preventDefault();
@@ -441,6 +449,7 @@ export function SubmissionHistory({
                       return (
                         <PaginationItem key={p}>
                           <PaginationLink
+                            className="hover:bg-[#E0F2FE]"
                             href="#"
                             isActive={p === currentPage}
                             onClick={(e) => {
@@ -453,7 +462,7 @@ export function SubmissionHistory({
                         </PaginationItem>
                       );
                     })}
-                  <PaginationItem>
+                  <PaginationItem className="hover:bg-[#E0F2FE] rounded-lg">
                     <PaginationNext
                       className={
                         !canNext ? "pointer-events-none opacity-50" : ""
@@ -479,12 +488,14 @@ export function SubmissionHistory({
       >
         <DialogContent className="sm:max-w-5xl max-h-[85vh] overflow-y-auto">
           <DialogHeaderUI>
-            <DialogTitle className="text-lg ml-10">Form Submission</DialogTitle>
+            <DialogTitle className="text-lg ml-10">
+              {t("dataEntry.formSubmission")}
+            </DialogTitle>
           </DialogHeaderUI>
           {selectedLoading && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading form
-              response...
+              <Loader2 className="h-4 w-4 animate-spin" />{" "}
+              {t("dataEntry.loadingFormResponse")}
             </div>
           )}
           {!selectedLoading && selectedError && (
@@ -497,7 +508,8 @@ export function SubmissionHistory({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <h1 className="font-medium text-2xl">
-                      {selected.template?.name || "Untitled Template"}
+                      {selected.template?.name ||
+                        t("dataEntry.untitledTemplate")}
                     </h1>
                     {selected.template?.version !== undefined && (
                       <Badge variant="outline">
@@ -508,7 +520,7 @@ export function SubmissionHistory({
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5" />
                     <span>
-                      Submitted on{" "}
+                      {t("dataEntry.submittedOn")}{" "}
                       {selected.submittedAt
                         ? new Date(selected.submittedAt).toLocaleString()
                         : "—"}
@@ -517,7 +529,7 @@ export function SubmissionHistory({
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <User className="h-3.5 w-3.5" />
                     <span>
-                      By{" "}
+                      {t("dataEntry.by")}{" "}
                       {`${selected.submitter?.firstName ?? ""} ${
                         selected.submitter?.lastName ?? ""
                       }`.trim() || "—"}
@@ -529,7 +541,10 @@ export function SubmissionHistory({
                   {selected.beneficiary && (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <MapPin className="h-3.5 w-3.5" />
-                      <span>Beneficiary: {selected.beneficiary.pseudonym}</span>
+                      <span>
+                        {t("dataEntry.beneficiaryLabel")}{" "}
+                        {selected.beneficiary.pseudonym}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -537,7 +552,7 @@ export function SubmissionHistory({
 
               {selectedTemplateLoading && (
                 <div className="text-sm text-muted-foreground">
-                  Loading form definition…
+                  {t("dataEntry.loadingFormDefinition")}
                 </div>
               )}
 
@@ -559,12 +574,14 @@ export function SubmissionHistory({
 
               <Card className="bg-[#F7F9FB] border-0 ">
                 <CardHeader>
-                  <CardTitle className="text-base">Submitted Data</CardTitle>
+                  <CardTitle className="text-base">
+                    {t("dataEntry.submittedData")}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {Object.keys(selected.data || {}).length === 0 ? (
                     <div className="text-sm text-muted-foreground">
-                      No data fields.
+                      {t("dataEntry.noDataFields")}
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-t border-slate-200 md:border-t">
@@ -611,7 +628,11 @@ export function SubmissionHistory({
                               <span>{labelMap[key] ?? formatLabel(key)}</span>
                             </div>
                             <div className="mt-1 text-sm font-medium text-slate-900 break-words">
-                              {typeof value === "object"
+                              {typeof value === "boolean"
+                                ? value
+                                  ? "Po"
+                                  : "Jo"
+                                : typeof value === "object"
                                 ? JSON.stringify(value)
                                 : String(value)}
                             </div>
@@ -627,7 +648,7 @@ export function SubmissionHistory({
               <Card className=" border-0  bg-[#E5ECF6]">
                 <CardHeader className="border-0  ">
                   <CardTitle className="text-base ">
-                    Linked Service Deliveries
+                    {t("dataEntry.linkedServiceDeliveries")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className=" bg-white">
@@ -635,11 +656,11 @@ export function SubmissionHistory({
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Service</TableHead>
-                          <TableHead>Staff</TableHead>
-                          <TableHead>Entity</TableHead>
+                          <TableHead>{t("dataEntry.date")}</TableHead>
+                          <TableHead>{t("dataEntry.category")}</TableHead>
+                          <TableHead>{t("dataEntry.service")}</TableHead>
+                          <TableHead>{t("dataEntry.staff")}</TableHead>
+                          <TableHead>{t("dataEntry.entity")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -671,7 +692,7 @@ export function SubmissionHistory({
                     </Table>
                   ) : (
                     <div className="text-sm text-muted-foreground">
-                      No linked service deliveries.
+                      {t("dataEntry.noLinkedServiceDeliveries")}
                     </div>
                   )}
                 </CardContent>

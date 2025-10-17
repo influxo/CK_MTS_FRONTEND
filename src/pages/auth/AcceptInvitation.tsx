@@ -16,6 +16,7 @@ import { Label } from "../../components/ui/form/label";
 import { Input } from "../../components/ui/form/input";
 import { Button } from "../../components/ui/button/button";
 import { Eye, EyeOff } from "lucide-react";
+import { useTranslation } from "../../hooks/useTranslation";
 import {
   Carousel,
   CarouselContent,
@@ -25,6 +26,7 @@ import {
 import reactLogo from "../../assets/react.svg";
 
 const AcceptInvitation = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -102,13 +104,13 @@ const AcceptInvitation = () => {
 
     if (!passwordMeetsRules) {
       setValidationError(
-        "Password must be at least 8 characters, include an uppercase letter and a special character."
+        t('validation.passwordRequirements')
       );
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setValidationError("Passwords do not match.");
+      setValidationError(t('validation.passwordMismatch'));
       return;
     }
     setIsSubmitting(true);
@@ -167,10 +169,10 @@ const AcceptInvitation = () => {
           <Card className="w-full border-0 max-w-md">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold text-center">
-                Accept Invitation
+                {t('auth.acceptInvitation')}
               </CardTitle>
               <CardDescription className="text-center">
-                Set your password to activate your account
+                {t('auth.setPasswordToActivate')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -192,7 +194,7 @@ const AcceptInvitation = () => {
               )}
               <Form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Email</Label>
+                  <Label>{t('common.email')}</Label>
                   <Input
                     className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
                     id="email"
@@ -207,12 +209,12 @@ const AcceptInvitation = () => {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label>Password</Label>
+                    <Label>{t('common.password')}</Label>
                     <a
                       href="/forgot-password"
                       className="text-sm text-[#00a6ff]"
                     >
-                      Forgot password?
+                      {t('auth.forgotPassword')}
                     </a>
                   </div>
                   <div className="relative">
@@ -243,9 +245,9 @@ const AcceptInvitation = () => {
                   </div>
                   {formData.password && !passwordMeetsRules && (
                     <ul className="text-sm text-red-600 mt-1 list-disc pl-5">
-                      {!minLenOk && <li>Minimum 8 characters</li>}
-                      {!hasUpper && <li>At least one uppercase letter</li>}
-                      {!hasSpecial && <li>At least one special character</li>}
+                      {!minLenOk && <li>{t('validation.minimum8Characters')}</li>}
+                      {!hasUpper && <li>{t('validation.oneUppercase')}</li>}
+                      {!hasSpecial && <li>{t('validation.oneSpecialChar')}</li>}
                     </ul>
                   )}
                 </div>

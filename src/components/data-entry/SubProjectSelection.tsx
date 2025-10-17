@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "../../hooks/useTranslation";
 import {
   Search,
   ArrowRight,
@@ -50,6 +51,7 @@ type AggregatedItem = {
 };
 
 export function SubProjectSelection() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useAuth();
@@ -215,7 +217,7 @@ export function SubProjectSelection() {
               <FolderKanban className="h-5 w-5 text-blue-500" />
               <div>
                 <div className="text-sm text-muted-foreground">
-                  Available Sub Projects
+                  {t('dataEntry.availableSubProjects')}
                 </div>
                 <div className="text-xl font-medium">56</div>
               </div>
@@ -228,7 +230,7 @@ export function SubProjectSelection() {
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-green-500" />
               <div>
-                <div className="text-sm text-muted-foreground">Total Forms</div>
+                <div className="text-sm text-muted-foreground">{t('dataEntry.totalForms')}</div>
                 <div className="text-xl font-medium">56</div>
               </div>
             </div>
@@ -241,7 +243,7 @@ export function SubProjectSelection() {
               <Calendar className="h-5 w-5 text-purple-500" />
               <div>
                 <div className="text-sm text-muted-foreground">
-                  Total Activities
+                  {t('dataEntry.totalActivities')}
                 </div>
                 <div className="text-xl font-medium">130</div>
               </div>
@@ -255,7 +257,7 @@ export function SubProjectSelection() {
               <Users className="h-5 w-5 text-orange-500" />
               <div>
                 <div className="text-sm text-muted-foreground">
-                  Team Members
+                  {t('dataEntry.teamMembers')}
                 </div>
                 <div className="text-xl font-medium">120</div>
               </div>
@@ -269,8 +271,8 @@ export function SubProjectSelection() {
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search projects or subprojects..."
-            className="pl-9 bg-black/5 border-0"
+            placeholder={t('dataEntry.searchProjectsSubprojects')}
+            className="pl-9 bg-white border-gray-100   border"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -285,13 +287,13 @@ export function SubProjectSelection() {
             setFilterSubprojectId("all");
           }}
         >
-          <SelectTrigger className="w-full sm:w-[180px] bg-black/5 border-0">
-            <SelectValue placeholder="Show" />
+          <SelectTrigger className="w-full sm:w-[180px] bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
+            <SelectValue placeholder={t('dataEntry.show')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="project">Project</SelectItem>
-            <SelectItem value="subproject">Subproject</SelectItem>
+            <SelectItem value="all">{t('dataEntry.all')}</SelectItem>
+            <SelectItem value="project">{t('dataEntry.project')}</SelectItem>
+            <SelectItem value="subproject">{t('dataEntry.subproject')}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -301,11 +303,11 @@ export function SubProjectSelection() {
             value={filterProjectId}
             onValueChange={(v) => setFilterProjectId(v)}
           >
-            <SelectTrigger className="w-full sm:w-[220px] bg-black/5 border-0">
-              <SelectValue placeholder="Select project" />
+            <SelectTrigger className="w-full sm:w-[220px] bg-white border-gray-100 border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
+              <SelectValue placeholder={t('dataEntry.selectProject')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Projects</SelectItem>
+              <SelectItem value="all">{t('dataEntry.allProjects')}</SelectItem>
               {allowedProjects.map((project: any) => (
                 <SelectItem key={project.id} value={project.id}>
                   {project.name}
@@ -318,11 +320,11 @@ export function SubProjectSelection() {
             value={filterSubprojectId}
             onValueChange={(v) => setFilterSubprojectId(v)}
           >
-            <SelectTrigger className="w-full sm:w-[260px] bg-black/5 border-0">
-              <SelectValue placeholder="Select subproject" />
+            <SelectTrigger className="w-full sm:w-[260px] bg-[#E0F2FE] border-gray-100 border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
+              <SelectValue placeholder={t('dataEntry.selectSubproject')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Subprojects</SelectItem>
+              <SelectItem value="all">{t('dataEntry.allSubprojects')}</SelectItem>
               {(allowedSubprojects as any[]).map((sp: any) => (
                 <SelectItem key={sp.id} value={sp.id}>
                   {sp.name}
@@ -339,11 +341,11 @@ export function SubProjectSelection() {
           <Table className="rounded-md overflow-hidden">
             <TableHeader className="bg-[#E5ECF6] ">
               <TableRow>
-                <TableHead className="w-[300px]">Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[300px]">{t('dataEntry.name')}</TableHead>
+                <TableHead>{t('dataEntry.type')}</TableHead>
+                <TableHead>{t('dataEntry.project')}</TableHead>
+                <TableHead>{t('dataEntry.status')}</TableHead>
+                <TableHead className="text-right">{t('dataEntry.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -391,9 +393,9 @@ export function SubProjectSelection() {
                     <Button
                       onClick={() => handleSelect(item)}
                       size="sm"
-                      className=" hover:bg-black/10"
+                      className=" hover:bg-[#E0F2FE]"
                     >
-                      Select
+                      {t('dataEntry.select')}
                       <ArrowRight className="h-4 w-4 ml-1" />
                     </Button>
                   </TableCell>
@@ -406,9 +408,9 @@ export function SubProjectSelection() {
 
       {filtered.length === 0 && (
         <div className="text-center py-12">
-          <h3 className="font-medium mb-2">No items available</h3>
+          <h3 className="font-medium mb-2">{t('dataEntry.noItemsAvailable')}</h3>
           <p className="text-muted-foreground">
-            Try adjusting your search criteria.
+            {t('dataEntry.tryAdjustingSearch')}
           </p>
         </div>
       )}
