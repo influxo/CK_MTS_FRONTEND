@@ -107,9 +107,9 @@ export function SubProjectActivities({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3>{t('subProjectActivities.title')}</h3>
+          <h3>{t("subProjectActivities.title")}</h3>
           <p className="text-muted-foreground">
-            {t('subProjectActivities.subtitle')}
+            {t("subProjectActivities.subtitle")}
           </p>
         </div>
         <Dialog
@@ -124,14 +124,14 @@ export function SubProjectActivities({
              hover:scale-[1.02] hover:-translate-y-[1px]"
             >
               <Plus className="h-4 w-4 mr-2" />
-              {t('subProjectActivities.recordNewActivity')}
+              {t("subProjectActivities.recordNewActivity")}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
-              <DialogTitle>{t('subProjectActivities.dialogTitle')}</DialogTitle>
+              <DialogTitle>{t("subProjectActivities.dialogTitle")}</DialogTitle>
               <DialogDescription>
-                {t('subProjectActivities.dialogDescription')}
+                {t("subProjectActivities.dialogDescription")}
               </DialogDescription>
             </DialogHeader>
             {createError && (
@@ -141,55 +141,71 @@ export function SubProjectActivities({
               {/* Model-based fields */}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="activity-name" className="text-right">
-                  {t('subProjectActivities.nameLabel')}
+                  {t("subProjectActivities.nameLabel")}
                 </Label>
                 <Input
                   id="activity-name"
                   className="col-span-3"
-                  placeholder={t('subProjectActivities.namePlaceholder')}
+                  placeholder={t("subProjectActivities.namePlaceholder")}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="activity-category" className="text-right">
-                  {t('subProjectActivities.categoryLabel')}
+                  {t("subProjectActivities.categoryLabel")}
                 </Label>
                 <Input
                   id="activity-category"
                   className="col-span-3"
-                  placeholder={t('subProjectActivities.categoryPlaceholder')}
+                  placeholder={t("subProjectActivities.categoryPlaceholder")}
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="activity-frequency" className="text-right">
-                  {t('subProjectActivities.frequencyLabel')}
+                  {t("subProjectActivities.frequencyLabel")}
                 </Label>
                 <Select value={frequency} onValueChange={setFrequency}>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder={t('subProjectActivities.selectFrequency')} />
+                    <SelectValue
+                      placeholder={t("subProjectActivities.selectFrequency")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="daily">{t('subProjectActivities.daily')}</SelectItem>
-                    <SelectItem value="weekly">{t('subProjectActivities.weekly')}</SelectItem>
-                    <SelectItem value="monthly">{t('subProjectActivities.monthly')}</SelectItem>
-                    <SelectItem value="quarterly">{t('subProjectActivities.quarterly')}</SelectItem>
+                    <SelectItem value="daily">
+                      {t("subProjectActivities.daily")}
+                    </SelectItem>
+                    <SelectItem value="weekly">
+                      {t("subProjectActivities.weekly")}
+                    </SelectItem>
+                    <SelectItem value="monthly">
+                      {t("subProjectActivities.monthly")}
+                    </SelectItem>
+                    <SelectItem value="quarterly">
+                      {t("subProjectActivities.quarterly")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="activity-status" className="text-right">
-                  {t('subProjectActivities.statusLabel')}
+                  {t("subProjectActivities.statusLabel")}
                 </Label>
                 <Select value={status} onValueChange={setStatus}>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder={t('subProjectActivities.selectStatus')} />
+                    <SelectValue
+                      placeholder={t("subProjectActivities.selectStatus")}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">{t('subProjectActivities.active')}</SelectItem>
-                    <SelectItem value="inactive">{t('subProjectActivities.inactive')}</SelectItem>
+                    <SelectItem value="active">
+                      {t("subProjectActivities.active")}
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      {t("subProjectActivities.inactive")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -198,24 +214,28 @@ export function SubProjectActivities({
                   htmlFor="activity-description"
                   className="text-right pt-2"
                 >
-                  {t('subProjectActivities.descriptionLabel')}
+                  {t("subProjectActivities.descriptionLabel")}
                 </Label>
                 <Textarea
                   id="activity-description"
                   className="col-span-3"
-                  placeholder={t('subProjectActivities.descriptionPlaceholder')}
+                  placeholder={t("subProjectActivities.descriptionPlaceholder")}
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
-                <Label className="text-right pt-2">{t('subProjectActivities.reportingFields')}</Label>
+                <Label className="text-right pt-2">
+                  {t("subProjectActivities.reportingFields")}
+                </Label>
                 <div className="col-span-3 space-y-2">
                   {reportingFieldsRows.map((row, idx) => (
                     <div key={idx} className="flex gap-2 items-center">
                       <Input
-                        placeholder={t('subProjectActivities.fieldKeyPlaceholder')}
+                        placeholder={t(
+                          "subProjectActivities.fieldKeyPlaceholder"
+                        )}
                         value={row.key}
                         onChange={(e) => {
                           const next = [...reportingFieldsRows];
@@ -232,18 +252,36 @@ export function SubProjectActivities({
                         }}
                       >
                         <SelectTrigger className="w-[160px]">
-                          <SelectValue placeholder={t('subProjectActivities.typePlaceholder')} />
+                          <SelectValue
+                            placeholder={t(
+                              "subProjectActivities.typePlaceholder"
+                            )}
+                          />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="number">{t('subProjectActivities.number')}</SelectItem>
-                          <SelectItem value="text">{t('subProjectActivities.text')}</SelectItem>
-                          <SelectItem value="boolean">{t('subProjectActivities.boolean')}</SelectItem>
-                          <SelectItem value="date">{t('subProjectActivities.date')}</SelectItem>
-                          <SelectItem value="time">{t('subProjectActivities.time')}</SelectItem>
-                          <SelectItem value="datetime">{t('subProjectActivities.datetime')}</SelectItem>
-                          <SelectItem value="select">{t('subProjectActivities.select')}</SelectItem>
+                          <SelectItem value="number">
+                            {t("subProjectActivities.number")}
+                          </SelectItem>
+                          <SelectItem value="text">
+                            {t("subProjectActivities.text")}
+                          </SelectItem>
+                          <SelectItem value="boolean">
+                            {t("subProjectActivities.boolean")}
+                          </SelectItem>
+                          <SelectItem value="date">
+                            {t("subProjectActivities.date")}
+                          </SelectItem>
+                          <SelectItem value="time">
+                            {t("subProjectActivities.time")}
+                          </SelectItem>
+                          <SelectItem value="datetime">
+                            {t("subProjectActivities.datetime")}
+                          </SelectItem>
+                          <SelectItem value="select">
+                            {t("subProjectActivities.select")}
+                          </SelectItem>
                           <SelectItem value="multiselect">
-                            {t('subProjectActivities.multiselect')}
+                            {t("subProjectActivities.multiselect")}
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -257,7 +295,7 @@ export function SubProjectActivities({
                           setReportingFieldsRows(next);
                         }}
                       >
-                        {t('subProjectActivities.remove')}
+                        {t("subProjectActivities.remove")}
                       </Button>
                     </div>
                   ))}
@@ -270,7 +308,7 @@ export function SubProjectActivities({
                       ])
                     }
                   >
-                    {t('subProjectActivities.addField')}
+                    {t("subProjectActivities.addField")}
                   </Button>
                 </div>
               </div>
@@ -281,7 +319,7 @@ export function SubProjectActivities({
                 onClick={() => setIsCreateActivityDialogOpen(false)}
                 disabled={isCreating}
               >
-                {t('subProjectActivities.cancel')}
+                {t("subProjectActivities.cancel")}
               </Button>
               <Button
                 className="bg-[#0073e6] border-0 text-white"
@@ -324,7 +362,9 @@ export function SubProjectActivities({
                 }}
                 disabled={isCreating}
               >
-                {isCreating ? t('subProjectActivities.saving') : t('subProjectActivities.saveActivity')}
+                {isCreating
+                  ? t("subProjectActivities.saving")
+                  : t("subProjectActivities.saveActivity")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -338,7 +378,7 @@ export function SubProjectActivities({
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder={t('subProjectActivities.searchPlaceholder')}
+                  placeholder={t("subProjectActivities.searchPlaceholder")}
                   className="pl-9 bg-white border border-gray-100 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -346,12 +386,20 @@ export function SubProjectActivities({
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[160px] bg-white border border-gray-100 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
-                  <SelectValue placeholder={t('subProjectActivities.statusFilter')} />
+                  <SelectValue
+                    placeholder={t("subProjectActivities.statusFilter")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t('subProjectActivities.allStatus')}</SelectItem>
-                  <SelectItem value="active">{t('subProjectActivities.active')}</SelectItem>
-                  <SelectItem value="inactive">{t('subProjectActivities.inactive')}</SelectItem>
+                  <SelectItem value="all">
+                    {t("subProjectActivities.allStatus")}
+                  </SelectItem>
+                  <SelectItem value="active">
+                    {t("subProjectActivities.active")}
+                  </SelectItem>
+                  <SelectItem value="inactive">
+                    {t("subProjectActivities.inactive")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -364,13 +412,21 @@ export function SubProjectActivities({
           <Table className="rounded-md overflow-hidden ">
             <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
-                <TableHead className="w-[300px]">{t('subProjectActivities.activityColumn')}</TableHead>
-                <TableHead>{t('subProjectActivities.categoryColumn')}</TableHead>
-                <TableHead>{t('subProjectActivities.frequencyColumn')}</TableHead>
-                <TableHead>{t('subProjectActivities.statusColumn')}</TableHead>
-                <TableHead>{t('subProjectActivities.createdColumn')}</TableHead>
-                <TableHead>{t('subProjectActivities.updatedColumn')}</TableHead>
-                <TableHead className="text-right">{t('subProjectActivities.actionsColumn')}</TableHead>
+                <TableHead className="w-[300px]">
+                  {t("subProjectActivities.activityColumn")}
+                </TableHead>
+                <TableHead>
+                  {t("subProjectActivities.categoryColumn")}
+                </TableHead>
+                <TableHead>
+                  {t("subProjectActivities.frequencyColumn")}
+                </TableHead>
+                <TableHead>{t("subProjectActivities.statusColumn")}</TableHead>
+                <TableHead>{t("subProjectActivities.createdColumn")}</TableHead>
+                <TableHead>{t("subProjectActivities.updatedColumn")}</TableHead>
+                <TableHead className="text-right">
+                  {t("subProjectActivities.actionsColumn")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -378,7 +434,7 @@ export function SubProjectActivities({
                 <TableRow>
                   <TableCell colSpan={7}>
                     <span className="text-sm text-muted-foreground">
-                      {t('subProjectActivities.loadingActivities')}
+                      {t("subProjectActivities.loadingActivities")}
                     </span>
                   </TableCell>
                 </TableRow>
@@ -398,7 +454,7 @@ export function SubProjectActivities({
                   <TableRow>
                     <TableCell colSpan={7}>
                       <span className="text-sm text-muted-foreground">
-                        {t('subProjectActivities.noActivitiesFound')}
+                        {t("subProjectActivities.noActivitiesFound")}
                       </span>
                     </TableCell>
                   </TableRow>
@@ -453,12 +509,14 @@ export function SubProjectActivities({
                           className="bg-[#0073e6] border-0 text-white hover:bg-[#0060c0]"
                           onClick={() => {
                             if (projectId && effectiveSubProjectId) {
-                              navigate(`/projects/${projectId}/subprojects/${effectiveSubProjectId}/activities/${activity.id}`);
+                              navigate(
+                                `/projects/${projectId}/subprojects/${effectiveSubProjectId}/activities/${activity.id}`
+                              );
                             }
                           }}
                         >
                           <Eye className="h-4 w-4 mr-1" />
-                          {t('subProjectActivities.view')}
+                          {t("subProjectActivities.view")}
                         </Button>
                       </div>
                     </TableCell>
