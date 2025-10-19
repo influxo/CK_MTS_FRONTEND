@@ -34,3 +34,9 @@ export interface GetSubprojectActivitiesResponse {
   data: Activity[];
   message?: string;
 }
+
+export interface GetActivityByIdResponse {
+  success: boolean;
+  data: Activity;
+  message?: string;
+}

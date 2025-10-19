@@ -4,6 +4,7 @@ import type {
   CreateSubprojectActivityRequest,
   CreateActivityResponse,
   GetSubprojectActivitiesResponse,
+  GetActivityByIdResponse,
 } from "./activityModels";
 import { toast } from "sonner";
 
@@ -63,6 +64,22 @@ class ActivityService {
         data: [],
         message: error.message || "Failed to fetch activities",
       } as GetSubprojectActivitiesResponse;
+    }
+  }
+
+  async getActivityById(id: string): Promise<GetActivityByIdResponse> {
+    try {
+      const url = `${this.activityEndpoint}/${id}`;
+      const response = await axiosInstance.get<GetActivityByIdResponse>(url);
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as GetActivityByIdResponse;
+      }
+      return {
+        success: false,
+        message: error.message || "Failed to fetch activity",
+      } as GetActivityByIdResponse;
     }
   }
 }

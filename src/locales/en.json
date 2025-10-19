@@ -1070,7 +1070,24 @@
     "loadingActivities": "Loading activities...",
     "noActivitiesFound": "No activities found.",
     "editActivity": "Edit Activity",
-    "exportDetails": "Export Details"
+    "exportDetails": "Export Details",
+    "view": "View"
+  },
+  "activityDetails": {
+    "loading": "Loading activity details...",
+    "back": "Back",
+    "backToSubproject": "Back to Subproject",
+    "notFound": "Activity not found",
+    "category": "Category",
+    "frequency": "Frequency",
+    "created": "Created",
+    "reportingFields": "Reporting Fields",
+    "noReportingFields": "No reporting fields defined",
+    "metadata": "Metadata",
+    "activityId": "Activity ID",
+    "subprojectId": "Subproject ID",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At"
   },
   "subProjectServices": {
     "title": "Services",

@@ -1032,7 +1032,24 @@
     "loadingActivities": "Duke ngarkuar aktivitetet...",
     "noActivitiesFound": "Nuk u gjetën aktivitete.",
     "editActivity": "Modifiko Aktivitetin",
-    "exportDetails": "Eksporto Detajet"
+    "exportDetails": "Eksporto Detajet",
+    "view": "Shiko"
+  },
+  "activityDetails": {
+    "loading": "Duke ngarkuar detajet e aktivitetit...",
+    "back": "Prapa",
+    "backToSubproject": "Kthehu te Nënprojekti",
+    "notFound": "Aktiviteti nuk u gjet",
+    "category": "Kategoria",
+    "frequency": "Frekuenca",
+    "created": "Krijuar",
+    "reportingFields": "Fushat e Raportimit",
+    "noReportingFields": "Nuk ka fusha raportimi të përcaktuara",
+    "metadata": "Metadata",
+    "activityId": "ID e Aktivitetit",
+    "subprojectId": "ID e Nënprojektit",
+    "createdAt": "Krijuar Më",
+    "updatedAt": "Përditësuar Më"
   },
   "subProjectServices": {
     "title": "Shërbimet",

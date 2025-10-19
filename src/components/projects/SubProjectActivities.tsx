@@ -1,7 +1,7 @@
-import { Download, FileEdit, Plus, Search } from "lucide-react";
+import { Eye, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import type { AppDispatch } from "../../store";
 import {
   createActivity,
@@ -42,12 +42,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/overlay/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/overlay/dropdown-menu";
 import { useTranslation } from "../../hooks/useTranslation";
 
 interface SubProjectActivitiesProps {
@@ -71,10 +65,12 @@ export function SubProjectActivities({
   const listError = useSelector(selectSubprojectActivitiesError);
 
   // Prefer URL param if present (route: :subprojectId)
-  const { subprojectId: subprojectIdParam } = useParams<{
+  const { subprojectId: subprojectIdParam, projectId } = useParams<{
     subprojectId: string;
+    projectId: string;
   }>();
   const effectiveSubProjectId = subprojectIdParam ?? subProjectId;
+  const navigate = useNavigate();
 
   // Fetch activities when subproject changes
   useEffect(() => {
@@ -451,19 +447,19 @@ export function SubProjectActivities({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <FileEdit className="h-4 w-4 mr-2" />
-                              {t('subProjectActivities.editActivity')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Download className="h-4 w-4 mr-2" />
-                              {t('subProjectActivities.exportDetails')}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="bg-[#0073e6] border-0 text-white hover:bg-[#0060c0]"
+                          onClick={() => {
+                            if (projectId && effectiveSubProjectId) {
+                              navigate(`/projects/${projectId}/subprojects/${effectiveSubProjectId}/activities/${activity.id}`);
+                            }
+                          }}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          {t('subProjectActivities.view')}
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

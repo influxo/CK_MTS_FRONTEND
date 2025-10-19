@@ -8,14 +8,20 @@ import {
   MoreHorizontal,
   Pencil,
   Search,
-  Shield,
   SlidersHorizontal,
   Trash,
   UserPlus,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "../../hooks/useTranslation";
 import type { Employee as ApiEmployee } from "../../services/employees/employeesModels";
+import type { AppDispatch } from "../../store";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import {
+  deleteEmployee,
+  selectEmployeeDeleting,
+} from "../../store/slices/employeesSlice";
 import { Button } from "../ui/button/button";
 import { Avatar, AvatarFallback } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
@@ -78,6 +84,7 @@ export function EmployeesList({
   error,
 }: EmployeesListProps) {
   const { t } = useTranslation();
+  const dispatch = useDispatch<AppDispatch>();
   const [activeTab, setActiveTab] = useState("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -85,6 +92,26 @@ export function EmployeesList({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
+  const isDeleting = useSelector(selectEmployeeDeleting);
+
+  // Current user for role checking
+  const currentUser = useSelector(selectCurrentUser);
+
+  // Determine if current user is sys or super admin
+  const normalizedRoles = useMemo(
+    () =>
+      (currentUser?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [currentUser?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
 
   // Canonicalize role names for consistent display and filtering
   const normalizeRole = (raw?: string): string => {
@@ -197,11 +224,18 @@ export function EmployeesList({
   };
 
   // Confirm delete employee
-  const confirmDelete = () => {
-    console.log("Deleting employee:", employeeToDelete);
-    // In a real app, we would call an API to delete the employee
-    setShowDeleteDialog(false);
-    setEmployeeToDelete(null);
+  const confirmDelete = async () => {
+    if (!employeeToDelete) return;
+
+    try {
+      await dispatch(deleteEmployee(employeeToDelete)).unwrap();
+      setShowDeleteDialog(false);
+      setEmployeeToDelete(null);
+    } catch (e) {
+      // Error toast will be shown by the service
+      console.error("Failed to delete employee", e);
+      // Keep dialog open to show error
+    }
   };
 
   // Render role badge
@@ -597,25 +631,23 @@ export function EmployeesList({
                                   <Pencil className="h-4 w-4 mr-2" />
                                   Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Mail className="h-4 w-4 mr-2" />
-                                  Send Email
-                                </DropdownMenuItem>
+
                                 <DropdownMenuItem>
                                   <KeyRound className="h-4 w-4 mr-2" />
                                   {t("employees.resetPassword")}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Shield className="h-4 w-4 mr-2" />
-                                  {t("employees.managePermissions")}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => handleDeleteClick(employee.id)}
-                                >
-                                  <Trash className="h-4 w-4 mr-2" />
-                                  {t("common.delete")}
-                                </DropdownMenuItem>
+
+                                {isSysOrSuperAdmin && (
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() =>
+                                      handleDeleteClick(employee.id)
+                                    }
+                                  >
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    {t("common.delete")}
+                                  </DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -760,13 +792,17 @@ export function EmployeesList({
                                   <Mail className="h-4 w-4 mr-2" />
                                   Resend Invitation
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => handleDeleteClick(employee.id)}
-                                >
-                                  <Trash className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
+                                {isSysOrSuperAdmin && (
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() =>
+                                      handleDeleteClick(employee.id)
+                                    }
+                                  >
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -915,13 +951,17 @@ export function EmployeesList({
                                   <CheckCircle className="h-4 w-4 mr-2" />
                                   Reactivate
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => handleDeleteClick(employee.id)}
-                                >
-                                  <Trash className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
+                                {isSysOrSuperAdmin && (
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() =>
+                                      handleDeleteClick(employee.id)
+                                    }
+                                  >
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -961,11 +1001,16 @@ export function EmployeesList({
             <Button
               variant="outline"
               onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
             >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Delete Employee
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete Employee"}
             </Button>
           </DialogFooter>
         </DialogContent>
