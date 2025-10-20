@@ -11,6 +11,9 @@ export interface CreateBeneficiaryRequest {
   gender: string;
   municipality: string;
   nationality: string;
+  ethnicity?: string;
+  residence?: string;
+  householdMembers?: number;
   status: string; // e.g., "active"
   // Optional medical and additional details
   details?: BeneficiaryDetails;
@@ -76,6 +79,9 @@ export interface BeneficiaryPIIEnc {
   genderEnc: BeneficiaryPIIEncField;
   municipalityEnc: BeneficiaryPIIEncField;
   nationalityEnc: BeneficiaryPIIEncField;
+  ethnicityEnc?: BeneficiaryPIIEncField;
+  residenceEnc?: BeneficiaryPIIEncField;
+  householdMembersEnc?: BeneficiaryPIIEncField;
 }
 
 export interface BeneficiaryPII {
@@ -89,6 +95,9 @@ export interface BeneficiaryPII {
   gender: string;
   municipality: string;
   nationality: string;
+  ethnicity?: string;
+  residence?: string;
+  householdMembers?: number;
 }
 
 export interface BeneficiaryListItem extends Beneficiary {

@@ -28,6 +28,7 @@ import { Alert, AlertDescription } from "../components/ui/feedback/alert";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { FormSubmission } from "../components/data-entry/FormSubmission";
 import { useAuth } from "../hooks/useAuth";
+import { useTranslation } from "../hooks/useTranslation";
 import {
   fetchUserProjectsByUserId,
   selectUserProjectsTree,
@@ -41,6 +42,7 @@ import {
 } from "../components/ui/form/select";
 
 export function DataEntryTemplates() {
+  const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -142,10 +144,10 @@ export function DataEntryTemplates() {
   }, [dispatch, selectedTemplateId]);
 
   const pageTitle = useMemo(() => {
-    if (projectId) return "Templates for Project";
-    if (subprojectId) return "Templates for Subproject";
-    return "Templates";
-  }, [projectId, subprojectId]);
+    if (projectId) return t("dataEntryTemplates.templatesForProject");
+    if (subprojectId) return t("dataEntryTemplates.templatesForSubproject");
+    return t("dataEntryTemplates.templates");
+  }, [projectId, subprojectId, t]);
 
   // Build numbered pagination tokens (compact with ellipsis)
   const pageTokens = useMemo(() => {
@@ -175,12 +177,11 @@ export function DataEntryTemplates() {
           onClick={() => navigate("/data-entry")}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Data Entry
+          {t("dataEntryTemplates.backToDataEntry")}
         </Button>
         <Alert variant="destructive">
           <AlertDescription>
-            Missing required parameter. Provide either projectId or subprojectId
-            in the URL.
+            {t("dataEntryTemplates.missingParameter")}
           </AlertDescription>
         </Alert>
       </div>
@@ -196,11 +197,11 @@ export function DataEntryTemplates() {
           onClick={() => navigate("/data-entry")}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Data Entry
+          {t("dataEntryTemplates.backToDataEntry")}
         </Button>
         <Alert variant="destructive">
           <AlertDescription>
-            You do not have access to this selection.
+            {t("dataEntryTemplates.noAccess")}
           </AlertDescription>
         </Alert>
       </div>
@@ -214,8 +215,6 @@ export function DataEntryTemplates() {
     : subprojectId
     ? "subproject"
     : undefined;
-
-
 
   return (
     <div className="space-y-6">
@@ -231,18 +230,19 @@ export function DataEntryTemplates() {
           }
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back
+          {t("dataEntryTemplates.back")}
         </Button>
         <div>
           <h2>{pageTitle}</h2>
           <div className="text-sm text-muted-foreground">
             {projectId ? (
               <>
-                projectId: <Badge variant="outline">{projectId}</Badge>
+                {t("dataEntryTemplates.projectId")}{" "}
+                <Badge variant="outline">{projectId}</Badge>
               </>
             ) : (
               <>
-                subprojectId:{" "}
+                {t("dataEntryTemplates.subprojectId")}{" "}
                 <Badge
                   variant="outline"
                   className="bg-black/5 text-black border-0"
@@ -259,7 +259,8 @@ export function DataEntryTemplates() {
         <div className="p-4">
           {loading && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading templates...
+              <Loader2 className="h-4 w-4 animate-spin" />{" "}
+              {t("dataEntryTemplates.loadingTemplates")}
             </div>
           )}
 
@@ -276,9 +277,9 @@ export function DataEntryTemplates() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Version</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead>{t("dataEntryTemplates.name")}</TableHead>
+                        <TableHead>{t("dataEntryTemplates.version")}</TableHead>
+                        <TableHead>{t("dataEntryTemplates.actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -301,8 +302,8 @@ export function DataEntryTemplates() {
                                 onClick={() => setSelectedTemplateId(tpl.id)}
                               >
                                 {selectedTemplateId === tpl.id
-                                  ? "Selected"
-                                  : "Select"}
+                                  ? t("dataEntryTemplates.selected")
+                                  : t("dataEntryTemplates.select")}
                               </Button>
                             </div>
                           </TableCell>
@@ -314,7 +315,7 @@ export function DataEntryTemplates() {
                             colSpan={3}
                             className="text-center text-muted-foreground"
                           >
-                            No templates found for this selection.
+                            {t("dataEntryTemplates.noTemplatesFound")}
                           </TableCell>
                         </TableRow>
                       )}
@@ -324,11 +325,14 @@ export function DataEntryTemplates() {
                   <div className="flex items-center justify-between flex-wrap gap-3">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <span>
-                        Page {pagination?.page || 1} of{" "}
+                        {t("dataEntryTemplates.page")} {pagination?.page || 1}{" "}
+                        {t("dataEntryTemplates.of")}{" "}
                         {Math.max(pagination?.totalPages || 1, 1)}
                       </span>
                       <span className="hidden sm:inline">
-                        • Total {pagination?.totalCount || 0} records
+                        • {t("dataEntryTemplates.total")}{" "}
+                        {pagination?.totalCount || 0}{" "}
+                        {t("dataEntryTemplates.records")}
                       </span>
                       <div className="flex items-center gap-2 ml-2">
                         <Button
@@ -338,7 +342,7 @@ export function DataEntryTemplates() {
                           disabled={loading || (pagination?.page || 1) <= 1}
                           className="bg-[#E0F2FE]"
                         >
-                          Prev
+                          {t("dataEntryTemplates.prev")}
                         </Button>
                         <Button
                           variant="outline"
@@ -352,7 +356,7 @@ export function DataEntryTemplates() {
                           }
                           className="bg-[#E0F2FE]"
                         >
-                          Next
+                          {t("dataEntryTemplates.next")}
                         </Button>
                         <div className="flex items-center gap-1 ml-2">
                           {pageTokens.map((tok, idx) =>
@@ -398,13 +402,23 @@ export function DataEntryTemplates() {
                           }}
                         >
                           <SelectTrigger className="w-[120px] bg-[#E0F2FE] border-0 text-black">
-                            <SelectValue placeholder="Rows" />
+                            <SelectValue
+                              placeholder={t("dataEntryTemplates.rows")}
+                            />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="10">10 / page</SelectItem>
-                            <SelectItem value="20">20 / page</SelectItem>
-                            <SelectItem value="50">50 / page</SelectItem>
-                            <SelectItem value="100">100 / page</SelectItem>
+                            <SelectItem value="10">
+                              {t("dataEntryTemplates.perPage10")}
+                            </SelectItem>
+                            <SelectItem value="20">
+                              {t("dataEntryTemplates.perPage20")}
+                            </SelectItem>
+                            <SelectItem value="50">
+                              {t("dataEntryTemplates.perPage50")}
+                            </SelectItem>
+                            <SelectItem value="100">
+                              {t("dataEntryTemplates.perPage100")}
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -415,8 +429,8 @@ export function DataEntryTemplates() {
                 <div className="space-y-4">
                   {selectedTemplateLoading && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" /> Loading
-                      template...
+                      <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                      {t("dataEntryTemplates.loadingTemplate")}
                     </div>
                   )}
                   {!selectedTemplateLoading && selectedTemplateError && (

@@ -8,24 +8,47 @@ import {
   MoreHorizontal,
   Pencil,
   Search,
-  Shield,
-  ShieldAlert,
   SlidersHorizontal,
   Trash,
-  UserCog,
   UserPlus,
-  Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "../../hooks/useTranslation";
+import type { Employee as ApiEmployee } from "../../services/employees/employeesModels";
+import type { AppDispatch } from "../../store";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import {
+  deleteEmployee,
+  selectEmployeeDeleting,
+} from "../../store/slices/employeesSlice";
+import { Button } from "../ui/button/button";
 import { Avatar, AvatarFallback } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
-import { Button } from "../ui/button/button";
+import { Card, CardContent } from "../ui/data-display/card";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../ui/data-display/card";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/form/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../ui/navigation/tabs";
 import {
   Dialog,
   DialogContent,
@@ -40,45 +63,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/overlay/dropdown-menu";
-import { Input } from "../ui/form/input";
-import { Label } from "../ui/form/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/form/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/data-display/table";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../ui/navigation/tabs";
-import type { Employee as ApiEmployee } from "../../services/employees/employeesModels";
-import { useTranslation } from "../../hooks/useTranslation";
 
 // Using API data provided via props; mock employees removed.
-
-// Pending invitation mock data
-const mockInvitations: any[] = [];
-
-// Mock data for roles
-const mockRoles = [
-  { id: "role-001", name: "Super Admin", count: 1 },
-  { id: "role-002", name: "Admin", count: 1 },
-  { id: "role-003", name: "Program Manager", count: 2 },
-  { id: "role-004", name: "Field Staff", count: 3 },
-  { id: "role-005", name: "Data Analyst", count: 1 },
-];
 
 // Props interface
 interface EmployeesListProps {
@@ -97,6 +83,7 @@ export function EmployeesList({
   error,
 }: EmployeesListProps) {
   const { t } = useTranslation();
+  const dispatch = useDispatch<AppDispatch>();
   const [activeTab, setActiveTab] = useState("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -104,6 +91,26 @@ export function EmployeesList({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
+  const isDeleting = useSelector(selectEmployeeDeleting);
+
+  // Current user for role checking
+  const currentUser = useSelector(selectCurrentUser);
+
+  // Determine if current user is sys or super admin
+  const normalizedRoles = useMemo(
+    () =>
+      (currentUser?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [currentUser?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
 
   // Canonicalize role names for consistent display and filtering
   const normalizeRole = (raw?: string): string => {
@@ -138,7 +145,12 @@ export function EmployeesList({
     role: normalizeRole(
       e.roles && e.roles.length > 0 ? e.roles[0].name : "N/A"
     ),
-    status: e.status === "active" ? "active" : "pending",
+    status:
+      e.status === "active"
+        ? "active"
+        : e.status === "inactive"
+        ? "inactive"
+        : "pending",
     lastActive: e.lastLogin,
     projects: ["All Projects"],
     subProjects: [] as string[],
@@ -204,31 +216,6 @@ export function EmployeesList({
     return true;
   });
 
-  // Get invitations based on tab
-  const filteredInvitations = mockInvitations.filter((invitation) => {
-    if (activeTab !== "invitations") return false;
-
-    // Filter by search query
-    const matchesSearch =
-      invitation.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invitation.role.toLowerCase().includes(searchQuery.toLowerCase());
-
-    if (!matchesSearch) return false;
-
-    // Filter by role
-    if (roleFilter !== "all" && invitation.role !== roleFilter) return false;
-
-    // Filter by project
-    if (
-      projectFilter !== "all" &&
-      !invitation.projects.includes(projectFilter) &&
-      invitation.projects[0] !== "All Projects"
-    )
-      return false;
-
-    return true;
-  });
-
   // Handle delete employee
   const handleDeleteClick = (employeeId: string) => {
     setEmployeeToDelete(employeeId);
@@ -236,23 +223,18 @@ export function EmployeesList({
   };
 
   // Confirm delete employee
-  const confirmDelete = () => {
-    console.log("Deleting employee:", employeeToDelete);
-    // In a real app, we would call an API to delete the employee
-    setShowDeleteDialog(false);
-    setEmployeeToDelete(null);
-  };
+  const confirmDelete = async () => {
+    if (!employeeToDelete) return;
 
-  // Handle resend invitation
-  const handleResendInvite = (invitationId: string) => {
-    console.log("Resending invitation:", invitationId);
-    // In a real app, we would call an API to resend the invitation
-  };
-
-  // Handle cancel invitation
-  const handleCancelInvite = (invitationId: string) => {
-    console.log("Cancelling invitation:", invitationId);
-    // In a real app, we would call an API to cancel the invitation
+    try {
+      await dispatch(deleteEmployee(employeeToDelete)).unwrap();
+      setShowDeleteDialog(false);
+      setEmployeeToDelete(null);
+    } catch (e) {
+      // Error toast will be shown by the service
+      console.error("Failed to delete employee", e);
+      // Keep dialog open to show error
+    }
   };
 
   // Render role badge
@@ -283,8 +265,6 @@ export function EmployeesList({
       return displayEmployees.filter((emp) => emp.status === "inactive").length;
     } else if (tab === "pending") {
       return displayEmployees.filter((emp) => emp.status === "pending").length;
-    } else if (tab === "invitations") {
-      return mockInvitations.length;
     }
     return 0;
   };
@@ -475,12 +455,6 @@ export function EmployeesList({
             >
               {t("employees.inactiveEmployees")} ({getTabCount("inactive")})
             </TabsTrigger>
-            <TabsTrigger
-              value="invitations"
-              className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
-            >
-              {t("employees.invitations")} ({getTabCount("invitations")})
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="active" className="pt-6">
@@ -594,6 +568,13 @@ export function EmployeesList({
                               <CheckCircle className="h-3 w-3 mr-1" />
                               {t("common.active")}
                             </Badge>
+                          ) : employee.status === "inactive" ? (
+                            <Badge
+                              variant="outline"
+                              className="text-red-600 border-0 bg-red-50"
+                            >
+                              {t("common.inactive")}
+                            </Badge>
                           ) : (
                             <Badge
                               variant="outline"
@@ -649,25 +630,23 @@ export function EmployeesList({
                                   <Pencil className="h-4 w-4 mr-2" />
                                   Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Mail className="h-4 w-4 mr-2" />
-                                  Send Email
-                                </DropdownMenuItem>
+
                                 <DropdownMenuItem>
                                   <KeyRound className="h-4 w-4 mr-2" />
                                   {t("employees.resetPassword")}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Shield className="h-4 w-4 mr-2" />
-                                  {t("employees.managePermissions")}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => handleDeleteClick(employee.id)}
-                                >
-                                  <Trash className="h-4 w-4 mr-2" />
-                                  {t("common.delete")}
-                                </DropdownMenuItem>
+
+                                {isSysOrSuperAdmin && (
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() =>
+                                      handleDeleteClick(employee.id)
+                                    }
+                                  >
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    {t("common.delete")}
+                                  </DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -812,13 +791,17 @@ export function EmployeesList({
                                   <Mail className="h-4 w-4 mr-2" />
                                   Resend Invitation
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => handleDeleteClick(employee.id)}
-                                >
-                                  <Trash className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
+                                {isSysOrSuperAdmin && (
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() =>
+                                      handleDeleteClick(employee.id)
+                                    }
+                                  >
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -967,13 +950,17 @@ export function EmployeesList({
                                   <CheckCircle className="h-4 w-4 mr-2" />
                                   Reactivate
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => handleDeleteClick(employee.id)}
-                                >
-                                  <Trash className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
+                                {isSysOrSuperAdmin && (
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() =>
+                                      handleDeleteClick(employee.id)
+                                    }
+                                  >
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -986,7 +973,7 @@ export function EmployeesList({
             </Card>
           </TabsContent>
 
-          <TabsContent value="invitations" className="pt-6">
+          {/* <TabsContent value="invitations" className="pt-6">
             <Card className="bg-[#F7F9FB]">
               <div className="w-full overflow-x-auto">
                 <Table className="min-w-[900px]">
@@ -1108,106 +1095,9 @@ export function EmployeesList({
                 </Table>
               </div>
             </Card>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </div>
-
-      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-[#E5ECF6] border-0   drop-shadow-sm shadow-gray-50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Role Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {mockRoles.map((role) => (
-                <div
-                  key={role.id}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    {role.name === "Super Admin" || role.name === "Admin" ? (
-                      <ShieldAlert className="h-4 w-4 text-destructive" />
-                    ) : role.name === "Program Manager" ? (
-                      <UserCog className="h-4 w-4 text-primary" />
-                    ) : (
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    <span>{role.name}</span>
-                  </div>
-                  <Badge variant="outline" className="ml-auto">
-                    {role.count}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="col-span-3 bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Recent Activities</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="bg-[#E3F5FF] rounded-md p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>ML</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">Michael Lee</div>
-                      <div className="text-sm text-muted-foreground">
-                        Changed role of Robert Johnson from Field Staff to
-                        Program Manager
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    2 hours ago
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-[#E3F5FF] rounded-md p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>JS</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">Jane Smith</div>
-                      <div className="text-sm text-muted-foreground">
-                        Invited Alex Taylor to join as Field Staff
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    5 hours ago
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-[#E3F5FF] rounded-md p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>TB</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">Thomas Brown</div>
-                      <div className="text-sm text-muted-foreground">
-                        Assigned Lisa Anderson to Youth Empowerment Program
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-sm text-muted-foreground">Yesterday</div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div> */}
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
@@ -1234,11 +1124,16 @@ export function EmployeesList({
             <Button
               variant="outline"
               onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
             >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Delete Employee
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete Employee"}
             </Button>
           </DialogFooter>
         </DialogContent>

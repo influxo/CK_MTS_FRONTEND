@@ -628,7 +628,11 @@ export function SubmissionHistory({
                               <span>{labelMap[key] ?? formatLabel(key)}</span>
                             </div>
                             <div className="mt-1 text-sm font-medium text-slate-900 break-words break-all sm:break-words">
-                              {typeof value === "object"
+                              {typeof value === "boolean"
+                                ? value
+                                  ? "Po"
+                                  : "Jo"
+                                : typeof value === "object"
                                 ? JSON.stringify(value)
                                 : String(value)}
                             </div>

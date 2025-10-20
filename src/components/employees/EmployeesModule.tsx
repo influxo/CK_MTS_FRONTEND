@@ -71,7 +71,12 @@ export function EmployeesModule() {
   const handleInviteCreated = (inviteData: any) => {
     setInviteData(inviteData);
     setView("list");
-    // In a real app, we would trigger an API call here
+    // Re-fetch employees based on role after successful invite
+    if (isSysOrSuperAdmin) {
+      dispatch(fetchEmployees());
+    } else {
+      dispatch(fetchMyTeamEmployees());
+    }
   };
 
   // Handle when a user accesses the account setup

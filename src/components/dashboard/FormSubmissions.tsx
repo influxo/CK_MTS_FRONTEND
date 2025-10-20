@@ -649,7 +649,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">
-                    {t("subProjects.allSubProjects")}
+                    {t("subProjectsDetails.allSubProjects")}
                   </SelectItem>
                   {subprojectsOptions
                     .filter((sp) => sp.projectId === effectiveProjectId)

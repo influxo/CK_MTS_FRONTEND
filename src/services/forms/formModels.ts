@@ -80,6 +80,7 @@ export interface FormTemplate {
   category?: string;
   status?: string;
   version?: string;
+  includeBeneficiaries?: boolean;
   entityAssociations: EntityReference[];
   schema: FormSchema;
   updatedAt?: string;

@@ -1,4 +1,8 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import {
+  createAsyncThunk,
+  createSelector,
+  createSlice,
+} from "@reduxjs/toolkit";
 import beneficiaryService from "../../services/beneficiaries/beneficiaryService";
 import type {
   CreateBeneficiaryRequest,
@@ -602,14 +606,15 @@ export const selectBeneficiariesError = (state: {
   beneficiaries: BeneficiaryState;
 }) => state.beneficiaries.listError;
 
-export const selectBeneficiariesPagination = (state: {
-  beneficiaries: BeneficiaryState;
-}) => ({
-  page: state.beneficiaries.page,
-  limit: state.beneficiaries.limit,
-  totalItems: state.beneficiaries.totalItems,
-  totalPages: state.beneficiaries.totalPages,
-});
+export const selectBeneficiariesPagination = createSelector(
+  [(state: { beneficiaries: BeneficiaryState }) => state.beneficiaries],
+  (beneficiaries) => ({
+    page: beneficiaries.page,
+    limit: beneficiaries.limit,
+    totalItems: beneficiaries.totalItems,
+    totalPages: beneficiaries.totalPages,
+  })
+);
 
 export const selectBeneficiaryDetail = (state: {
   beneficiaries: BeneficiaryState;
@@ -651,14 +656,15 @@ export const selectBeneficiaryServicesError = (state: {
   beneficiaries: BeneficiaryState;
 }) => state.beneficiaries.servicesError;
 
-export const selectBeneficiaryServicesMeta = (state: {
-  beneficiaries: BeneficiaryState;
-}) => ({
-  page: state.beneficiaries.servicesPage,
-  limit: state.beneficiaries.servicesLimit,
-  totalItems: state.beneficiaries.servicesTotalItems,
-  totalPages: state.beneficiaries.servicesTotalPages,
-});
+export const selectBeneficiaryServicesMeta = createSelector(
+  [(state: { beneficiaries: BeneficiaryState }) => state.beneficiaries],
+  (beneficiaries) => ({
+    page: beneficiaries.servicesPage,
+    limit: beneficiaries.servicesLimit,
+    totalItems: beneficiaries.servicesTotalItems,
+    totalPages: beneficiaries.servicesTotalPages,
+  })
+);
 
 export const selectBeneficiaryEntities = (state: {
   beneficiaries: BeneficiaryState;
@@ -701,14 +707,15 @@ export const selectBeneficiariesByEntityError = (state: {
   beneficiaries: BeneficiaryState;
 }) => state.beneficiaries.byEntityError;
 
-export const selectBeneficiariesByEntityPagination = (state: {
-  beneficiaries: BeneficiaryState;
-}) => ({
-  page: state.beneficiaries.byEntityPage,
-  limit: state.beneficiaries.byEntityLimit,
-  totalItems: state.beneficiaries.byEntityTotalItems,
-  totalPages: state.beneficiaries.byEntityTotalPages,
-});
+export const selectBeneficiariesByEntityPagination = createSelector(
+  [(state: { beneficiaries: BeneficiaryState }) => state.beneficiaries],
+  (beneficiaries) => ({
+    page: beneficiaries.byEntityPage,
+    limit: beneficiaries.byEntityLimit,
+    totalItems: beneficiaries.byEntityTotalItems,
+    totalPages: beneficiaries.byEntityTotalPages,
+  })
+);
 
 // association selectors
 export const selectBeneficiaryAssociateLoading = (state: {

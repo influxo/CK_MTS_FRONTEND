@@ -208,6 +208,9 @@ export function FormBuilder({
           field.options?.map((opt) => ({ value: opt, label: opt })) || [],
       }));
 
+      // Set includeBeneficiaries state from the form data
+      setIncludeBeneficiaries(formToEdit.includeBeneficiaries ?? true);
+
       if (assocEntityType === "subproject" && assocEntityId) {
         (async () => {
           try {
@@ -390,6 +393,7 @@ export function FormBuilder({
                 },
               ],
       },
+      includeBeneficiaries: includeBeneficiaries,
     };
 
     onSave(formattedData);
@@ -725,22 +729,24 @@ export function FormBuilder({
                             />
                           </div>
 
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id="field-required"
-                                checked={selectedFieldData.required}
-                                onCheckedChange={(checked: any) =>
-                                  handleFieldUpdate(selectedField!, {
-                                    required: !!checked,
-                                  })
-                                }
-                              />
-                              <Label htmlFor="field-required">
-                                {t("forms.requiredField")}
-                              </Label>
+                          {selectedFieldData?.type !== "checkbox" && (
+                            <div className="space-y-2">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id="field-required"
+                                  checked={selectedFieldData.required}
+                                  onCheckedChange={(checked: any) =>
+                                    handleFieldUpdate(selectedField!, {
+                                      required: !!checked,
+                                    })
+                                  }
+                                />
+                                <Label htmlFor="field-required">
+                                  {t("forms.requiredField")}
+                                </Label>
+                              </div>
                             </div>
-                          </div>
+                          )}
 
                           {selectedFieldData?.type === "dropdown" && (
                             <div className="space-y-2">
