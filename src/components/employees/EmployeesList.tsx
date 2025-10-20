@@ -43,7 +43,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/form/select";
-import { ScrollArea } from "../ui/layout/scroll-area";
 import {
   Tabs,
   TabsContent,
@@ -460,8 +459,8 @@ export function EmployeesList({
 
           <TabsContent value="active" className="pt-6">
             <Card>
-              <ScrollArea className="h-[600px]">
-                <Table className="border-0">
+              <div className="w-full overflow-x-auto">
+                <Table className="border-0 min-w-[900px]">
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
                       <TableHead className="w-[250px]">
@@ -656,14 +655,14 @@ export function EmployeesList({
                     ))}
                   </TableBody>
                 </Table>
-              </ScrollArea>
+              </div>
             </Card>
           </TabsContent>
 
           <TabsContent value="pending" className="pt-6">
             <Card className="bg-[#F7F9FB]">
-              <ScrollArea className="h-[600px]">
-                <Table>
+              <div className="w-full overflow-x-auto">
+                <Table className="min-w-[900px]">
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
                       <TableHead className="w-[250px]">
@@ -679,7 +678,7 @@ export function EmployeesList({
                       </TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className="bg-[#F7F9FB]">
                     {filteredEmployees.map((employee) => (
                       <TableRow key={employee.id}>
                         <TableCell>
@@ -811,14 +810,14 @@ export function EmployeesList({
                     ))}
                   </TableBody>
                 </Table>
-              </ScrollArea>
+              </div>
             </Card>
           </TabsContent>
 
           <TabsContent value="inactive" className="pt-6">
             <Card className="bg-[#F7F9FB]">
-              <ScrollArea className="h-[600px]">
-                <Table>
+              <div className="w-full overflow-x-auto">
+                <Table className="min-w-[900px]">
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
                       <TableHead className="w-[250px]">Punëtori</TableHead>
@@ -970,9 +969,133 @@ export function EmployeesList({
                     ))}
                   </TableBody>
                 </Table>
-              </ScrollArea>
+              </div>
             </Card>
           </TabsContent>
+
+          {/* <TabsContent value="invitations" className="pt-6">
+            <Card className="bg-[#F7F9FB]">
+              <div className="w-full overflow-x-auto">
+                <Table className="min-w-[900px]">
+                  <TableHeader className="bg-[#E5ECF6]">
+                    <TableRow>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Roli</TableHead>
+                      <TableHead>Projektet</TableHead>
+                      <TableHead>Ftuar nga</TableHead>
+                      <TableHead>Ftuar me</TableHead>
+                      <TableHead>Skadon</TableHead>
+                      <TableHead>Statusi</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredInvitations.map((invitation) => (
+                      <TableRow key={invitation.id}>
+                        <TableCell>
+                          <div className="font-medium">{invitation.email}</div>
+                        </TableCell>
+                        <TableCell>
+                          {renderRoleBadge(invitation.role)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="max-w-[200px]">
+                            {invitation.projects[0] === "All Projects" ? (
+                              <Badge
+                                variant="outline"
+                                className="bg-[#2E343E] text-white border-0"
+                              >
+                                All Projects
+                              </Badge>
+                            ) : (
+                              <div className="space-y-1">
+                                {invitation.projects.map(
+                                  (project: string, index: number) => (
+                                    <div
+                                      key={index}
+                                      className="text-sm truncate"
+                                    >
+                                      {project}
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{invitation.invitedBy}</TableCell>
+                        <TableCell>
+                          {formatDate(invitation.invitedAt)}
+                        </TableCell>
+                        <TableCell>
+                          {formatDate(invitation.expiresAt)}
+                        </TableCell>
+                        <TableCell>
+                          {invitation.status === "pending" ? (
+                            <Badge
+                              variant="outline"
+                              className="bg-[#E2F5FF] text-[#59A8D4] border-0"
+                            >
+                              Pending
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="bg-[#FFFBD4] text-[#FFC555] border-0"
+                            >
+                              Expired
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            {invitation.status === "pending" ? (
+                              <>
+                                <Button
+                                  className="bg-[#2E343E] text-white border-0"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleResendInvite(invitation.id)
+                                  }
+                                >
+                                  <Mail className="h-4 w-4 mr-2" />
+                                  Resend
+                                </Button>
+                                <Button
+                                  className="hover:bg-black/10 text-black border-0"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleCancelInvite(invitation.id)
+                                  }
+                                >
+                                  <Trash className="h-4 w-4 mr-2" />
+                                  Cancel
+                                </Button>
+                              </>
+                            ) : (
+                              <Button
+                                className="bg-[#2E343E] text-white border-0"
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleResendInvite(invitation.id)
+                                }
+                              >
+                                <Mail className="h-4 w-4 mr-2" />
+                                Resend
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          </TabsContent> */}
         </Tabs>
       </div>
 

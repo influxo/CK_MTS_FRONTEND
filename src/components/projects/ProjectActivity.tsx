@@ -138,13 +138,15 @@ export function ProjectActivity({ projectId }: ProjectActivityProps) {
     <Card className="bg-[#E5ECF6] border-0 drop-shadow-sm shadow-gray-50">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-base">{t('projectActivity.recentActivity')}</CardTitle>
+          <CardTitle className="text-base">
+            {t("projectActivity.recentActivity")}
+          </CardTitle>
           <Button
             variant="ghost"
             size="sm"
             className="h-7  text-black bg-black bg-opacity-5 "
           >
-            {t('projectActivity.viewAll')}
+            {t("projectActivity.viewAll")}
           </Button>
         </div>
       </CardHeader>
