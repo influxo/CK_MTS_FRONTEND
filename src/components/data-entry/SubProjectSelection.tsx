@@ -56,6 +56,8 @@ export function SubProjectSelection() {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(10);
   // New: scope selector for showing All, Projects, or Subprojects
   const [filterEntityType, setFilterEntityType] = useState<
     "all" | "project" | "subproject"
@@ -190,6 +192,13 @@ export function SubProjectSelection() {
     filterSubprojectId,
   ]);
 
+  // Pagination calculations for the table
+  const totalRows = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalRows);
+  const visibleItems = filtered.slice(startIndex, endIndex);
+
   const handleSelect = (item: AggregatedItem) => {
     if (item.type === "project") {
       navigate(`/data-entry/templates?projectId=${item.id}`);
@@ -217,7 +226,7 @@ export function SubProjectSelection() {
               <FolderKanban className="h-5 w-5 text-blue-500" />
               <div>
                 <div className="text-sm text-muted-foreground">
-                  {t('dataEntry.availableSubProjects')}
+                  {t("dataEntry.availableSubProjects")}
                 </div>
                 <div className="text-xl font-medium">56</div>
               </div>
@@ -230,7 +239,9 @@ export function SubProjectSelection() {
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-green-500" />
               <div>
-                <div className="text-sm text-muted-foreground">{t('dataEntry.totalForms')}</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("dataEntry.totalForms")}
+                </div>
                 <div className="text-xl font-medium">56</div>
               </div>
             </div>
@@ -243,7 +254,7 @@ export function SubProjectSelection() {
               <Calendar className="h-5 w-5 text-purple-500" />
               <div>
                 <div className="text-sm text-muted-foreground">
-                  {t('dataEntry.totalActivities')}
+                  {t("dataEntry.totalActivities")}
                 </div>
                 <div className="text-xl font-medium">130</div>
               </div>
@@ -257,7 +268,7 @@ export function SubProjectSelection() {
               <Users className="h-5 w-5 text-orange-500" />
               <div>
                 <div className="text-sm text-muted-foreground">
-                  {t('dataEntry.teamMembers')}
+                  {t("dataEntry.teamMembers")}
                 </div>
                 <div className="text-xl font-medium">120</div>
               </div>
@@ -271,7 +282,7 @@ export function SubProjectSelection() {
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={t('dataEntry.searchProjectsSubprojects')}
+            placeholder={t("dataEntry.searchProjectsSubprojects")}
             className="pl-9 bg-white border-gray-100   border"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -288,12 +299,14 @@ export function SubProjectSelection() {
           }}
         >
           <SelectTrigger className="w-full sm:w-[180px] bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
-            <SelectValue placeholder={t('dataEntry.show')} />
+            <SelectValue placeholder={t("dataEntry.show")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t('dataEntry.all')}</SelectItem>
-            <SelectItem value="project">{t('dataEntry.project')}</SelectItem>
-            <SelectItem value="subproject">{t('dataEntry.subproject')}</SelectItem>
+            <SelectItem value="all">{t("dataEntry.all")}</SelectItem>
+            <SelectItem value="project">{t("dataEntry.project")}</SelectItem>
+            <SelectItem value="subproject">
+              {t("dataEntry.subproject")}
+            </SelectItem>
           </SelectContent>
         </Select>
 
@@ -304,10 +317,10 @@ export function SubProjectSelection() {
             onValueChange={(v) => setFilterProjectId(v)}
           >
             <SelectTrigger className="w-full sm:w-[220px] bg-white border-gray-100 border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
-              <SelectValue placeholder={t('dataEntry.selectProject')} />
+              <SelectValue placeholder={t("dataEntry.selectProject")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('dataEntry.allProjects')}</SelectItem>
+              <SelectItem value="all">{t("dataEntry.allProjects")}</SelectItem>
               {allowedProjects.map((project: any) => (
                 <SelectItem key={project.id} value={project.id}>
                   {project.name}
@@ -321,10 +334,12 @@ export function SubProjectSelection() {
             onValueChange={(v) => setFilterSubprojectId(v)}
           >
             <SelectTrigger className="w-full sm:w-[260px] bg-[#E0F2FE] border-gray-100 border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
-              <SelectValue placeholder={t('dataEntry.selectSubproject')} />
+              <SelectValue placeholder={t("dataEntry.selectSubproject")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('dataEntry.allSubprojects')}</SelectItem>
+              <SelectItem value="all">
+                {t("dataEntry.allSubprojects")}
+              </SelectItem>
               {(allowedSubprojects as any[]).map((sp: any) => (
                 <SelectItem key={sp.id} value={sp.id}>
                   {sp.name}
@@ -337,19 +352,19 @@ export function SubProjectSelection() {
 
       {/* Aggregated Table */}
       <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
-        <ScrollArea className="h-[600px]">
-          <Table className="rounded-md overflow-hidden">
-            <TableHeader className="bg-[#E5ECF6] ">
+        <div className="rounded-md border overflow-hidden">
+          <Table>
+            <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
-                <TableHead className="w-[300px]">{t('dataEntry.name')}</TableHead>
-                <TableHead>{t('dataEntry.type')}</TableHead>
-                <TableHead>{t('dataEntry.project')}</TableHead>
-                <TableHead>{t('dataEntry.status')}</TableHead>
-                <TableHead className="text-right">{t('dataEntry.actions')}</TableHead>
+                <TableHead className="w-[300px]">{t("dataEntry.name")}</TableHead>
+                <TableHead>{t("dataEntry.type")}</TableHead>
+                <TableHead>{t("dataEntry.project")}</TableHead>
+                <TableHead>{t("dataEntry.status")}</TableHead>
+                <TableHead className="text-right">{t("dataEntry.actions")}</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {filtered.map((item) => (
+            <TableBody className="bg-[#F7F9FB]">
+              {visibleItems.map((item) => (
                 <TableRow key={`${item.type}-${item.id}`}>
                   <TableCell>
                     <div className="space-y-1">
@@ -395,7 +410,7 @@ export function SubProjectSelection() {
                       size="sm"
                       className=" hover:bg-[#E0F2FE]"
                     >
-                      {t('dataEntry.select')}
+                      {t("dataEntry.select")}
                       <ArrowRight className="h-4 w-4 ml-1" />
                     </Button>
                   </TableCell>
@@ -403,14 +418,64 @@ export function SubProjectSelection() {
               ))}
             </TableBody>
           </Table>
-        </ScrollArea>
+        </div>
+        <div className="p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">{t("common.show") || "Show"}</span>
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => {
+                const sz = Number(v) || 10;
+                setPageSize(sz);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[100px] bg-white border-gray-100 border">
+                <SelectValue placeholder="10" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-muted-foreground whitespace-nowrap">
+              {startIndex + 1}-{endIndex} / {totalRows}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-[#E0F2FE] border-0"
+              disabled={page === 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              {t("common.previous") || "Previous"}
+            </Button>
+            <div className="text-sm text-muted-foreground whitespace-nowrap">
+              {t("common.page") || "Page"} {page} {t("common.of") || "of"} {totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-[#E0F2FE] border-0"
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              {t("common.next") || "Next"}
+            </Button>
+          </div>
+        </div>
       </Card>
 
       {filtered.length === 0 && (
         <div className="text-center py-12">
-          <h3 className="font-medium mb-2">{t('dataEntry.noItemsAvailable')}</h3>
+          <h3 className="font-medium mb-2">
+            {t("dataEntry.noItemsAvailable")}
+          </h3>
           <p className="text-muted-foreground">
-            {t('dataEntry.tryAdjustingSearch')}
+            {t("dataEntry.tryAdjustingSearch")}
           </p>
         </div>
       )}

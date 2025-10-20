@@ -223,11 +223,13 @@ export function SubmissionHistory({
           onClick={onBack}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          {t('dataEntry.backToForms')}
+          {t("dataEntry.backToForms")}
         </Button>
         <div>
-          <h2>{t('dataEntry.submissionHistory')}</h2>
-          <p className="text-muted-foreground">{t('dataEntry.viewCompletedSubmissions')}</p>
+          <h2>{t("dataEntry.submissionHistory")}</h2>
+          <p className="text-muted-foreground">
+            {t("dataEntry.viewCompletedSubmissions")}
+          </p>
         </div>
       </div>
 
@@ -236,7 +238,7 @@ export function SubmissionHistory({
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={t('dataEntry.searchByFormSubmitter')}
+            placeholder={t("dataEntry.searchByFormSubmitter")}
             className="pl-9 border-gray-100 bg-white border"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -246,10 +248,10 @@ export function SubmissionHistory({
           <Select value={templateFilter} onValueChange={setTemplateFilter}>
             <SelectTrigger className="w-full bg-white border-gray-100 border sm:w-[220px] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
               <Filter className="h-4 w-4 mr-2 " />
-              <SelectValue placeholder={t('dataEntry.template')} />
+              <SelectValue placeholder={t("dataEntry.template")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('dataEntry.allTemplates')}</SelectItem>
+              <SelectItem value="all">{t("dataEntry.allTemplates")}</SelectItem>
               {templateOptions.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
                   {t.name}
@@ -267,7 +269,7 @@ export function SubmissionHistory({
                 setFromDate(e.target.value);
               }}
               className="w-[160px] border-gray-100 bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
-              placeholder={t('dataEntry.from')}
+              placeholder={t("dataEntry.from")}
             />
             <Input
               type="date"
@@ -277,7 +279,7 @@ export function SubmissionHistory({
                 setToDate(e.target.value);
               }}
               className="w-[160px] border-gray-100 bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
-              placeholder={t('dataEntry.to')}
+              placeholder={t("dataEntry.to")}
             />
           </div>
 
@@ -289,12 +291,12 @@ export function SubmissionHistory({
             }}
           >
             <SelectTrigger className="w-full sm:w-[120px] border-gray-100 bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
-              <SelectValue placeholder={t('dataEntry.pageSize')} />
+              <SelectValue placeholder={t("dataEntry.pageSize")} />
             </SelectTrigger>
             <SelectContent>
               {[10, 20, 50, 100].map((n) => (
                 <SelectItem key={n} value={String(n)}>
-                  {n} {t('dataEntry.perPage')}
+                  {n} {t("dataEntry.perPage")}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -311,7 +313,7 @@ export function SubmissionHistory({
               setSearchQuery("");
             }}
           >
-            {t('dataEntry.reset')}
+            {t("dataEntry.reset")}
           </Button>
         </div>
       </div>
@@ -320,7 +322,8 @@ export function SubmissionHistory({
         <CardHeader className="py-3 px-4">
           {loading && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> {t('dataEntry.loadingSubmissions')}
+              <Loader2 className="h-4 w-4 animate-spin" />{" "}
+              {t("dataEntry.loadingSubmissions")}
             </div>
           )}
           {!loading && error && (
@@ -332,11 +335,13 @@ export function SubmissionHistory({
             <Table>
               <TableHeader className="bg-[#e4ebf6]">
                 <TableRow>
-                  <TableHead>{t('dataEntry.form')}</TableHead>
-                  <TableHead>{t('dataEntry.beneficiary')}</TableHead>
-                  <TableHead>{t('dataEntry.submitted')}</TableHead>
-                  <TableHead>{t('dataEntry.submittedBy')}</TableHead>
-                  <TableHead className="w-[70px]">{t('dataEntry.actions')}</TableHead>
+                  <TableHead>{t("dataEntry.form")}</TableHead>
+                  <TableHead>{t("dataEntry.beneficiary")}</TableHead>
+                  <TableHead>{t("dataEntry.submitted")}</TableHead>
+                  <TableHead>{t("dataEntry.submittedBy")}</TableHead>
+                  <TableHead className="w-[70px]">
+                    {t("dataEntry.actions")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="bg-[#f8f9fb]">
@@ -397,7 +402,7 @@ export function SubmissionHistory({
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleView(r.id)}>
                             <Eye className="h-4 w-4 mr-2 hover:bg-[#E0F2FE]" />{" "}
-                            {t('dataEntry.view')}
+                            {t("dataEntry.view")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -410,7 +415,7 @@ export function SubmissionHistory({
                       colSpan={5}
                       className="text-center py-8 text-muted-foreground"
                     >
-                      {t('dataEntry.noSubmissionsFound')}
+                      {t("dataEntry.noSubmissionsFound")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -481,26 +486,30 @@ export function SubmissionHistory({
         open={viewerOpen}
         onOpenChange={(o) => (!o ? setViewerOpen(false) : null)}
       >
-        <DialogContent className="sm:max-w-5xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-5xl max-h-[85vh] overflow-y-auto overflow-x-hidden">
           <DialogHeaderUI>
-            <DialogTitle className="text-lg ml-10">{t('dataEntry.formSubmission')}</DialogTitle>
+            <DialogTitle className="text-lg ml-0 sm:ml-10">
+              {t("dataEntry.formSubmission")}
+            </DialogTitle>
           </DialogHeaderUI>
           {selectedLoading && (
             <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> {t('dataEntry.loadingFormResponse')}
+              <Loader2 className="h-4 w-4 animate-spin" />{" "}
+              {t("dataEntry.loadingFormResponse")}
             </div>
           )}
           {!selectedLoading && selectedError && (
             <div className="text-sm text-red-600">{selectedError}</div>
           )}
           {!selectedLoading && !selectedError && selected && (
-            <div className="space-y-6 px-6 ml-4">
+            <div className="space-y-6 px-4 sm:px-6 ml-0 sm:ml-4 w-full overflow-x-hidden">
               {/* Header */}
               <div className="flex flex-col md:flex-row justify-between gap-6">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <h1 className="font-medium text-2xl">
-                      {selected.template?.name || t('dataEntry.untitledTemplate')}
+                      {selected.template?.name ||
+                        t("dataEntry.untitledTemplate")}
                     </h1>
                     {selected.template?.version !== undefined && (
                       <Badge variant="outline">
@@ -511,7 +520,7 @@ export function SubmissionHistory({
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5" />
                     <span>
-                      {t('dataEntry.submittedOn')}{" "}
+                      {t("dataEntry.submittedOn")}{" "}
                       {selected.submittedAt
                         ? new Date(selected.submittedAt).toLocaleString()
                         : "—"}
@@ -520,7 +529,7 @@ export function SubmissionHistory({
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <User className="h-3.5 w-3.5" />
                     <span>
-                      {t('dataEntry.by')}{" "}
+                      {t("dataEntry.by")}{" "}
                       {`${selected.submitter?.firstName ?? ""} ${
                         selected.submitter?.lastName ?? ""
                       }`.trim() || "—"}
@@ -532,7 +541,10 @@ export function SubmissionHistory({
                   {selected.beneficiary && (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <MapPin className="h-3.5 w-3.5" />
-                      <span>{t('dataEntry.beneficiaryLabel')} {selected.beneficiary.pseudonym}</span>
+                      <span>
+                        {t("dataEntry.beneficiaryLabel")}{" "}
+                        {selected.beneficiary.pseudonym}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -540,7 +552,7 @@ export function SubmissionHistory({
 
               {selectedTemplateLoading && (
                 <div className="text-sm text-muted-foreground">
-                  {t('dataEntry.loadingFormDefinition')}
+                  {t("dataEntry.loadingFormDefinition")}
                 </div>
               )}
 
@@ -562,12 +574,14 @@ export function SubmissionHistory({
 
               <Card className="bg-[#F7F9FB] border-0 ">
                 <CardHeader>
-                  <CardTitle className="text-base">{t('dataEntry.submittedData')}</CardTitle>
+                  <CardTitle className="text-base">
+                    {t("dataEntry.submittedData")}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {Object.keys(selected.data || {}).length === 0 ? (
                     <div className="text-sm text-muted-foreground">
-                      {t('dataEntry.noDataFields')}
+                      {t("dataEntry.noDataFields")}
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border-t border-slate-200 md:border-t">
@@ -613,7 +627,7 @@ export function SubmissionHistory({
                               })()}
                               <span>{labelMap[key] ?? formatLabel(key)}</span>
                             </div>
-                            <div className="mt-1 text-sm font-medium text-slate-900 break-words">
+                            <div className="mt-1 text-sm font-medium text-slate-900 break-words break-all sm:break-words">
                               {typeof value === "object"
                                 ? JSON.stringify(value)
                                 : String(value)}
@@ -630,51 +644,53 @@ export function SubmissionHistory({
               <Card className=" border-0  bg-[#E5ECF6]">
                 <CardHeader className="border-0  ">
                   <CardTitle className="text-base ">
-                    {t('dataEntry.linkedServiceDeliveries')}
+                    {t("dataEntry.linkedServiceDeliveries")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className=" bg-white">
                   {selected.serviceDeliveries?.length ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>{t('dataEntry.date')}</TableHead>
-                          <TableHead>{t('dataEntry.category')}</TableHead>
-                          <TableHead>{t('dataEntry.service')}</TableHead>
-                          <TableHead>{t('dataEntry.staff')}</TableHead>
-                          <TableHead>{t('dataEntry.entity')}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selected.serviceDeliveries.map((d: any) => (
-                          <TableRow key={d.id}>
-                            <TableCell>
-                              {d.deliveredAt
-                                ? new Date(d.deliveredAt).toLocaleDateString()
-                                : "—"}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">
-                                {d.service?.category ?? "—"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{d.service?.name ?? "—"}</TableCell>
-                            <TableCell>
-                              {`${d.staff?.firstName ?? ""} ${
-                                d.staff?.lastName ?? ""
-                              }`.trim() || "—"}
-                            </TableCell>
-                            <TableCell>
-                              {`${d.entityType || ""}`}
-                              {d.entityId ? ` • ${d.entityId}` : ""}
-                            </TableCell>
+                    <div className="w-full overflow-x-auto">
+                      <Table className="min-w-[720px]">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{t("dataEntry.date")}</TableHead>
+                            <TableHead>{t("dataEntry.category")}</TableHead>
+                            <TableHead>{t("dataEntry.service")}</TableHead>
+                            <TableHead>{t("dataEntry.staff")}</TableHead>
+                            <TableHead>{t("dataEntry.entity")}</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {selected.serviceDeliveries.map((d: any) => (
+                            <TableRow key={d.id}>
+                              <TableCell>
+                                {d.deliveredAt
+                                  ? new Date(d.deliveredAt).toLocaleDateString()
+                                  : "—"}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">
+                                  {d.service?.category ?? "—"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{d.service?.name ?? "—"}</TableCell>
+                              <TableCell>
+                                {`${d.staff?.firstName ?? ""} ${
+                                  d.staff?.lastName ?? ""
+                                }`.trim() || "—"}
+                              </TableCell>
+                              <TableCell>
+                                {`${d.entityType || ""}`}
+                                {d.entityId ? ` • ${d.entityId}` : ""}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   ) : (
                     <div className="text-sm text-muted-foreground">
-                      {t('dataEntry.noLinkedServiceDeliveries')}
+                      {t("dataEntry.noLinkedServiceDeliveries")}
                     </div>
                   )}
                 </CardContent>

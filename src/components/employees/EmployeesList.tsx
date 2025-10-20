@@ -42,7 +42,6 @@ import {
 } from "../ui/overlay/dropdown-menu";
 import { Input } from "../ui/form/input";
 import { Label } from "../ui/form/label";
-import { ScrollArea } from "../ui/layout/scroll-area";
 import {
   Select,
   SelectContent,
@@ -152,8 +151,8 @@ export function EmployeesList({
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2>{t('employees.title')}</h2>
-            <p className="text-muted-foreground">{t('common.loading')}</p>
+            <h2>{t("employees.title")}</h2>
+            <p className="text-muted-foreground">{t("common.loading")}</p>
           </div>
         </div>
       </div>
@@ -165,8 +164,10 @@ export function EmployeesList({
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2>{t('employees.title')}</h2>
-            <p className="text-destructive">{t('common.error')}: {error}</p>
+            <h2>{t("employees.title")}</h2>
+            <p className="text-destructive">
+              {t("common.error")}: {error}
+            </p>
           </div>
         </div>
       </div>
@@ -292,7 +293,7 @@ export function EmployeesList({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-muted-foreground">{t('dashboard.manageStaff')}</p>
+          <p className="text-muted-foreground">{t("dashboard.manageStaff")}</p>
         </div>
         <div className="flex gap-3">
           <Button
@@ -301,14 +302,14 @@ export function EmployeesList({
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
-            {t('employees.filters')}
+            {t("employees.filters")}
           </Button>
           <Button
             onClick={onInviteClick}
             className="bg-[#0073e6] border-0 text-white"
           >
             <UserPlus className="h-4 w-4 mr-2" />
-            {t('employees.inviteEmployee')}
+            {t("employees.inviteEmployee")}
           </Button>
         </div>
       </div>
@@ -318,7 +319,7 @@ export function EmployeesList({
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t('employees.searchEmployees')}
+              placeholder={t("employees.searchEmployees")}
               className="pl-9 bg-white border-gray-100 border"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -331,7 +332,7 @@ export function EmployeesList({
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t('common.allRoles')}</SelectItem>
+                <SelectItem value="all">{t("common.allRoles")}</SelectItem>
                 {ROLE_OPTIONS.map((r) => (
                   <SelectItem key={r} value={r}>
                     {r}
@@ -345,7 +346,7 @@ export function EmployeesList({
                 <SelectValue placeholder="Project" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t('common.allProjects')}</SelectItem>
+                <SelectItem value="all">{t("common.allProjects")}</SelectItem>
                 <SelectItem value="Rural Healthcare Initiative">
                   Rural Healthcare
                 </SelectItem>
@@ -363,7 +364,7 @@ export function EmployeesList({
                 className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white border-0"
               >
                 <Download className="h-4 w-4 mr-2" />
-                {t('common.export')}
+                {t("common.export")}
               </Button>
             </div>
           </div>
@@ -384,35 +385,43 @@ export function EmployeesList({
           <CardContent className="py-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label>{t('employees.twoFactorStatus')}</Label>
+                <Label>{t("employees.twoFactorStatus")}</Label>
                 <Select defaultValue="all">
                   <SelectTrigger className="mt-2 bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                     <SelectValue placeholder="2FA Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t('common.all')}</SelectItem>
-                    <SelectItem value="enabled">{t('common.active')}</SelectItem>
-                    <SelectItem value="disabled">{t('common.inactive')}</SelectItem>
+                    <SelectItem value="all">{t("common.all")}</SelectItem>
+                    <SelectItem value="enabled">
+                      {t("common.active")}
+                    </SelectItem>
+                    <SelectItem value="disabled">
+                      {t("common.inactive")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>{t('employees.dateAdded')}</Label>
+                <Label>{t("employees.dateAdded")}</Label>
                 <Select defaultValue="any">
                   <SelectTrigger className="mt-2 bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                     <SelectValue placeholder="Date Added" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="any">{t('common.all')}</SelectItem>
-                    <SelectItem value="today">{t('common.today')}</SelectItem>
-                    <SelectItem value="week">{t('common.thisWeek')}</SelectItem>
-                    <SelectItem value="month">{t('common.thisMonth')}</SelectItem>
-                    <SelectItem value="quarter">{t('common.thisYear')}</SelectItem>
+                    <SelectItem value="any">{t("common.all")}</SelectItem>
+                    <SelectItem value="today">{t("common.today")}</SelectItem>
+                    <SelectItem value="week">{t("common.thisWeek")}</SelectItem>
+                    <SelectItem value="month">
+                      {t("common.thisMonth")}
+                    </SelectItem>
+                    <SelectItem value="quarter">
+                      {t("common.thisYear")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>{t('employees.lastActiveDate')}</Label>
+                <Label>{t("employees.lastActiveDate")}</Label>
                 <Select defaultValue="any">
                   <SelectTrigger className="mt-2 bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                     <SelectValue placeholder="Last Active" />
@@ -423,7 +432,7 @@ export function EmployeesList({
                     <SelectItem value="week">Kjo javë</SelectItem>
                     <SelectItem value="month">Ky muaj</SelectItem>
                     <SelectItem value="inactive">
-                      {t('employees.inactive30Days')}
+                      {t("employees.inactive30Days")}
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -435,10 +444,10 @@ export function EmployeesList({
                 size="sm"
                 className="mr-2 bg-[#E0F2FE] border-0"
               >
-                {t('employees.resetFilters')}
+                {t("employees.resetFilters")}
               </Button>
               <Button size="sm" className="bg-[#0073e6] text-white border-0">
-                {t('employees.applyFilters')}
+                {t("employees.applyFilters")}
               </Button>
             </div>
           </CardContent>
@@ -452,42 +461,46 @@ export function EmployeesList({
               value="active"
               className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
-              {t('employees.allActiveEmployees')} ({getTabCount("active")})
+              {t("employees.allActiveEmployees")} ({getTabCount("active")})
             </TabsTrigger>
             <TabsTrigger
               value="pending"
               className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
-              {t('employees.pendingEmployees')} ({getTabCount("pending")})
+              {t("employees.pendingEmployees")} ({getTabCount("pending")})
             </TabsTrigger>
             <TabsTrigger
               value="inactive"
               className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
             >
-              {t('employees.inactiveEmployees')} ({getTabCount("inactive")})
+              {t("employees.inactiveEmployees")} ({getTabCount("inactive")})
             </TabsTrigger>
             <TabsTrigger
               value="invitations"
               className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
             >
-              {t('employees.invitations')} ({getTabCount("invitations")})
+              {t("employees.invitations")} ({getTabCount("invitations")})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="active" className="pt-6">
             <Card>
-              <ScrollArea className="h-[600px]">
-                <Table className="border-0">
+              <div className="w-full overflow-x-auto">
+                <Table className="border-0 min-w-[900px]">
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
-                      <TableHead className="w-[250px]">{t('employees.employee')}</TableHead>
-                      <TableHead>{t('common.role')}</TableHead>
-                      <TableHead>{t('projects.title')}</TableHead>
-                      <TableHead>{t('subProjects.title')}</TableHead>
-                      <TableHead>{t('employees.lastActive')}</TableHead>
-                      <TableHead>{t('common.status')}</TableHead>
+                      <TableHead className="w-[250px]">
+                        {t("employees.employee")}
+                      </TableHead>
+                      <TableHead>{t("common.role")}</TableHead>
+                      <TableHead>{t("projects.title")}</TableHead>
+                      <TableHead>{t("subProjects.title")}</TableHead>
+                      <TableHead>{t("employees.lastActive")}</TableHead>
+                      <TableHead>{t("common.status")}</TableHead>
                       <TableHead>2FA</TableHead>
-                      <TableHead className="text-right">{t('common.actions')}</TableHead>
+                      <TableHead className="text-right">
+                        {t("common.actions")}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody className="bg-[#F7F9FB]">
@@ -570,7 +583,7 @@ export function EmployeesList({
                         <TableCell>
                           {employee.lastActive
                             ? formatDate(employee.lastActive)
-                            : t('common.never')}
+                            : t("common.never")}
                         </TableCell>
                         <TableCell>
                           {employee.status === "active" ? (
@@ -579,14 +592,14 @@ export function EmployeesList({
                               className=" text-[#4AA785] bg-[#DEF8EE] border-0"
                             >
                               <CheckCircle className="h-3 w-3 mr-1" />
-                              {t('common.active')}
+                              {t("common.active")}
                             </Badge>
                           ) : (
                             <Badge
                               variant="outline"
                               className="text-black/40 border-0 bg-black/5"
                             >
-                              {t('common.pending')}
+                              {t("common.pending")}
                             </Badge>
                           )}
                         </TableCell>
@@ -597,14 +610,14 @@ export function EmployeesList({
                               className=" text-[#4AA785] bg-[#DEF8EE] border-0"
                             >
                               <CheckCircle className="h-3 w-3 mr-1" />
-                              {t('common.enabled')}
+                              {t("common.enabled")}
                             </Badge>
                           ) : (
                             <Badge
                               variant="outline"
                               className="text-black/40 border-0 bg-black/5"
                             >
-                              {t('common.disabled')}
+                              {t("common.disabled")}
                             </Badge>
                           )}
                         </TableCell>
@@ -642,18 +655,18 @@ export function EmployeesList({
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <KeyRound className="h-4 w-4 mr-2" />
-                                  {t('employees.resetPassword')}
+                                  {t("employees.resetPassword")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
                                   <Shield className="h-4 w-4 mr-2" />
-                                  {t('employees.managePermissions')}
+                                  {t("employees.managePermissions")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   className="text-destructive"
                                   onClick={() => handleDeleteClick(employee.id)}
                                 >
                                   <Trash className="h-4 w-4 mr-2" />
-                                  {t('common.delete')}
+                                  {t("common.delete")}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -663,26 +676,30 @@ export function EmployeesList({
                     ))}
                   </TableBody>
                 </Table>
-              </ScrollArea>
+              </div>
             </Card>
           </TabsContent>
 
           <TabsContent value="pending" className="pt-6">
             <Card className="bg-[#F7F9FB]">
-              <ScrollArea className="h-[600px]">
-                <Table>
+              <div className="w-full overflow-x-auto">
+                <Table className="min-w-[900px]">
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
-                      <TableHead className="w-[250px]">{t('employees.employee')}</TableHead>
-                      <TableHead>{t('common.role')}</TableHead>
-                      <TableHead>{t('projects.title')}</TableHead>
-                      <TableHead>{t('subProjects.title')}</TableHead>
-                      <TableHead>{t('employees.invitedOn')}</TableHead>
-                      <TableHead>{t('common.status')}</TableHead>
-                      <TableHead className="text-right">{t('common.actions')}</TableHead>
+                      <TableHead className="w-[250px]">
+                        {t("employees.employee")}
+                      </TableHead>
+                      <TableHead>{t("common.role")}</TableHead>
+                      <TableHead>{t("projects.title")}</TableHead>
+                      <TableHead>{t("subProjects.title")}</TableHead>
+                      <TableHead>{t("employees.invitedOn")}</TableHead>
+                      <TableHead>{t("common.status")}</TableHead>
+                      <TableHead className="text-right">
+                        {t("common.actions")}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className="bg-[#F7F9FB]">
                     {filteredEmployees.map((employee) => (
                       <TableRow key={employee.id}>
                         <TableCell>
@@ -810,14 +827,14 @@ export function EmployeesList({
                     ))}
                   </TableBody>
                 </Table>
-              </ScrollArea>
+              </div>
             </Card>
           </TabsContent>
 
           <TabsContent value="inactive" className="pt-6">
             <Card className="bg-[#F7F9FB]">
-              <ScrollArea className="h-[600px]">
-                <Table>
+              <div className="w-full overflow-x-auto">
+                <Table className="min-w-[900px]">
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
                       <TableHead className="w-[250px]">Punëtori</TableHead>
@@ -965,14 +982,14 @@ export function EmployeesList({
                     ))}
                   </TableBody>
                 </Table>
-              </ScrollArea>
+              </div>
             </Card>
           </TabsContent>
 
           <TabsContent value="invitations" className="pt-6">
             <Card className="bg-[#F7F9FB]">
-              <ScrollArea className="h-[600px]">
-                <Table>
+              <div className="w-full overflow-x-auto">
+                <Table className="min-w-[900px]">
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
                       <TableHead>Email</TableHead>
@@ -1089,7 +1106,7 @@ export function EmployeesList({
                     ))}
                   </TableBody>
                 </Table>
-              </ScrollArea>
+              </div>
             </Card>
           </TabsContent>
         </Tabs>

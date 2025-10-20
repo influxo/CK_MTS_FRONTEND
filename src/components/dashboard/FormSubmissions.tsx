@@ -552,9 +552,9 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
   return (
     <Card className="mb-6 bg-[#F7F9FB]   drop-shadow-md shadow-gray-50 border-0">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <CardTitle>
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
+            <CardTitle className="text-lg sm:text-xl">
               {(metricLocal || globalFilters.metric) === "serviceDeliveries"
                 ? t("dashboard.serviceDeliveriesOverview")
                 : (metricLocal || globalFilters.metric) ===
@@ -564,7 +564,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
             </CardTitle>
 
             <Tabs
-              className="w-[220px] bg-blue-50 p-1   rounded-full"
+              className="w-full sm:w-[220px] bg-blue-50 p-1 rounded-full"
               value={chartType}
               onValueChange={(value) => setChartType(value as "line" | "bar")}
             >
@@ -585,8 +585,8 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
             </Tabs>
           </div>
           {/* Local-only filters for Form Submissions: project/subproject always visible; others hidden behind 'More Filters' */}
-          <div className=" flex flex-col gap-2 w-full md:w-auto">
-            <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-2 w-full lg:w-auto">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
               {/* Project (local override) */}
               <Select
                 value={
@@ -605,7 +605,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                 }}
               >
                 <SelectTrigger
-                  className="w-[180px] bg-white p-2 rounded-md  border-gray-100
+                  className="w-full sm:w-[180px] bg-white p-2 rounded-md border-gray-100
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                 >
@@ -639,7 +639,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                 disabled={!effectiveProjectId}
               >
                 <SelectTrigger
-                  className="w-[180px] bg-white p-2 rounded-md  border-gray-100
+                  className="w-full sm:w-[180px] bg-white p-2 rounded-md border-gray-100
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                 >
@@ -665,17 +665,22 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowMoreLocal((s) => !s)}
-                className="bg-[#E0F2FE] text-black border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+                className="w-full sm:w-auto bg-[#E0F2FE] text-black border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
               >
-                <Filter className="h-4 w-4 mr-2" />
-                {showMoreLocal
-                  ? t("dashboard.hideFilters")
-                  : t("dashboard.moreFilters")}
+                <Filter className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">
+                  {showMoreLocal
+                    ? t("dashboard.hideFilters")
+                    : t("dashboard.moreFilters")}
+                </span>
+                <span className="sm:hidden">
+                  {showMoreLocal ? "Hide" : "More"}
+                </span>
               </Button>
             </div>
 
             {showMoreLocal && (
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                 {/* Metric (local override; inherits global if unset) */}
                 <Select
                   value={
@@ -688,7 +693,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                   }}
                 >
                   <SelectTrigger
-                    className="w-[180px] bg-white p-2 rounded-md  border-gray-100
+                    className="w-full sm:w-[180px] bg-white p-2 rounded-md border-gray-100
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                   >
@@ -736,7 +741,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                   }}
                 >
                   <SelectTrigger
-                    className="w-[180px] bg-white p-2 rounded-md  border-gray-100
+                    className="w-full sm:w-[180px] bg-white p-2 rounded-md border-gray-100
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                   >
@@ -801,7 +806,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                   }}
                 >
                   <SelectTrigger
-                    className="w-[180px] bg-white p-2 rounded-md  border-gray-100
+                    className="w-full sm:w-[180px] bg-white p-2 rounded-md border-gray-100
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                   >
@@ -836,10 +841,10 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                 </Select>
 
                 {/* Granularity dropdown */}
-                <div className="relative">
+                <div className="relative w-full sm:w-auto">
                   <button
                     onClick={() => setFiltersOpen((s) => !s)}
-                    className="px-3 py-1.5 rounded-md text-sm bg-[#E0F2FE]   flex items-center gap-2"
+                    className="w-full sm:w-auto px-3 py-1.5 rounded-md text-sm bg-[#E0F2FE] flex items-center justify-between sm:justify-start gap-2"
                   >
                     <span>
                       {" "}
@@ -939,7 +944,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
           </div>
         </div>
         {/* Chart */}
-        <div className="h-64 mt-4">
+        <div className="h-48 sm:h-64 md:h-80 mt-4">
           {loading ? (
             <div className="h-full w-full flex items-center justify-center text-sm text-gray-600">
               Loading…

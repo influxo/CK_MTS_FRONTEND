@@ -76,17 +76,17 @@ import subProjectService from "../../services/subprojects/subprojectService";
 
 // Field types available for forms - will be translated dynamically
 const getFieldTypes = (t: any) => [
-  { id: "text", name: t('forms.text'), icon: <Type className="h-4 w-4" /> },
-  { id: "number", name: t('forms.number'), icon: <Hash className="h-4 w-4" /> },
-  { id: "date", name: t('forms.date'), icon: <Calendar className="h-4 w-4" /> },
+  { id: "text", name: t("forms.text"), icon: <Type className="h-4 w-4" /> },
+  { id: "number", name: t("forms.number"), icon: <Hash className="h-4 w-4" /> },
+  { id: "date", name: t("forms.date"), icon: <Calendar className="h-4 w-4" /> },
   {
     id: "checkbox",
-    name: t('forms.checkbox'),
+    name: t("forms.checkbox"),
     icon: <CheckSquare className="h-4 w-4" />,
   },
   {
     id: "dropdown",
-    name: t('forms.dropdown'),
+    name: t("forms.dropdown"),
     icon: <ChevronDown className="h-4 w-4" />,
   },
 ];
@@ -414,45 +414,46 @@ export function FormBuilder({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap">
           <Button
             variant="outline"
-            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] w-full sm:w-auto"
             size="sm"
             onClick={onBack}
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            {t('forms.backToForms')}
+            {t("forms.backToForms")}
           </Button>
-          <h2>
-            {isEditing ? t('forms.editFormTitle') : t('forms.createFormTitle')}: {formData.name}
+          <h2 className="flex-1 sm:flex-none min-w-0 truncate">
+            {isEditing ? t("forms.editFormTitle") : t("forms.createFormTitle")}:{" "}
+            {formData.name}
           </h2>
           {isEditing && <Badge variant="outline">v{formData.version}</Badge>}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
           <Button
-            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] w-full sm:w-auto"
             variant="outline"
             onClick={() => setPreviewMode(!previewMode)}
           >
             <Eye className="h-4 w-4 mr-2" />
-            {previewMode ? t('forms.exitPreview') : t('forms.preview')}
+            {previewMode ? t("forms.exitPreview") : t("forms.preview")}
           </Button>
           <Button
-            className="bg-[#0073e6] text-white border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+            className="bg-[#0073e6] text-white border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] w-full sm:w-auto"
             onClick={handleSaveForm}
             disabled={isSaving}
           >
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t('forms.saving')}
+                {t("forms.saving")}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                {t('forms.saveForm')}
+                {t("forms.saveForm")}
               </>
             )}
           </Button>
@@ -464,13 +465,17 @@ export function FormBuilder({
           <div className="col-span-12 lg:col-span-8">
             <Card className="mb-6 bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">{t('forms.formBuilder')}</CardTitle>
+                <CardTitle className="text-base">
+                  {t("forms.formBuilder")}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="form-name">{t('forms.formNameRequired')}</Label>
+                      <Label htmlFor="form-name">
+                        {t("forms.formNameRequired")}
+                      </Label>
                       <Input
                         className="bg-white border-gray-100 border"
                         id="form-name"
@@ -482,13 +487,15 @@ export function FormBuilder({
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="form-project">{t('forms.projectRequired')}</Label>
+                      <Label htmlFor="form-project">
+                        {t("forms.projectRequired")}
+                      </Label>
                       <Select
                         value={formData.project}
                         onValueChange={handleChangeProject}
                       >
                         <SelectTrigger className="bg-white border-gray-100 border">
-                          <SelectValue placeholder={t('forms.selectProject')} />
+                          <SelectValue placeholder={t("forms.selectProject")} />
                         </SelectTrigger>
                         <SelectContent>
                           {projectsForUi.map((project) => (
@@ -502,16 +509,20 @@ export function FormBuilder({
 
                     {formData.project && (
                       <>
-                        <div className="space-y-2"></div>
+                        <div className="hidden md:block"></div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="form-project">{t('forms.subProject')}</Label>
+                          <Label htmlFor="form-project">
+                            {t("forms.subProject")}
+                          </Label>
                           <Select
                             value={formData.subProject}
                             onValueChange={handleChangeSubProject}
                           >
                             <SelectTrigger className="bg-white border-gray-100 border">
-                              <SelectValue placeholder={t('forms.selectASubproject')} />
+                              <SelectValue
+                                placeholder={t("forms.selectASubproject")}
+                              />
                             </SelectTrigger>
                             <SelectContent>
                               {subProjects
@@ -540,15 +551,17 @@ export function FormBuilder({
                     )}
                   </div>
                   <div className="grid gap-2">
-                    <Label>{t('forms.includeBeneficiaries')}</Label>
+                    <Label>{t("forms.includeBeneficiaries")}</Label>
                     <div className="flex items-center gap-3">
                       <Switch
                         checked={includeBeneficiaries}
                         onCheckedChange={setIncludeBeneficiaries}
-                        aria-label={t('forms.includeBeneficiaries')}
+                        aria-label={t("forms.includeBeneficiaries")}
                       />
                       <span className="text-sm text-muted-foreground">
-                        {includeBeneficiaries ? t('forms.enabled') : t('forms.disabled')}
+                        {includeBeneficiaries
+                          ? t("forms.enabled")
+                          : t("forms.disabled")}
                       </span>
                     </div>
                   </div>
@@ -573,7 +586,9 @@ export function FormBuilder({
 
             <Card className="mb-6 bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <CardTitle className="text-base">{t('forms.formFields')}</CardTitle>
+                <CardTitle className="text-base">
+                  {t("forms.formFields")}
+                </CardTitle>
                 <Dialog
                   open={isAddFieldDialogOpen}
                   onOpenChange={setIsAddFieldDialogOpen}
@@ -586,9 +601,9 @@ export function FormBuilder({
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                      <DialogTitle>{t('forms.addField')}</DialogTitle>
+                      <DialogTitle>{t("forms.addField")}</DialogTitle>
                       <DialogDescription>
-                        {t('forms.selectFieldType')}
+                        {t("forms.selectFieldType")}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid grid-cols-2 gap-3 py-4">
@@ -611,16 +626,16 @@ export function FormBuilder({
                 {formData.fields.length === 0 ? (
                   <div className="text-center  py-8 border bg-[#E3F5FF] border-dashed rounded-md">
                     <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                    <h3 className="text-lg mb-2">{t('forms.noFieldsYet')}</h3>
+                    <h3 className="text-lg mb-2">{t("forms.noFieldsYet")}</h3>
                     <p className="text-muted-foreground mb-4">
-                      {t('forms.startBuildingForm')}
+                      {t("forms.startBuildingForm")}
                     </p>
                     <Button
                       onClick={() => setIsAddFieldDialogOpen(true)}
                       className="bg-[#E0F2FE] border-0"
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      {t('forms.addFirstField')}
+                      {t("forms.addFirstField")}
                     </Button>
                   </div>
                 ) : (
@@ -646,7 +661,7 @@ export function FormBuilder({
                                 variant="outline"
                                 className="text-destructive border-destructive ml-2"
                               >
-                                {t('forms.requiredBadge')}
+                                {t("forms.requiredBadge")}
                               </Badge>
                             )}
                           </div>
@@ -670,7 +685,7 @@ export function FormBuilder({
                       onClick={() => setIsAddFieldDialogOpen(true)}
                     >
                       <Plus className="h-4 w-4 mr-2 " />
-                      {t('forms.addField')}
+                      {t("forms.addField")}
                     </Button>
                   </div>
                 )}
@@ -686,7 +701,7 @@ export function FormBuilder({
                     value="properties"
                     className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
                   >
-                    {t('forms.fieldProperties')}
+                    {t("forms.fieldProperties")}
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="properties">
@@ -695,7 +710,9 @@ export function FormBuilder({
                       {selectedFieldData ? (
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label htmlFor="field-label">{t('forms.fieldLabelInput')}</Label>
+                            <Label htmlFor="field-label">
+                              {t("forms.fieldLabelInput")}
+                            </Label>
                             <Input
                               className="bg-white border-gray-100 border"
                               id="field-label"
@@ -720,7 +737,7 @@ export function FormBuilder({
                                 }
                               />
                               <Label htmlFor="field-required">
-                                {t('forms.requiredField')}
+                                {t("forms.requiredField")}
                               </Label>
                             </div>
                           </div>
@@ -728,7 +745,7 @@ export function FormBuilder({
                           {selectedFieldData?.type === "dropdown" && (
                             <div className="space-y-2">
                               <div className="flex justify-between items-center">
-                                <Label>{t('forms.options')}</Label>
+                                <Label>{t("forms.options")}</Label>
                                 <Button
                                   className="hover:bg-[#E0F2FE]"
                                   variant="outline"
@@ -753,7 +770,7 @@ export function FormBuilder({
                                   }}
                                 >
                                   <Plus className="h-4 w-4 mr-1" />
-                                  {t('forms.addOption')}
+                                  {t("forms.addOption")}
                                 </Button>
                               </div>
                               <div className="space-y-2 border rounded-md p-3">
@@ -815,16 +832,18 @@ export function FormBuilder({
                               onClick={() => handleDeleteField(selectedField!)}
                             >
                               <Trash className="h-4 w-4 mr-2" />
-                              {t('forms.deleteField')}
+                              {t("forms.deleteField")}
                             </Button>
                           </div>
                         </div>
                       ) : (
                         <div className="text-center py-6">
                           <Settings className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                          <h3 className="text-lg mb-2">{t('forms.noFieldSelected')}</h3>
+                          <h3 className="text-lg mb-2">
+                            {t("forms.noFieldSelected")}
+                          </h3>
                           <p className="text-muted-foreground mb-4">
-                            {t('forms.selectFieldToEdit')}
+                            {t("forms.selectFieldToEdit")}
                           </p>
                         </div>
                       )}
@@ -849,7 +868,7 @@ export function FormBuilder({
               variant="outline"
               onClick={() => setPreviewMode(false)}
             >
-              {t('forms.editFormMode')}
+              {t("forms.editFormMode")}
             </Button>
           </CardHeader>
           <CardContent className="pt-6">
@@ -859,9 +878,11 @@ export function FormBuilder({
               ))}
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="outline" className="bg-[#E0F2FE] border-0">
-                  {t('forms.cancel')}
+                  {t("forms.cancel")}
                 </Button>
-                <Button className="bg-[#0073e6] text-white">{t('forms.submitForm')}</Button>
+                <Button className="bg-[#0073e6] text-white">
+                  {t("forms.submitForm")}
+                </Button>
               </div>
             </div>
           </CardContent>

@@ -870,8 +870,8 @@ export function ReportsList({
         </TabsContent>
       </Tabs>
 
-      <div className="flex items-center justify-between mt-4">
-        <div className="text-sm text-muted-foreground">
+      <div className="flex items-center justify-between mt-4 gap-2 overflow-hidden flex-nowrap">
+        <div className="text-sm text-muted-foreground flex-1 min-w-0 truncate">
           {activeTab === "saved-reports" && (
             <>
               Showing {filteredReports.length} of {mockSavedReports.length}{" "}
@@ -882,15 +882,19 @@ export function ReportsList({
             <>Showing {mockReportTemplates.length} templates</>
           )}
         </div>
-        <div className="space-x-2">
-          <Button variant="outline" size="sm" className="bg-[#E0F2FE] border-0">
+        <div className="flex items-center space-x-2 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-[#E0F2FE] border-0 whitespace-nowrap"
+          >
             <Calendar className="h-4 w-4 mr-2" />
             Scheduled Reports
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="bg-[#E0F2FE]  border-0"
+            className="bg-[#E0F2FE]  border-0 whitespace-nowrap"
           >
             <UserCircle className="h-4 w-4 mr-2" />
             Manage Recipients
