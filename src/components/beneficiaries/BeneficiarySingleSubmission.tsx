@@ -54,7 +54,8 @@ export default function BeneficiarySingleSubmission() {
   // Fetch the form template when the response is available
   useEffect(() => {
     if (!response) return;
-    const templateId = response.template?.id || (response as any)?.formTemplateId;
+    const templateId =
+      response.template?.id || (response as any)?.formTemplateId;
     if (templateId) {
       dispatch(fetchFormTemplateById({ id: templateId }));
     }
@@ -97,7 +98,7 @@ export default function BeneficiarySingleSubmission() {
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Beneficiary
         </Button>
-        <h2>Form Submission</h2>
+        <h2>Form Submissions</h2>
       </div>
 
       <Card className="bg-white drop-shadow-sm shadow-gray-50 border-0">

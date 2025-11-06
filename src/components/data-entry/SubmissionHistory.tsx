@@ -486,9 +486,9 @@ export function SubmissionHistory({
         open={viewerOpen}
         onOpenChange={(o) => (!o ? setViewerOpen(false) : null)}
       >
-        <DialogContent className="sm:max-w-5xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-5xl max-h-[85vh] overflow-y-auto overflow-x-hidden">
           <DialogHeaderUI>
-            <DialogTitle className="text-lg ml-10">
+            <DialogTitle className="text-lg ml-0 sm:ml-10">
               {t("dataEntry.formSubmission")}
             </DialogTitle>
           </DialogHeaderUI>
@@ -502,7 +502,7 @@ export function SubmissionHistory({
             <div className="text-sm text-red-600">{selectedError}</div>
           )}
           {!selectedLoading && !selectedError && selected && (
-            <div className="space-y-6 px-6 ml-4">
+            <div className="space-y-6 px-4 sm:px-6 ml-0 sm:ml-4 w-full overflow-x-hidden">
               {/* Header */}
               <div className="flex flex-col md:flex-row justify-between gap-6">
                 <div className="space-y-2">
@@ -627,7 +627,7 @@ export function SubmissionHistory({
                               })()}
                               <span>{labelMap[key] ?? formatLabel(key)}</span>
                             </div>
-                            <div className="mt-1 text-sm font-medium text-slate-900 break-words">
+                            <div className="mt-1 text-sm font-medium text-slate-900 break-words break-all sm:break-words">
                               {typeof value === "boolean"
                                 ? value
                                   ? "Po"
@@ -653,43 +653,45 @@ export function SubmissionHistory({
                 </CardHeader>
                 <CardContent className=" bg-white">
                   {selected.serviceDeliveries?.length ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>{t("dataEntry.date")}</TableHead>
-                          <TableHead>{t("dataEntry.category")}</TableHead>
-                          <TableHead>{t("dataEntry.service")}</TableHead>
-                          <TableHead>{t("dataEntry.staff")}</TableHead>
-                          <TableHead>{t("dataEntry.entity")}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selected.serviceDeliveries.map((d: any) => (
-                          <TableRow key={d.id}>
-                            <TableCell>
-                              {d.deliveredAt
-                                ? new Date(d.deliveredAt).toLocaleDateString()
-                                : "—"}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">
-                                {d.service?.category ?? "—"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{d.service?.name ?? "—"}</TableCell>
-                            <TableCell>
-                              {`${d.staff?.firstName ?? ""} ${
-                                d.staff?.lastName ?? ""
-                              }`.trim() || "—"}
-                            </TableCell>
-                            <TableCell>
-                              {`${d.entityType || ""}`}
-                              {d.entityId ? ` • ${d.entityId}` : ""}
-                            </TableCell>
+                    <div className="w-full overflow-x-auto">
+                      <Table className="min-w-[720px]">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{t("dataEntry.date")}</TableHead>
+                            <TableHead>{t("dataEntry.category")}</TableHead>
+                            <TableHead>{t("dataEntry.service")}</TableHead>
+                            <TableHead>{t("dataEntry.staff")}</TableHead>
+                            <TableHead>{t("dataEntry.entity")}</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {selected.serviceDeliveries.map((d: any) => (
+                            <TableRow key={d.id}>
+                              <TableCell>
+                                {d.deliveredAt
+                                  ? new Date(d.deliveredAt).toLocaleDateString()
+                                  : "—"}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">
+                                  {d.service?.category ?? "—"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{d.service?.name ?? "—"}</TableCell>
+                              <TableCell>
+                                {`${d.staff?.firstName ?? ""} ${
+                                  d.staff?.lastName ?? ""
+                                }`.trim() || "—"}
+                              </TableCell>
+                              <TableCell>
+                                {`${d.entityType || ""}`}
+                                {d.entityId ? ` • ${d.entityId}` : ""}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   ) : (
                     <div className="text-sm text-muted-foreground">
                       {t("dataEntry.noLinkedServiceDeliveries")}

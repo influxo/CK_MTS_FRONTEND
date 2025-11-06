@@ -94,10 +94,8 @@ export function DataEntry({}: DataEntryModuleProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2>{t('dataEntry.title')}</h2>
-          <p className="text-muted-foreground">
-            {t('dataEntry.subtitle')}
-          </p>
+          <h2>{t("dataEntry.title")}</h2>
+          <p className="text-muted-foreground">{t("dataEntry.subtitle")}</p>
         </div>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
           <TabsList className="bg-[#E0F2FE]  items-center ">
@@ -105,13 +103,13 @@ export function DataEntry({}: DataEntryModuleProps) {
               value="entry"
               className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
-              {t('dataEntry.dataEntryTab')}
+              {t("dataEntry.dataEntryTab")}
             </TabsTrigger>
             <TabsTrigger
               value="history"
               className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
             >
-              {t('dataEntry.submissionHistoryTab')}
+              {t("dataEntry.submissionHistoryTab")}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -134,11 +132,15 @@ export function DataEntry({}: DataEntryModuleProps) {
                   }}
                 >
                   <SelectTrigger className="w-full sm:w-[200px] border border-gray-100 bg-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
-                    <SelectValue placeholder={t('dataEntry.entityType')} />
+                    <SelectValue placeholder={t("dataEntry.entityType")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="project">{t('dataEntry.project')}</SelectItem>
-                    <SelectItem value="subproject">{t('dataEntry.subproject')}</SelectItem>
+                    <SelectItem value="project">
+                      {t("dataEntry.project")}
+                    </SelectItem>
+                    <SelectItem value="subproject">
+                      {t("dataEntry.subproject")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -148,7 +150,7 @@ export function DataEntry({}: DataEntryModuleProps) {
                     onValueChange={setSelectedEntityId}
                   >
                     <SelectTrigger className="w-full sm:w-[260px] border border-gray-100 bg-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
-                      <SelectValue placeholder={t('dataEntry.selectProject')} />
+                      <SelectValue placeholder={t("dataEntry.selectProject")} />
                     </SelectTrigger>
                     <SelectContent>
                       {allowedProjects.map((p: any) => (
@@ -164,7 +166,9 @@ export function DataEntry({}: DataEntryModuleProps) {
                     onValueChange={setSelectedEntityId}
                   >
                     <SelectTrigger className="w-full sm:w-[260px] border border-gray-100 bg-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]   ">
-                      <SelectValue placeholder={t('dataEntry.selectSubproject')} />
+                      <SelectValue
+                        placeholder={t("dataEntry.selectSubproject")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {allowedSubprojects.map((sp: any) => (
@@ -179,11 +183,11 @@ export function DataEntry({}: DataEntryModuleProps) {
 
               <div>
                 <div className="mb-3 text-sm text-muted-foreground">
-                  {t('dataEntry.showingSubmissionsFor')}
+                  {t("dataEntry.showingSubmissionsFor")}
                   <Badge variant="outline" className="ml-2">
                     {selectedEntityId
                       ? `${entityType} • ${selectedEntityId}`
-                      : t('dataEntry.all')}
+                      : t("dataEntry.all")}
                   </Badge>
                 </div>
                 <SubmissionHistory

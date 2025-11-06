@@ -418,26 +418,26 @@ export function FormBuilder({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-wrap">
           <Button
             variant="outline"
-            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] w-full sm:w-auto"
             size="sm"
             onClick={onBack}
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             {t("forms.backToForms")}
           </Button>
-          <h2>
+          <h2 className="flex-1 sm:flex-none min-w-0 truncate">
             {isEditing ? t("forms.editFormTitle") : t("forms.createFormTitle")}:{" "}
             {formData.name}
           </h2>
           {isEditing && <Badge variant="outline">v{formData.version}</Badge>}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
           <Button
-            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+            className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] w-full sm:w-auto"
             variant="outline"
             onClick={() => setPreviewMode(!previewMode)}
           >
@@ -445,7 +445,7 @@ export function FormBuilder({
             {previewMode ? t("forms.exitPreview") : t("forms.preview")}
           </Button>
           <Button
-            className="bg-[#0073e6] text-white border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+            className="bg-[#0073e6] text-white border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] w-full sm:w-auto"
             onClick={handleSaveForm}
             disabled={isSaving}
           >
@@ -475,7 +475,7 @@ export function FormBuilder({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="form-name">
                         {t("forms.formNameRequired")}
@@ -513,7 +513,7 @@ export function FormBuilder({
 
                     {formData.project && (
                       <>
-                        <div className="space-y-2"></div>
+                        <div className="hidden md:block"></div>
 
                         <div className="space-y-2">
                           <Label htmlFor="form-project">

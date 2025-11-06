@@ -1,4 +1,5 @@
 import { Navigate } from "react-router-dom";
+import { ActivityDetails } from "./components/projects/ActivityDetails";
 import { BeneficiaryDetails } from "./components/beneficiaries/BeneficiaryDetails";
 import BeneficiarySingleSubmission from "./components/beneficiaries/BeneficiarySingleSubmission";
 import { ProjectDetails } from "./components/projects/ProjectDetails";
@@ -69,8 +70,12 @@ const routes = [
         element: <ProjectDetails />,
       },
       {
-        path: "projects/:id/subprojects/:subprojectId",
+        path: "projects/:projectId/subprojects/:subprojectId",
         element: <SubProjectDetails />,
+      },
+      {
+        path: "projects/:projectId/subprojects/:subprojectId/activities/:activityId",
+        element: <ActivityDetails />,
       },
       {
         path: "beneficiaries",

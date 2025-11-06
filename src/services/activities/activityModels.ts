@@ -34,3 +34,58 @@ export interface GetSubprojectActivitiesResponse {
   data: Activity[];
   message?: string;
 }
+
+export interface GetActivityByIdResponse {
+  success: boolean;
+  data: Activity;
+  message?: string;
+}
+
+export interface UpdateActivityRequest {
+  name: string;
+  description: string;
+  category: string;
+  frequency: string;
+  reportingFields: Record<string, string>;
+  status: string;
+}
+
+export interface UpdateActivityResponse {
+  success: boolean;
+  message: string;
+  data?: Activity;
+}
+
+export interface DeleteActivityResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface ActivityUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  status: string;
+}
+
+export interface GetActivityUsersResponse {
+  success: boolean;
+  data: ActivityUser[];
+  message?: string;
+}
+
+export interface AssignUserToActivityRequest {
+  userId: string;
+}
+
+export interface AssignUserToActivityResponse {
+  success: boolean;
+  message: string;
+  data?: ActivityUser;
+}
+
+export interface RemoveUserFromActivityResponse {
+  success: boolean;
+  message: string;
+}

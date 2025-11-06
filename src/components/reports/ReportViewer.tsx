@@ -226,6 +226,8 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [emailRecipients, setEmailRecipients] = useState("");
   const [includeAttachments, setIncludeAttachments] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
 
   // Pie chart data for Female/Male/Other using configured colors
   const pieData = report.chartData.pie.labels.map((name, index) => ({
@@ -241,6 +243,13 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
     color:
       report.chartData.bar.colors[index % report.chartData.bar.colors.length],
   }));
+
+  // Pagination for Data tab table
+  const totalRows = report.tableData.rows.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalRows);
+  const visibleRows = report.tableData.rows.slice(startIndex, endIndex);
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -266,18 +275,26 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={onBack}>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col items-start gap-1 min-w-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onBack}
+            className="shrink-0 whitespace-nowrap bg-[#E0F2FE] border-0"
+          >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Reports
           </Button>
-          <h2>{report.name}</h2>
+          <h2 className="truncate">{report.name}</h2>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 md:justify-end">
           <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="bg-black/10 border-0">
+              <Button
+                variant="outline"
+                className="bg-[#E0F2FE] border-0 whitespace-nowrap"
+              >
                 <Share className="h-4 w-4 mr-2" />
                 Share
               </Button>
@@ -333,7 +350,10 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
             onOpenChange={setIsScheduleDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button variant="outline" className="bg-black/10 border-0">
+              <Button
+                variant="outline"
+                className="bg-[#E0F2FE] border-0 whitespace-nowrap"
+              >
                 <Repeat className="h-4 w-4 mr-2" />
                 Schedule
               </Button>
@@ -401,7 +421,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
             </DialogContent>
           </Dialog>
 
-          <Button className="bg-[#2E343E] text-white border-0">
+          <Button className="bg-[#0073e6] text-white border-0 whitespace-nowrap">
             <FileDown className="h-4 w-4 mr-2" />
             Export
           </Button>
@@ -754,7 +774,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="bg-[#2E343E] text-white border-0"
+                      className="bg-[#0073e6] text-white border-0"
                     >
                       <FileSpreadsheet className="h-4 w-4 mr-2" />
                       Export Excel
@@ -763,47 +783,77 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                <ScrollArea className="h-[500px] rounded-md">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        {report.tableData.headers.map((header, index) => (
-                          <TableHead key={index}>{header}</TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {report.tableData.rows.map((row, rowIndex) => (
-                        <TableRow key={rowIndex}>
-                          {row.map((cell, cellIndex) => (
-                            <TableCell key={cellIndex}>
-                              {cellIndex === 0 ? (
-                                <span className="font-medium">{cell}</span>
-                              ) : cellIndex === 6 ? (
-                                <Badge
-                                  className={
-                                    cell === "Active"
-                                      ? "text-[#4AA785] bg-[#DEF8EE] border-0"
-                                      : cell === "Pending"
-                                      ? "text-[#59A8D4] bg-[#E2F5FF] border-0"
-                                      : "text-[rgba(28,28,28,0.4)] bg-[rgba(28,28,28,0.05)] border-0"
-                                  }
-                                >
-                                  {cell}
-                                </Badge>
-                              ) : (
-                                cell
-                              )}
-                            </TableCell>
+                <div className="w-full overflow-x-auto">
+                  <div className="rounded-md border overflow-hidden min-w-[900px]">
+                    <ScrollArea className="max-h-[400px] md:max-h-[500px] rounded-md">
+                      <Table className="min-w-[900px]">
+                        <TableHeader className="bg-[#E5ECF6]">
+                          <TableRow>
+                            {report.tableData.headers.map((header, index) => (
+                              <TableHead key={index}>{header}</TableHead>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody className="bg-[#F7F9FB]">
+                          {visibleRows.map((row, rowIndex) => (
+                            <TableRow key={rowIndex}>
+                              {row.map((cell, cellIndex) => (
+                                <TableCell key={cellIndex}>
+                                  {cellIndex === 0 ? (
+                                    <span className="font-medium">{cell}</span>
+                                  ) : cellIndex === 6 ? (
+                                    <Badge
+                                      className={
+                                        cell === "Active"
+                                          ? "text-[#4AA785] bg-[#DEF8EE] border-0"
+                                          : cell === "Pending"
+                                          ? "text-[#59A8D4] bg-[#E2F5FF] border-0"
+                                          : "text-[rgba(28,28,28,0.4)] bg-[rgba(28,28,28,0.05)] border-0"
+                                      }
+                                    >
+                                      {cell}
+                                    </Badge>
+                                  ) : (
+                                    cell
+                                  )}
+                                </TableCell>
+                              ))}
+                            </TableRow>
                           ))}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </ScrollArea>
-                <div className="p-4 text-sm text-muted-foreground border-t">
-                  Showing {report.tableData.rows.length} of{" "}
-                  {report.summary.totalBeneficiaries} beneficiaries
+                        </TableBody>
+                      </Table>
+                    </ScrollArea>
+                  </div>
+                </div>
+                <div className="p-4 border-t flex items-center justify-between gap-3">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {startIndex + 1}-{endIndex} of {totalRows} rows
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-[#E0F2FE] border-0"
+                      disabled={page === 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      Previous
+                    </Button>
+                    <div className="text-sm text-muted-foreground whitespace-nowrap">
+                      Page {page} of {totalPages}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-[#E0F2FE] border-0"
+                      disabled={page === totalPages}
+                      onClick={() =>
+                        setPage((p) => Math.min(totalPages, p + 1))
+                      }
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

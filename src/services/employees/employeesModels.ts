@@ -118,3 +118,9 @@ export interface GetUserProjectsResponse {
   message?: string;
   items: EmployeeProject[];
 }
+
+// Delete User (Employee) response
+export interface DeleteUserResponse {
+  success: boolean;
+  message: string;
+}
