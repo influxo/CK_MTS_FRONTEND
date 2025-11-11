@@ -698,6 +698,24 @@ export function SubProjectDetails() {
     setHouseholdMembers("");
   };
 
+  // Validation for "Add New" tab - all required fields must be filled
+  const isNewBeneficiaryFormValid = useMemo(() => {
+    const hasRequiredFields =
+      form.firstName.trim() !== "" &&
+      form.lastName.trim() !== "" &&
+      form.gender !== "" &&
+      form.dob !== "" &&
+      form.nationalId.trim() !== "" &&
+      form.status !== "";
+
+    return hasRequiredFields;
+  }, [form]);
+
+  // Validation for "Add Existing" tab - beneficiary must be selected
+  const isExistingBeneficiaryFormValid = useMemo(() => {
+    return associateSelectedBeneficiaryId !== "";
+  }, [associateSelectedBeneficiaryId]);
+
   const handleCreateSubmit = async () => {
     if (!form.firstName || !form.lastName || !form.gender || !form.status) {
       return;
@@ -2915,9 +2933,9 @@ export function SubProjectDetails() {
                         </Button>
                         {addBeneficiaryTab === "new" ? (
                           <Button
-                            className="bg-[#0073e6] border-0 text-white"
+                            className="bg-[#0073e6] border-0 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleCreateSubmit}
-                            disabled={createLoading}
+                            disabled={!isNewBeneficiaryFormValid || createLoading}
                           >
                             {createLoading
                               ? t("subProjectDetails.saving")
@@ -2925,11 +2943,10 @@ export function SubProjectDetails() {
                           </Button>
                         ) : (
                           <Button
-                            className="bg-[#0073e6] border-0 text-white"
+                            className="bg-[#0073e6] border-0 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleAssociateExistingSubmit}
                             disabled={
-                              associateLoading ||
-                              !associateSelectedBeneficiaryId
+                              !isExistingBeneficiaryFormValid || associateLoading
                             }
                           >
                             {associateLoading

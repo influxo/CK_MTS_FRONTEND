@@ -12,7 +12,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "../../components/ui/data-display/card";
@@ -125,10 +124,10 @@ const Login = () => {
           <Card className="w-full border-0 max-w-md">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold text-center">
-                {t('auth.login')}
+                {t("auth.login")}
               </CardTitle>
               <CardDescription className="text-center">
-                {t('auth.loginSubtitle')}
+                {t("auth.loginSubtitle")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -142,7 +141,7 @@ const Login = () => {
               )}
               <Form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>{t('common.email')}</Label>
+                  <Label>{t("common.email")}</Label>
                   <Input
                     className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
                     id="email"
@@ -156,7 +155,9 @@ const Login = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+                  {/* Forgot Password link - nuk e perdorim kto */}
+
+                  {/* <div className="flex items-center justify-between">
                     <Label>{t('common.password')}</Label>
                     <a
                       href="/forgot-password"
@@ -164,7 +165,7 @@ const Login = () => {
                     >
                       {t('auth.forgotPassword')}
                     </a>
-                  </div>
+                  </div> */}
                   <div className="relative">
                     <Input
                       id="password"
@@ -196,15 +197,13 @@ const Login = () => {
                   className="w-full bg-[#2E343E] text-white"
                   disabled={isLoading}
                 >
-                  {isLoading ? t('auth.loggingIn') : t('auth.logIn')}
+                  {isLoading ? t("auth.loggingIn") : t("auth.logIn")}
                 </Button>
               </Form>
             </CardContent>
-            <CardFooter className="flex justify-center">
-              <p className="text-sm text-gray-500">
-                {t('auth.noAccount')}
-              </p>
-            </CardFooter>
+            {/* <CardFooter className="flex justify-center">
+              <p className="text-sm text-gray-500">{t("auth.noAccount")}</p>
+            </CardFooter> */}
           </Card>
         </div>
       </div>

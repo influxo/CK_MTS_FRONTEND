@@ -124,3 +124,13 @@ export interface DeleteUserResponse {
   success: boolean;
   message: string;
 }
+
+// Reset Password request/response
+export interface ResetPasswordRequest {
+  newPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+  message: string;
+}

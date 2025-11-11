@@ -711,6 +711,30 @@ export function BeneficiariesList({
     }
   };
 
+  // Validate form - all required fields and at least one subproject per selected project
+  const isFormValid = useMemo(() => {
+    const hasRequiredFields = 
+      form.firstName.trim() !== "" &&
+      form.lastName.trim() !== "" &&
+      form.gender !== "" &&
+      form.dob !== "" &&
+      form.nationalId.trim() !== "" &&
+      form.status !== "";
+    
+    // Each selected project must have at least one subproject selected
+    const hasValidSubprojects = selectedProjects.every((projectId) => {
+      const subprojectsForProject = subprojectsForModalByProjectId[projectId] || [];
+      const subprojectIdsForProject = subprojectsForProject.map((sp) => sp.id);
+      // Check if at least one subproject from this project is selected
+      return subprojectIdsForProject.some((spId) => selectedSubProjects.includes(spId));
+    });
+    
+    // Must have at least one project selected with valid subprojects
+    const hasProjectsWithSubprojects = selectedProjects.length > 0 && hasValidSubprojects;
+    
+    return hasRequiredFields && hasProjectsWithSubprojects;
+  }, [form, selectedProjects, selectedSubProjects, subprojectsForModalByProjectId]);
+
   const handleCreateSubmit = async () => {
     if (!form.firstName || !form.lastName || !form.gender || !form.status) {
       return;
@@ -1580,7 +1604,8 @@ export function BeneficiariesList({
               </Button>
               <Button
                 onClick={handleCreateSubmit}
-                disabled={createLoading || associateLoading}
+                disabled={!isFormValid || createLoading || associateLoading}
+                className="disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {createLoading
                   ? t("beneficiaries.creating")

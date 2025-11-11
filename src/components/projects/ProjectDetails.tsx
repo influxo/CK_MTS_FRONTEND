@@ -838,6 +838,30 @@ export function ProjectDetails() {
     setHouseholdMembers("");
   };
 
+  // Validation for "Add New" tab - all required fields and at least one subproject
+  const isNewBeneficiaryFormValid = useMemo(() => {
+    const hasRequiredFields =
+      form.firstName.trim() !== "" &&
+      form.lastName.trim() !== "" &&
+      form.gender !== "" &&
+      form.dob !== "" &&
+      form.nationalId.trim() !== "" &&
+      form.status !== "";
+
+    // Must have at least one subproject selected
+    const hasSubproject = selectedSubProjects.length > 0;
+
+    return hasRequiredFields && hasSubproject;
+  }, [form, selectedSubProjects]);
+
+  // Validation for "Add Existing" tab - beneficiary selected and at least one subproject
+  const isExistingBeneficiaryFormValid = useMemo(() => {
+    const hasBeneficiary = associateSelectedBeneficiaryId !== "";
+    const hasSubproject = associateSelectedSubProjects.length > 0;
+
+    return hasBeneficiary && hasSubproject;
+  }, [associateSelectedBeneficiaryId, associateSelectedSubProjects]);
+
   const handleCreateSubmit = async () => {
     if (!form.firstName || !form.lastName || !form.gender || !form.status) {
       return;
@@ -2830,9 +2854,10 @@ export function ProjectDetails() {
                             className="bg-[#0073e6] text-white flex items-center
              px-4 py-2 rounded-md border-0
              transition-transform duration-200 ease-in-out
-             hover:scale-[1.02] hover:-translate-y-[1px]"
+             hover:scale-[1.02] hover:-translate-y-[1px]
+             disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleCreateSubmit}
-                            disabled={createLoading}
+                            disabled={!isNewBeneficiaryFormValid || createLoading}
                           >
                             {createLoading
                               ? t("projectDetails.saving")
@@ -2843,11 +2868,11 @@ export function ProjectDetails() {
                             className="bg-[#0073e6] text-white flex items-center
              px-4 py-2 rounded-md border-0
              transition-transform duration-200 ease-in-out
-             hover:scale-[1.02] hover:-translate-y-[1px]"
+             hover:scale-[1.02] hover:-translate-y-[1px]
+             disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleAssociateSubmit}
                             disabled={
-                              associateLoading ||
-                              !associateSelectedBeneficiaryId
+                              !isExistingBeneficiaryFormValid || associateLoading
                             }
                           >
                             {associateLoading
