@@ -12,6 +12,7 @@ export interface ChangePasswordRequest {
 }
 
 export interface ResetPasswordRequest {
+  token: string;
   password: string;
   confirmPassword: string;
 }
@@ -21,6 +22,10 @@ export interface InviteUserRequest {
   lastName: string;
   email: string;
   roleIds: number[];
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
 }
 
 // Accept invitation / verify email request

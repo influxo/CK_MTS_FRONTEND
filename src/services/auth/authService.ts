@@ -7,6 +7,7 @@ import type {
   ProfileResponse,
   ChangePasswordRequest,
   ResetPasswordRequest,
+  ForgotPasswordRequest,
   ApiResponse,
   AcceptInvitationRequest,
   VerifyTotpRequest,
@@ -29,6 +30,26 @@ class AuthService {
     this.authEndpoint = `${this.baseUrl}/auth`;
   }
 
+  /**
+   * Request password reset email
+   */
+  async forgotPassword(payload: ForgotPasswordRequest): Promise<ApiResponse> {
+    try {
+      const response = await axiosInstance.post<ApiResponse>(
+        `${this.authEndpoint}/forgot-password`,
+        payload
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as ApiResponse;
+      }
+      return {
+        success: false,
+        message: error.message || "Failed to send reset email. Please try again.",
+      };
+    }
+  }
   /**
    * Login user and get authentication token
    * @param credentials User login credentials

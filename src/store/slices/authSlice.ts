@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import authService from '../../services/auth/authService';
-import type { LoginRequest, LoginResponse, ResetPasswordRequest, ApiResponse, AcceptInvitationRequest, VerifyTotpRequest, VerifyTotpResponse } from '../../services/auth/authModels';
+import type { LoginRequest, LoginResponse, ResetPasswordRequest, ForgotPasswordRequest, ApiResponse, AcceptInvitationRequest, VerifyTotpRequest, VerifyTotpResponse } from '../../services/auth/authModels';
 import type { User } from '../../services/globalModels/User';
 
 // Define the auth state interface
@@ -93,6 +93,22 @@ export const resetPassword = createAsyncThunk<
     return response;
   } catch (error: any) {
     return rejectWithValue(error.message || 'Password reset failed');
+  }
+});
+
+export const forgotPassword = createAsyncThunk<
+  ApiResponse,
+  ForgotPasswordRequest,
+  { rejectValue: string }
+>('auth/forgotPassword', async (payload, { rejectWithValue }) => {
+  try {
+    const response = await authService.forgotPassword(payload);
+    if (!response.success) {
+      return rejectWithValue(response.message);
+    }
+    return response;
+  } catch (error: any) {
+    return rejectWithValue(error.message || 'Failed to send reset email');
   }
 });
 
@@ -214,6 +230,18 @@ const authSlice = createSlice({
         // We don't update auth state here as the user will need to log in after reset
       })
       .addCase(resetPassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Forgot password cases
+      .addCase(forgotPassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })

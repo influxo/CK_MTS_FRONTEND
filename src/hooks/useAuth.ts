@@ -4,6 +4,7 @@ import {
   logoutUser,
   fetchUserProfile,
   resetPassword,
+  forgotPassword,
   acceptInvitation,
   selectCurrentUser,
   selectIsAuthenticated,
@@ -16,6 +17,7 @@ import {
 import type {
   LoginRequest,
   ResetPasswordRequest,
+  ForgotPasswordRequest,
   AcceptInvitationRequest,
 } from "../services/auth/authModels";
 import type { AppDispatch } from "../store";
@@ -89,6 +91,19 @@ export const useAuth = () => {
   };
 
   /**
+   * Request a password reset email
+   */
+  const forgotPasswordUser = async (payload: ForgotPasswordRequest) => {
+    const result = await dispatch(forgotPassword(payload));
+    if (forgotPassword.fulfilled.match(result)) {
+      if (result.payload.success) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  /**
    * Accept invitation (verify email) with email, token and password
    */
   const acceptInvitationUser = async (payload: AcceptInvitationRequest) => {
@@ -118,7 +133,8 @@ export const useAuth = () => {
     login,
     verifyTotpCode,
     logout,
-    resetPasswordUser,
+    resetPassword: resetPasswordUser,
+    forgotPassword: forgotPasswordUser,
     acceptInvitationUser,
     getProfile,
   };
