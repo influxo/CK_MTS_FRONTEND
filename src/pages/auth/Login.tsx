@@ -34,6 +34,9 @@ const Login = () => {
   const { t } = useTranslation();
   const {
     login,
+    verifyTotpCode,
+    mfaRequired,
+    mfaTempToken,
     isAuthenticated,
     isLoading: authLoading,
     error: authError,
@@ -46,6 +49,7 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [totpCode, setTotpCode] = useState("");
 
   const sliderImages = [caritas, donation, volunteer];
 
@@ -91,6 +95,19 @@ const Login = () => {
     }
   };
 
+  const handleVerifyTotp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!totpCode) return;
+    setIsSubmitting(true);
+    try {
+      await verifyTotpCode(totpCode, mfaTempToken);
+    } catch (err) {
+      console.error("2FA verify error:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const isLoading = authLoading || isSubmitting;
 
   return (
@@ -125,10 +142,10 @@ const Login = () => {
           <Card className="w-full border-0 max-w-md">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold text-center">
-                {t('auth.login')}
+                {mfaRequired ? t('auth.twoFactor') ?? 'Two-Factor Authentication' : t('auth.login')}
               </CardTitle>
               <CardDescription className="text-center">
-                {t('auth.loginSubtitle')}
+                {mfaRequired ? (t('auth.enterCode') ?? 'Enter the 6-digit code from your authenticator app') : t('auth.loginSubtitle')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -140,65 +157,93 @@ const Login = () => {
                   <AlertDescription>{authError}</AlertDescription>
                 </Alert>
               )}
-              <Form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>{t('common.email')}</Label>
-                  <Input
-                    className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="name@example.com "
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>{t('common.password')}</Label>
-                    <a
-                      href="/forgot-password"
-                      className="text-sm text-[#00a6ff]  "
-                    >
-                      {t('auth.forgotPassword')}
-                    </a>
-                  </div>
-                  <div className="relative">
+              {mfaRequired ? (
+                <form onSubmit={handleVerifyTotp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>{t('auth.authenticationCode') ?? 'Authentication code'}</Label>
                     <Input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
+                      className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                      id="totpCode"
+                      name="totpCode"
+                      inputMode="numeric"
+                      maxLength={6}
+                      autoComplete="one-time-code"
+                      placeholder="123456"
                       required
-                      value={formData.password}
+                      value={totpCode}
+                      onChange={(e) => setTotpCode(e.target.value.replace(/[^0-9]/g, ''))}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-[#2E343E] text-white"
+                    disabled={isSubmitting || totpCode.length !== 6}
+                  >
+                    {isSubmitting ? (t('auth.verifying') ?? 'Verifying...') : (t('auth.verify') ?? 'Verify')}
+                  </Button>
+                </form>
+              ) : (
+                <Form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>{t('common.email')}</Label>
+                    <Input
+                      className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5  "
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="name@example.com "
+                      required
+                      value={formData.email}
                       onChange={handleChange}
                       disabled={isLoading}
-                      className="pr-10 bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
-                      title={showPassword ? "Hide password" : "Show password"}
-                      disabled={isLoading}
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
                   </div>
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-[#2E343E] text-white"
-                  disabled={isLoading}
-                >
-                  {isLoading ? t('auth.loggingIn') : t('auth.logIn')}
-                </Button>
-              </Form>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>{t('common.password')}</Label>
+                      <a
+                        href="/forgot-password"
+                        className="text-sm text-[#00a6ff]  "
+                      >
+                        {t('auth.forgotPassword')}
+                      </a>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        required
+                        value={formData.password}
+                        onChange={handleChange}
+                        disabled={isLoading}
+                        className="pr-10 bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        title={showPassword ? "Hide password" : "Show password"}
+                        disabled={isLoading}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-[#2E343E] text-white"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? t('auth.loggingIn') : t('auth.logIn')}
+                  </Button>
+                </Form>
+              )}
             </CardContent>
             <CardFooter className="flex justify-center">
               <p className="text-sm text-gray-500">

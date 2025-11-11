@@ -21,11 +21,15 @@ import type {
   UpdateUserRequest,
 } from "../../services/employees/employeesModels";
 import type { AppDispatch } from "../../store";
+import { selectCurrentUser } from "../../store/slices/authSlice";
 import {
   clearSingleEmployee,
+  deleteEmployee,
   fetchSingleEmployee,
   // projects tree
   fetchUserProjects,
+  selectEmployeeDeleteError,
+  selectEmployeeDeleting,
   selectEmployeeUpdateError,
   selectEmployeeUpdating,
   selectSingleEmployee,
@@ -158,10 +162,31 @@ export function EmployeeDetails() {
   const singleError = useSelector(selectSingleEmployeeError);
   const isUpdating = useSelector(selectEmployeeUpdating);
   const updateError = useSelector(selectEmployeeUpdateError);
+  const isDeleting = useSelector(selectEmployeeDeleting);
+  const deleteError = useSelector(selectEmployeeDeleteError);
   // User projects tree state
   const userProjects = useSelector(selectUserProjects);
   const isUserProjectsLoading = useSelector(selectUserProjectsLoading);
   const userProjectsError = useSelector(selectUserProjectsError);
+
+  // Current user for role checking
+  const currentUser = useSelector(selectCurrentUser);
+
+  // Determine if current user is sys or super admin
+  const normalizedRoles = useMemo(
+    () =>
+      (currentUser?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
+    [currentUser?.roles]
+  );
+  const isSysOrSuperAdmin = useMemo(() => {
+    return normalizedRoles.some(
+      (r: string) =>
+        r === "sysadmin" ||
+        r === "superadmin" ||
+        r.includes("system admin") ||
+        r.includes("super admin")
+    );
+  }, [normalizedRoles]);
 
   // Tabs & edit state (activeTab must be declared before effects below)
   const [activeTab, setActiveTab] = useState("profile");
@@ -454,13 +479,18 @@ export function EmployeeDetails() {
   };
 
   // Handle delete employee
-  const handleDeleteEmployee = () => {
-    // In a real app, we would call an API to delete the employee
-    if (employee) {
-      console.log("Deleting employee:", employee.id);
+  const handleDeleteEmployee = async () => {
+    if (!singleEmployee) return;
+
+    try {
+      await dispatch(deleteEmployee(singleEmployee.id)).unwrap();
+      setShowDeleteDialog(false);
+      navigate("/employees");
+    } catch (e) {
+      // Error toast will be shown by the service
+      console.error("Failed to delete employee", e);
+      // Keep dialog open to show error
     }
-    setShowDeleteDialog(false);
-    navigate("/employees");
   };
 
   // Format date for display
@@ -540,7 +570,7 @@ export function EmployeeDetails() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
@@ -548,50 +578,70 @@ export function EmployeeDetails() {
             className="hover:bg-[#E0F2FE] border-0"
             onClick={handleBack}
           >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            {t("employees.backButton")}
+            <ArrowLeft className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">
+              {t("employees.backButton")}
+            </span>
           </Button>
-          <h2>{t("employees.employeeDetails")}</h2>
+          <h2 className="text-lg sm:text-2xl">
+            {t("employees.employeeDetails")}
+          </h2>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           {!isEditing ? (
             <>
               <Button
-                className="bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]  border-0"
+                className="bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-0 flex-1 sm:flex-none"
                 variant="outline"
+                size="sm"
                 onClick={() => setShowPasswordResetDialog(true)}
               >
-                <KeyRound className="h-4 w-4 mr-2" />
-                {t("employees.resetPassword")}
+                <KeyRound className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">
+                  {t("employees.resetPassword")}
+                </span>
               </Button>
 
+              {isSysOrSuperAdmin && (
+                <Button
+                  className="bg-[#E0F2FE] text-black transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-0 flex-1 sm:flex-none"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">
+                    {t("employees.deleteEmployee")}
+                  </span>
+                </Button>
+              )}
               <Button
-                className="bg-[#E0F2FE] text-black transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-0"
-                variant="destructive"
-                onClick={() => setShowDeleteDialog(true)}
-              >
-                <Trash className="h-4 w-4 mr-2" />
-                {t("employees.deleteEmployee")}
-              </Button>
-              <Button
-                className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white border-0"
+                className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white border-0 flex-1 sm:flex-none"
                 variant="outline"
+                size="sm"
                 onClick={handleEditClick}
               >
-                <Pencil className="h-4 w-4 mr-2" />
-                {t("employees.edit")}
+                <Pencil className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">{t("employees.edit")}</span>
               </Button>
             </>
           ) : (
             <>
               <Button
                 variant="outline"
+                size="sm"
+                className="flex-1 sm:flex-none"
                 onClick={handleCancelClick}
                 disabled={isUpdating}
               >
                 {t("employees.cancel")}
               </Button>
-              <Button onClick={handleSaveClick} disabled={isUpdating}>
+              <Button
+                size="sm"
+                className="flex-1 sm:flex-none"
+                onClick={handleSaveClick}
+                disabled={isUpdating}
+              >
                 {isUpdating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -728,7 +778,7 @@ export function EmployeeDetails() {
           </CardContent>
         </Card>
 
-        <div className="col-span-12 lg:col-span-9 space-y-6">
+        <div className="col-span-12 lg:col-span-9 space-y-6 overflow-y-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="bg-[#E3F5FF] w-full justify-start border-b rounded-md drop-shadow-sm shadow-gray-50   items-center h-auto p-2 ">
               <TabsTrigger
@@ -1354,11 +1404,23 @@ export function EmployeeDetails() {
             <Button
               variant="outline"
               onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
             >
               {t("employees.cancel")}
             </Button>
-            <Button variant="destructive" onClick={handleDeleteEmployee}>
-              {t("employees.deleteEmployee")}
+            <Button
+              // variant="destructive"
+              onClick={handleDeleteEmployee}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {t("employees.deleting")}
+                </>
+              ) : (
+                t("employees.deleteEmployee")
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

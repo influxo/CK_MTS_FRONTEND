@@ -4,15 +4,20 @@ import {
   logoutUser,
   fetchUserProfile,
   resetPassword,
+  forgotPassword,
   acceptInvitation,
   selectCurrentUser,
   selectIsAuthenticated,
   selectAuthLoading,
   selectAuthError,
+  verifyTotp,
+  selectMfaRequired,
+  selectMfaTempToken,
 } from "../store/slices/authSlice";
 import type {
   LoginRequest,
   ResetPasswordRequest,
+  ForgotPasswordRequest,
   AcceptInvitationRequest,
 } from "../services/auth/authModels";
 import type { AppDispatch } from "../store";
@@ -26,6 +31,8 @@ export const useAuth = () => {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const isLoading = useSelector(selectAuthLoading);
   const error = useSelector(selectAuthError);
+  const mfaRequired = useSelector(selectMfaRequired);
+  const mfaTempToken = useSelector(selectMfaTempToken);
 
   /**
    * Login user with credentials
@@ -36,6 +43,23 @@ export const useAuth = () => {
       if (result.payload.success) {
         // Navigation will be handled by the useEffect in Login component
         // that watches the isAuthenticated state
+        return true;
+      }
+    }
+    return false;
+  };
+
+  /**
+   * Verify TOTP code when MFA is required
+   */
+  const verifyTotpCode = async (code: string, tempToken?: string | null) => {
+    const tokenToUse = tempToken ?? mfaTempToken;
+    if (!tokenToUse) return false;
+    const result = await dispatch(
+      verifyTotp({ code, mfaTempToken: tokenToUse }) as any
+    );
+    if ((verifyTotp as any).fulfilled.match(result)) {
+      if (result.payload.success) {
         return true;
       }
     }
@@ -67,6 +91,19 @@ export const useAuth = () => {
   };
 
   /**
+   * Request a password reset email
+   */
+  const forgotPasswordUser = async (payload: ForgotPasswordRequest) => {
+    const result = await dispatch(forgotPassword(payload));
+    if (forgotPassword.fulfilled.match(result)) {
+      if (result.payload.success) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  /**
    * Accept invitation (verify email) with email, token and password
    */
   const acceptInvitationUser = async (payload: AcceptInvitationRequest) => {
@@ -91,9 +128,13 @@ export const useAuth = () => {
     isAuthenticated,
     isLoading,
     error,
+    mfaRequired,
+    mfaTempToken,
     login,
+    verifyTotpCode,
     logout,
-    resetPasswordUser,
+    resetPassword: resetPasswordUser,
+    forgotPassword: forgotPasswordUser,
     acceptInvitationUser,
     getProfile,
   };

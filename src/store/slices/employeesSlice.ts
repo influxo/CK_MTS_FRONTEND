@@ -8,6 +8,7 @@ import type {
   EmployeeProject,
   GetUserProjectsResponse,
   GetMyTeamResponse,
+  DeleteUserResponse,
 } from "../../services/employees/employeesModels";
 import employeesService from "../../services/employees/employeesService";
 
@@ -17,9 +18,11 @@ interface EmployeesState {
   isLoading: boolean;
   isSingleLoading: boolean;
   isUpdating: boolean;
+  isDeleting: boolean;
   error: string | null;
   singleError: string | null;
   updateError: string | null;
+  deleteError: string | null;
   // user projects tree
   userProjects: EmployeeProject[];
   isUserProjectsLoading: boolean;
@@ -32,9 +35,11 @@ const initialState: EmployeesState = {
   isLoading: false,
   isSingleLoading: false,
   isUpdating: false,
+  isDeleting: false,
   error: null,
   singleError: null,
   updateError: null,
+  deleteError: null,
   userProjects: [],
   isUserProjectsLoading: false,
   userProjectsError: null,
@@ -105,6 +110,19 @@ export const fetchUserProjects = createAsyncThunk<
   return response;
 });
 
+// Delete employee
+export const deleteEmployee = createAsyncThunk<
+  DeleteUserResponse & { deletedUserId: string },
+  string,
+  { rejectValue: string }
+>("employees/deleteEmployee", async (userId, { rejectWithValue }) => {
+  const response = await employeesService.deleteEmployee(userId);
+  if (!response.success) {
+    return rejectWithValue(response.message || "Failed to delete user");
+  }
+  return { ...response, deletedUserId: userId };
+});
+
 const employeesSlice = createSlice({
   name: "employees",
   initialState,
@@ -138,7 +156,8 @@ const employeesSlice = createSlice({
       .addCase(fetchMyTeamEmployees.fulfilled, (state, action) => {
         state.isLoading = false;
         // Normalize into the same employees array used elsewhere
-        state.employees = (action.payload.data?.teamMembers || []) as Employee[];
+        state.employees = (action.payload.data?.teamMembers ||
+          []) as Employee[];
       })
       .addCase(fetchMyTeamEmployees.rejected, (state, action) => {
         state.isLoading = false;
@@ -191,7 +210,27 @@ const employeesSlice = createSlice({
       })
       .addCase(fetchUserProjects.rejected, (state, action) => {
         state.isUserProjectsLoading = false;
-        state.userProjectsError = action.payload ?? "Failed to fetch user projects";
+        state.userProjectsError =
+          action.payload ?? "Failed to fetch user projects";
+      })
+      // deleteEmployee
+      .addCase(deleteEmployee.pending, (state) => {
+        state.isDeleting = true;
+        state.deleteError = null;
+      })
+      .addCase(deleteEmployee.fulfilled, (state, action) => {
+        state.isDeleting = false;
+        const deletedId = action.payload.deletedUserId;
+        // Remove from employees list
+        state.employees = state.employees.filter((e) => e.id !== deletedId);
+        // Clear single employee if it was the deleted one
+        if (state.singleEmployee && state.singleEmployee.id === deletedId) {
+          state.singleEmployee = null;
+        }
+      })
+      .addCase(deleteEmployee.rejected, (state, action) => {
+        state.isDeleting = false;
+        state.deleteError = action.payload ?? "Failed to delete user";
       });
   },
 });
@@ -221,10 +260,17 @@ export const selectEmployeeUpdateError = (state: {
 
 export const selectUserProjects = (state: { employees: EmployeesState }) =>
   state.employees.userProjects;
-export const selectUserProjectsLoading = (state: { employees: EmployeesState }) =>
-  state.employees.isUserProjectsLoading;
+export const selectUserProjectsLoading = (state: {
+  employees: EmployeesState;
+}) => state.employees.isUserProjectsLoading;
 export const selectUserProjectsError = (state: { employees: EmployeesState }) =>
   state.employees.userProjectsError;
+
+export const selectEmployeeDeleting = (state: { employees: EmployeesState }) =>
+  state.employees.isDeleting;
+export const selectEmployeeDeleteError = (state: {
+  employees: EmployeesState;
+}) => state.employees.deleteError;
 
 // Actions
 export const { clearSingleEmployee } = employeesSlice.actions;

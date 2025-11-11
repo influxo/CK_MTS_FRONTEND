@@ -1331,8 +1331,8 @@ export function ProjectDetails() {
               {t("projectDetails.noAccessToView")}
             </div>
           ) : (
-            <div className="grid grid-cols-2  gap-6">
-              <div className="col-span-2 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+              <div className="col-span-1 lg:col-span-2 xl:col-span-1 space-y-6">
                 {/* Overview Filters */}
                 <h1>{t("projectDetails.overview")}</h1>
                 <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 w-full md:gap-6">

@@ -366,9 +366,9 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
         <Button
-          className="hover:bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+          className="w-full sm:w-auto hover:bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
           variant="outline"
           size="sm"
           onClick={onBack ?? (() => navigate("/beneficiaries"))}
@@ -377,7 +377,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           {t("beneficiaryDetails.backToBeneficiaries")}
         </Button>
 
-        <h2>{beneficiary.name}</h2>
+        <h2 className="truncate w-full sm:w-auto">{beneficiary.name}</h2>
         <Dialog
           open={isEditDialogOpen}
           onOpenChange={(open) => {
@@ -389,7 +389,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           }}
         >
           <DialogTrigger asChild>
-            <Button className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white ml-auto">
+            <Button className="bg-[#0073e6] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-white sm:ml-auto w-full sm:w-auto">
               <Edit className="h-4 w-4 mr-2" />
               {t("beneficiaryDetails.editProfile")}
             </Button>
@@ -403,7 +403,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 {t("beneficiaryDetails.updateInformation")}
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-3 sm:gap-4 py-4">
               {localValidationError && (
                 <div className="col-span-4 text-sm text-red-600">
                   {localValidationError}
@@ -414,91 +414,92 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   {updateError}
                 </div>
               )}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="firstName" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label htmlFor="firstName" className="sm:text-right text-left">
                   {t("beneficiaryDetails.firstNameRequired")}
                 </Label>
                 <Input
                   id="firstName"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   value={editForm.firstName}
                   onChange={handleEditInput}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="lastName" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label htmlFor="lastName" className="sm:text-right text-left">
                   {t("beneficiaryDetails.lastNameRequired")}
                 </Label>
                 <Input
                   id="lastName"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   value={editForm.lastName}
                   onChange={handleEditInput}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="dob" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label htmlFor="dob" className="sm:text-right text-left">
                   {t("beneficiaryDetails.dateOfBirthRequired")}
                 </Label>
                 <Input
                   id="dob"
                   type="date"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   value={editForm.dob}
                   onChange={handleEditInput}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="nationalId" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label htmlFor="nationalId" className="sm:text-right text-left">
                   {t("beneficiaryDetails.nationalId")}
                 </Label>
                 <Input
                   id="nationalId"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   value={editForm.nationalId}
                   onChange={handleEditInput}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label htmlFor="phone" className="sm:text-right text-left">
                   {t("beneficiaryDetails.phone")}
                 </Label>
                 <Input
                   id="phone"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   value={editForm.phone}
                   onChange={handleEditInput}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label htmlFor="email" className="sm:text-right text-left">
                   {t("beneficiaryDetails.email")}
                 </Label>
                 <Input
                   id="email"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   type="email"
                   value={editForm.email}
                   onChange={handleEditInput}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="address" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label htmlFor="address" className="sm:text-right text-left">
                   {t("beneficiaryDetails.address")}
                 </Label>
                 <Input
                   id="address"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   value={editForm.address}
                   onChange={handleEditInput}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label className="sm:text-right text-left">
+                  {" "}
                   {t("beneficiaryDetails.genderRequired")}
                 </Label>
                 <RadioGroup
-                  className="col-span-3 flex gap-4"
+                  className="col-span-1 sm:col-span-3 flex flex-wrap gap-3"
                   value={editForm.gender}
                   onValueChange={(v) =>
                     setEditForm((p) => ({ ...p, gender: v }))
@@ -522,30 +523,36 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   </div>
                 </RadioGroup>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="municipality" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label
+                  htmlFor="municipality"
+                  className="sm:text-right text-left"
+                >
                   {t("beneficiaryDetails.municipality")}
                 </Label>
                 <Input
                   id="municipality"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   value={editForm.municipality}
                   onChange={handleEditInput}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="nationality" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label
+                  htmlFor="nationality"
+                  className="sm:text-right text-left"
+                >
                   {t("beneficiaryDetails.nationality")}
                 </Label>
                 <Input
                   id="nationality"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   value={editForm.nationality}
                   onChange={handleEditInput}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label htmlFor="status" className="sm:text-right text-left">
                   {t("beneficiaryDetails.statusRequired")}
                 </Label>
                 <Select
@@ -554,10 +561,8 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                     setEditForm((p) => ({ ...p, status: v }))
                   }
                 >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue
-                      placeholder={t("beneficiaryDetails.selectStatus")}
-                    />
+                  <SelectTrigger className="col-span-1 sm:col-span-3">
+                    <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">
@@ -578,7 +583,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 </span>
               </div>
               <Button
-                className="bg-[#E0F2FE] border-0"
+                className="bg-[#E0F2FE] border-0 w-full sm:w-auto"
                 variant="outline"
                 onClick={() => {
                   setIsEditDialogOpen(false);
@@ -589,7 +594,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                 {t("beneficiaryDetails.cancel")}
               </Button>
               <Button
-                className="bg-[#0073e6] text-white"
+                className="bg-[#0073e6] text-white w-full sm:w-auto"
                 onClick={handleEditSubmit}
                 disabled={updateLoading}
               >
@@ -605,7 +610,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
           <DialogTrigger asChild>
             <Button
               variant="outline"
-              className="bg-[#0073e6] text-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
+              className="bg-[#0073e6] text-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] w-full sm:w-auto"
             >
               <Link className="h-4 w-4 mr-2" />
               {t("beneficiaryDetails.removeAssociation")}
@@ -671,14 +676,14 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
             </div>
             <DialogFooter>
               <Button
-                className="bg-[#E0F2FE] border-0"
+                className="bg-[#E0F2FE] border-0 w-full sm:w-auto"
                 variant="outline"
                 onClick={() => setIsRemoveAssocOpen(false)}
               >
                 {t("beneficiaryDetails.cancel")}
               </Button>
               <Button
-                className="bg-[#0073e6] text-white"
+                className="bg-[#0073e6] text-white w-full sm:w-auto"
                 disabled={!selectedAssociation || !id}
                 onClick={async () => {
                   if (!id || !selectedAssociation) return;
@@ -817,23 +822,29 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="service-date" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label
+                  htmlFor="service-date"
+                  className="sm:text-right text-left"
+                >
                   Date *
                 </Label>
                 <Input
                   id="service-date"
                   type="date"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   defaultValue={new Date().toISOString().split("T")[0]}
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="service-type" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label
+                  htmlFor="service-type"
+                  className="sm:text-right text-left"
+                >
                   Type *
                 </Label>
                 <Select>
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger className="col-span-1 sm:col-span-3">
                     <SelectValue placeholder="Select service type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -847,42 +858,54 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="service-description" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label
+                  htmlFor="service-description"
+                  className="sm:text-right text-left"
+                >
                   Description *
                 </Label>
                 <Input
                   id="service-description"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   placeholder="Brief description of the service"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="service-provider" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label
+                  htmlFor="service-provider"
+                  className="sm:text-right text-left"
+                >
                   Provider *
                 </Label>
                 <Input
                   id="service-provider"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   placeholder="Name of person or team providing the service"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="service-location" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label
+                  htmlFor="service-location"
+                  className="sm:text-right text-left"
+                >
                   Location
                 </Label>
                 <Input
                   id="service-location"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   placeholder="Where the service was provided"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="service-subproject" className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label
+                  htmlFor="service-subproject"
+                  className="sm:text-right text-left"
+                >
                   Sub-Project
                 </Label>
                 <Select>
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger className="col-span-1 sm:col-span-3">
                     <SelectValue placeholder="Select sub-project" />
                   </SelectTrigger>
                   <SelectContent>
@@ -894,13 +917,16 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="service-notes" className="text-right pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                <Label
+                  htmlFor="service-notes"
+                  className="sm:text-right text-left pt-2"
+                >
                   Notes
                 </Label>
                 <Textarea
                   id="service-notes"
-                  className="col-span-3"
+                  className="col-span-1 sm:col-span-3"
                   rows={3}
                   placeholder="Additional notes about the service provided"
                 />
@@ -921,63 +947,63 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
         </Dialog>
       </div>
 
-      <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
+      <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0 w-full max-w-4xl mx-auto">
         <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row justify-between gap-6">
-            <div className="flex items-start gap-6 ">
+          <div className="mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-5 gap-4 md:gap-6 items-start">
+            <div className="sm:col-span-1 flex justify-center sm:justify-start">
               <Avatar className="h-16 w-16">
                 <AvatarImage src={beneficiary.avatar} alt={beneficiary.name} />
                 <AvatarFallback>{beneficiary.initials}</AvatarFallback>
               </Avatar>
+            </div>
+            <div className="sm:col-span-4 space-y-2">
               <div className="space-y-2">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 ">
-                    <h1 className="font-medium text-3xl">{beneficiary.name}</h1>
-                    <Badge
-                      style={{ backgroundColor: "#DEF8EE", color: "#4AA785" }}
-                      variant={
-                        beneficiary.status === "active"
-                          ? "default"
-                          : "secondary"
-                      }
-                    >
-                      {beneficiary.status}
-                    </Badge>
-                    <div className="flex flex-wrap gap-1.5">
-                      {beneficiary.tags.map((tag) => (
-                        <Badge key={tag} variant="outline">
-                          {tag.replace("-", " ")}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <ShieldAlert className="h-3.5 w-3.5" />
-                    <span>{beneficiary.pseudoId}</span>
-                    <span className="text-xs">
-                      ({t("beneficiaryDetails.pseudonymizedId")})
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                    <span>{beneficiary.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span>{beneficiary.contactNumber}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span>
-                      {t("beneficiaryDetails.registeredOn")}{" "}
-                      {new Date(
-                        beneficiary.registrationDate
-                      ).toLocaleDateString()}
-                    </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="font-medium text-2xl md:text-3xl break-words">
+                    {beneficiary.name}
+                  </h1>
+                  <Badge
+                    style={{ backgroundColor: "#DEF8EE", color: "#4AA785" }}
+                    variant={
+                      beneficiary.status === "active" ? "default" : "secondary"
+                    }
+                  >
+                    {beneficiary.status}
+                  </Badge>
+                  <div className="flex flex-wrap gap-1.5">
+                    {beneficiary.tags.map((tag) => (
+                      <Badge key={tag} variant="outline">
+                        {tag.replace("-", " ")}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <ShieldAlert className="h-3.5 w-3.5" />
+                  <span>{beneficiary.pseudoId}</span>
+                  <span className="text-xs">(Pseudonymized ID)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                  <span>{beneficiary.location}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>{beneficiary.contactNumber}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>
+                    Registered on{" "}
+                    {new Date(
+                      beneficiary.registrationDate
+                    ).toLocaleDateString()}
+                  </span>
+                </div>
               </div>
-              <div className="flex mt-10 flex-col gap-4 md:text-right">
+            </div>
+            <div className="sm:col-start-2 sm:col-span-4 flex flex-col items-start text-left gap-2">
+              <div className="flex mt-2 md:mt-4 flex-col gap-2 items-start text-left">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">
@@ -1011,10 +1037,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                   <span className="ml-1">{beneficiary.vulnerabilityScore}</span>
                 </div>
               </div>
-            </div>
-
-            <div className="flex flex-col gap-2 md:text-right">
-              <div className="text-sm text-muted-foreground mt-2 text-[#6B7280]">
+              <div className="text-sm text-muted-foreground text-[#6B7280]">
                 Last updated: {new Date().toLocaleDateString()}
               </div>
             </div>

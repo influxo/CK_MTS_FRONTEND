@@ -7,8 +7,15 @@ import type {
   ProfileResponse,
   ChangePasswordRequest,
   ResetPasswordRequest,
+  ForgotPasswordRequest,
   ApiResponse,
   AcceptInvitationRequest,
+  VerifyTotpRequest,
+  VerifyTotpResponse,
+  StartTotpSetupResponse,
+  ConfirmTotpSetupRequest,
+  ConfirmTotpSetupResponse,
+  RecoveryCodesResponse,
 } from "./authModels";
 
 /**
@@ -24,6 +31,26 @@ class AuthService {
   }
 
   /**
+   * Request password reset email
+   */
+  async forgotPassword(payload: ForgotPasswordRequest): Promise<ApiResponse> {
+    try {
+      const response = await axiosInstance.post<ApiResponse>(
+        `${this.authEndpoint}/forgot-password`,
+        payload
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data as ApiResponse;
+      }
+      return {
+        success: false,
+        message: error.message || "Failed to send reset email. Please try again.",
+      };
+    }
+  }
+  /**
    * Login user and get authentication token
    * @param credentials User login credentials
    * @returns Promise with login response containing user data and token
@@ -35,11 +62,13 @@ class AuthService {
         credentials
       );
 
-      // Store token in localStorage if login successful
-      if (response.data.success && response.data.data?.token) {
+      // Store token only if login completed without MFA requirement
+      if (
+        response.data.success &&
+        response.data.data?.token &&
+        !response.data.data?.mfaRequired
+      ) {
         localStorage.setItem("token", response.data.data.token);
-
-        // Set the token in axios headers for subsequent requests
         this.setAuthHeader(response.data.data.token);
       }
 
@@ -188,6 +217,105 @@ class AuthService {
       return {
         success: false,
         message: error.message || "Failed to reset password. Please try again.",
+      };
+    }
+  }
+
+  /**
+   * Verify TOTP code to complete login when MFA is required
+   */
+  async verifyTotp(payload: VerifyTotpRequest): Promise<VerifyTotpResponse> {
+    try {
+      const response = await axiosInstance.post<VerifyTotpResponse>(
+        `${this.authEndpoint}/mfa/verify`,
+        payload
+      );
+      if (response.data.success && response.data.data?.token) {
+        localStorage.setItem("token", response.data.data.token);
+        this.setAuthHeader(response.data.data.token);
+      }
+      return response.data;
+    } catch (error: any) {
+      if (error.response) return error.response.data as VerifyTotpResponse;
+      return {
+        success: false,
+        message: error.message || "Failed to verify code.",
+      } as VerifyTotpResponse;
+    }
+  }
+
+  /**
+   * Begin TOTP setup: returns secret/otpauth and optional QR image
+   */
+  async startTotpSetup(): Promise<StartTotpSetupResponse> {
+    try {
+      const response = await axiosInstance.post<StartTotpSetupResponse>(
+        `${this.authEndpoint}/mfa/setup/start`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) return error.response.data as StartTotpSetupResponse;
+      return {
+        success: false,
+        message: error.message || "Failed to start 2FA setup.",
+      };
+    }
+  }
+
+  /**
+   * Confirm TOTP setup with code; may return recovery codes
+   */
+  async confirmTotpSetup(
+    payload: ConfirmTotpSetupRequest
+  ): Promise<ConfirmTotpSetupResponse> {
+    try {
+      const response = await axiosInstance.post<ConfirmTotpSetupResponse>(
+        `${this.authEndpoint}/mfa/setup/confirm`,
+        payload
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response)
+        return error.response.data as ConfirmTotpSetupResponse;
+      return {
+        success: false,
+        message: error.message || "Failed to confirm 2FA setup.",
+      };
+    }
+  }
+
+  /**
+   * Get recovery codes
+   */
+  async getRecoveryCodes(): Promise<RecoveryCodesResponse> {
+    try {
+      const response = await axiosInstance.get<RecoveryCodesResponse>(
+        `${this.authEndpoint}/mfa/recovery-codes`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) return error.response.data as RecoveryCodesResponse;
+      return {
+        success: false,
+        message: error.message || "Failed to fetch recovery codes.",
+      };
+    }
+  }
+
+  /**
+   * Disable TOTP for current user
+   */
+  async disableTotp(): Promise<ApiResponse> {
+    try {
+      const response = await axiosInstance.post<ApiResponse>(
+        `${this.authEndpoint}/mfa/disable`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) return error.response.data as ApiResponse;
+      return {
+        success: false,
+        message: error.message || "Failed to disable 2FA.",
       };
     }
   }

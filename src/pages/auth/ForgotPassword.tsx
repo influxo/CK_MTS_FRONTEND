@@ -25,17 +25,12 @@ import reactLogo from "../../assets/react.svg";
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const {
-    login,
-    isAuthenticated,
-    isLoading: authLoading,
-    error: authError,
-  } = useAuth();
+  const { forgotPassword, isAuthenticated, isLoading: authLoading, error: authError } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
-    password: "",
   });
+  const [sent, setSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get the intended destination from location state, or default to dashboard
@@ -61,8 +56,10 @@ const ForgotPassword = () => {
     setIsSubmitting(true);
 
     try {
-      await login(formData);
-      // Navigation is handled in the useEffect
+      const ok = await forgotPassword({ email: formData.email });
+      if (ok) {
+        setSent(true);
+      }
     } catch (err) {
       console.error("Login error:", err);
     } finally {
@@ -141,14 +138,14 @@ const ForgotPassword = () => {
                     disabled={isLoading}
                   />
                 </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-[#2E343E] text-white"
-                  onClick={() => navigate("/reset-password")}
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Sending..." : "Send"}
+                <Button type="submit" className="w-full bg-[#2E343E] text-white" disabled={isLoading}>
+                  {isLoading ? "Sending..." : sent ? "Email Sent" : "Send"}
                 </Button>
+                {sent && (
+                  <p className="text-xs text-gray-600 text-center">
+                    If an account exists, a reset link was sent to your email.
+                  </p>
+                )}
               </Form>
             </CardContent>
             <CardFooter className="flex justify-center">
