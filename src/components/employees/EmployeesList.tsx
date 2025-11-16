@@ -320,7 +320,9 @@ export function EmployeesList({
                 ))}
               </SelectContent>
             </Select>
-            <Select value={projectFilter} onValueChange={setProjectFilter}>
+
+            {/* E kom hek ket filter se nuk kryn noj pune qysh dyhet, edhe nese bojm fetch, nuk kthen info qysh duhet */}
+            {/* <Select value={projectFilter} onValueChange={setProjectFilter}>
               <SelectTrigger className="w-[180px] bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Project" />
@@ -337,7 +339,7 @@ export function EmployeesList({
                   Youth Empowerment
                 </SelectItem>
               </SelectContent>
-            </Select>
+            </Select> */}
             <div className="flex gap-3">
               <Button
                 variant="outline"
