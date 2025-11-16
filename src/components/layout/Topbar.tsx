@@ -152,6 +152,9 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
     }
   };
 
+  // Check if all required fields are filled
+  const isFormValid = formData.name.trim() !== "" && formData.category.trim() !== "";
+
   return (
     // <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
     <header
@@ -314,7 +317,8 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                 </Button>
                 <Button
                   onClick={handleCreateProject}
-                  className="bg-[#0073e6] border-0 text-white"
+                  className="bg-[#0073e6] border-0 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!isFormValid}
                 >
                   Shto Projektin
                 </Button>
