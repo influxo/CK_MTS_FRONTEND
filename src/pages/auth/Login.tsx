@@ -210,7 +210,7 @@ const Login = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
+                    {/* <div className="flex items-center justify-between">
                       <Label>{t("common.password")}</Label>
                       <a
                         href="/forgot-password"
@@ -218,7 +218,7 @@ const Login = () => {
                       >
                         {t("auth.forgotPassword")}
                       </a>
-                    </div>
+                    </div> */}
                     <div className="relative">
                       <Input
                         id="password"
