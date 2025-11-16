@@ -115,7 +115,11 @@ export default function Dashboard() {
   }
 
   if (error) {
-    return <div>{t("common.error")}: {error}</div>;
+    return (
+      <div>
+        {t("common.error")}: {error}
+      </div>
+    );
   }
 
   if (isFieldOperator && !isSysOrSuperAdmin) {
