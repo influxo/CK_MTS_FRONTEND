@@ -7,6 +7,12 @@ export default defineConfig({
   server: {
     host: true, // ← exposes to local network
     port: 5173, // ← optional, default is 5173
+    allowedHosts: ["databaza.caritaskosova.org"],
+  },
+  preview: {
+    host: true,
+    port: 4173,
+    allowedHosts: ["databaza.caritaskosova.org"],
   },
   plugins: [
     react(),
