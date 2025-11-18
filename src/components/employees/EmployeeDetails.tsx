@@ -2,6 +2,8 @@ import {
   AlertTriangle,
   ArrowLeft,
   CheckCircle,
+  Eye,
+  EyeOff,
   FileDown,
   KeyRound,
   Loader2,
@@ -16,6 +18,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "../../hooks/useTranslation";
+import employeesService from "../../services/employees/employeesService";
 import type {
   EmployeeStatus,
   UpdateUserRequest,
@@ -315,6 +318,14 @@ export function EmployeeDetails() {
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordResetDialog, setShowPasswordResetDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  // Password reset state
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   console.log("employee", singleEmployee);
 
@@ -470,12 +481,77 @@ export function EmployeeDetails() {
     setIsEditing(false);
   };
 
+  // Validate password
+  const validatePassword = (password: string): string[] => {
+    const errors: string[] = [];
+    
+    if (password.length < 8) {
+      errors.push("Password must be at least 8 characters long");
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push("Password must contain at least one uppercase letter");
+    }
+    if (!/[0-9]/.test(password)) {
+      errors.push("Password must contain at least one number");
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      errors.push("Password must contain at least one special character");
+    }
+    
+    return errors;
+  };
+
   // Handle password reset
-  const handlePasswordReset = () => {
-    // In a real app, we would call an API to reset the password
-    if (!employee) return;
-    console.log("Resetting password for:", employee.email);
-    setShowPasswordResetDialog(false);
+  const handlePasswordReset = async () => {
+    if (!singleEmployee) return;
+    
+    // Validate password
+    const errors = validatePassword(newPassword);
+    
+    if (errors.length > 0) {
+      setPasswordErrors(errors);
+      return;
+    }
+    
+    // Check if passwords match
+    if (newPassword !== confirmPassword) {
+      setPasswordErrors(["Passwords do not match"]);
+      return;
+    }
+    
+    setIsResettingPassword(true);
+    setPasswordErrors([]);
+    
+    try {
+      const response = await employeesService.resetPassword(singleEmployee.id, {
+        newPassword,
+      });
+      
+      if (response.success) {
+        setShowPasswordResetDialog(false);
+        setNewPassword("");
+        setConfirmPassword("");
+        setPasswordErrors([]);
+      } else {
+        setPasswordErrors([response.message || "Failed to reset password"]);
+      }
+    } catch (error: any) {
+      setPasswordErrors([error.message || "An error occurred"]);
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+  
+  // Reset password dialog state when closed
+  const handlePasswordResetDialogChange = (open: boolean) => {
+    setShowPasswordResetDialog(open);
+    if (!open) {
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordErrors([]);
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+    }
   };
 
   // Handle delete employee
@@ -590,18 +666,19 @@ export function EmployeeDetails() {
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           {!isEditing ? (
             <>
-              <Button
-                className="bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-0 flex-1 sm:flex-none"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPasswordResetDialog(true)}
-              >
-                <KeyRound className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">
-                  {t("employees.resetPassword")}
-                </span>
-              </Button>
-
+              {isSysOrSuperAdmin && (
+                <Button
+                  className="bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-0 flex-1 sm:flex-none"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowPasswordResetDialog(true)}
+                >
+                  <KeyRound className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">
+                    {t("employees.resetPassword")}
+                  </span>
+                </Button>
+              )}
               {isSysOrSuperAdmin && (
                 <Button
                   className="bg-[#E0F2FE] text-black transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-0 flex-1 sm:flex-none"
@@ -1171,18 +1248,20 @@ export function EmployeeDetails() {
                           <h4 className="font-medium">
                             {t("employees.password")}
                           </h4>
-                          <p className="text-sm text-muted-foreground">
+                          {/* <p className="text-sm text-muted-foreground">
                             {t("employees.modifiedAgo")}
-                          </p>
+                          </p> */}
                         </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        className="bg-[#2E343E] border-0 text-white"
-                        onClick={() => setShowPasswordResetDialog(true)}
-                      >
-                        {t("employees.resetPassword")}
-                      </Button>
+                      {isSysOrSuperAdmin && (
+                        <Button
+                          variant="outline"
+                          className="bg-[#2E343E] border-0 text-white"
+                          onClick={() => setShowPasswordResetDialog(true)}
+                        >
+                          {t("employees.resetPassword")}
+                        </Button>
+                      )}
                     </div>
                   </div>
 
@@ -1324,17 +1403,17 @@ export function EmployeeDetails() {
 
       <Dialog
         open={showPasswordResetDialog}
-        onOpenChange={setShowPasswordResetDialog}
+        onOpenChange={handlePasswordResetDialogChange}
       >
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{t("employees.resetPasswordTitle")}</DialogTitle>
             <DialogDescription>
-              {t("employees.resetPasswordDescription")}
+              Set a new password for this employee. The password must meet security requirements.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <div className="flex items-center space-x-3">
+          <div className="space-y-4 py-4">
+            <div className="flex items-center space-x-3 pb-4 border-b">
               <Avatar>
                 <AvatarFallback>
                   {employee.name
@@ -1350,16 +1429,132 @@ export function EmployeeDetails() {
                 </p>
               </div>
             </div>
+            
+            {/* New Password Input */}
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    if (passwordErrors.length > 0) {
+                      setPasswordErrors([]);
+                    }
+                  }}
+                  placeholder="Enter new password"
+                  disabled={isResettingPassword}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={isResettingPassword}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+            
+            {/* Confirm Password Input */}
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (passwordErrors.length > 0) {
+                      setPasswordErrors([]);
+                    }
+                  }}
+                  placeholder="Confirm new password"
+                  disabled={isResettingPassword}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={isResettingPassword}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+            
+            {/* Password Requirements */}
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+              <h4 className="text-sm font-medium text-blue-900 mb-2">Password Requirements:</h4>
+              <ul className="text-xs text-blue-800 space-y-1">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3" />
+                  At least 8 characters long
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3" />
+                  At least one uppercase letter (A-Z)
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3" />
+                  At least one number (0-9)
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3" />
+                  At least one special character (!@#$%^&*)
+                </li>
+              </ul>
+            </div>
+            
+            {/* Error Messages */}
+            {passwordErrors.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div className="space-y-1">
+                    {passwordErrors.map((error, index) => (
+                      <p key={index} className="text-sm text-red-800">
+                        {error}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setShowPasswordResetDialog(false)}
+              onClick={() => handlePasswordResetDialogChange(false)}
+              disabled={isResettingPassword}
             >
               {t("employees.cancel")}
             </Button>
-            <Button onClick={handlePasswordReset}>
-              {t("employees.sendResetLink")}
+            <Button 
+              onClick={handlePasswordReset}
+              disabled={isResettingPassword || !newPassword || !confirmPassword}
+            >
+              {isResettingPassword ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Resetting...
+                </>
+              ) : (
+                "Reset Password"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
