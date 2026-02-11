@@ -100,7 +100,7 @@ export function EmployeesList({
   const normalizedRoles = useMemo(
     () =>
       (currentUser?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [currentUser?.roles]
+    [currentUser?.roles],
   );
   const isSysOrSuperAdmin = useMemo(() => {
     return normalizedRoles.some(
@@ -108,7 +108,7 @@ export function EmployeesList({
         r === "sysadmin" ||
         r === "superadmin" ||
         r.includes("system admin") ||
-        r.includes("super admin")
+        r.includes("super admin"),
     );
   }, [normalizedRoles]);
 
@@ -143,14 +143,14 @@ export function EmployeesList({
     name: `${e.firstName} ${e.lastName}`.trim(),
     email: e.email,
     role: normalizeRole(
-      e.roles && e.roles.length > 0 ? e.roles[0].name : "N/A"
+      e.roles && e.roles.length > 0 ? e.roles[0].name : "N/A",
     ),
     status:
       e.status === "active"
         ? "active"
         : e.status === "inactive"
-        ? "inactive"
-        : "pending",
+          ? "inactive"
+          : "pending",
     lastActive: e.lastLogin,
     projects: ["All Projects"],
     subProjects: [] as string[],
@@ -276,14 +276,15 @@ export function EmployeesList({
           <p className="text-muted-foreground">{t("dashboard.manageStaff")}</p>
         </div>
         <div className="flex gap-3">
-          <Button
+          {/* KTU I KENA PAS DO EXTRA FILTERS, KURRE SJAN PERDOR */}
+          {/* <Button
             variant="outline"
             className="bg-[#E0F2FE] border-0"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
             {t("employees.filters")}
-          </Button>
+          </Button> */}
           <Button
             onClick={onInviteClick}
             className="bg-[#0073e6] border-0 text-white"
@@ -520,7 +521,7 @@ export function EmployeesList({
                                     >
                                       {project}
                                     </div>
-                                  )
+                                  ),
                                 )}
                               </div>
                             )}
@@ -550,7 +551,7 @@ export function EmployeesList({
                                     >
                                       {subProject}
                                     </div>
-                                  )
+                                  ),
                                 )}
                               </div>
                             )}
@@ -746,7 +747,7 @@ export function EmployeesList({
                                     >
                                       {subProject}
                                     </div>
-                                  )
+                                  ),
                                 )}
                               </div>
                             )}
@@ -897,7 +898,7 @@ export function EmployeesList({
                                     >
                                       {subProject}
                                     </div>
-                                  )
+                                  ),
                                 )}
                               </div>
                             )}

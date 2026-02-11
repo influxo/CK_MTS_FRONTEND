@@ -6,6 +6,7 @@ import {
   Filter,
   MapPin,
   Plus,
+  RotateCcw,
   Search,
   ShieldAlert,
   SlidersHorizontal,
@@ -277,7 +278,7 @@ export function BeneficiariesList({
   const [limit, setLimit] = useState(20);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedBeneficiaries, setSelectedBeneficiaries] = useState<string[]>(
-    []
+    [],
   );
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
@@ -288,18 +289,18 @@ export function BeneficiariesList({
   // Projects & Subprojects from Redux
   const projects = useSelector((state: RootState) => state.projects.projects);
   const projectsLoading = useSelector(
-    (state: RootState) => state.projects.isLoading
+    (state: RootState) => state.projects.isLoading,
   );
   const projectsError = useSelector((state: RootState) => state.projects.error);
 
   const subprojects = useSelector(
-    (state: RootState) => state.subprojects.subprojects
+    (state: RootState) => state.subprojects.subprojects,
   );
   const subprojectsLoading = useSelector(
-    (state: RootState) => state.subprojects.isLoading
+    (state: RootState) => state.subprojects.isLoading,
   );
   const subprojectsError = useSelector(
-    (state: RootState) => state.subprojects.error
+    (state: RootState) => state.subprojects.error,
   );
 
   // Role + assigned projects tree
@@ -307,7 +308,7 @@ export function BeneficiariesList({
   const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
   const isSysOrSuperAdmin = useMemo(() => {
     return normalizedRoles.some(
@@ -315,7 +316,7 @@ export function BeneficiariesList({
         r === "sysadmin" ||
         r === "superadmin" ||
         r.includes("system admin") ||
-        r.includes("super admin")
+        r.includes("super admin"),
     );
   }, [normalizedRoles]);
   const isSubProjectManager = useMemo(() => {
@@ -324,7 +325,7 @@ export function BeneficiariesList({
         r === "sub-project manager" ||
         r === "sub project manager" ||
         r.includes("sub-project manager") ||
-        r.includes("sub project manager")
+        r.includes("sub project manager"),
     );
   }, [normalizedRoles]);
   const isFieldOperator = useMemo(() => {
@@ -334,7 +335,7 @@ export function BeneficiariesList({
       normalizedRoles.includes("fieldoperator") ||
       normalizedRoles.includes("field_op") ||
       normalizedRoles.some(
-        (r: string) => r.includes("field") && r.includes("operator")
+        (r: string) => r.includes("field") && r.includes("operator"),
       )
     );
   }, [normalizedRoles]);
@@ -363,7 +364,7 @@ export function BeneficiariesList({
     }
     // Non-admins: build from userProjectsTree
     const proj = (userProjectsTree || []).find(
-      (p: any) => p.id === filterProjectId
+      (p: any) => p.id === filterProjectId,
     );
     return ((proj?.subprojects || []) as any[]).map((sp: any) => ({
       id: sp.id,
@@ -402,7 +403,7 @@ export function BeneficiariesList({
     try {
       if (filterProjectId === "all") return new Set<string>();
       const proj = (userProjectsTree || []).find(
-        (p: any) => p.id === filterProjectId
+        (p: any) => p.id === filterProjectId,
       );
       const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
       return new Set<string>(ids);
@@ -439,10 +440,10 @@ export function BeneficiariesList({
       } else if (isSubProjectManager) {
         try {
           const proj = (userProjectsTree || []).find(
-            (xp: any) => xp.id === p.id
+            (xp: any) => xp.id === p.id,
           );
           const allowed = new Set<string>(
-            (proj?.subprojects || []).map((sp: any) => sp.id)
+            (proj?.subprojects || []).map((sp: any) => sp.id),
           );
           result[p.id] = base.filter((sp) => allowed.has(sp.id));
         } catch {
@@ -494,7 +495,7 @@ export function BeneficiariesList({
   const addItem = (
     value: string,
     list: string[],
-    setter: (next: string[]) => void
+    setter: (next: string[]) => void,
   ) => {
     const v = (value || "").trim();
     if (!v) return;
@@ -505,7 +506,7 @@ export function BeneficiariesList({
   const removeItemAt = (
     index: number,
     list: string[],
-    setter: (next: string[]) => void
+    setter: (next: string[]) => void,
   ) => {
     setter(list.filter((_, i) => i !== index));
   };
@@ -562,7 +563,7 @@ export function BeneficiariesList({
           status: statusParam,
           page,
           limit,
-        })
+        }),
       );
       return;
     }
@@ -574,7 +575,7 @@ export function BeneficiariesList({
           status: statusParam,
           page,
           limit,
-        })
+        }),
       );
       return;
     }
@@ -583,7 +584,7 @@ export function BeneficiariesList({
         status: statusParam,
         page,
         limit,
-      })
+      }),
     );
   }, [
     dispatch,
@@ -689,7 +690,7 @@ export function BeneficiariesList({
 
   // Unique tags for advanced filter mock (using mockBeneficiaries)
   const uniqueTags = Array.from(
-    new Set(mockBeneficiaries.flatMap((beneficiary) => beneficiary.tags))
+    new Set(mockBeneficiaries.flatMap((beneficiary) => beneficiary.tags)),
   );
 
   // Selection helpers
@@ -704,36 +705,55 @@ export function BeneficiariesList({
   const handleSelectBeneficiary = (id: string) => {
     if (selectedBeneficiaries.includes(id)) {
       setSelectedBeneficiaries(
-        selectedBeneficiaries.filter((beneficiaryId) => beneficiaryId !== id)
+        selectedBeneficiaries.filter((beneficiaryId) => beneficiaryId !== id),
       );
     } else {
       setSelectedBeneficiaries([...selectedBeneficiaries, id]);
     }
   };
 
+  const handleResetFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("all");
+    setFilterProjectId("all");
+    setFilterSubProjectId("all");
+    setTagFilter("all");
+    setShowAdvancedFilters(false);
+    setPage(1);
+  };
+
   // Validate form - all required fields and at least one subproject per selected project
   const isFormValid = useMemo(() => {
-    const hasRequiredFields = 
+    const hasRequiredFields =
       form.firstName.trim() !== "" &&
       form.lastName.trim() !== "" &&
       form.gender !== "" &&
       form.dob !== "" &&
       form.nationalId.trim() !== "" &&
       form.status !== "";
-    
+
     // Each selected project must have at least one subproject selected
     const hasValidSubprojects = selectedProjects.every((projectId) => {
-      const subprojectsForProject = subprojectsForModalByProjectId[projectId] || [];
+      const subprojectsForProject =
+        subprojectsForModalByProjectId[projectId] || [];
       const subprojectIdsForProject = subprojectsForProject.map((sp) => sp.id);
       // Check if at least one subproject from this project is selected
-      return subprojectIdsForProject.some((spId) => selectedSubProjects.includes(spId));
+      return subprojectIdsForProject.some((spId) =>
+        selectedSubProjects.includes(spId),
+      );
     });
-    
+
     // Must have at least one project selected with valid subprojects
-    const hasProjectsWithSubprojects = selectedProjects.length > 0 && hasValidSubprojects;
-    
+    const hasProjectsWithSubprojects =
+      selectedProjects.length > 0 && hasValidSubprojects;
+
     return hasRequiredFields && hasProjectsWithSubprojects;
-  }, [form, selectedProjects, selectedSubProjects, subprojectsForModalByProjectId]);
+  }, [
+    form,
+    selectedProjects,
+    selectedSubProjects,
+    subprojectsForModalByProjectId,
+  ]);
 
   const handleCreateSubmit = async () => {
     if (!form.firstName || !form.lastName || !form.gender || !form.status) {
@@ -814,7 +834,7 @@ export function BeneficiariesList({
         if (links.length > 0) {
           try {
             await dispatch(
-              associateBeneficiaryToEntities({ id: newId, links })
+              associateBeneficiaryToEntities({ id: newId, links }),
             ).unwrap();
           } catch (_) {
             // Association errors are surfaced via slice selectors
@@ -929,6 +949,17 @@ export function BeneficiariesList({
             >
               <SlidersHorizontal className="h-4 w-4 mr-2" />
               {showAdvancedFilters ? "Advanced Off" : "Advanced"}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="bg-orange-500 text-white border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] hover:bg-orange-600 w-full sm:w-auto"
+              onClick={handleResetFilters}
+              title="Reset all filters"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset Filters
             </Button>
           </div>
         </div>
@@ -1261,7 +1292,7 @@ export function BeneficiariesList({
                             addItem(
                               disabilitiesInput,
                               disabilities,
-                              setDisabilities
+                              setDisabilities,
                             );
                             setDisabilitiesInput("");
                           }
@@ -1274,7 +1305,7 @@ export function BeneficiariesList({
                           addItem(
                             disabilitiesInput,
                             disabilities,
-                            setDisabilities
+                            setDisabilities,
                           );
                           setDisabilitiesInput("");
                         }}
@@ -1326,7 +1357,7 @@ export function BeneficiariesList({
                             addItem(
                               chronicConditionsInput,
                               chronicConditions,
-                              setChronicConditions
+                              setChronicConditions,
                             );
                             setChronicConditionsInput("");
                           }
@@ -1339,7 +1370,7 @@ export function BeneficiariesList({
                           addItem(
                             chronicConditionsInput,
                             chronicConditions,
-                            setChronicConditions
+                            setChronicConditions,
                           );
                           setChronicConditionsInput("");
                         }}
@@ -1363,7 +1394,7 @@ export function BeneficiariesList({
                                 removeItemAt(
                                   idx,
                                   chronicConditions,
-                                  setChronicConditions
+                                  setChronicConditions,
                                 )
                               }
                               aria-label={`Remove ${c}`}
@@ -1393,7 +1424,7 @@ export function BeneficiariesList({
                             addItem(
                               medicationsInput,
                               medications,
-                              setMedications
+                              setMedications,
                             );
                             setMedicationsInput("");
                           }
@@ -1406,7 +1437,7 @@ export function BeneficiariesList({
                           addItem(
                             medicationsInput,
                             medications,
-                            setMedications
+                            setMedications,
                           );
                           setMedicationsInput("");
                         }}
@@ -1500,12 +1531,12 @@ export function BeneficiariesList({
                                         project.id
                                       ] || [];
                                     const subIds = subProjectsForProject.map(
-                                      (sp) => sp.id
+                                      (sp) => sp.id,
                                     );
                                     setSelectedSubProjects((prevSubs) =>
                                       prevSubs.filter(
-                                        (spId) => !subIds.includes(spId)
-                                      )
+                                        (spId) => !subIds.includes(spId),
+                                      ),
                                     );
                                     return prev.filter((p) => p !== project.id);
                                   } else {
@@ -1533,13 +1564,13 @@ export function BeneficiariesList({
                                 <Checkbox
                                   id={`sub-${subProject.id}`}
                                   checked={selectedSubProjects.includes(
-                                    subProject.id
+                                    subProject.id,
                                   )}
                                   onCheckedChange={() => {
                                     setSelectedSubProjects((prev) => {
                                       if (prev.includes(subProject.id)) {
                                         return prev.filter(
-                                          (sp) => sp !== subProject.id
+                                          (sp) => sp !== subProject.id,
                                         );
                                       } else {
                                         if (
@@ -1549,7 +1580,7 @@ export function BeneficiariesList({
                                             (prevProjects) => [
                                               ...prevProjects,
                                               project.id,
-                                            ]
+                                            ],
                                           );
                                         }
                                         return [...prev, subProject.id];
@@ -1610,8 +1641,8 @@ export function BeneficiariesList({
                 {createLoading
                   ? t("beneficiaries.creating")
                   : associateLoading
-                  ? t("beneficiaries.associating")
-                  : t("beneficiaries.addBeneficiary")}
+                    ? t("beneficiaries.associating")
+                    : t("beneficiaries.addBeneficiary")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1702,13 +1733,6 @@ export function BeneficiariesList({
               </div>
             </div>
             <div className="flex justify-end mt-4">
-              <Button
-                //  variant="outline"
-                // size="sm"
-                className="mr-2 bg-[#E0F2FE]"
-              >
-                {t("common.resetFilters")}
-              </Button>
               <Button className="bg-[#0073e6] text-white">
                 {t("common.applyFilters")}
               </Button>
@@ -1927,7 +1951,7 @@ export function BeneficiariesList({
                   >
                     …
                   </span>
-                )
+                ),
               )}
             </div>
             <Select

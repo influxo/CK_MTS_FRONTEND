@@ -9,6 +9,7 @@ import {
   FolderKanban,
   MapPin,
   Plus,
+  RotateCcw,
   TrendingDown,
   TrendingUp,
   User,
@@ -167,23 +168,23 @@ export function SubProjectDetails() {
   const dispatch = useDispatch<AppDispatch>();
 
   const subProject = useSelector((state: RootState) =>
-    selectSelectedSubproject(state)
+    selectSelectedSubproject(state),
   );
   const loading = useSelector((state: RootState) =>
-    selectSubprojectsLoading(state)
+    selectSubprojectsLoading(state),
   );
   const error = useSelector((state: RootState) =>
-    selectSubprojectsError(state)
+    selectSubprojectsError(state),
   );
 
   // Beneficiaries by entity (subproject)
   const subBeneficiaries = useSelector(selectBeneficiariesByEntity);
   const subBeneficiariesLoading = useSelector(
-    selectBeneficiariesByEntityLoading
+    selectBeneficiariesByEntityLoading,
   );
   const subBeneficiariesError = useSelector(selectBeneficiariesByEntityError);
   const subBeneficiariesMeta = useSelector(
-    selectBeneficiariesByEntityPagination
+    selectBeneficiariesByEntityPagination,
   );
 
   // Create/associate selectors
@@ -199,10 +200,10 @@ export function SubProjectDetails() {
 
   // Subproject-scoped metrics state (typed with RootState)
   const summaryState = useSelector((state: RootState) =>
-    selectSubProjectMetricsSummary(state)
+    selectSubProjectMetricsSummary(state),
   );
   const seriesState = useSelector((state: RootState) =>
-    selectSubProjectMetricsSeries(state)
+    selectSubProjectMetricsSeries(state),
   );
 
   // Overview local filter state (mirroring ProjectDetails)
@@ -215,7 +216,7 @@ export function SubProjectDetails() {
     "submissions" | "serviceDeliveries" | "uniqueBeneficiaries"
   >("submissions");
   const [serviceIdLocal, setServiceIdLocal] = useState<string | undefined>(
-    undefined
+    undefined,
   );
   const [formTemplateIdLocal, setFormTemplateIdLocal] = useState<
     string | undefined
@@ -238,7 +239,7 @@ export function SubProjectDetails() {
   // Determine role
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
 
   const hasFullAccess = useMemo(() => {
@@ -253,7 +254,7 @@ export function SubProjectDetails() {
         r.includes("super admin") ||
         r.includes("program manager") ||
         r.includes("sub project manager") ||
-        r.includes("sub-project manager")
+        r.includes("sub-project manager"),
     );
   }, [normalizedRoles]);
 
@@ -292,6 +293,22 @@ export function SubProjectDetails() {
     setCustomOpen(false);
   };
 
+  const handleResetFilters = () => {
+    setServiceIdLocal(undefined);
+    setFormTemplateIdLocal(undefined);
+    setMetricLocal("submissions");
+    setGranularity("week");
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setTimePreset("all-period");
+    setFiltersOpen(false);
+    setCustomOpen(false);
+    setCustomFrom("");
+    setCustomTo("");
+    setShowMoreLocal(false);
+    setChartType("line");
+  };
+
   // Label formatting helpers
   const dayFmt = new Intl.DateTimeFormat(undefined, {
     month: "short",
@@ -317,7 +334,7 @@ export function SubProjectDetails() {
         const monday = startOfWeek(d);
         const startYear = new Date(d.getFullYear(), 0, 1);
         const diffDays = Math.floor(
-          (monday.getTime() - startYear.getTime()) / 86400000
+          (monday.getTime() - startYear.getTime()) / 86400000,
         );
         const week = Math.floor(diffDays / 7) + 1;
         return `W${week} ${d.getFullYear()}`;
@@ -368,7 +385,7 @@ export function SubProjectDetails() {
           links: [
             { entityId: subprojectId, entityType: "subproject" as const },
           ],
-        })
+        }),
       ).unwrap();
       setIsAddDialogOpen(false);
       toast.success("Përfituesi u shtua me sukses", {
@@ -386,7 +403,7 @@ export function SubProjectDetails() {
           entityType: "subproject",
           page: 1,
           limit: 20,
-        })
+        }),
       );
     } catch (_) {
       // errors surfaced via slice
@@ -401,7 +418,7 @@ export function SubProjectDetails() {
   };
   const toggleSelectOne = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
@@ -442,7 +459,7 @@ export function SubProjectDetails() {
   const addItem = (
     value: string,
     list: string[],
-    setter: (next: string[]) => void
+    setter: (next: string[]) => void,
   ) => {
     const v = (value || "").trim();
     if (!v) return;
@@ -452,7 +469,7 @@ export function SubProjectDetails() {
   const removeItemAt = (
     index: number,
     list: string[],
-    setter: (next: string[]) => void
+    setter: (next: string[]) => void,
   ) => {
     setter(list.filter((_, i) => i !== index));
   };
@@ -506,7 +523,7 @@ export function SubProjectDetails() {
           entityType: "subproject",
           page: 1,
           limit: 20,
-        })
+        }),
       );
     };
 
@@ -584,7 +601,7 @@ export function SubProjectDetails() {
         ...commonFilters,
         startDate,
         endDate,
-      }) as any
+      }) as any,
     );
 
     dispatch(
@@ -594,7 +611,7 @@ export function SubProjectDetails() {
         endDate,
         groupBy: granularity,
         metric: metricLocal,
-      }) as any
+      }) as any,
     );
   }, [
     dispatch,
@@ -663,7 +680,7 @@ export function SubProjectDetails() {
           entityType: "subproject",
           page: 1,
           limit: 20,
-        })
+        }),
       );
       dispatch(clearBeneficiaryMessages());
     }
@@ -776,7 +793,7 @@ export function SubProjectDetails() {
                   entityType: "subproject",
                 },
               ],
-            })
+            }),
           ).unwrap();
           // Explicitly refetch to update the table immediately after association
           await dispatch(
@@ -785,7 +802,7 @@ export function SubProjectDetails() {
               entityType: "subproject",
               page: 1,
               limit: 20,
-            })
+            }),
           );
         } catch (_) {
           // association errors handled via slice
@@ -1033,7 +1050,7 @@ export function SubProjectDetails() {
                           description: editDescription,
                           category: editCategory,
                           status: editStatus,
-                        }) as any
+                        }) as any,
                       ).unwrap();
                       if (res && res.success) {
                         toast.success("Nënprojekti u modifikua me sukses", {
@@ -1302,18 +1319,18 @@ export function SubProjectDetails() {
                     enhancedSubProject.status === "active"
                       ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
                       : enhancedSubProject.status === "pending"
-                      ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
-                      : {
-                          backgroundColor: "rgba(28,28,28,0.05)",
-                          color: "rgba(28,28,28,0.4)",
-                        }
+                        ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
+                        : {
+                            backgroundColor: "rgba(28,28,28,0.05)",
+                            color: "rgba(28,28,28,0.4)",
+                          }
                   }
                 >
                   {enhancedSubProject.status === "active"
                     ? t("subProjectDetails.active")
                     : enhancedSubProject.status === "pending"
-                    ? t("subProjectDetails.pending")
-                    : t("subProjectDetails.inactive")}
+                      ? t("subProjectDetails.pending")
+                      : t("subProjectDetails.inactive")}
                 </Badge>
               </div>
 
@@ -1332,11 +1349,11 @@ export function SubProjectDetails() {
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span>
                       {new Date(
-                        enhancedSubProject.startDate
+                        enhancedSubProject.startDate,
                       ).toLocaleDateString()}{" "}
                       -{" "}
                       {new Date(
-                        enhancedSubProject.endDate
+                        enhancedSubProject.endDate,
                       ).toLocaleDateString()}
                     </span>
                   </div>
@@ -1491,6 +1508,16 @@ export function SubProjectDetails() {
                       ? t("subProjectDetails.hideFilters")
                       : t("subProjectDetails.moreFilters")}
                   </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetFilters}
+                    className="bg-orange-500 text-white border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] hover:bg-orange-600 w-full md:w-auto"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reset Filters
+                  </Button>
                 </div>
 
                 {showMoreLocal && (
@@ -1616,7 +1643,7 @@ export function SubProjectDetails() {
                                       {g}
                                     </button>
                                   </li>
-                                )
+                                ),
                               )}
                               <li className="my-1 border-t border-gray-100" />
                               <li>
@@ -1927,7 +1954,7 @@ export function SubProjectDetails() {
                         {seriesState.loading
                           ? "…"
                           : Number(
-                              seriesSummary?.totalSubmissions || 0
+                              seriesSummary?.totalSubmissions || 0,
                             ).toLocaleString()}
                       </div>
                       <div className="flex items-center text-xs text-muted-foreground">
@@ -1949,7 +1976,7 @@ export function SubProjectDetails() {
                         {seriesState.loading
                           ? "…"
                           : Number(
-                              seriesSummary?.totalServiceDeliveries || 0
+                              seriesSummary?.totalServiceDeliveries || 0,
                             ).toLocaleString()}
                       </div>
                       <div className="flex items-center text-xs text-muted-foreground">
@@ -1971,7 +1998,7 @@ export function SubProjectDetails() {
                         {seriesState.loading
                           ? "…"
                           : Number(
-                              seriesSummary?.totalUniqueBeneficiaries || 0
+                              seriesSummary?.totalUniqueBeneficiaries || 0,
                             ).toLocaleString()}
                       </div>
                       <div className="flex items-center text-xs text-muted-foreground">
@@ -2064,7 +2091,7 @@ export function SubProjectDetails() {
                           </span>
                           <span className="text-sm">
                             {new Date(
-                              enhancedSubProject.lastSync
+                              enhancedSubProject.lastSync,
                             ).toLocaleString()}
                           </span>
                         </div>
@@ -2121,7 +2148,7 @@ export function SubProjectDetails() {
                                   </Badge>
                                   <span className="text-xs text-muted-foreground">
                                     {new Date(
-                                      report.createdDate
+                                      report.createdDate,
                                     ).toLocaleDateString()}
                                   </span>
                                 </div>
@@ -2239,7 +2266,7 @@ export function SubProjectDetails() {
                                 id="firstName"
                                 className="col-span-3"
                                 placeholder={t(
-                                  "subProjectDetails.enterFirstName"
+                                  "subProjectDetails.enterFirstName",
                                 )}
                                 value={form.firstName}
                                 onChange={(e) =>
@@ -2258,7 +2285,7 @@ export function SubProjectDetails() {
                                 id="lastName"
                                 className="col-span-3"
                                 placeholder={t(
-                                  "subProjectDetails.enterLastName"
+                                  "subProjectDetails.enterLastName",
                                 )}
                                 value={form.lastName}
                                 onChange={(e) =>
@@ -2322,7 +2349,7 @@ export function SubProjectDetails() {
                                 id="nationalId"
                                 className="col-span-3"
                                 placeholder={t(
-                                  "subProjectDetails.enterNationalId"
+                                  "subProjectDetails.enterNationalId",
                                 )}
                                 value={form.nationalId}
                                 onChange={(e) =>
@@ -2341,7 +2368,7 @@ export function SubProjectDetails() {
                                 id="phone"
                                 className="col-span-3"
                                 placeholder={t(
-                                  "subProjectDetails.enterPhoneNumber"
+                                  "subProjectDetails.enterPhoneNumber",
                                 )}
                                 value={form.phone}
                                 onChange={(e) =>
@@ -2372,7 +2399,7 @@ export function SubProjectDetails() {
                                 id="address"
                                 className="col-span-3"
                                 placeholder={t(
-                                  "subProjectDetails.enterAddress"
+                                  "subProjectDetails.enterAddress",
                                 )}
                                 value={form.address}
                                 onChange={(e) =>
@@ -2391,7 +2418,7 @@ export function SubProjectDetails() {
                                 id="municipality"
                                 className="col-span-3"
                                 placeholder={t(
-                                  "subProjectDetails.enterMunicipality"
+                                  "subProjectDetails.enterMunicipality",
                                 )}
                                 value={form.municipality}
                                 onChange={(e) =>
@@ -2413,7 +2440,7 @@ export function SubProjectDetails() {
                                 <SelectTrigger className="col-span-3">
                                   <SelectValue
                                     placeholder={t(
-                                      "subProjectDetails.selectEthnicity"
+                                      "subProjectDetails.selectEthnicity",
                                     )}
                                   />
                                 </SelectTrigger>
@@ -2478,7 +2505,7 @@ export function SubProjectDetails() {
                                 step={1}
                                 className="col-span-3"
                                 placeholder={t(
-                                  "subProjectDetails.enterHouseholdMembers"
+                                  "subProjectDetails.enterHouseholdMembers",
                                 )}
                                 value={householdMembers}
                                 onChange={(e) =>
@@ -2499,7 +2526,7 @@ export function SubProjectDetails() {
                                 <SelectTrigger className="col-span-3">
                                   <SelectValue
                                     placeholder={t(
-                                      "subProjectDetails.selectStatus"
+                                      "subProjectDetails.selectStatus",
                                     )}
                                   />
                                 </SelectTrigger>
@@ -2530,7 +2557,7 @@ export function SubProjectDetails() {
                                     <Input
                                       id="allergies"
                                       placeholder={t(
-                                        "subProjectDetails.typeAndPressEnter"
+                                        "subProjectDetails.typeAndPressEnter",
                                       )}
                                       value={allergiesInput}
                                       onChange={(e) =>
@@ -2542,7 +2569,7 @@ export function SubProjectDetails() {
                                           addItem(
                                             allergiesInput,
                                             allergies,
-                                            setAllergies
+                                            setAllergies,
                                           );
                                           setAllergiesInput("");
                                         }
@@ -2556,7 +2583,7 @@ export function SubProjectDetails() {
                                         addItem(
                                           allergiesInput,
                                           allergies,
-                                          setAllergies
+                                          setAllergies,
                                         );
                                         setAllergiesInput("");
                                       }}
@@ -2580,7 +2607,7 @@ export function SubProjectDetails() {
                                               removeItemAt(
                                                 idx,
                                                 allergies,
-                                                setAllergies
+                                                setAllergies,
                                               )
                                             }
                                             aria-label={`Remove ${a}`}
@@ -2605,7 +2632,7 @@ export function SubProjectDetails() {
                                     <Input
                                       id="disabilities"
                                       placeholder={t(
-                                        "subProjectDetails.typeAndPressEnter"
+                                        "subProjectDetails.typeAndPressEnter",
                                       )}
                                       value={disabilitiesInput}
                                       onChange={(e) =>
@@ -2617,7 +2644,7 @@ export function SubProjectDetails() {
                                           addItem(
                                             disabilitiesInput,
                                             disabilities,
-                                            setDisabilities
+                                            setDisabilities,
                                           );
                                           setDisabilitiesInput("");
                                         }
@@ -2631,7 +2658,7 @@ export function SubProjectDetails() {
                                         addItem(
                                           disabilitiesInput,
                                           disabilities,
-                                          setDisabilities
+                                          setDisabilities,
                                         );
                                         setDisabilitiesInput("");
                                       }}
@@ -2655,7 +2682,7 @@ export function SubProjectDetails() {
                                               removeItemAt(
                                                 idx,
                                                 disabilities,
-                                                setDisabilities
+                                                setDisabilities,
                                               )
                                             }
                                             aria-label={`Remove ${d}`}
@@ -2680,12 +2707,12 @@ export function SubProjectDetails() {
                                     <Input
                                       id="chronicConditions"
                                       placeholder={t(
-                                        "subProjectDetails.typeAndPressEnter"
+                                        "subProjectDetails.typeAndPressEnter",
                                       )}
                                       value={chronicConditionsInput}
                                       onChange={(e) =>
                                         setChronicConditionsInput(
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       onKeyDown={(e) => {
@@ -2694,7 +2721,7 @@ export function SubProjectDetails() {
                                           addItem(
                                             chronicConditionsInput,
                                             chronicConditions,
-                                            setChronicConditions
+                                            setChronicConditions,
                                           );
                                           setChronicConditionsInput("");
                                         }
@@ -2708,7 +2735,7 @@ export function SubProjectDetails() {
                                         addItem(
                                           chronicConditionsInput,
                                           chronicConditions,
-                                          setChronicConditions
+                                          setChronicConditions,
                                         );
                                         setChronicConditionsInput("");
                                       }}
@@ -2732,7 +2759,7 @@ export function SubProjectDetails() {
                                               removeItemAt(
                                                 idx,
                                                 chronicConditions,
-                                                setChronicConditions
+                                                setChronicConditions,
                                               )
                                             }
                                             aria-label={`Remove ${c}`}
@@ -2757,7 +2784,7 @@ export function SubProjectDetails() {
                                     <Input
                                       id="medications"
                                       placeholder={t(
-                                        "subProjectDetails.typeAndPressEnter"
+                                        "subProjectDetails.typeAndPressEnter",
                                       )}
                                       value={medicationsInput}
                                       onChange={(e) =>
@@ -2769,7 +2796,7 @@ export function SubProjectDetails() {
                                           addItem(
                                             medicationsInput,
                                             medications,
-                                            setMedications
+                                            setMedications,
                                           );
                                           setMedicationsInput("");
                                         }
@@ -2783,7 +2810,7 @@ export function SubProjectDetails() {
                                         addItem(
                                           medicationsInput,
                                           medications,
-                                          setMedications
+                                          setMedications,
                                         );
                                         setMedicationsInput("");
                                       }}
@@ -2807,7 +2834,7 @@ export function SubProjectDetails() {
                                               removeItemAt(
                                                 idx,
                                                 medications,
-                                                setMedications
+                                                setMedications,
                                               )
                                             }
                                             aria-label={`Remove ${m}`}
@@ -2831,7 +2858,7 @@ export function SubProjectDetails() {
                                   id="bloodType"
                                   className="col-span-3"
                                   placeholder={t(
-                                    "subProjectDetails.bloodTypePlaceholder"
+                                    "subProjectDetails.bloodTypePlaceholder",
                                   )}
                                   value={bloodTypeInput}
                                   onChange={(e) =>
@@ -2850,7 +2877,7 @@ export function SubProjectDetails() {
                                   id="notes"
                                   className="col-span-3 bg-white border border-input rounded-md p-2 min-h-[70px]"
                                   placeholder={t(
-                                    "subProjectDetails.notesPlaceholder"
+                                    "subProjectDetails.notesPlaceholder",
                                   )}
                                   value={notesInput}
                                   onChange={(e) =>
@@ -2878,7 +2905,7 @@ export function SubProjectDetails() {
                                 {listLoading ? (
                                   <div className="text-sm text-muted-foreground">
                                     {t(
-                                      "subProjectDetails.loadingBeneficiaries"
+                                      "subProjectDetails.loadingBeneficiaries",
                                     )}
                                   </div>
                                 ) : listError ? (
@@ -2895,7 +2922,7 @@ export function SubProjectDetails() {
                                     <SelectTrigger>
                                       <SelectValue
                                         placeholder={t(
-                                          "subProjectDetails.selectBeneficiary"
+                                          "subProjectDetails.selectBeneficiary",
                                         )}
                                       />
                                     </SelectTrigger>
@@ -2935,7 +2962,9 @@ export function SubProjectDetails() {
                           <Button
                             className="bg-[#0073e6] border-0 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleCreateSubmit}
-                            disabled={!isNewBeneficiaryFormValid || createLoading}
+                            disabled={
+                              !isNewBeneficiaryFormValid || createLoading
+                            }
                           >
                             {createLoading
                               ? t("subProjectDetails.saving")
@@ -2946,7 +2975,8 @@ export function SubProjectDetails() {
                             className="bg-[#0073e6] border-0 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             onClick={handleAssociateExistingSubmit}
                             disabled={
-                              !isExistingBeneficiaryFormValid || associateLoading
+                              !isExistingBeneficiaryFormValid ||
+                              associateLoading
                             }
                           >
                             {associateLoading
@@ -3026,21 +3056,21 @@ export function SubProjectDetails() {
                                     color: "#4AA785",
                                   }
                                 : r.status === "pending"
-                                ? {
-                                    backgroundColor: "#E2F5FF",
-                                    color: "#59A8D4",
-                                  }
-                                : {
-                                    backgroundColor: "rgba(28,28,28,0.05)",
-                                    color: "rgba(28,28,28,0.4)",
-                                  }
+                                  ? {
+                                      backgroundColor: "#E2F5FF",
+                                      color: "#59A8D4",
+                                    }
+                                  : {
+                                      backgroundColor: "rgba(28,28,28,0.05)",
+                                      color: "rgba(28,28,28,0.4)",
+                                    }
                             }
                           >
                             {r.status === "active"
                               ? t("subProjectDetails.active")
                               : r.status === "pending"
-                              ? t("subProjectDetails.pending")
-                              : t("subProjectDetails.inactive")}
+                                ? t("subProjectDetails.pending")
+                                : t("subProjectDetails.inactive")}
                           </Badge>
                         </TableCell>
                         <TableCell>

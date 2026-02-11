@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Download, Filter } from "lucide-react";
+import { Download, Filter, RotateCcw } from "lucide-react";
 import { Button } from "../ui/button/button";
 import {
   Select,
@@ -13,6 +13,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   setFilters,
   selectMetricsFilters,
+  resetFilters,
 } from "../../store/slices/serviceMetricsSlice";
 import {
   fetchSubProjectsByProjectId,
@@ -49,13 +50,13 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   const [subprojectId, setSubprojectId] = React.useState<string>("");
   const [timePreset, setTimePreset] = React.useState<string>("last-30-days");
   const [metric, setMetric] = React.useState<string>(
-    metricsFilters.metric || "submissions"
+    metricsFilters.metric || "submissions",
   );
   const [serviceId, setServiceId] = React.useState<string>(
-    metricsFilters.serviceId || ""
+    metricsFilters.serviceId || "",
   );
   const [formTemplateId, setFormTemplateId] = React.useState<string>(
-    metricsFilters.formTemplateId || ""
+    metricsFilters.formTemplateId || "",
   );
   const [showMore, setShowMore] = React.useState<boolean>(false);
   // Control dropdown open state so pagination actions keep the menu open
@@ -72,7 +73,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
   const normalizedRoles = React.useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
   const isSubProjectManager = React.useMemo(() => {
     return normalizedRoles.some(
@@ -80,13 +81,13 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         r === "sub-project manager" ||
         r === "sub project manager" ||
         r.includes("sub-project manager") ||
-        r.includes("sub project manager")
+        r.includes("sub project manager"),
     );
   }, [normalizedRoles]);
   const allowedSubprojectIds = React.useMemo(() => {
     try {
       const proj = (userProjectsTree || []).find(
-        (p: any) => p.id === projectId
+        (p: any) => p.id === projectId,
       );
       const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
       return new Set<string>(ids);
@@ -106,11 +107,11 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   React.useEffect(() => {
     if (subprojectId) {
       dispatch(
-        getEntityServices({ entityId: subprojectId, entityType: "subproject" })
+        getEntityServices({ entityId: subprojectId, entityType: "subproject" }),
       );
     } else if (projectId) {
       dispatch(
-        getEntityServices({ entityId: projectId, entityType: "project" })
+        getEntityServices({ entityId: projectId, entityType: "project" }),
       );
     } else {
       dispatch(getAllServices({ page: 1, limit: 100 }));
@@ -142,13 +143,13 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         } else {
           // Fallback to redux state
           setTemplatesOptions(
-            (formsState as any)?.templates || (formsState as any) || []
+            (formsState as any)?.templates || (formsState as any) || [],
           );
           setTemplatesTotalPages(1);
         }
       } catch (e) {
         setTemplatesOptions(
-          (formsState as any)?.templates || (formsState as any) || []
+          (formsState as any)?.templates || (formsState as any) || [],
         );
         setTemplatesTotalPages(1);
       }
@@ -213,8 +214,28 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
     dispatch(
-      setFilters({ startDate: start.toISOString(), endDate: end.toISOString() })
+      setFilters({
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+      }),
     );
+  };
+
+  const handleResetFilters = () => {
+    // Reset Redux global filters
+    dispatch(resetFilters());
+
+    // Reset all local filter states
+    setProjectId("");
+    setSubprojectId("");
+    setTimePreset("last-30-days");
+    setMetric("submissions");
+    setServiceId("");
+    setFormTemplateId("");
+    setShowMore(false);
+
+    // Reset pagination states
+    setTemplatesPage(1);
   };
 
   const servicesForSelect =
@@ -265,7 +286,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               subprojects
                 .filter((sp) => sp.projectId === projectId)
                 .filter((sp) =>
-                  !isSubProjectManager ? true : allowedSubprojectIds.has(sp.id)
+                  !isSubProjectManager ? true : allowedSubprojectIds.has(sp.id),
                 )
                 .map((sp) => (
                   <SelectItem key={sp.id} value={sp.id}>
@@ -360,7 +381,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                         ? Math.max(1, (servicesCurrentPage || 1) - 1)
                         : Math.min(
                             servicesTotalPages || 1,
-                            (servicesCurrentPage || 1) + 1
+                            (servicesCurrentPage || 1) + 1,
                           );
                     dispatch(getAllServices({ page: nextPage, limit: 100 }));
                     setOpenServicesSelect(true);
@@ -469,6 +490,17 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         </div>
       )}
       <div className="flex gap-4 justify-end w-full">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleResetFilters}
+          className="bg-orange-500 text-white border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px] hover:bg-orange-600"
+        >
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Reset Filters
+        </Button>
         <Button
           variant="outline"
           size="sm"

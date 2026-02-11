@@ -68,7 +68,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   // Determine role
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
   const isSysOrSuperAdmin = useMemo(() => {
     return normalizedRoles.some(
@@ -76,7 +76,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         r === "sysadmin" ||
         r === "superadmin" ||
         r.includes("system admin") ||
-        r.includes("super admin")
+        r.includes("super admin"),
     );
   }, [normalizedRoles]);
 
@@ -121,7 +121,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -153,7 +153,8 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   };
 
   // Check if all required fields are filled
-  const isFormValid = formData.name.trim() !== "" && formData.category.trim() !== "";
+  const isFormValid =
+    formData.name.trim() !== "" && formData.category.trim() !== "";
 
   return (
     // <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
@@ -326,97 +327,6 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
             </DialogContent>
           </Dialog>
         )}
-
-        {/* Notifications */}
-        <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
-            </Button>
-          </DropdownMenuTrigger>
-          {/* Dark overlay behind the dropdown when open, rendered to body to cover the whole page */}
-          {notifOpen &&
-            createPortal(
-              <div
-                className="fixed inset-0 bg-black/20 z-[60]"
-                onClick={() => setNotifOpen(false)}
-              />,
-              document.body
-            )}
-          <DropdownMenuContent
-            align="end"
-            className="w-[300px] bg-white z-[70]"
-          >
-            <div className="flex items-center justify-between p-2">
-              <span className="font-medium">Notifications</span>
-              <Button variant="ghost" size="sm">
-                Mark all as read
-              </Button>
-            </div>
-            <DropdownMenuSeparator />
-            <div className="max-h-[300px] overflow-auto">
-              <div className="p-3 hover:bg-muted cursor-pointer">
-                <div className="flex gap-3 items-start">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>JS</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm">
-                      <span className="font-medium">Jane Smith</span> invited
-                      you to{" "}
-                      <span className="font-medium">
-                        Rural Healthcare Initiative
-                      </span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      2 hours ago
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-3 hover:bg-muted cursor-pointer">
-                <div className="flex gap-3 items-start">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>ML</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm">
-                      <span className="font-medium">Michael Lee</span> commented
-                      on your report
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      5 hours ago
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-3 hover:bg-muted cursor-pointer bg-muted/40">
-                <div className="flex gap-3 items-start">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>SYS</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm">Weekly system update completed</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Yesterday
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <DropdownMenuSeparator />
-            <div className="p-2 text-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-center"
-              >
-                View all notifications
-              </Button>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
 
         {/* User Menu */}
         <DropdownMenu>

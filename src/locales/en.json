@@ -1187,6 +1187,7 @@
     "title": "Data Entry",
     "subtitle": "Submit forms or view submission history",
     "dataEntryTab": "Data Entry",
+    "resetFilters": "Reset Filters",
     "submissionHistoryTab": "Submission History",
     "entityType": "Entity Type",
     "project": "Project",

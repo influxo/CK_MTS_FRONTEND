@@ -1,15 +1,10 @@
 import {
-  AlertCircle,
-  Check,
-  Copy,
   Edit,
   Eye,
   FileDown,
   FileJson,
   FileText,
-  Filter,
   HelpCircle,
-  Link,
   MoreHorizontal,
   Plus,
   Search,
@@ -18,7 +13,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch } from "../../store";
 import {
@@ -26,8 +21,8 @@ import {
   selectAllProjects,
   selectProjectsLoading,
 } from "../../store/slices/projectsSlice";
-import { Badge } from "../ui/data-display/badge";
 import { Button } from "../ui/button/button";
+import { Badge } from "../ui/data-display/badge";
 import {
   Card,
   CardContent,
@@ -35,20 +30,13 @@ import {
   CardTitle,
 } from "../ui/data-display/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/overlay/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/overlay/dropdown-menu";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
 import { Input } from "../ui/form/input";
 import { Label } from "../ui/form/label";
 import {
@@ -59,27 +47,33 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/data-display/table";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/overlay/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/overlay/dropdown-menu";
 // Removed Pagination components in favor of Beneficiaries-style Button pagination
 // Tabs components were unused in this component
-import { Textarea } from "../ui/form/textarea";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useTranslation } from "../../hooks/useTranslation";
 import type { FormTemplate } from "../../services/forms/formModels";
-import {
-  deleteForm,
-  updateFormToInactive,
-} from "../../store/slices/formsSlice";
+import { selectCurrentUser } from "../../store/slices/authSlice";
 import {
   fetchFormTemplates,
   selectFormTemplates,
   selectFormTemplatesPagination,
 } from "../../store/slices/formSlice";
-import { toast } from "sonner";
+import { updateFormToInactive } from "../../store/slices/formsSlice";
+import { Textarea } from "../ui/form/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -90,10 +84,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/overlay/alert-dialog";
-import { useNavigate } from "react-router-dom";
 import { FormPreview } from "./FormPreview";
-import { selectCurrentUser } from "../../store/slices/authSlice";
-import { useTranslation } from "../../hooks/useTranslation";
 
 // Interface for component props
 interface FormsListProps {
@@ -188,7 +179,7 @@ export function FormsList({
   // Determine role
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
 
   const hasFullAccess = useMemo(() => {
@@ -203,7 +194,7 @@ export function FormsList({
         r.includes("super admin") ||
         r.includes("program manager") ||
         r.includes("sub project manager") ||
-        r.includes("sub-project manager")
+        r.includes("sub-project manager"),
     );
   }, [normalizedRoles]);
 
@@ -236,10 +227,10 @@ export function FormsList({
 
       onFormDeleted();
 
-      toast.success(t('forms.formDeletedSuccessfully'));
+      toast.success(t("forms.formDeletedSuccessfully"));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : t('forms.failedToDeleteForm')
+        error instanceof Error ? error.message : t("forms.failedToDeleteForm"),
       );
     } finally {
       setIsDeleting(false);
@@ -260,20 +251,19 @@ export function FormsList({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2>{t('forms.title')}</h2>
-          <p className="text-muted-foreground">
-            {t('forms.subtitle')}
-          </p>
+          <h2>{t("forms.title")}</h2>
+          <p className="text-muted-foreground">{t("forms.subtitle")}</p>
         </div>
         <div className="flex gap-3">
-          <Button
+          {/* KTU E KENA PAS NI BUTON PER FILTRIM */}
+          {/* <Button
             className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-black"
             variant="outline"
             onClick={() => setProjectFilter("all")}
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
-            {t('forms.advancedFilters')}
-          </Button>
+            {t("forms.advancedFilters")}
+          </Button> */}
 
           {hasFullAccess && (
             <Dialog open={isCreateFormOpen} onOpenChange={setIsCreateFormOpen}>
@@ -282,57 +272,75 @@ export function FormsList({
                 className="bg-[#0073e6] text-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                {t('forms.createForm')}
+                {t("forms.createForm")}
               </Button>
 
               <DialogContent className="sm:max-w-[550px]">
                 <DialogHeader>
-                  <DialogTitle>{t('forms.createNewForm')}</DialogTitle>
+                  <DialogTitle>{t("forms.createNewForm")}</DialogTitle>
                   <DialogDescription>
-                    {t('forms.createNewFormDesc')}
+                    {t("forms.createNewFormDesc")}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="form-name">{t('forms.formName')} *</Label>
+                    <Label htmlFor="form-name">{t("forms.formName")} *</Label>
                     <Input
                       id="form-name"
-                      placeholder={t('forms.enterFormName')}
+                      placeholder={t("forms.enterFormName")}
                       value={newFormName}
                       onChange={(e) => setNewFormName(e.target.value)}
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="form-description">{t('forms.description')}</Label>
+                    <Label htmlFor="form-description">
+                      {t("forms.description")}
+                    </Label>
                     <Textarea
                       id="form-description"
-                      placeholder={t('forms.enterFormDescription')}
+                      placeholder={t("forms.enterFormDescription")}
                       rows={3}
                       value={newFormDescription}
                       onChange={(e) => setNewFormDescription(e.target.value)}
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="form-category">{t('forms.category')} *</Label>
+                    <Label htmlFor="form-category">
+                      {t("forms.category")} *
+                    </Label>
                     <Select
                       value={newFormCategory}
                       onValueChange={setNewFormCategory}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={t('forms.selectCategory')} />
+                        <SelectValue placeholder={t("forms.selectCategory")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="health">{t('forms.health')}</SelectItem>
-                        <SelectItem value="agriculture">{t('forms.agriculture')}</SelectItem>
-                        <SelectItem value="wash">{t('forms.washCategory')}</SelectItem>
-                        <SelectItem value="education">{t('forms.education')}</SelectItem>
-                        <SelectItem value="training">{t('forms.training')}</SelectItem>
-                        <SelectItem value="other">{t('forms.other')}</SelectItem>
+                        <SelectItem value="health">
+                          {t("forms.health")}
+                        </SelectItem>
+                        <SelectItem value="agriculture">
+                          {t("forms.agriculture")}
+                        </SelectItem>
+                        <SelectItem value="wash">
+                          {t("forms.washCategory")}
+                        </SelectItem>
+                        <SelectItem value="education">
+                          {t("forms.education")}
+                        </SelectItem>
+                        <SelectItem value="training">
+                          {t("forms.training")}
+                        </SelectItem>
+                        <SelectItem value="other">
+                          {t("forms.other")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="form-project">{t('forms.associateWithProject')}</Label>
+                    <Label htmlFor="form-project">
+                      {t("forms.associateWithProject")}
+                    </Label>
                     <Select
                       value={newFormProject}
                       onValueChange={setNewFormProject}
@@ -342,8 +350,8 @@ export function FormsList({
                         <SelectValue
                           placeholder={
                             isLoadingProjects
-                              ? t('forms.loadingProjects')
-                              : t('forms.selectProject')
+                              ? t("forms.loadingProjects")
+                              : t("forms.selectProject")
                           }
                         />
                       </SelectTrigger>
@@ -359,14 +367,16 @@ export function FormsList({
                   {newFormProject && (
                     <div className="grid gap-2">
                       <Label htmlFor="form-subproject">
-                        {t('forms.associateWithSubProject')}
+                        {t("forms.associateWithSubProject")}
                       </Label>
                       <Select
                         value={newFormSubProject}
                         onValueChange={setNewFormSubProject}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={t('forms.selectSubProject')} />
+                          <SelectValue
+                            placeholder={t("forms.selectSubProject")}
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {projects.map((subProject) => (
@@ -387,13 +397,13 @@ export function FormsList({
                     variant="outline"
                     onClick={() => setIsCreateFormOpen(false)}
                   >
-                    {t('forms.cancel')}
+                    {t("forms.cancel")}
                   </Button>
                   <Button
                     onClick={handleCreateForm}
                     disabled={!newFormName || !newFormCategory}
                   >
-                    {t('forms.createAndOpenBuilder')}
+                    {t("forms.createAndOpenBuilder")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -424,7 +434,7 @@ export function FormsList({
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t('forms.searchForms')}
+              placeholder={t("forms.searchForms")}
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -435,7 +445,7 @@ export function FormsList({
         <div className="flex gap-3">
           <Button variant="outline">
             <FileDown className="h-4 w-4 mr-2" />
-            {t('forms.export')}
+            {t("forms.export")}
           </Button>
         </div>
       </div>
@@ -446,13 +456,15 @@ export function FormsList({
           <CardContent className="py-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label>{t('forms.project')}</Label>
+                <Label>{t("forms.project")}</Label>
                 <Select value={projectFilter} onValueChange={setProjectFilter}>
                   <SelectTrigger className="mt-2">
-                    <SelectValue placeholder={t('forms.allProjects')} />
+                    <SelectValue placeholder={t("forms.allProjects")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t('forms.allProjects')}</SelectItem>
+                    <SelectItem value="all">
+                      {t("forms.allProjects")}
+                    </SelectItem>
                     {projects.map((project) => (
                       <SelectItem key={project.id} value={project.name}>
                         {project.name}
@@ -462,13 +474,13 @@ export function FormsList({
                 </Select>
               </div>
               <div>
-                <Label>{t('forms.createdBy')}</Label>
+                <Label>{t("forms.createdBy")}</Label>
                 <Select>
                   <SelectTrigger className="mt-2">
-                    <SelectValue placeholder={t('forms.allUsers')} />
+                    <SelectValue placeholder={t("forms.allUsers")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t('forms.allUsers')}</SelectItem>
+                    <SelectItem value="all">{t("forms.allUsers")}</SelectItem>
                     <SelectItem value="jane">Jane Smith</SelectItem>
                     <SelectItem value="robert">Robert Johnson</SelectItem>
                     <SelectItem value="michael">Michael Lee</SelectItem>
@@ -479,26 +491,30 @@ export function FormsList({
                 </Select>
               </div>
               <div>
-                <Label>{t('forms.lastUpdated')}</Label>
+                <Label>{t("forms.lastUpdated")}</Label>
                 <Select>
                   <SelectTrigger className="mt-2">
-                    <SelectValue placeholder={t('forms.anyTime')} />
+                    <SelectValue placeholder={t("forms.anyTime")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="any">{t('forms.anyTime')}</SelectItem>
-                    <SelectItem value="today">{t('forms.today')}</SelectItem>
-                    <SelectItem value="week">{t('forms.thisWeek')}</SelectItem>
-                    <SelectItem value="month">{t('forms.thisMonth')}</SelectItem>
-                    <SelectItem value="quarter">{t('forms.thisQuarter')}</SelectItem>
+                    <SelectItem value="any">{t("forms.anyTime")}</SelectItem>
+                    <SelectItem value="today">{t("forms.today")}</SelectItem>
+                    <SelectItem value="week">{t("forms.thisWeek")}</SelectItem>
+                    <SelectItem value="month">
+                      {t("forms.thisMonth")}
+                    </SelectItem>
+                    <SelectItem value="quarter">
+                      {t("forms.thisQuarter")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="flex justify-end mt-4">
               <Button variant="outline" size="sm" className="mr-2">
-                {t('forms.resetFilters')}
+                {t("forms.resetFilters")}
               </Button>
-              <Button size="sm">{t('forms.applyFilters')}</Button>
+              <Button size="sm">{t("forms.applyFilters")}</Button>
             </div>
           </CardContent>
         </Card>
@@ -532,14 +548,14 @@ export function FormsList({
                           onClick={() => handleEditClick(formTes.id)}
                         >
                           <Edit className="h-4 w-4 mr-2" />
-                          {t('forms.editForm')}
+                          {t("forms.editForm")}
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem
                         onClick={() => handlePreviewClick(formTes)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
-                        {t('forms.preview')}
+                        {t("forms.preview")}
                       </DropdownMenuItem>
                       {hasFullAccess && (
                         <DropdownMenuItem
@@ -547,7 +563,7 @@ export function FormsList({
                           onClick={() => handleDeleteClick(formTes.id)}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
-                          {t('forms.delete')}
+                          {t("forms.delete")}
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>
@@ -562,8 +578,8 @@ export function FormsList({
                         formTes.status === "active"
                           ? "default"
                           : formTes.status === "draft"
-                          ? "outline"
-                          : "secondary"
+                            ? "outline"
+                            : "secondary"
                       }
                     >
                       {formTes.status}
@@ -576,7 +592,9 @@ export function FormsList({
 
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
-                      <span className="text-muted-foreground">{t('forms.fields')}:</span>
+                      <span className="text-muted-foreground">
+                        {t("forms.fields")}:
+                      </span>
                       <div>{formTes.schema.fields.length}</div>
                     </div>
                     <div>
@@ -587,7 +605,7 @@ export function FormsList({
                     </div>
                     <div className="col-span-2">
                       <span className="text-muted-foreground">
-                        {t('forms.lastUpdatedLabel')}
+                        {t("forms.lastUpdatedLabel")}
                       </span>
                       <div>
                         {formTes.updatedAt &&
@@ -595,7 +613,9 @@ export function FormsList({
                       </div>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-muted-foreground">{t('forms.createdByLabel')}</span>
+                      <span className="text-muted-foreground">
+                        {t("forms.createdByLabel")}
+                      </span>
                       <div>
                         {formTes.createdAt &&
                           new Date(formTes.createdAt).toLocaleDateString()}
@@ -605,7 +625,7 @@ export function FormsList({
 
                   <div className="pt-2 border-t">
                     <span className="text-sm text-muted-foreground">
-                      {t('forms.projects')}:
+                      {t("forms.projects")}:
                     </span>
                     <div className="mt-1 space-y-1">
                       {formTes.entityAssociations?.map((association, index) => (
@@ -625,7 +645,7 @@ export function FormsList({
                       {(!formTes.entityAssociations ||
                         formTes.entityAssociations.length === 0) && (
                         <span className="text-xs text-muted-foreground">
-                          {t('forms.noAssociatedProjects')}
+                          {t("forms.noAssociatedProjects")}
                         </span>
                       )}
                     </div>
@@ -640,7 +660,7 @@ export function FormsList({
                   onClick={() => handleEditClick(formTes.id)}
                 >
                   <Settings className="h-4 w-4 mr-2" />
-                  {t('forms.configure')}
+                  {t("forms.configure")}
                 </Button>
                 <Button
                   size="sm"
@@ -648,7 +668,7 @@ export function FormsList({
                   className="rounded-md bg-black text-white"
                 >
                   <Edit className="h-4 w-4 mr-2" />
-                  {t('forms.editForm')}
+                  {t("forms.editForm")}
                 </Button>
               </div>
             </Card>
@@ -659,11 +679,13 @@ export function FormsList({
             <div className="rounded-full border-dashed border-2 p-3 mb-3">
               <Plus className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h4 className="mb-1">{t('forms.createNewFormCard')}</h4>
+            <h4 className="mb-1">{t("forms.createNewFormCard")}</h4>
             <p className="text-sm text-muted-foreground text-center mb-3">
-              {t('forms.designCustomForm')}
+              {t("forms.designCustomForm")}
             </p>
-            <Button onClick={() => handleCreateForm()}>{t('forms.createForm')}</Button>
+            <Button onClick={() => handleCreateForm()}>
+              {t("forms.createForm")}
+            </Button>
           </Card>
         </div>
       ) : (
@@ -671,15 +693,19 @@ export function FormsList({
           <Table>
             <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
-                <TableHead className="w-[250px]">{t('forms.formNameHeader')}</TableHead>
+                <TableHead className="w-[250px]">
+                  {t("forms.formNameHeader")}
+                </TableHead>
                 {/* <TableHead>Category</TableHead> */}
-                <TableHead>{t('forms.statusHeader')}</TableHead>
-                <TableHead>{t('forms.versionHeader')}</TableHead>
-                <TableHead>{t('forms.fieldsHeader')}</TableHead>
+                <TableHead>{t("forms.statusHeader")}</TableHead>
+                <TableHead>{t("forms.versionHeader")}</TableHead>
+                <TableHead>{t("forms.fieldsHeader")}</TableHead>
                 {/* <TableHead>Submissions</TableHead> */}
-                <TableHead>{t('forms.projectHeader')}</TableHead>
-                <TableHead>{t('forms.lastUpdatedHeader')}</TableHead>
-                <TableHead className="text-right">{t('forms.actionsHeader')}</TableHead>
+                <TableHead>{t("forms.projectHeader")}</TableHead>
+                <TableHead>{t("forms.lastUpdatedHeader")}</TableHead>
+                <TableHead className="text-right">
+                  {t("forms.actionsHeader")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="bg-[#F7F9FB]">
@@ -704,15 +730,15 @@ export function FormsList({
                         template.status === "active"
                           ? "default"
                           : template.status === "draft"
-                          ? "outline"
-                          : "secondary"
+                            ? "outline"
+                            : "secondary"
                       }
                       className={
                         template.status === "active"
                           ? "bg-[#DEF8EE] text-[#4AA785] border-0"
                           : template.status === "inactive"
-                          ? "bg-black/10 text-black/40 border-0"
-                          : undefined
+                            ? "bg-black/10 text-black/40 border-0"
+                            : undefined
                       }
                     >
                       {template.status}
@@ -724,7 +750,8 @@ export function FormsList({
                   <TableCell>
                     <div className="space-y-1 max-w-[150px]">
                       <div className="text-sm">
-                        {template.entityAssociations.length} {t('forms.projects')}
+                        {template.entityAssociations.length}{" "}
+                        {t("forms.projects")}
                       </div>
                     </div>
                   </TableCell>
@@ -744,7 +771,7 @@ export function FormsList({
                         onClick={() => handleEditClick(template.id)}
                       >
                         <Edit className="h-4 w-4 mr-2" />
-                        {t('forms.edit')}
+                        {t("forms.edit")}
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -761,14 +788,14 @@ export function FormsList({
                             onClick={() => handlePreviewClick(template)}
                           >
                             <Eye className="h-4 w-4 mr-2" />
-                            {t('forms.preview')}
+                            {t("forms.preview")}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => handleDeleteClick(template.id)}
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
-                            {t('forms.delete')}
+                            {t("forms.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -782,10 +809,11 @@ export function FormsList({
           <div className="flex items-center justify-between flex-wrap gap-3 px-4 py-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>
-                {t('forms.pageOf')} {page} {t('forms.of')} {Math.max(totalPages || 1, 1)}
+                {t("forms.pageOf")} {page} {t("forms.of")}{" "}
+                {Math.max(totalPages || 1, 1)}
               </span>
               <span className="hidden sm:inline">
-                • {t('forms.total')} {totalCount} {t('forms.records')}
+                • {t("forms.total")} {totalCount} {t("forms.records")}
               </span>
               <div className="flex items-center gap-2 ml-2">
                 <Button
@@ -795,7 +823,7 @@ export function FormsList({
                   disabled={page <= 1}
                   className="bg-white"
                 >
-                  {t('forms.prev')}
+                  {t("forms.prev")}
                 </Button>
                 <Button
                   variant="outline"
@@ -804,7 +832,7 @@ export function FormsList({
                   disabled={totalPages === 0 || page >= totalPages}
                   className="bg-white"
                 >
-                  {t('forms.next')}
+                  {t("forms.next")}
                 </Button>
                 <div className="flex items-center gap-1 ml-2">
                   {pageTokens.map((tok, idx) =>
@@ -830,7 +858,7 @@ export function FormsList({
                       >
                         …
                       </span>
-                    )
+                    ),
                   )}
                 </div>
                 <Select
@@ -842,13 +870,15 @@ export function FormsList({
                   }}
                 >
                   <SelectTrigger className="w-[120px] bg-black/5 border-0 text-black">
-                    <SelectValue placeholder={t('forms.rows')} />
+                    <SelectValue placeholder={t("forms.rows")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="10">10 {t('forms.perPage')}</SelectItem>
-                    <SelectItem value="20">20 {t('forms.perPage')}</SelectItem>
-                    <SelectItem value="50">50 {t('forms.perPage')}</SelectItem>
-                    <SelectItem value="100">100 {t('forms.perPage')}</SelectItem>
+                    <SelectItem value="10">10 {t("forms.perPage")}</SelectItem>
+                    <SelectItem value="20">20 {t("forms.perPage")}</SelectItem>
+                    <SelectItem value="50">50 {t("forms.perPage")}</SelectItem>
+                    <SelectItem value="100">
+                      100 {t("forms.perPage")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -857,7 +887,7 @@ export function FormsList({
           <Dialog open={isPreviewMode} onOpenChange={setIsPreviewMode}>
             <DialogContent className="min-w-[600px]">
               <DialogHeader>
-                <DialogTitle>{t('forms.formPreview')}</DialogTitle>
+                <DialogTitle>{t("forms.formPreview")}</DialogTitle>
               </DialogHeader>
 
               <div className="grid gap-4 py-4">
@@ -876,16 +906,17 @@ export function FormsList({
       {formTemplates.length === 0 && (
         <div className="text-center py-10 border rounded-lg">
           <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <h3 className="text-lg mb-2">{t('forms.noFormsFound')}</h3>
+          <h3 className="text-lg mb-2">{t("forms.noFormsFound")}</h3>
           <p className="text-muted-foreground">
-            {t('forms.tryAdjustingFilters')}
+            {t("forms.tryAdjustingFilters")}
           </p>
         </div>
       )}
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          {t('forms.showing')} {displayedTemplates.length} {t('forms.of')} {totalCount} {t('forms.records')}
+          {t("forms.showing")} {displayedTemplates.length} {t("forms.of")}{" "}
+          {totalCount} {t("forms.records")}
         </div>
         <div className="space-x-2">
           <Button
@@ -894,7 +925,7 @@ export function FormsList({
             className="bg-[#E0F2FE] border-0 text-black"
           >
             <HelpCircle className="h-4 w-4 mr-2" />
-            {t('forms.formTemplates')}
+            {t("forms.formTemplates")}
           </Button>
           <Button
             variant="outline"
@@ -902,7 +933,7 @@ export function FormsList({
             className="bg-[#E0F2FE] border-0 text-black"
           >
             <FileJson className="h-4 w-4 mr-2" />
-            {t('forms.importJson')}
+            {t("forms.importJson")}
           </Button>
         </div>
       </div>
@@ -914,19 +945,21 @@ export function FormsList({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('forms.areYouSure')}</AlertDialogTitle>
+            <AlertDialogTitle>{t("forms.areYouSure")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('forms.deleteFormConfirmation')}
+              {t("forms.deleteFormConfirmation")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{t('forms.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>
+              {t("forms.cancel")}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? t('forms.deleting') : t('forms.delete')}
+              {isDeleting ? t("forms.deleting") : t("forms.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

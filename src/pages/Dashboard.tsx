@@ -45,7 +45,7 @@ export default function Dashboard() {
   // Determine role: field operator
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
   const isSysOrSuperAdmin = useMemo(() => {
     return normalizedRoles.some(
@@ -53,7 +53,7 @@ export default function Dashboard() {
         r === "sysadmin" ||
         r === "superadmin" ||
         r.includes("system admin") ||
-        r.includes("super admin")
+        r.includes("super admin"),
     );
   }, [normalizedRoles]);
   const isFieldOperator = useMemo(() => {
@@ -63,7 +63,7 @@ export default function Dashboard() {
       normalizedRoles.includes("fieldoperator") ||
       normalizedRoles.includes("field_op") ||
       normalizedRoles.some(
-        (r: string) => r.includes("field") && r.includes("operator")
+        (r: string) => r.includes("field") && r.includes("operator"),
       )
     );
   }, [normalizedRoles]);
