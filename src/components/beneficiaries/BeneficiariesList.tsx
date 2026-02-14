@@ -9,7 +9,7 @@ import {
   RotateCcw,
   Search,
   ShieldAlert,
-  SlidersHorizontal,
+  // SlidersHorizontal,
   User,
   X,
 } from "lucide-react";
@@ -472,7 +472,7 @@ export function BeneficiariesList({
     phone: "",
     email: "",
     address: "",
-    gender: "female",
+    gender: "F",
     municipality: "",
     nationality: "",
     status: "active",
@@ -520,7 +520,7 @@ export function BeneficiariesList({
       phone: "",
       email: "",
       address: "",
-      gender: "female",
+      gender: "F",
       municipality: "",
       nationality: "",
       status: "active",
@@ -702,15 +702,15 @@ export function BeneficiariesList({
     }
   };
 
-  const handleSelectBeneficiary = (id: string) => {
-    if (selectedBeneficiaries.includes(id)) {
-      setSelectedBeneficiaries(
-        selectedBeneficiaries.filter((beneficiaryId) => beneficiaryId !== id),
-      );
-    } else {
-      setSelectedBeneficiaries([...selectedBeneficiaries, id]);
-    }
-  };
+  // const handleSelectBeneficiary = (id: string) => {
+  //   if (selectedBeneficiaries.includes(id)) {
+  //     setSelectedBeneficiaries(
+  //       selectedBeneficiaries.filter((beneficiaryId) => beneficiaryId !== id),
+  //     );
+  //   } else {
+  //     setSelectedBeneficiaries([...selectedBeneficiaries, id]);
+  //   }
+  // };
 
   const handleResetFilters = () => {
     setSearchQuery("");
@@ -936,7 +936,7 @@ export function BeneficiariesList({
               </SelectContent>
             </Select>
 
-            <Button
+            {/* <Button
               type="button"
               variant="outline"
               className="bg-white border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] border-gray-100 text-black w-full sm:w-auto"
@@ -949,7 +949,7 @@ export function BeneficiariesList({
             >
               <SlidersHorizontal className="h-4 w-4 mr-2" />
               {showAdvancedFilters ? "Advanced Off" : "Advanced"}
-            </Button>
+            </Button> */}
 
             <Button
               type="button"
@@ -1029,15 +1029,15 @@ export function BeneficiariesList({
                   onValueChange={(val) => setForm({ ...form, gender: val })}
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="female" id="female" />
+                    <RadioGroupItem value="F" id="female" />
                     <Label htmlFor="female">{t("beneficiaries.female")}</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="male" id="male" />
+                    <RadioGroupItem value="M" id="male" />
                     <Label htmlFor="male">{t("beneficiaries.male")}</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="other" id="other" />
+                    <RadioGroupItem value="O" id="other" />
                     <Label htmlFor="other">{t("beneficiaries.other")}</Label>
                   </div>
                 </RadioGroup>

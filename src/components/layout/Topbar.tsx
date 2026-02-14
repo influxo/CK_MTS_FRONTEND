@@ -1,43 +1,18 @@
 // No state needed for light-mode only application
-import {
-  Bell,
-  ChevronDown,
-  LogOut,
-  Menu,
-  Plus,
-  Search,
-  Settings,
-  User,
-} from "lucide-react";
+import { ChevronDown, LogOut, Menu, Plus, Search, User } from "lucide-react";
 import { useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useTranslation } from "../../hooks/useTranslation";
+import type { CreateProjectRequest } from "../../services/projects/projectModels";
+import type { AppDispatch } from "../../store";
 import { selectCurrentUser } from "../../store/slices/authSlice";
+import { createProject } from "../../store/slices/projectsSlice";
+import { LanguageSwitcher } from "../LanguageSwitcher";
 import { Button } from "../ui/button/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Input } from "../ui/form/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../ui/overlay/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "../ui/overlay/sheet";
-import type { CreateProjectRequest } from "../../services/projects/projectModels";
-import type { AppDispatch } from "../../store";
-import { createProject } from "../../store/slices/projectsSlice";
-import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/overlay/dialog";
 import { Label } from "../ui/form/label";
 import {
   Select,
@@ -47,8 +22,23 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import { Textarea } from "../ui/form/textarea";
-import { LanguageSwitcher } from "../LanguageSwitcher";
-import { useTranslation } from "../../hooks/useTranslation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/overlay/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/overlay/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "../ui/overlay/sheet";
 
 interface TopbarProps {
   title?: string;
@@ -57,8 +47,6 @@ interface TopbarProps {
 }
 
 export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
-  // Light mode only - no dark mode toggle
-  const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(selectCurrentUser);
@@ -223,16 +211,15 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[550px]">
               <DialogHeader>
-                <DialogTitle>Krijo Projekt të ri</DialogTitle>
+                <DialogTitle>{t("projects.createNewProject")}</DialogTitle>
                 <DialogDescription>
-                  Shkruani detajet për projektin tuaj të ri. Të gjitha fushat e
-                  shënuara me * janë të detyrueshme.
+                  {t("projects.provideDescription")}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="title" className="text-right">
-                    Titulli *
+                    {t("projects.projectTitle")} *
                   </Label>
                   <Input
                     id="title"
@@ -252,7 +239,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="category" className="text-right">
-                    Kategoria *
+                    {t("projects.projectCategory")} *
                   </Label>
                   <Input
                     id="category"
@@ -273,7 +260,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
 
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">
-                    Statusi
+                    {t("projects.projectStatus")}
                   </Label>
                   <Select
                     defaultValue="active"
@@ -295,7 +282,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
 
                 <div className="grid grid-cols-4 items-start gap-4">
                   <Label htmlFor="description" className="text-right pt-2">
-                    Përshkrimi
+                    {t("projects.projectDescription")}
                   </Label>
                   <Textarea
                     id="description"
@@ -314,14 +301,14 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                   variant="outline"
                   onClick={() => setIsCreateDialogOpen(false)}
                 >
-                  Dil
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   onClick={handleCreateProject}
                   className="bg-[#0073e6] border-0 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!isFormValid}
                 >
-                  Shto Projektin
+                  {t("projects.createProject")}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -338,7 +325,9 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src="" alt="User" />
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarFallback>
+                  {`${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <span className="text-sm font-normal hidden sm:inline-block">
                 {user?.firstName} {user?.lastName}
@@ -351,10 +340,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
               <User className="h-4 w-4 mr-2" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </DropdownMenuItem>
+
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-red-500">
               <LogOut className="h-4 w-4 mr-2" />

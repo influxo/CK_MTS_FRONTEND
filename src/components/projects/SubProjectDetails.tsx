@@ -198,6 +198,23 @@ export function SubProjectDetails() {
   const listLoading = useSelector(selectBeneficiariesLoading);
   const listError = useSelector(selectBeneficiariesError);
 
+  // Pagination state for beneficiaries list
+  const [beneficiariesList, setBeneficiariesList] = useState<any[]>([]);
+  const [beneficiariesPage, setBeneficiariesPage] = useState(1);
+  const [beneficiariesTotalPages, setBeneficiariesTotalPages] = useState(1);
+  const [beneficiariesFetchLoading, setBeneficiariesFetchLoading] =
+    useState(false);
+
+  // Exclude beneficiaries already assigned to this subproject from the 'Add Existing' select
+  const assignedBeneficiaryIds = useMemo(
+    () => new Set((subBeneficiaries || []).map((b) => b.id)),
+    [subBeneficiaries],
+  );
+  const unassignedListItems = useMemo(
+    () => beneficiariesList.filter((b) => !assignedBeneficiaryIds.has(b.id)),
+    [beneficiariesList, assignedBeneficiaryIds],
+  );
+
   // Subproject-scoped metrics state (typed with RootState)
   const summaryState = useSelector((state: RootState) =>
     selectSubProjectMetricsSummary(state),
@@ -435,7 +452,7 @@ export function SubProjectDetails() {
     phone: "",
     email: "",
     address: "",
-    gender: "female",
+    gender: "F",
     municipality: "",
     nationality: "",
     status: "active",
@@ -530,6 +547,41 @@ export function SubProjectDetails() {
     fetchBeneficiaries();
   }, [subprojectId, dispatch, hasFullAccess, user?.roles]);
 
+  // Fetch a specific page of beneficiaries
+  const fetchBeneficiariesPage = (page: number) => {
+    setBeneficiariesFetchLoading(true);
+    dispatch(fetchBeneficiaries({ page, limit: 20 }))
+      .unwrap()
+      .then((response) => {
+        setBeneficiariesList(response.items || []);
+        setBeneficiariesTotalPages(response.totalPages || 1);
+        setBeneficiariesFetchLoading(false);
+      })
+      .catch(() => {
+        setBeneficiariesFetchLoading(false);
+      });
+  };
+
+  // Pagination handlers
+  const handlePreviousPage = () => {
+    if (beneficiariesPage > 1 && !beneficiariesFetchLoading) {
+      const newPage = beneficiariesPage - 1;
+      setBeneficiariesPage(newPage);
+      fetchBeneficiariesPage(newPage);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (
+      beneficiariesPage < beneficiariesTotalPages &&
+      !beneficiariesFetchLoading
+    ) {
+      const newPage = beneficiariesPage + 1;
+      setBeneficiariesPage(newPage);
+      fetchBeneficiariesPage(newPage);
+    }
+  };
+
   // Fetch beneficiaries list when Add dialog is open and tab is "existing"
   useEffect(() => {
     // Only run effect if user roles are loaded
@@ -539,7 +591,8 @@ export function SubProjectDetails() {
       return; // exit
     }
     if (isAddDialogOpen && addBeneficiaryTab === "existing") {
-      dispatch(fetchBeneficiaries(undefined));
+      setBeneficiariesPage(1);
+      fetchBeneficiariesPage(1);
     }
   }, [
     isAddDialogOpen,
@@ -695,7 +748,7 @@ export function SubProjectDetails() {
       phone: "",
       email: "",
       address: "",
-      gender: "female",
+      gender: "F",
       municipality: "",
       nationality: "",
       status: "active",
@@ -1413,14 +1466,14 @@ export function SubProjectDetails() {
             >
               {t("subProjectDetails.overview")}
             </TabsTrigger>
-            <TabsTrigger
+            {/* <TabsTrigger
               value="forms"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
                 activeTab === "forms" ? "border-black" : "border-transparent"
               }`}
             >
               {t("subProjectDetails.formsData")}
-            </TabsTrigger>
+            </TabsTrigger> */}
             <TabsTrigger
               value="activities"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
@@ -1457,14 +1510,14 @@ export function SubProjectDetails() {
             >
               {t("subProjectDetails.team")}
             </TabsTrigger>
-            <TabsTrigger
+            {/* <TabsTrigger
               value="reports"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent ${
                 activeTab === "reports" ? "border-black" : "border-transparent"
               }`}
             >
               {t("subProjectDetails.reports")}
-            </TabsTrigger>
+            </TabsTrigger> */}
           </div>
         </TabsList>
 
@@ -2305,15 +2358,15 @@ export function SubProjectDetails() {
                                 }
                               >
                                 <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="female" id="female" />
+                                  <RadioGroupItem value="F" id="female" />
                                   <Label htmlFor="female">
-                                    {t("subProjectDetails.female")}
+                                    {t("beneficiaries.female")}
                                   </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="male" id="male" />
+                                  <RadioGroupItem value="M" id="male" />
                                   <Label htmlFor="male">
-                                    {t("subProjectDetails.male")}
+                                    {t("beneficiaries.male")}
                                   </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
@@ -2927,20 +2980,75 @@ export function SubProjectDetails() {
                                       />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-64 overflow-y-auto">
-                                      {listItems.map((b) => {
-                                        const pii: any = (b as any).pii || {};
-                                        const fullName =
-                                          `${pii.firstName || ""} ${
-                                            pii.lastName || ""
-                                          }`.trim() ||
-                                          b.pseudonym ||
-                                          b.id;
-                                        return (
-                                          <SelectItem key={b.id} value={b.id}>
-                                            {fullName} ({b.pseudonym})
-                                          </SelectItem>
-                                        );
-                                      })}
+                                      {beneficiariesFetchLoading ? (
+                                        <div className="py-4 text-center text-sm text-muted-foreground">
+                                          Loading...
+                                        </div>
+                                      ) : unassignedListItems.length === 0 ? (
+                                        <div className="py-4 text-center text-sm text-muted-foreground">
+                                          No beneficiaries available
+                                        </div>
+                                      ) : (
+                                        <>
+                                          {unassignedListItems.map((b) => {
+                                            const pii: any =
+                                              (b as any).pii || {};
+                                            const fullName =
+                                              `${pii.firstName || ""} ${
+                                                pii.lastName || ""
+                                              }`.trim() ||
+                                              b.pseudonym ||
+                                              b.id;
+                                            return (
+                                              <SelectItem
+                                                key={b.id}
+                                                value={b.id}
+                                              >
+                                                {fullName} ({b.pseudonym})
+                                              </SelectItem>
+                                            );
+                                          })}
+                                          <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t bg-white px-2 py-2">
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                handlePreviousPage();
+                                              }}
+                                              disabled={
+                                                beneficiariesPage === 1 ||
+                                                beneficiariesFetchLoading
+                                              }
+                                              className="h-7 text-xs"
+                                            >
+                                              Previous
+                                            </Button>
+                                            <span className="text-xs text-muted-foreground">
+                                              Page {beneficiariesPage} of{" "}
+                                              {beneficiariesTotalPages}
+                                            </span>
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                handleNextPage();
+                                              }}
+                                              disabled={
+                                                beneficiariesPage >=
+                                                  beneficiariesTotalPages ||
+                                                beneficiariesFetchLoading
+                                              }
+                                              className="h-7 text-xs"
+                                            >
+                                              Next
+                                            </Button>
+                                          </div>
+                                        </>
+                                      )}
                                     </SelectContent>
                                   </Select>
                                 )}

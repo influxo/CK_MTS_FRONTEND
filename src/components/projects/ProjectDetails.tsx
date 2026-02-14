@@ -11,7 +11,6 @@ import {
   RotateCcw,
   TrendingDown,
   TrendingUp,
-  User,
   Users,
   X,
 } from "lucide-react";
@@ -36,8 +35,8 @@ import formService from "../../services/forms/formService";
 import type { Project } from "../../services/projects/projectModels";
 import projectService from "../../services/projects/projectService";
 import type { TimeUnit } from "../../services/services/serviceMetricsModels";
-import servicesService from "../../services/services/serviceServices";
 import serviceMetricsService from "../../services/services/serviceMetricsService";
+import servicesService from "../../services/services/serviceServices";
 import type { AppDispatch } from "../../store";
 import { selectCurrentUser } from "../../store/slices/authSlice";
 import {
@@ -250,7 +249,7 @@ export function ProjectDetails() {
     phone: "",
     email: "",
     address: "",
-    gender: "female",
+    gender: "F",
     municipality: "",
     nationality: "",
     status: "active",
@@ -295,6 +294,13 @@ export function ProjectDetails() {
     useState<string>("");
   const [associateSelectedSubProjects, setAssociateSelectedSubProjects] =
     useState<string[]>([]);
+
+  // Pagination state for beneficiaries list
+  const [beneficiariesList, setBeneficiariesList] = useState<any[]>([]);
+  const [beneficiariesPage, setBeneficiariesPage] = useState(1);
+  const [beneficiariesTotalPages, setBeneficiariesTotalPages] = useState(1);
+  const [beneficiariesFetchLoading, setBeneficiariesFetchLoading] =
+    useState(false);
 
   // Get projects from Redux store
   const allProjects = useSelector(selectAllProjects);
@@ -417,8 +423,8 @@ export function ProjectDetails() {
     [byEntityItems],
   );
   const unassignedListItems = useMemo(
-    () => (listItems || []).filter((b) => !assignedBeneficiaryIds.has(b.id)),
-    [listItems, assignedBeneficiaryIds],
+    () => beneficiariesList.filter((b) => !assignedBeneficiaryIds.has(b.id)),
+    [beneficiariesList, assignedBeneficiaryIds],
   );
 
   // Subprojects of this project
@@ -764,9 +770,46 @@ export function ProjectDetails() {
   // Fetch beneficiaries list when "Add Existing" tab is visible in the Add dialog
   useEffect(() => {
     if (isAddDialogOpen && addBeneficiaryTab === "existing") {
-      dispatch(fetchBeneficiaries(undefined));
+      // Reset pagination and fetch first page
+      setBeneficiariesPage(1);
+      fetchBeneficiariesPage(1);
     }
   }, [isAddDialogOpen, addBeneficiaryTab, dispatch]);
+
+  // Fetch a specific page of beneficiaries
+  const fetchBeneficiariesPage = (page: number) => {
+    setBeneficiariesFetchLoading(true);
+    dispatch(fetchBeneficiaries({ page, limit: 20 }))
+      .unwrap()
+      .then((response) => {
+        setBeneficiariesList(response.items || []);
+        setBeneficiariesTotalPages(response.totalPages || 1);
+        setBeneficiariesFetchLoading(false);
+      })
+      .catch(() => {
+        setBeneficiariesFetchLoading(false);
+      });
+  };
+
+  // Pagination handlers
+  const handlePreviousPage = () => {
+    if (beneficiariesPage > 1 && !beneficiariesFetchLoading) {
+      const newPage = beneficiariesPage - 1;
+      setBeneficiariesPage(newPage);
+      fetchBeneficiariesPage(newPage);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (
+      beneficiariesPage < beneficiariesTotalPages &&
+      !beneficiariesFetchLoading
+    ) {
+      const newPage = beneficiariesPage + 1;
+      setBeneficiariesPage(newPage);
+      fetchBeneficiariesPage(newPage);
+    }
+  };
 
   const handleAssociateSubmit = async () => {
     if (!id) {
@@ -834,7 +877,7 @@ export function ProjectDetails() {
       phone: "",
       email: "",
       address: "",
-      gender: "female",
+      gender: "F",
       municipality: "",
       nationality: "",
       status: "active",
@@ -1253,32 +1296,22 @@ export function ProjectDetails() {
             </div>
 
             <div>
-              {/* 2x2 grid of project summary cards */}
-              <div className=" grid grid-cols-1 sm:grid-cols-2  gap-4">
-                <div className=" bg-[#E5ECF6] rounded-xl p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-[#E5ECF6] rounded-xl p-4 sm:col-span-2">
                   <div className="text-sm text-muted-foreground">
                     {t("projectDetails.timeline")}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {new Date(enhancedProject.startDate).toLocaleDateString()}{" "}
-                      - {new Date(enhancedProject.endDate).toLocaleDateString()}
+                      {new Date(
+                        enhancedProject.startDate,
+                      ).toLocaleDateString()}{" "}
                     </span>
                   </div>
                 </div>
 
-                <div className=" bg-[#E5ECF6] rounded-xl p-4">
-                  <div className="text-sm text-muted-foreground">
-                    {t("projectDetails.projectLeads")}
-                  </div>
-                  <div className="flex items-center gap-1 mt-1">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span>{enhancedProject.leads.join(", ")}</span>
-                  </div>
-                </div>
-
-                <div className=" bg-[#E5ECF6] rounded-xl p-4">
+                <div className="bg-[#E5ECF6] rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">
                     {t("projectDetails.subprojects")}
                   </div>
@@ -1290,7 +1323,7 @@ export function ProjectDetails() {
                   </div>
                 </div>
 
-                <div className=" bg-[#E5ECF6] rounded-xl p-4">
+                <div className="bg-[#E5ECF6] rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">
                     {t("projectDetails.beneficiaries")}
                   </div>
@@ -1355,14 +1388,14 @@ export function ProjectDetails() {
             >
               {t("projectDetails.beneficiaries")}
             </TabsTrigger>
-            <TabsTrigger
+            {/* <TabsTrigger
               value="reports"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
                 activeTab === "reports" ? "border-black" : "border-transparent"
               }`}
             >
               {t("projectDetails.reportsExports")}
-            </TabsTrigger>
+            </TabsTrigger> */}
           </div>
         </TabsList>
 
@@ -2083,19 +2116,19 @@ export function ProjectDetails() {
                                 }
                               >
                                 <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="female" id="female" />
+                                  <RadioGroupItem value="F" id="female" />
                                   <Label htmlFor="female">
                                     {t("projectDetails.female")}
                                   </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="male" id="male" />
+                                  <RadioGroupItem value="M" id="male" />
                                   <Label htmlFor="male">
                                     {t("projectDetails.male")}
                                   </Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="other" id="other" />
+                                  <RadioGroupItem value="O" id="other" />
                                   <Label htmlFor="other">
                                     {t("projectDetails.other")}
                                   </Label>
@@ -2787,20 +2820,75 @@ export function ProjectDetails() {
                                       />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-64 overflow-y-auto">
-                                      {unassignedListItems.map((b) => {
-                                        const pii: any = (b as any).pii || {};
-                                        const fullName =
-                                          `${pii.firstName || ""} ${
-                                            pii.lastName || ""
-                                          }`.trim() ||
-                                          b.pseudonym ||
-                                          b.id;
-                                        return (
-                                          <SelectItem key={b.id} value={b.id}>
-                                            {fullName} ({b.pseudonym})
-                                          </SelectItem>
-                                        );
-                                      })}
+                                      {beneficiariesFetchLoading ? (
+                                        <div className="py-4 text-center text-sm text-muted-foreground">
+                                          Loading...
+                                        </div>
+                                      ) : unassignedListItems.length === 0 ? (
+                                        <div className="py-4 text-center text-sm text-muted-foreground">
+                                          No beneficiaries available
+                                        </div>
+                                      ) : (
+                                        <>
+                                          {unassignedListItems.map((b) => {
+                                            const pii: any =
+                                              (b as any).pii || {};
+                                            const fullName =
+                                              `${pii.firstName || ""} ${
+                                                pii.lastName || ""
+                                              }`.trim() ||
+                                              b.pseudonym ||
+                                              b.id;
+                                            return (
+                                              <SelectItem
+                                                key={b.id}
+                                                value={b.id}
+                                              >
+                                                {fullName} ({b.pseudonym})
+                                              </SelectItem>
+                                            );
+                                          })}
+                                          <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t bg-white px-2 py-2">
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                handlePreviousPage();
+                                              }}
+                                              disabled={
+                                                beneficiariesPage === 1 ||
+                                                beneficiariesFetchLoading
+                                              }
+                                              className="h-7 text-xs"
+                                            >
+                                              Previous
+                                            </Button>
+                                            <span className="text-xs text-muted-foreground">
+                                              Page {beneficiariesPage} of{" "}
+                                              {beneficiariesTotalPages}
+                                            </span>
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="sm"
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                handleNextPage();
+                                              }}
+                                              disabled={
+                                                beneficiariesPage >=
+                                                  beneficiariesTotalPages ||
+                                                beneficiariesFetchLoading
+                                              }
+                                              className="h-7 text-xs"
+                                            >
+                                              Next
+                                            </Button>
+                                          </div>
+                                        </>
+                                      )}
                                     </SelectContent>
                                   </Select>
                                 )}
