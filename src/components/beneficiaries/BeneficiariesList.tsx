@@ -269,6 +269,7 @@ export function BeneficiariesList({
   const associateLoading = useSelector(selectBeneficiaryAssociateLoading);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [filterProjectId, setFilterProjectId] = useState("all");
   const [filterSubProjectId, setFilterSubProjectId] = useState("all");
@@ -549,12 +550,23 @@ export function BeneficiariesList({
   const listLoading = isEntityMode ? byEntityListLoading : allListLoading;
   const listError = isEntityMode ? byEntityListError : allListError;
 
+  // Debounce search query with 500ms delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Loader based on filters and pagination
   const loadBeneficiaries = useCallback(() => {
     const statusParam =
       statusFilter === "all"
         ? undefined
         : (statusFilter as "active" | "inactive");
+    const searchParam = debouncedSearch.trim() || undefined;
+
     if (filterSubProjectId !== "all") {
       dispatch(
         fetchBeneficiariesByEntity({
@@ -563,6 +575,7 @@ export function BeneficiariesList({
           status: statusParam,
           page,
           limit,
+          search: searchParam,
         }),
       );
       return;
@@ -575,6 +588,7 @@ export function BeneficiariesList({
           status: statusParam,
           page,
           limit,
+          search: searchParam,
         }),
       );
       return;
@@ -584,6 +598,7 @@ export function BeneficiariesList({
         status: statusParam,
         page,
         limit,
+        search: searchParam,
       }),
     );
   }, [
@@ -593,6 +608,7 @@ export function BeneficiariesList({
     statusFilter,
     page,
     limit,
+    debouncedSearch,
   ]);
 
   useEffect(() => {
@@ -650,24 +666,14 @@ export function BeneficiariesList({
     });
   }, [rawList]);
 
-  // Filter list by search/status (project/tag filters are placeholders)
+  // Filter list by status/tag only (search is now handled by API)
   const filteredBeneficiaries = useMemo(() => {
-    const q = searchQuery.toLowerCase();
     return list.filter((b) => {
-      const matchesSearch =
-        b.name.toLowerCase().includes(q) ||
-        b.id.toLowerCase().includes(q) ||
-        (b.pseudonym || "").toLowerCase().includes(q) ||
-        b.municipality.toLowerCase().includes(q) ||
-        b.nationality.toLowerCase().includes(q) ||
-        b.phone.toLowerCase().includes(q) ||
-        b.email.toLowerCase().includes(q);
-
       const matchesStatus = statusFilter === "all" || b.status === statusFilter;
       const matchesTag = tagFilter === "all"; // placeholder
-      return matchesSearch && matchesStatus && matchesTag;
+      return matchesStatus && matchesTag;
     });
-  }, [list, searchQuery, statusFilter, tagFilter]);
+  }, [list, statusFilter, tagFilter]);
 
   // Numbered pagination builder (compact with ellipsis)
   const pageTokens = useMemo(() => {
@@ -714,6 +720,7 @@ export function BeneficiariesList({
 
   const handleResetFilters = () => {
     setSearchQuery("");
+    setDebouncedSearch("");
     setStatusFilter("all");
     setFilterProjectId("all");
     setFilterSubProjectId("all");
@@ -863,7 +870,7 @@ export function BeneficiariesList({
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground " />
             <Input
-              placeholder="Search beneficiaries..."
+              placeholder={t("beneficiaries.searchPlaceholder")}
               className="pl-9 bg-white border border-gray-100"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
