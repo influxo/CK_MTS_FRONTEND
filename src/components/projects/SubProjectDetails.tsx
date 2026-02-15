@@ -115,6 +115,7 @@ import { SubProjectReports } from "./SubProjectReports";
 import { SubProjectServices } from "./SubProjectServices";
 import { SubProjectTeam } from "./SubProjectTeam";
 import { useTranslation } from "../../hooks/useTranslation";
+import { KOSOVO_CITIES } from "../../utils/cities";
 
 // We don't need to import the SubProject type directly as it's already used in Redux selectors
 
@@ -155,6 +156,7 @@ export function SubProjectDetails() {
   // Edit dialog local state
   const [editName, setEditName] = useState("");
   const [editCategory, setEditCategory] = useState("");
+  const [editCity, setEditCity] = useState("");
   const [editStatus, setEditStatus] = useState<
     "active" | "inactive" | "pending"
   >("active");
@@ -512,6 +514,7 @@ export function SubProjectDetails() {
     if (!subProject) return;
     setEditName(subProject.name || "");
     setEditCategory(subProject.category || "");
+    setEditCity(subProject.city || "");
     setEditStatus(subProject.status as any);
     setEditDescription(subProject.description || "");
   }, [subProject, isEditDialogOpen]);
@@ -898,6 +901,7 @@ export function SubProjectDetails() {
     title: subProject.name, // Map name to title
     description: subProject.description,
     category: subProject.category,
+    city: subProject.city,
     status: subProject.status,
     projectId: subProject.projectId,
     createdAt: subProject.createdAt,
@@ -953,7 +957,7 @@ export function SubProjectDetails() {
                     {t("subProjectDetails.category")}
                   </Label>
                   <Select
-                    value={editCategory.toLowerCase()}
+                    value={editCategory}
                     onValueChange={(v) => setEditCategory(v)}
                   >
                     <SelectTrigger className="col-span-3">
@@ -962,54 +966,46 @@ export function SubProjectDetails() {
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="healthcare">
+                      <SelectItem value="Healthcare">
                         {t("subProjectDetails.healthcare")}
                       </SelectItem>
-                      <SelectItem value="education">
+                      <SelectItem value="Education">
                         {t("subProjectDetails.education")}
                       </SelectItem>
-                      <SelectItem value="infrastructure">
+                      <SelectItem value="Infrastructure">
                         {t("subProjectDetails.infrastructure")}
                       </SelectItem>
-                      <SelectItem value="training">
+                      <SelectItem value="Training">
                         {t("subProjectDetails.training")}
                       </SelectItem>
-                      <SelectItem value="food aid">
+                      <SelectItem value="Food Aid">
                         {t("subProjectDetails.foodAid")}
+                      </SelectItem>
+                      <SelectItem value="Other">
+                        {t("subProjectDetails.other")}
                       </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="type" className="text-right">
-                    {t("subProjectDetails.type")}
+                  <Label htmlFor="city" className="text-right">
+                    {t("subProjectDetails.city")}
                   </Label>
                   <Select
-                    defaultValue={enhancedSubProject.type
-                      .toLowerCase()
-                      .replace(" ", "-")}
+                    value={editCity}
+                    onValueChange={(v) => setEditCity(v)}
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue
-                        placeholder={t("subProjectDetails.selectType")}
+                        placeholder={t("subProjectDetails.selectCity")}
                       />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="service-delivery">
-                        {t("subProjectDetails.serviceDelivery")}
-                      </SelectItem>
-                      <SelectItem value="training">
-                        {t("subProjectDetails.training")}
-                      </SelectItem>
-                      <SelectItem value="construction">
-                        {t("subProjectDetails.construction")}
-                      </SelectItem>
-                      <SelectItem value="distribution">
-                        {t("subProjectDetails.distribution")}
-                      </SelectItem>
-                      <SelectItem value="research">
-                        {t("subProjectDetails.research")}
-                      </SelectItem>
+                    <SelectContent className="max-h-64">
+                      {KOSOVO_CITIES.map((cityName) => (
+                        <SelectItem key={cityName} value={cityName}>
+                          {cityName}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1038,38 +1034,6 @@ export function SubProjectDetails() {
                       </SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="location" className="text-right">
-                    {t("subProjectDetails.location")}
-                  </Label>
-                  <Input
-                    id="location"
-                    className="col-span-3"
-                    defaultValue={enhancedSubProject.location}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="start-date" className="text-right">
-                    {t("subProjectDetails.startDate")}
-                  </Label>
-                  <Input
-                    id="start-date"
-                    type="date"
-                    className="col-span-3"
-                    defaultValue={enhancedSubProject.startDate}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="end-date" className="text-right">
-                    {t("subProjectDetails.endDate")}
-                  </Label>
-                  <Input
-                    id="end-date"
-                    type="date"
-                    className="col-span-3"
-                    defaultValue={enhancedSubProject.endDate}
-                  />
                 </div>
                 <div className="grid grid-cols-4 items-start gap-4">
                   <Label htmlFor="description" className="text-right pt-2">
@@ -1102,8 +1066,9 @@ export function SubProjectDetails() {
                           name: editName,
                           description: editDescription,
                           category: editCategory,
+                          city: editCity,
                           status: editStatus,
-                        }) as any,
+                        }),
                       ).unwrap();
                       if (res && res.success) {
                         toast.success("Nënprojekti u modifikua me sukses", {
@@ -1135,222 +1100,6 @@ export function SubProjectDetails() {
         <h1 className="text-3xl basis-full font-semibold capitalize">
           {enhancedSubProject.title}
         </h1>
-        {/* {hasFullAccess && (
-          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                className="ml-auto bg-[#0073e6] border-0 text-white"
-              >
-                <FileEdit className="h-4 w-4 mr-2" />
-                {t("subProjectDetails.editSubProject")}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[550px]">
-              <DialogHeader>
-                <DialogTitle>
-                  {t("subProjectDetails.editSubProjectTitle")}
-                </DialogTitle>
-                <DialogDescription>
-                  {t("subProjectDetails.editSubProjectDesc")}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="title" className="text-right">
-                    {t("subProjectDetails.title")}
-                  </Label>
-                  <Input
-                    id="title"
-                    className="col-span-3"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="category" className="text-right">
-                    {t("subProjectDetails.category")}
-                  </Label>
-                  <Select
-                    value={editCategory.toLowerCase()}
-                    onValueChange={(v) => setEditCategory(v)}
-                  >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue
-                        placeholder={t("subProjectDetails.selectCategory")}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="healthcare">
-                        {t("subProjectDetails.healthcare")}
-                      </SelectItem>
-                      <SelectItem value="education">
-                        {t("subProjectDetails.education")}
-                      </SelectItem>
-                      <SelectItem value="infrastructure">
-                        {t("subProjectDetails.infrastructure")}
-                      </SelectItem>
-                      <SelectItem value="training">
-                        {t("subProjectDetails.training")}
-                      </SelectItem>
-                      <SelectItem value="food aid">
-                        {t("subProjectDetails.foodAid")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="type" className="text-right">
-                    {t("subProjectDetails.type")}
-                  </Label>
-                  <Select
-                    defaultValue={enhancedSubProject.type
-                      .toLowerCase()
-                      .replace(" ", "-")}
-                  >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue
-                        placeholder={t("subProjectDetails.selectType")}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="service-delivery">
-                        {t("subProjectDetails.serviceDelivery")}
-                      </SelectItem>
-                      <SelectItem value="training">
-                        {t("subProjectDetails.training")}
-                      </SelectItem>
-                      <SelectItem value="construction">
-                        {t("subProjectDetails.construction")}
-                      </SelectItem>
-                      <SelectItem value="distribution">
-                        {t("subProjectDetails.distribution")}
-                      </SelectItem>
-                      <SelectItem value="research">
-                        {t("subProjectDetails.research")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="status" className="text-right">
-                    {t("subProjectDetails.status")}
-                  </Label>
-                  <Select
-                    value={editStatus}
-                    onValueChange={(v) => setEditStatus(v as any)}
-                  >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue
-                        placeholder={t("subProjectDetails.selectStatus")}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">
-                        {t("subProjectDetails.active")}
-                      </SelectItem>
-                      <SelectItem value="inactive">
-                        {t("subProjectDetails.inactive")}
-                      </SelectItem>
-                      <SelectItem value="pending">
-                        {t("subProjectDetails.pending")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="location" className="text-right">
-                    {t("subProjectDetails.location")}
-                  </Label>
-                  <Input
-                    id="location"
-                    className="col-span-3"
-                    defaultValue={enhancedSubProject.location}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="start-date" className="text-right">
-                    {t("subProjectDetails.startDate")}
-                  </Label>
-                  <Input
-                    id="start-date"
-                    type="date"
-                    className="col-span-3"
-                    defaultValue={enhancedSubProject.startDate}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="end-date" className="text-right">
-                    {t("subProjectDetails.endDate")}
-                  </Label>
-                  <Input
-                    id="end-date"
-                    type="date"
-                    className="col-span-3"
-                    defaultValue={enhancedSubProject.endDate}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-start gap-4">
-                  <Label htmlFor="description" className="text-right pt-2">
-                    {t("subProjectDetails.description")}
-                  </Label>
-                  <Textarea
-                    id="description"
-                    className="col-span-3"
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditDialogOpen(false)}
-                >
-                  {t("subProjectDetails.cancel")}
-                </Button>
-                <Button
-                  className="bg-[#0073e6] border-0 text-white"
-                  onClick={async () => {
-                    if (!subprojectId) return;
-                    try {
-                      const res = await dispatch(
-                        updateSubProject({
-                          id: subprojectId,
-                          name: editName,
-                          description: editDescription,
-                          category: editCategory,
-                          status: editStatus,
-                        }) as any
-                      ).unwrap();
-                      if (res && res.success) {
-                        toast.success("Nënprojekti u modifikua me sukses", {
-                          style: {
-                            backgroundColor: "#d1fae5",
-                            color: "#065f46",
-                            border: "1px solid #10b981",
-                          },
-                        });
-                      }
-                      setIsEditDialogOpen(false);
-                    } catch (_) {
-                      toast.error("Diçka shkoi gabim", {
-                        style: {
-                          backgroundColor: "#fee2e2",
-                          color: "#991b1b",
-                          border: "1px solid #ef4444",
-                        },
-                      });
-                    }
-                  }}
-                >
-                  {t("subProjectDetails.saveChanges")}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )} */}
       </div>
 
       <Card className="flex  bg-[#F7F9FB] border-0   drop-shadow-sm shadow-gray-50">
@@ -1433,7 +1182,7 @@ export function SubProjectDetails() {
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{enhancedSubProject.location}</span>
+                    <span>{enhancedSubProject.city}</span>
                   </div>
                 </div>
 

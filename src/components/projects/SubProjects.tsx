@@ -75,6 +75,7 @@ import { toast } from "sonner";
 import { selectCurrentUser } from "../../store/slices/authSlice";
 import { useTranslation } from "../../hooks/useTranslation";
 import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
+import { KOSOVO_CITIES } from "../../utils/cities";
 
 interface SubProjectsProps {
   projectId?: string;
@@ -96,16 +97,16 @@ export function SubProjects({
   const dispatch = useDispatch<AppDispatch>();
 
   const subprojects = useSelector((state: RootState) =>
-    selectAllSubprojects(state)
+    selectAllSubprojects(state),
   );
   const isLoading = useSelector((state: RootState) =>
-    selectSubprojectsLoading(state)
+    selectSubprojectsLoading(state),
   );
   const error = useSelector((state: RootState) =>
-    selectSubprojectsError(state)
+    selectSubprojectsError(state),
   );
   const createSuccessMessage = useSelector((state: RootState) =>
-    selectCreateSuccessMessage(state)
+    selectCreateSuccessMessage(state),
   );
 
   // Role + user-assigned subprojects (from cache)
@@ -113,7 +114,7 @@ export function SubProjects({
   const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
   const isSubProjectManager = useMemo(() => {
     return normalizedRoles.some(
@@ -121,13 +122,13 @@ export function SubProjects({
         r === "sub-project manager" ||
         r === "sub project manager" ||
         r.includes("sub-project manager") ||
-        r.includes("sub project manager")
+        r.includes("sub project manager"),
     );
   }, [normalizedRoles]);
   const allowedSubprojectIds = useMemo(() => {
     try {
       const proj = (userProjectsTree || []).find(
-        (p: any) => p.id === projectId
+        (p: any) => p.id === projectId,
       );
       const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
       return new Set<string>(ids);
@@ -146,8 +147,9 @@ export function SubProjects({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [city, setCity] = useState("");
   const [status, setStatus] = useState<"active" | "inactive" | "pending">(
-    "active"
+    "active",
   );
 
   useEffect(() => {
@@ -172,6 +174,7 @@ export function SubProjects({
       setName("");
       setDescription("");
       setCategory("");
+      setCity("");
       setStatus("active");
       const t = setTimeout(() => {
         setIsCreateDialogOpen(false);
@@ -188,7 +191,7 @@ export function SubProjects({
 
   const handleCreateSubmit = async () => {
     if (!projectId) return;
-    if (!name.trim() || !category.trim()) {
+    if (!name.trim() || !category.trim() || !city.trim()) {
       return;
     }
 
@@ -196,6 +199,7 @@ export function SubProjects({
       name: name.trim(),
       description: description.trim(),
       category: category.trim(),
+      city: city.trim(),
       status,
       projectId,
     };
@@ -319,6 +323,26 @@ export function SubProjects({
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="city" className="text-right">
+                    {t("subProjects.city")}
+                  </Label>
+                  <Select
+                    value={city}
+                    onValueChange={(val) => setCity(val as string)}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder={t("subProjects.selectCity")} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {KOSOVO_CITIES.map((cityName) => (
+                        <SelectItem key={cityName} value={cityName}>
+                          {cityName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">
                     {t("subProjects.status")}
                   </Label>
@@ -378,7 +402,12 @@ export function SubProjects({
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                   onClick={handleCreateSubmit}
-                  disabled={isLoading || !name.trim() || !category.trim()}
+                  disabled={
+                    isLoading ||
+                    !name.trim() ||
+                    !category.trim() ||
+                    !city.trim()
+                  }
                 >
                   {isLoading
                     ? t("subProjects.creating")
