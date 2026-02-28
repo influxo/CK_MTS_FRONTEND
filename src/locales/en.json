@@ -28,6 +28,8 @@
     "pending": "Pending",
     "enabled": "Enabled",
     "disabled": "Disabled",
+    "verified": "Verified",
+    "notVerified": "Not Verified",
     "today": "Today",
     "thisWeek": "This Week",
     "thisMonth": "This Month",
@@ -611,6 +613,14 @@
     "invitedOn": "Invited on",
     "resendInvitation": "Resend Invitation",
     "sendEmail": "Send Email",
+    "reactivate": "Reactivate",
+    "updatedAt": "Updated At",
+    "createdAt": "Created At",
+    "archiveEmployeeTitle": "Delete Employee",
+    "archiveEmployeeDescription": "Are you sure you want to delete this employee?",
+    "archiveEmployeeNote": "This employee will be moved to inactive status. Their account and data will be preserved and can be reactivated at any time.",
+    "archiveEmployee": "Delete Employee",
+    "archiving": "Archiving...",
     "managePermissions": "Manage Permissions",
     "filters": "Filters",
     "twoFactorStatus": "Two-Factor Status",
@@ -758,7 +768,8 @@
     "registration": "Registration",
     "actions": "Actions",
     "view": "View",
-    "noBeneficiariesFound": "No beneficiaries found"
+    "noBeneficiariesFound": "No beneficiaries found",
+    "searchBeneficiaries": "Search beneficiaries"
   },
   "projectActivity": {
     "recentActivity": "Recent Activity",
@@ -863,7 +874,9 @@
     "lead": "Lead",
     "stats": "Stats",
     "view": "View",
-    "actions": "Actions"
+    "actions": "Actions",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At"
   },
   "projectStats": {
     "keyStatistics": "Key Statistics",

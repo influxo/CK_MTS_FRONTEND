@@ -9,6 +9,7 @@ import {
   FileEdit,
   Filter,
   FolderKanban,
+  MapPin,
   Plus,
   RotateCcw,
   Search,
@@ -34,6 +35,7 @@ import {
 import { toast } from "sonner";
 import { useTranslation } from "../../hooks/useTranslation";
 import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
+import { KOSOVO_CITIES } from "../../utils/cities";
 import formService from "../../services/forms/formService";
 import type { Project } from "../../services/projects/projectModels";
 import projectService from "../../services/projects/projectService";
@@ -167,6 +169,7 @@ export function ProjectDetails() {
     "active" | "inactive" | "pending"
   >("active");
   const [editDescription, setEditDescription] = useState("");
+  const [editCity, setEditCity] = useState("");
   // Project-scoped metrics state
   const summaryState = useSelector(selectProjectMetricsSummary);
   const seriesState = useSelector(selectProjectMetricsSeries);
@@ -382,6 +385,7 @@ export function ProjectDetails() {
     setEditCategory(project.category || "");
     setEditStatus(project.status as any);
     setEditDescription(project.description || "");
+    setEditCity(project.city || "");
   }, [project, isEditDialogOpen]);
 
   // useEffect(() => {
@@ -1191,6 +1195,29 @@ export function ProjectDetails() {
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="city" className="text-right">
+                    {t("projectDetails.city")}
+                  </Label>
+                  <Select
+                    value={editCity}
+                    onValueChange={(v) => setEditCity(v)}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue
+                        placeholder={t("projectDetails.selectCity")}
+                      />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {KOSOVO_CITIES.map((cityName) => (
+                        <SelectItem key={cityName} value={cityName}>
+                          {cityName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">
                     {t("projectDetails.status")}
                   </Label>
@@ -1251,6 +1278,7 @@ export function ProjectDetails() {
                             : editCategory
                           : project?.category,
                       status: editStatus,
+                      city: editCity,
                     } as any;
                     try {
                       const res = await dispatch(
@@ -1323,6 +1351,14 @@ export function ProjectDetails() {
               <h3 className="text-xl font-normal  capitalize">
                 {enhancedProject.description}
               </h3>
+              {enhancedProject.city && (
+                <div className="flex items-center gap-1 mt-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {enhancedProject.city}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div>

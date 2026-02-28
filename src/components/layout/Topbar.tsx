@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useTranslation } from "../../hooks/useTranslation";
 import type { CreateProjectRequest } from "../../services/projects/projectModels";
+import { KOSOVO_CITIES } from "../../utils/cities";
 import type { AppDispatch } from "../../store";
 import { selectCurrentUser } from "../../store/slices/authSlice";
 import { createProject } from "../../store/slices/projectsSlice";
@@ -73,6 +74,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
     category: "",
     status: "active",
     description: "",
+    city: "",
   });
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -134,6 +136,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         category: "",
         status: "active",
         description: "",
+        city: "",
       });
     } else {
       console.log("Form validation failed", formErrors);
@@ -256,6 +259,27 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                       {formErrors.category}
                     </p>
                   )}
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="city" className="text-right">
+                    {t("projects.city")}
+                  </Label>
+                  <Select
+                    value={formData.city || ""}
+                    onValueChange={(value) => handleSelectField(value, "city")}
+                  >
+                    <SelectTrigger className="col-span-3 bg-blue-50 border-0">
+                      <SelectValue placeholder={t("projects.selectCity")} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {KOSOVO_CITIES.map((cityName) => (
+                        <SelectItem key={cityName} value={cityName}>
+                          {cityName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
