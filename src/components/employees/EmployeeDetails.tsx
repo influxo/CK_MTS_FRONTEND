@@ -179,7 +179,7 @@ export function EmployeeDetails() {
   const normalizedRoles = useMemo(
     () =>
       (currentUser?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [currentUser?.roles]
+    [currentUser?.roles],
   );
   const isSysOrSuperAdmin = useMemo(() => {
     return normalizedRoles.some(
@@ -187,7 +187,7 @@ export function EmployeeDetails() {
         r === "sysadmin" ||
         r === "superadmin" ||
         r.includes("system admin") ||
-        r.includes("super admin")
+        r.includes("super admin"),
     );
   }, [normalizedRoles]);
 
@@ -210,7 +210,7 @@ export function EmployeeDetails() {
 
   // Local selected role id for editing (defaults to employee's current role)
   const [selectedRoleId, setSelectedRoleId] = useState<string | undefined>(
-    undefined
+    undefined,
   );
 
   useEffect(() => {
@@ -226,7 +226,7 @@ export function EmployeeDetails() {
 
   // Role permissions from store and status flags
   const rolePermissions = useSelector((state: any) =>
-    roleId ? selectRolePermissions(state, roleId) : []
+    roleId ? selectRolePermissions(state, roleId) : [],
   );
   const isPermissionsLoading = useSelector(selectRolePermissionsLoading);
   const permissionsError = useSelector(selectRolePermissionsError);
@@ -297,8 +297,8 @@ export function EmployeeDetails() {
             singleEmployee.status === "active"
               ? "active"
               : singleEmployee.status === "invited"
-              ? "pending"
-              : "inactive",
+                ? "pending"
+                : "inactive",
           phone: "-",
           // lastActive: singleEmployee.lastLogin,
           projects: ["All Projects"],
@@ -318,7 +318,7 @@ export function EmployeeDetails() {
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordResetDialog, setShowPasswordResetDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  
+
   // Password reset state
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -348,7 +348,7 @@ export function EmployeeDetails() {
 
   // Permission state
   const [permissions, setPermissions] = useState(
-    [] as { id: string; name: string; granted: boolean }[]
+    [] as { id: string; name: string; granted: boolean }[],
   );
 
   // Sync form state when employee loads
@@ -399,7 +399,7 @@ export function EmployeeDetails() {
   // Handle permission toggle
   const handlePermissionToggle = (permId: string) => {
     setPermissions((prev) =>
-      prev.map((p) => (p.id === permId ? { ...p, granted: !p.granted } : p))
+      prev.map((p) => (p.id === permId ? { ...p, granted: !p.granted } : p)),
     );
   };
 
@@ -427,10 +427,10 @@ export function EmployeeDetails() {
       formData.status === "active"
         ? "active"
         : formData.status === "pending"
-        ? "invited"
-        : formData.status === "inactive"
-        ? "inactive"
-        : singleEmployee.status; // fallback to original if unsupported value selected
+          ? "invited"
+          : formData.status === "inactive"
+            ? "inactive"
+            : singleEmployee.status; // fallback to original if unsupported value selected
 
     const payload: UpdateUserRequest = {
       firstName,
@@ -442,7 +442,7 @@ export function EmployeeDetails() {
 
     try {
       await dispatch(
-        updateEmployee({ userId: singleEmployee.id, data: payload })
+        updateEmployee({ userId: singleEmployee.id, data: payload }),
       ).unwrap();
       setIsEditing(false);
     } catch (e) {
@@ -484,7 +484,7 @@ export function EmployeeDetails() {
   // Validate password
   const validatePassword = (password: string): string[] => {
     const errors: string[] = [];
-    
+
     if (password.length < 8) {
       errors.push("Password must be at least 8 characters long");
     }
@@ -497,36 +497,36 @@ export function EmployeeDetails() {
     if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
       errors.push("Password must contain at least one special character");
     }
-    
+
     return errors;
   };
 
   // Handle password reset
   const handlePasswordReset = async () => {
     if (!singleEmployee) return;
-    
+
     // Validate password
     const errors = validatePassword(newPassword);
-    
+
     if (errors.length > 0) {
       setPasswordErrors(errors);
       return;
     }
-    
+
     // Check if passwords match
     if (newPassword !== confirmPassword) {
       setPasswordErrors(["Passwords do not match"]);
       return;
     }
-    
+
     setIsResettingPassword(true);
     setPasswordErrors([]);
-    
+
     try {
       const response = await employeesService.resetPassword(singleEmployee.id, {
         newPassword,
       });
-      
+
       if (response.success) {
         setShowPasswordResetDialog(false);
         setNewPassword("");
@@ -541,7 +541,7 @@ export function EmployeeDetails() {
       setIsResettingPassword(false);
     }
   };
-  
+
   // Reset password dialog state when closed
   const handlePasswordResetDialogChange = (open: boolean) => {
     setShowPasswordResetDialog(open);
@@ -882,12 +882,12 @@ export function EmployeeDetails() {
               >
                 {t("employees.security")}
               </TabsTrigger>
-              <TabsTrigger
+              {/* <TabsTrigger
                 value="activity"
                 className="rounded-none bg-transparent border-b-2 border-transparent px-4 pb-3 h-auto hover:bg-transparent hover:text-black data-[state=active]:border-b-[#2E343E] data-[state=active]:text-black"
               >
                 {t("employees.activityLog")}
-              </TabsTrigger>
+              </TabsTrigger> */}
             </TabsList>
 
             <TabsContent value="profile" className="space-y-6 pt-6">
@@ -1409,7 +1409,8 @@ export function EmployeeDetails() {
           <DialogHeader>
             <DialogTitle>{t("employees.resetPasswordTitle")}</DialogTitle>
             <DialogDescription>
-              Set a new password for this employee. The password must meet security requirements.
+              Set a new password for this employee. The password must meet
+              security requirements.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -1429,7 +1430,7 @@ export function EmployeeDetails() {
                 </p>
               </div>
             </div>
-            
+
             {/* New Password Input */}
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
@@ -1462,7 +1463,7 @@ export function EmployeeDetails() {
                 </button>
               </div>
             </div>
-            
+
             {/* Confirm Password Input */}
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
@@ -1495,10 +1496,12 @@ export function EmployeeDetails() {
                 </button>
               </div>
             </div>
-            
+
             {/* Password Requirements */}
             <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-              <h4 className="text-sm font-medium text-blue-900 mb-2">Password Requirements:</h4>
+              <h4 className="text-sm font-medium text-blue-900 mb-2">
+                Password Requirements:
+              </h4>
               <ul className="text-xs text-blue-800 space-y-1">
                 <li className="flex items-center gap-2">
                   <CheckCircle className="h-3 w-3" />
@@ -1518,7 +1521,7 @@ export function EmployeeDetails() {
                 </li>
               </ul>
             </div>
-            
+
             {/* Error Messages */}
             {passwordErrors.length > 0 && (
               <div className="bg-red-50 border border-red-200 rounded-md p-3">
@@ -1543,7 +1546,7 @@ export function EmployeeDetails() {
             >
               {t("employees.cancel")}
             </Button>
-            <Button 
+            <Button
               onClick={handlePasswordReset}
               disabled={isResettingPassword || !newPassword || !confirmPassword}
             >

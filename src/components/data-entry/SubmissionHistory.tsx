@@ -86,12 +86,14 @@ interface SubmissionHistoryProps {
   entityId?: string;
   entityType?: "project" | "subproject" | "activity";
   onBack: () => void;
+  onResetRefReady?: (resetFn: () => void) => void;
 }
 
 export function SubmissionHistory({
   entityId,
   entityType,
   onBack,
+  onResetRefReady,
 }: SubmissionHistoryProps) {
   const { t } = useTranslation();
   const dispatch = useDispatch<AppDispatch>();
@@ -118,6 +120,20 @@ export function SubmissionHistory({
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(20);
   const [viewerOpen, setViewerOpen] = useState(false);
+
+  // Expose reset function to parent
+  useEffect(() => {
+    if (onResetRefReady) {
+      onResetRefReady(() => {
+        setTemplateFilter("all");
+        setFromDate("");
+        setToDate("");
+        setPage(1);
+        setLimit(20);
+        setSearchQuery("");
+      });
+    }
+  }, [onResetRefReady]);
 
   // Fetch template for selected response to resolve field labels
   useEffect(() => {
@@ -158,7 +174,7 @@ export function SubmissionHistory({
           toDate: toDate || undefined,
           page,
           limit,
-        })
+        }),
       );
     } else {
       dispatch(
@@ -168,7 +184,7 @@ export function SubmissionHistory({
           toDate: toDate || undefined,
           page,
           limit,
-        })
+        }),
       );
     }
   }, [
@@ -301,20 +317,6 @@ export function SubmissionHistory({
               ))}
             </SelectContent>
           </Select>
-          <Button
-            className="bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] "
-            variant="ghost"
-            onClick={() => {
-              setTemplateFilter("all");
-              setFromDate("");
-              setToDate("");
-              setPage(1);
-              setLimit(20);
-              setSearchQuery("");
-            }}
-          >
-            {t("dataEntry.reset")}
-          </Button>
         </div>
       </div>
 
@@ -602,25 +604,25 @@ export function SubmissionHistory({
                                   l.includes("birth")
                                     ? Calendar
                                     : l === "email" || l.includes("email")
-                                    ? Mail
-                                    : l === "phone" || l.includes("phone")
-                                    ? Phone
-                                    : l === "gender" || l.includes("gender")
-                                    ? User
-                                    : l.includes("address")
-                                    ? Home
-                                    : l.includes("last name") ||
-                                      l.includes("first name")
-                                    ? User
-                                    : l.includes("national id") ||
-                                      l === "id" ||
-                                      l.includes(" id")
-                                    ? Hash
-                                    : l.includes("nationality")
-                                    ? Flag
-                                    : l.includes("municipality")
-                                    ? MapPin
-                                    : undefined;
+                                      ? Mail
+                                      : l === "phone" || l.includes("phone")
+                                        ? Phone
+                                        : l === "gender" || l.includes("gender")
+                                          ? User
+                                          : l.includes("address")
+                                            ? Home
+                                            : l.includes("last name") ||
+                                                l.includes("first name")
+                                              ? User
+                                              : l.includes("national id") ||
+                                                  l === "id" ||
+                                                  l.includes(" id")
+                                                ? Hash
+                                                : l.includes("nationality")
+                                                  ? Flag
+                                                  : l.includes("municipality")
+                                                    ? MapPin
+                                                    : undefined;
                                 return Icon ? (
                                   <Icon className="h-3.5 w-3.5 text-muted-foreground" />
                                 ) : null;
@@ -633,11 +635,11 @@ export function SubmissionHistory({
                                   ? "Po"
                                   : "Jo"
                                 : typeof value === "object"
-                                ? JSON.stringify(value)
-                                : String(value)}
+                                  ? JSON.stringify(value)
+                                  : String(value)}
                             </div>
                           </div>
-                        )
+                        ),
                       )}
                     </div>
                   )}

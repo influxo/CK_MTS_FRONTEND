@@ -1,43 +1,19 @@
 // No state needed for light-mode only application
-import {
-  Bell,
-  ChevronDown,
-  LogOut,
-  Menu,
-  Plus,
-  Search,
-  Settings,
-  User,
-} from "lucide-react";
+import { ChevronDown, LogOut, Menu, Plus, Search, User } from "lucide-react";
 import { useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useTranslation } from "../../hooks/useTranslation";
+import type { CreateProjectRequest } from "../../services/projects/projectModels";
+import { KOSOVO_CITIES } from "../../utils/cities";
+import type { AppDispatch } from "../../store";
 import { selectCurrentUser } from "../../store/slices/authSlice";
+import { createProject } from "../../store/slices/projectsSlice";
+import { LanguageSwitcher } from "../LanguageSwitcher";
 import { Button } from "../ui/button/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Input } from "../ui/form/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../ui/overlay/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "../ui/overlay/sheet";
-import type { CreateProjectRequest } from "../../services/projects/projectModels";
-import type { AppDispatch } from "../../store";
-import { createProject } from "../../store/slices/projectsSlice";
-import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/overlay/dialog";
 import { Label } from "../ui/form/label";
 import {
   Select,
@@ -47,8 +23,23 @@ import {
   SelectValue,
 } from "../ui/form/select";
 import { Textarea } from "../ui/form/textarea";
-import { LanguageSwitcher } from "../LanguageSwitcher";
-import { useTranslation } from "../../hooks/useTranslation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/overlay/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/overlay/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "../ui/overlay/sheet";
 
 interface TopbarProps {
   title?: string;
@@ -57,8 +48,6 @@ interface TopbarProps {
 }
 
 export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
-  // Light mode only - no dark mode toggle
-  const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(selectCurrentUser);
@@ -68,7 +57,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   // Determine role
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
   const isSysOrSuperAdmin = useMemo(() => {
     return normalizedRoles.some(
@@ -76,7 +65,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         r === "sysadmin" ||
         r === "superadmin" ||
         r.includes("system admin") ||
-        r.includes("super admin")
+        r.includes("super admin"),
     );
   }, [normalizedRoles]);
 
@@ -85,6 +74,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
     category: "",
     status: "active",
     description: "",
+    city: "",
   });
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -121,7 +111,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -146,6 +136,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         category: "",
         status: "active",
         description: "",
+        city: "",
       });
     } else {
       console.log("Form validation failed", formErrors);
@@ -153,7 +144,8 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   };
 
   // Check if all required fields are filled
-  const isFormValid = formData.name.trim() !== "" && formData.category.trim() !== "";
+  const isFormValid =
+    formData.name.trim() !== "" && formData.category.trim() !== "";
 
   return (
     // <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
@@ -222,16 +214,15 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[550px]">
               <DialogHeader>
-                <DialogTitle>Krijo Projekt të ri</DialogTitle>
+                <DialogTitle>{t("projects.createNewProject")}</DialogTitle>
                 <DialogDescription>
-                  Shkruani detajet për projektin tuaj të ri. Të gjitha fushat e
-                  shënuara me * janë të detyrueshme.
+                  {t("projects.provideDescription")}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="title" className="text-right">
-                    Titulli *
+                    {t("projects.projectTitle")} *
                   </Label>
                   <Input
                     id="title"
@@ -251,7 +242,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="category" className="text-right">
-                    Kategoria *
+                    {t("projects.projectCategory")} *
                   </Label>
                   <Input
                     id="category"
@@ -271,8 +262,29 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="city" className="text-right">
+                    {t("projects.city")}
+                  </Label>
+                  <Select
+                    value={formData.city || ""}
+                    onValueChange={(value) => handleSelectField(value, "city")}
+                  >
+                    <SelectTrigger className="col-span-3 bg-blue-50 border-0">
+                      <SelectValue placeholder={t("projects.selectCity")} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {KOSOVO_CITIES.map((cityName) => (
+                        <SelectItem key={cityName} value={cityName}>
+                          {cityName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">
-                    Statusi
+                    {t("projects.projectStatus")}
                   </Label>
                   <Select
                     defaultValue="active"
@@ -294,7 +306,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
 
                 <div className="grid grid-cols-4 items-start gap-4">
                   <Label htmlFor="description" className="text-right pt-2">
-                    Përshkrimi
+                    {t("projects.projectDescription")}
                   </Label>
                   <Textarea
                     id="description"
@@ -313,110 +325,19 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
                   variant="outline"
                   onClick={() => setIsCreateDialogOpen(false)}
                 >
-                  Dil
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   onClick={handleCreateProject}
                   className="bg-[#0073e6] border-0 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!isFormValid}
                 >
-                  Shto Projektin
+                  {t("projects.createProject")}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         )}
-
-        {/* Notifications */}
-        <DropdownMenu open={notifOpen} onOpenChange={setNotifOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
-            </Button>
-          </DropdownMenuTrigger>
-          {/* Dark overlay behind the dropdown when open, rendered to body to cover the whole page */}
-          {notifOpen &&
-            createPortal(
-              <div
-                className="fixed inset-0 bg-black/20 z-[60]"
-                onClick={() => setNotifOpen(false)}
-              />,
-              document.body
-            )}
-          <DropdownMenuContent
-            align="end"
-            className="w-[300px] bg-white z-[70]"
-          >
-            <div className="flex items-center justify-between p-2">
-              <span className="font-medium">Notifications</span>
-              <Button variant="ghost" size="sm">
-                Mark all as read
-              </Button>
-            </div>
-            <DropdownMenuSeparator />
-            <div className="max-h-[300px] overflow-auto">
-              <div className="p-3 hover:bg-muted cursor-pointer">
-                <div className="flex gap-3 items-start">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>JS</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm">
-                      <span className="font-medium">Jane Smith</span> invited
-                      you to{" "}
-                      <span className="font-medium">
-                        Rural Healthcare Initiative
-                      </span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      2 hours ago
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-3 hover:bg-muted cursor-pointer">
-                <div className="flex gap-3 items-start">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>ML</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm">
-                      <span className="font-medium">Michael Lee</span> commented
-                      on your report
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      5 hours ago
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-3 hover:bg-muted cursor-pointer bg-muted/40">
-                <div className="flex gap-3 items-start">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>SYS</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm">Weekly system update completed</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Yesterday
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <DropdownMenuSeparator />
-            <div className="p-2 text-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-center"
-              >
-                View all notifications
-              </Button>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
 
         {/* User Menu */}
         <DropdownMenu>
@@ -428,7 +349,9 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src="" alt="User" />
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarFallback>
+                  {`${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <span className="text-sm font-normal hidden sm:inline-block">
                 {user?.firstName} {user?.lastName}
@@ -441,10 +364,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
               <User className="h-4 w-4 mr-2" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </DropdownMenuItem>
+
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-red-500">
               <LogOut className="h-4 w-4 mr-2" />

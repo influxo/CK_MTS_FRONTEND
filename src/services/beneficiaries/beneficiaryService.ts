@@ -31,12 +31,12 @@ class BeneficiaryService {
   private serviceEndpoint = `${this.baseUrl}/services`;
 
   async createBeneficiary(
-    req: CreateBeneficiaryRequest
+    req: CreateBeneficiaryRequest,
   ): Promise<CreateBeneficiaryResponse> {
     try {
       const response = await axiosInstance.post<CreateBeneficiaryResponse>(
         this.beneficiaryEndpoint,
-        req
+        req,
       );
       return response.data;
     } catch (error: any) {
@@ -58,14 +58,14 @@ class BeneficiaryService {
   }
 
   async associateBeneficiaryToEntities(
-    params: AssociateBeneficiaryToEntitiesRequest
+    params: AssociateBeneficiaryToEntitiesRequest,
   ): Promise<AssociateBeneficiaryToEntitiesResponse> {
     const { id, links } = params;
     try {
       const response =
         await axiosInstance.post<AssociateBeneficiaryToEntitiesResponse>(
           `${this.beneficiaryEndpoint}/${id}/entities`,
-          links
+          links,
         );
       return response.data;
     } catch (error: any) {
@@ -88,9 +88,9 @@ class BeneficiaryService {
   }
 
   async getBeneficiariesByEntity(
-    params: GetBeneficiariesByEntityRequest
+    params: GetBeneficiariesByEntityRequest,
   ): Promise<GetBeneficiariesByEntityResponse> {
-    const { entityId, entityType, status, page, limit } = params;
+    const { entityId, entityType, status, page, limit, search } = params;
     try {
       const response =
         await axiosInstance.get<GetBeneficiariesByEntityResponse>(
@@ -102,8 +102,9 @@ class BeneficiaryService {
               status,
               page,
               limit,
+              search,
             },
-          }
+          },
         );
       return response.data;
     } catch (error: any) {
@@ -123,12 +124,12 @@ class BeneficiaryService {
   }
 
   async getBeneficiaries(
-    params?: GetBeneficiariesRequest
+    params?: GetBeneficiariesRequest,
   ): Promise<GetBeneficiariesResponse> {
     try {
       const response = await axiosInstance.get<GetBeneficiariesResponse>(
         this.beneficiaryEndpoint,
-        { params }
+        { params },
       );
       return response.data;
     } catch (error: any) {
@@ -150,7 +151,7 @@ class BeneficiaryService {
   async getBeneficiaryById(id: string): Promise<GetBeneficiaryByIdResponse> {
     try {
       const response = await axiosInstance.get<GetBeneficiaryByIdResponse>(
-        `${this.beneficiaryEndpoint}/${id}`
+        `${this.beneficiaryEndpoint}/${id}`,
       );
       return response.data;
     } catch (error: any) {
@@ -166,12 +167,12 @@ class BeneficiaryService {
 
   async updateBeneficiaryById(
     id: string,
-    req: UpdateBeneficiaryRequest
+    req: UpdateBeneficiaryRequest,
   ): Promise<UpdateBeneficiaryResponse> {
     try {
       const response = await axiosInstance.put<UpdateBeneficiaryResponse>(
         `${this.beneficiaryEndpoint}/${id}`,
-        req
+        req,
       );
       toast.success("Përfituesi u modifikua me sukses", {
         style: {
@@ -202,7 +203,7 @@ class BeneficiaryService {
   async deleteBeneficiaryById(id: string): Promise<DeleteBeneficiaryResponse> {
     try {
       const response = await axiosInstance.delete<DeleteBeneficiaryResponse>(
-        `${this.beneficiaryEndpoint}/${id}`
+        `${this.beneficiaryEndpoint}/${id}`,
       );
       return response.data;
     } catch (error: any) {
@@ -224,11 +225,11 @@ class BeneficiaryService {
   }
 
   async getDecryptedPiiForBeneficiaryById(
-    id: string
+    id: string,
   ): Promise<GetBeneficiaryPIIByIdResponse> {
     try {
       const response = await axiosInstance.get<GetBeneficiaryPIIByIdResponse>(
-        `${this.beneficiaryEndpoint}/${id}/pii`
+        `${this.beneficiaryEndpoint}/${id}/pii`,
       );
       return response.data;
     } catch (error: any) {
@@ -243,7 +244,7 @@ class BeneficiaryService {
   }
 
   async getBeneficiaryServices(
-    params: GetBeneficiaryServicesRequest
+    params: GetBeneficiaryServicesRequest,
   ): Promise<GetBeneficiaryServicesResponse> {
     const { id, page, limit, fromDate, toDate } = params;
     try {
@@ -256,7 +257,7 @@ class BeneficiaryService {
             fromDate,
             toDate,
           },
-        }
+        },
       );
       return response.data;
     } catch (error: any) {
@@ -278,12 +279,12 @@ class BeneficiaryService {
   }
 
   async getBeneficiaryEntities(
-    params: GetBeneficiaryEntitiesRequest
+    params: GetBeneficiaryEntitiesRequest,
   ): Promise<GetBeneficiaryEntitiesResponse> {
     const { id } = params;
     try {
       const response = await axiosInstance.get<GetBeneficiaryEntitiesResponse>(
-        `${this.beneficiaryEndpoint}/${id}/entities`
+        `${this.beneficiaryEndpoint}/${id}/entities`,
       );
       return response.data;
     } catch (error: any) {
@@ -299,13 +300,13 @@ class BeneficiaryService {
   }
 
   async removeBeneficiaryEntityAssociation(
-    params: RemoveBeneficiaryEntityAssociationRequest
+    params: RemoveBeneficiaryEntityAssociationRequest,
   ): Promise<RemoveBeneficiaryEntityAssociationResponse> {
     const { id, entityId, entityType } = params;
     try {
       const response = await (axiosInstance as any).delete(
         `${this.beneficiaryEndpoint}/${id}/entities`,
-        { data: { entityId, entityType } }
+        { data: { entityId, entityType } },
       );
       toast.success("Asociimi u fshi me sukses", {
         style: {
@@ -337,7 +338,7 @@ class BeneficiaryService {
 
   // Service deliveries summary metrics
   async getServiceDeliveriesSummary(
-    params?: GetServiceDeliveriesSummaryRequest
+    params?: GetServiceDeliveriesSummaryRequest,
   ): Promise<GetServiceDeliveriesSummaryResponse> {
     try {
       const response =
@@ -347,7 +348,7 @@ class BeneficiaryService {
             params: {
               beneficiaryId: params?.beneficiaryId,
             },
-          }
+          },
         );
       return response.data;
     } catch (error: any) {

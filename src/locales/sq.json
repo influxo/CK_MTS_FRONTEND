@@ -28,6 +28,8 @@
     "pending": "Në pritje",
     "enabled": "Aktiv",
     "disabled": "Jo Aktiv",
+    "verified": "I verifikuar",
+    "notVerified": "I paverifikuar",
     "today": "Sot",
     "thisWeek": "Kjo javë",
     "thisMonth": "Ky muaj",
@@ -573,6 +575,14 @@
     "invitedOn": "Ftuar më",
     "resendInvitation": "Ridërgo Ftesën",
     "sendEmail": "Dërgo Email",
+    "reactivate": "Riaktivizo",
+    "updatedAt": "Përditësuar më",
+    "createdAt": "Krijuar më",
+    "archiveEmployeeTitle": "Fshi Punonjësin",
+    "archiveEmployeeDescription": "Jeni të sigurt që dëshironi të fshini këtë punonjës?",
+    "archiveEmployeeNote": "Ky punonjës do të kalojë në statusin joaktiv. Llogaria dhe të dhënat e tyre do të ruhen dhe mund të riaktivizohen në çdo kohë.",
+    "archiveEmployee": "Fshini Punonjësin",
+    "archiving": "Duke arkivuar...",
     "managePermissions": "Menaxho Lejet",
     "filters": "Filtrat",
     "twoFactorStatus": "Statusi i Autentifikimit Dy-Faktorësh",
@@ -613,7 +623,7 @@
     "saveChanges": "Ruaj Ndryshimet",
     "projectUpdatedSuccess": "Projekti u përditësua me sukses",
     "somethingWentWrong": "Diçka shkoi gabim",
-    "timeline": "Afati Kohor",
+    "timeline": "Data e Krijimit",
     "projectLeads": "Drejtuesit e Projektit",
     "subprojects": "Nënprojektet",
     "beneficiaries": "Përfituesit",
@@ -720,7 +730,8 @@
     "registration": "Regjistrimi",
     "actions": "Veprimet",
     "view": "Shiko",
-    "noBeneficiariesFound": "Nuk u gjetën përfitues"
+    "noBeneficiariesFound": "Nuk u gjetën përfitues",
+    "searchBeneficiaries": "Kërko përfitues"
   },
   "projectActivity": {
     "recentActivity": "Aktiviteti i Fundit",
@@ -825,7 +836,9 @@
     "lead": "Drejtues",
     "stats": "Statistikat",
     "view": "Shiko",
-    "actions": "Veprimet"
+    "actions": "Veprimet",
+    "createdAt": "Krijuar më",
+    "updatedAt": "Përditësuar më"
   },
   "projectStats": {
     "keyStatistics": "Statistikat Kryesore",
@@ -1150,6 +1163,7 @@
     "subtitle": "Dërgo formularë ose shiko historinë e dërgimeve",
     "dataEntryTab": "Futja e të Dhënave",
     "submissionHistoryTab": "Historia e Dërgimeve",
+    "resetFilters": "Fshi Filtrat",
     "entityType": "Lloji i Entitetit",
     "project": "Projekti",
     "subproject": "Nën-projekti",
