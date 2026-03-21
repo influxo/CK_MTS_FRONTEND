@@ -92,10 +92,10 @@ export function FormSubmission({
   const submitError = useSelector(selectFormSubmitError);
   const byEntityBeneficiaries = useSelector(selectFormBeneficiariesByEntity);
   const byEntityBeneficiariesLoading = useSelector(
-    selectFormBeneficiariesByEntityLoading
+    selectFormBeneficiariesByEntityLoading,
   );
   const byEntityBeneficiariesError = useSelector(
-    selectFormBeneficiariesByEntityError
+    selectFormBeneficiariesByEntityError,
   );
   const entityServices = useSelector(selectEntityServices);
   const entityServicesLoading = useSelector(selectEntityServicesLoading);
@@ -123,7 +123,7 @@ export function FormSubmission({
   const isMobileOrTablet =
     typeof navigator !== "undefined" &&
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
+      navigator.userAgent,
     );
 
   // Build dynamic structure from API template when provided
@@ -142,11 +142,7 @@ export function FormSubmission({
       }
     : null;
   const formStructure = dynamicFormStructure;
-  useEffect(() => {
-    if (template) {
-      console.log(template);
-    }
-  }, [template]);
+
   const requestGps = async (): Promise<{ lat: number; lng: number }> => {
     setGpsError(null);
     setGpsLoading(true);
@@ -162,7 +158,7 @@ export function FormSubmission({
             timeout: 15000,
             maximumAge: 0,
           });
-        }
+        },
       );
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
@@ -179,7 +175,7 @@ export function FormSubmission({
               timeout: 60000,
               maximumAge: 60000,
             });
-          }
+          },
         );
         const lat = position2.coords.latitude;
         const lng = position2.coords.longitude;
@@ -209,7 +205,7 @@ export function FormSubmission({
           entityType,
           page: 1,
           limit: 50,
-        })
+        }),
       );
     }
     // Load services assigned to this entity for selection in delivery section
@@ -218,7 +214,7 @@ export function FormSubmission({
         getEntityServices({
           entityId,
           entityType: entityType as any as "project" | "subproject",
-        })
+        }),
       );
     }
   }, [dispatch, entityId, entityType, template?.includeBeneficiaries]);
@@ -277,7 +273,7 @@ export function FormSubmission({
           setGpsError(errMsg);
         }
       },
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 60000 }
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 60000 },
     );
     return () => navigator.geolocation.clearWatch(watchId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -324,7 +320,7 @@ export function FormSubmission({
           (Array.isArray(value) && value.length === 0)
         ) {
           errors[field.id] = `${field.label} ${t(
-            "formSubmission.fieldRequired"
+            "formSubmission.fieldRequired",
           )}`;
         }
       }
@@ -338,7 +334,7 @@ export function FormSubmission({
   const isFormReadyToSubmit = () => {
     // Check if all required fields are filled
     const requiredFields = formStructure.fields.filter(
-      (field) => field.required
+      (field) => field.required,
     );
     const allRequiredFieldsFilled = requiredFields.every((field) => {
       const value = formData[field.id];
@@ -402,7 +398,7 @@ export function FormSubmission({
         try {
           await (
             dispatch(
-              submitFormResponse({ templateId: template.id, payload })
+              submitFormResponse({ templateId: template.id, payload }),
             ) as any
           ).unwrap();
           onSubmissionComplete();
@@ -602,7 +598,7 @@ export function FormSubmission({
                       } else {
                         handleFieldChange(
                           field.id,
-                          checkboxValues.filter((v: string) => v !== option)
+                          checkboxValues.filter((v: string) => v !== option),
                         );
                       }
                     }}
@@ -731,7 +727,7 @@ export function FormSubmission({
                     <div className="flex flex-wrap gap-2">
                       {selectedServices.map((s) => {
                         const svc = entityServices.find(
-                          (x) => x.id === s.serviceId
+                          (x) => x.id === s.serviceId,
                         );
                         if (!svc) return null;
                         return (
@@ -746,8 +742,8 @@ export function FormSubmission({
                               onClick={() =>
                                 setSelectedServices((prev) =>
                                   prev.filter(
-                                    (it) => it.serviceId !== s.serviceId
-                                  )
+                                    (it) => it.serviceId !== s.serviceId,
+                                  ),
                                 )
                               }
                             >
@@ -765,14 +761,14 @@ export function FormSubmission({
                         .filter((svc) =>
                           svc.name
                             .toLowerCase()
-                            .includes(servicesQuery.toLowerCase())
+                            .includes(servicesQuery.toLowerCase()),
                         )
                         .map((svc) => {
                           const isChecked = selectedServices.some(
-                            (s) => s.serviceId === svc.id
+                            (s) => s.serviceId === svc.id,
                           );
                           const current = selectedServices.find(
-                            (s) => s.serviceId === svc.id
+                            (s) => s.serviceId === svc.id,
                           );
                           return (
                             <div
@@ -793,8 +789,8 @@ export function FormSubmission({
                                     } else {
                                       setSelectedServices((prev) =>
                                         prev.filter(
-                                          (s) => s.serviceId !== svc.id
-                                        )
+                                          (s) => s.serviceId !== svc.id,
+                                        ),
                                       );
                                     }
                                   }}
@@ -818,7 +814,7 @@ export function FormSubmission({
                                     id={`notes-${svc.id}`}
                                     rows={2}
                                     placeholder={t(
-                                      "formSubmission.optionalNotes"
+                                      "formSubmission.optionalNotes",
                                     )}
                                     value={current?.notes || ""}
                                     onChange={(e) => {
@@ -827,8 +823,8 @@ export function FormSubmission({
                                         prev.map((s) =>
                                           s.serviceId === svc.id
                                             ? { ...s, notes }
-                                            : s
-                                        )
+                                            : s,
+                                        ),
                                       );
                                     }}
                                   />

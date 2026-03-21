@@ -138,8 +138,6 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
         description: "",
         city: "",
       });
-    } else {
-      console.log("Form validation failed", formErrors);
     }
   };
 

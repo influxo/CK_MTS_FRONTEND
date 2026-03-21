@@ -67,20 +67,20 @@ export function SubProjectTeam({
 
   const dispatch = useDispatch<AppDispatch>();
   const users = useSelector((state: RootState) =>
-    selectAssignedSubProjectUsers(state)
+    selectAssignedSubProjectUsers(state),
   );
   const loading = useSelector((state: RootState) =>
-    selectAssignedSubProjectUsersLoading(state)
+    selectAssignedSubProjectUsersLoading(state),
   );
   const error = useSelector((state: RootState) =>
-    selectAssignedSubProjectUsersError(state)
+    selectAssignedSubProjectUsersError(state),
   );
   const employees = useSelector(selectAllEmployees);
 
   const onRemove = (userId: string) => {
     if (!subProjectId || !userId) return;
     dispatch(removeUserFromSubProject({ subProjectId, userId })).then(() =>
-      dispatch(fetchSubProjectUsers({ subProjectId }))
+      dispatch(fetchSubProjectUsers({ subProjectId })),
     );
   };
 
@@ -100,18 +100,18 @@ export function SubProjectTeam({
   // Exclude already assigned members from modal options
   const assignedIds = useMemo(
     () => new Set((users || []).map((u) => u.id)),
-    [users]
+    [users],
   );
   const employeesForSelect = useMemo(
     () => (employees || []).filter((emp) => !assignedIds.has(emp.id)),
-    [employees, assignedIds]
+    [employees, assignedIds],
   );
 
   const handleAssignMember = async () => {
     if (!selectedMemberId) return;
     try {
       await dispatch(
-        assignUserToSubProject({ subProjectId, userId: selectedMemberId })
+        assignUserToSubProject({ subProjectId, userId: selectedMemberId }),
       ).unwrap();
       // refresh assigned users, reset and close
       dispatch(fetchSubProjectUsers({ subProjectId }));
@@ -144,8 +144,6 @@ export function SubProjectTeam({
       statusFilter === "all" || member.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
-
-  console.log("employees", employees);
 
   return (
     <div className="space-y-6">

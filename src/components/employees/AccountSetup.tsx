@@ -32,7 +32,7 @@ interface AccountSetupProps {
 
 export function AccountSetup({ token, onSetupComplete }: AccountSetupProps) {
   // In a real app, we would validate the token and fetch user data
-  console.log("token test me i ik unused declaration", token);
+
   // Mock data for the invited user
   const mockInvitedUser = {
     email: "john.smith@example.com",
@@ -146,7 +146,7 @@ export function AccountSetup({ token, onSetupComplete }: AccountSetupProps) {
   // Complete account setup
   const completeSetup = () => {
     // In a real app, we would submit the form data to an API
-    console.log("Account setup completed", formData);
+
     onSetupComplete();
   };
 

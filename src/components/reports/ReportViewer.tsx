@@ -220,7 +220,7 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
   // For a real app, we would fetch the report data based on reportId
   // For this demo, we're using mock data
   const report = mockReportData;
-  console.log("reportId me i ik unused declaration", reportId);
+
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
@@ -262,14 +262,11 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
 
   // Handle email sending
   const handleSendEmail = () => {
-    console.log("Sending email to:", emailRecipients);
-    console.log("Include attachments:", includeAttachments);
     setIsShareDialogOpen(false);
   };
 
   // Handle scheduling
   const handleSchedule = () => {
-    console.log("Setting up schedule for report");
     setIsScheduleDialogOpen(false);
   };
 
@@ -807,8 +804,8 @@ export function ReportViewer({ reportId, onBack }: ReportViewerProps) {
                                         cell === "Active"
                                           ? "text-[#4AA785] bg-[#DEF8EE] border-0"
                                           : cell === "Pending"
-                                          ? "text-[#59A8D4] bg-[#E2F5FF] border-0"
-                                          : "text-[rgba(28,28,28,0.4)] bg-[rgba(28,28,28,0.05)] border-0"
+                                            ? "text-[#59A8D4] bg-[#E2F5FF] border-0"
+                                            : "text-[rgba(28,28,28,0.4)] bg-[rgba(28,28,28,0.05)] border-0"
                                       }
                                     >
                                       {cell}

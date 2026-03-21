@@ -37,7 +37,6 @@ const mockMonthlyData = [
 
 export function ProjectStats({ projectId, summary }: ProjectStatsProps) {
   const { t } = useTranslation();
-  console.log("projectId, veq sa me i ik unused declaration", projectId);
 
   return (
     <div className="space-y-6">
@@ -74,7 +73,7 @@ export function ProjectStats({ projectId, summary }: ProjectStatsProps) {
               </div>
               <div className="text-3xl font-medium mt-1">
                 {Number(
-                  summary?.totalUniqueBeneficiaries || 0
+                  summary?.totalUniqueBeneficiaries || 0,
                 ).toLocaleString()}
               </div>
             </CardContent>
@@ -144,11 +143,11 @@ export function ProjectStats({ projectId, summary }: ProjectStatsProps) {
               {(() => {
                 const totalActivities = mockMonthlyData.reduce(
                   (sum, m) => sum + m.activities,
-                  0
+                  0,
                 );
                 const totalBeneficiaries = mockMonthlyData.reduce(
                   (sum, m) => sum + m.beneficiaries,
-                  0
+                  0,
                 );
                 const pieData = [
                   {
@@ -194,28 +193,6 @@ export function ProjectStats({ projectId, summary }: ProjectStatsProps) {
                 );
               })()}
             </div>
-
-            {/* <div className="mt-6">
-              <div className="text-sm font-medium mb-3">Services Delivered</div>
-              <div className="space-y-3">
-                {mockServiceStats.map((service, index) => (
-                  <div key={index}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>{service.name}</span>
-                      <span>{service.value}</span>
-                    </div>
-                    <Progress
-                      value={
-                        (service.value /
-                          Math.max(...mockServiceStats.map((s) => s.value))) *
-                        100
-                      }
-                      className="h-1.5"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div> */}
           </CardContent>
         </Card>
       </div>

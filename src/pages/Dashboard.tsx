@@ -40,8 +40,6 @@ export default function Dashboard() {
   const projects = useSelector(selectAllProjects);
   const userProjectsTree = useSelector(selectUserProjectsTree);
 
-  console.log("projects from dashboard", projects);
-
   // Determine role: field operator
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),

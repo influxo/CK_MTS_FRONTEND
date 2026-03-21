@@ -394,7 +394,6 @@ export function ProjectDetails() {
   //     dispatch(fetchEmployees());
   //   }
   // }, [dispatch, isSubProjectManager]);
-  // console.log("employees", employees);
 
   // Load beneficiaries for this project when the Beneficiaries tab is active
   const byEntityItems = useSelector(selectBeneficiariesByEntity);
@@ -653,7 +652,6 @@ export function ProjectDetails() {
       );
     }
   }, [dispatch, id]);
-  console.log("subprojects", subprojects.length);
 
   // Load services assigned to the effective entity (project or subproject)
   useEffect(() => {
@@ -686,7 +684,6 @@ export function ProjectDetails() {
     // Sub-Project Manager should not fetch overview metrics
     if (user?.roles == null || user.roles.length === 0) return;
     if (!hasFullAccess) {
-      console.log("Skipping fetch because user does not have full access");
       return;
     }
     const effectiveEntityType = selectedSubProjectId ? "subproject" : "project";
