@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "../../hooks/useAuth";
 import { useTranslation } from "../../hooks/useTranslation";
 import type { CreateProjectRequest } from "../../services/projects/projectModels";
 import { KOSOVO_CITIES } from "../../utils/cities";
@@ -51,6 +52,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(selectCurrentUser);
+  const { logout } = useAuth();
 
   const { t } = useTranslation();
 
@@ -364,7 +366,7 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-500">
+            <DropdownMenuItem className="text-red-500" onSelect={logout}>
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </DropdownMenuItem>
