@@ -20,7 +20,6 @@ export function EmployeesModule() {
   const [view, setView] = useState<EmployeeView>("list");
   const [inviteData, setInviteData] = useState<any>(null);
   const [setupToken, setSetupToken] = useState<string | null>(null);
-  console.log("inviteData test me i ik unused declaration", inviteData);
 
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -34,7 +33,7 @@ export function EmployeesModule() {
   // Determine if user is sys or super admin
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
   const isSysOrSuperAdmin = useMemo(() => {
     return normalizedRoles.some(
@@ -42,7 +41,7 @@ export function EmployeesModule() {
         r === "sysadmin" ||
         r === "superadmin" ||
         r.includes("system admin") ||
-        r.includes("super admin")
+        r.includes("super admin"),
     );
   }, [normalizedRoles]);
 

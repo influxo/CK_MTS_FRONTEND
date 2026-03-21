@@ -555,7 +555,6 @@ export function SubProjectDetails() {
     }
 
     const fetchBeneficiaries = async () => {
-      console.log("Dispatching fetch beneficiaries for:", subprojectId);
       const searchParam = debouncedBeneficiariesSearch.trim() || undefined;
       await dispatch(
         fetchBeneficiariesByEntity({

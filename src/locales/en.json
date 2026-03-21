@@ -62,6 +62,9 @@
     "medications": "Medications",
     "bloodType": "Blood Type",
     "notes": "Notes",
+    "show": "Show",
+    "page": "Page",
+    "of": "of",
     "enterFirstName": "Enter first name",
     "enterLastName": "Enter last name",
     "enterNationalId": "Enter national ID",
@@ -203,6 +206,10 @@
     "summary": "Summary",
     "services": "Services",
     "mostFrequentService": "Most Frequent Service",
+    "no_activity": "No activity",
+    "loading": "Loading",
+    "form_submissions": "Form Submissions",
+    "project_changes": "Project Changes",
     "showMoreServices": "Show more services",
     "showLess": "Show less"
   },
@@ -236,7 +243,9 @@
     "services": "Services",
     "team": "Team",
     "activity": "Activity",
-    "to": "to"
+    "to": "to",
+    "city": "City",
+    "selectCity": "Select city"
   },
   "subProjectsDetails": {
     "title": "Sub-Projects",
@@ -251,6 +260,7 @@
     "title": "Beneficiaries",
     "subtitle": "Manage beneficiary information and track services",
     "searchBeneficiaries": "Search beneficiaries...",
+    "searchPlaceholder": "Search beneficiaries...",
     "beneficiaryName": "Beneficiary Name",
     "contactInfo": "Contact Info",
     "servicesReceived": "Services Received",
@@ -708,6 +718,8 @@
     "noAccess": "You have no access",
     "loadingBeneficiaries": "Loading beneficiaries...",
     "addBeneficiary": "Add Beneficiary",
+    "city": "City",
+    "selectCity": "Select city",
     "addBeneficiaryDesc": "Use the tabs below to add a brand new beneficiary or associate an existing one with this project.",
     "addNew": "Add New",
     "addExisting": "Add Existing",
@@ -876,7 +888,8 @@
     "view": "View",
     "actions": "Actions",
     "createdAt": "Created At",
-    "updatedAt": "Updated At"
+    "updatedAt": "Updated At",
+    "selectSubProject": "Select sub-project"
   },
   "projectStats": {
     "keyStatistics": "Key Statistics",
@@ -1030,7 +1043,10 @@
     "noBeneficiariesFound": "No beneficiaries found.",
     "loadingSubprojectDetails": "Loading subproject details...",
     "error": "Error",
-    "noSubprojectFound": "No Subproject Found"
+    "noSubprojectFound": "No Subproject Found",
+    "searchBeneficiaries": "Search beneficiaries...",
+    "city": "City",
+    "selectCity": "Select city"
   },
   "subProjectActivities": {
     "title": "Activities",
@@ -1084,7 +1100,9 @@
     "noActivitiesFound": "No activities found.",
     "editActivity": "Edit Activity",
     "exportDetails": "Export Details",
-    "view": "View"
+    "view": "View",
+    "fieldNamePlaceholder": "Field name",
+    "valuePlaceholder": "Value"
   },
   "activityDetails": {
     "loading": "Loading activity details...",
@@ -1194,7 +1212,11 @@
     "removeFromSubProject": "Remove from Sub-Project",
     "remove": "Remove",
     "addTeamMember": "Add Team Member",
-    "assignNewMember": "Assign a new team member to this sub-project"
+    "assignNewMember": "Assign a new team member to this sub-project",
+    "email": "Email",
+    "status": "Status",
+    "actions": "Actions",
+    "noTeamMembers": "No team members assigned yet."
   },
   "dataEntry": {
     "title": "Data Entry",

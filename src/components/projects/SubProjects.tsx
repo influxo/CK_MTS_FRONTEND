@@ -154,7 +154,6 @@ export function SubProjects({
     if (projectId) {
       if (user?.roles == null || user.roles.length === 0) return;
       if (isSubProjectManager) {
-        console.log("Skipping fetch subproject mng");
         return;
       }
       dispatch(fetchSubProjectsByProjectId({ projectId: projectId }));

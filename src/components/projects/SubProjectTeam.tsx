@@ -1,35 +1,15 @@
-import { MoreHorizontal, Plus, Search, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "../ui/button/button";
+import { useDispatch, useSelector } from "react-redux";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
-
-import { useDispatch, useSelector } from "react-redux";
-import { useTranslation } from "../../hooks/useTranslation";
-import type { AppDispatch, RootState } from "../../store";
+import { Button } from "../ui/button/button";
 import {
-  fetchEmployees,
-  selectAllEmployees,
-} from "../../store/slices/employeesSlice";
-import {
-  assignUserToSubProject,
-  fetchSubProjectUsers,
-  removeUserFromSubProject,
-  selectAssignedSubProjectUsers,
-  selectAssignedSubProjectUsersError,
-  selectAssignedSubProjectUsersLoading,
-} from "../../store/slices/subProjectSlice";
-import { Card, CardContent } from "../ui/data-display/card";
-import { Input } from "../ui/form/input";
-import { Label } from "../ui/form/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/form/select";
-import { Tabs, TabsContent } from "../ui/navigation/tabs";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/data-display/card";
 import {
   Dialog,
   DialogContent,
@@ -39,50 +19,63 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/overlay/dialog";
+import { Label } from "../ui/form/label";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/overlay/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/form/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
+import type { AppDispatch, RootState } from "../../store";
+import {
+  assignUserToSubProject,
+  fetchSubProjectUsers,
+  removeUserFromSubProject,
+  selectAssignedSubProjectUsers,
+  selectAssignedSubProjectUsersError,
+  selectAssignedSubProjectUsersLoading,
+} from "../../store/slices/subProjectSlice";
+import {
+  fetchEmployees,
+  selectAllEmployees,
+} from "../../store/slices/employeesSlice";
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface SubProjectTeamProps {
   subProjectId: string;
   hasFullAccess: boolean;
 }
 
-// Team members are fetched from Redux via fetchSubProjectUsers
-
-// Assignment uses employees list from Redux (see selectAllEmployees)
 export function SubProjectTeam({
   subProjectId,
   hasFullAccess,
 }: SubProjectTeamProps) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState("team-members");
-  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedMemberId, setSelectedMemberId] = useState("");
-
   const dispatch = useDispatch<AppDispatch>();
-  const users = useSelector((state: RootState) =>
-    selectAssignedSubProjectUsers(state)
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const assignedUsers = useSelector((state: RootState) =>
+    selectAssignedSubProjectUsers(state),
   );
-  const loading = useSelector((state: RootState) =>
-    selectAssignedSubProjectUsersLoading(state)
+  const isLoading = useSelector((state: RootState) =>
+    selectAssignedSubProjectUsersLoading(state),
   );
   const error = useSelector((state: RootState) =>
-    selectAssignedSubProjectUsersError(state)
+    selectAssignedSubProjectUsersError(state),
   );
   const employees = useSelector(selectAllEmployees);
-
-  const onRemove = (userId: string) => {
-    if (!subProjectId || !userId) return;
-    dispatch(removeUserFromSubProject({ subProjectId, userId })).then(() =>
-      dispatch(fetchSubProjectUsers({ subProjectId }))
-    );
-  };
 
   useEffect(() => {
     if (subProjectId && hasFullAccess) {
@@ -99,299 +92,290 @@ export function SubProjectTeam({
 
   // Exclude already assigned members from modal options
   const assignedIds = useMemo(
-    () => new Set((users || []).map((u) => u.id)),
-    [users]
+    () => new Set((assignedUsers || []).map((u) => u.id)),
+    [assignedUsers],
   );
   const employeesForSelect = useMemo(
     () => (employees || []).filter((emp) => !assignedIds.has(emp.id)),
-    [employees, assignedIds]
+    [employees, assignedIds],
   );
 
   const handleAssignMember = async () => {
     if (!selectedMemberId) return;
     try {
       await dispatch(
-        assignUserToSubProject({ subProjectId, userId: selectedMemberId })
+        assignUserToSubProject({ subProjectId, userId: selectedMemberId }),
       ).unwrap();
-      // refresh assigned users, reset and close
+      // refresh assigned users
       dispatch(fetchSubProjectUsers({ subProjectId }));
+      // reset and close
       setSelectedMemberId("");
       setIsAssignDialogOpen(false);
     } catch (e) {
-      // optional: show toast
+      // noop: error handling can be added with toasts if desired
     }
   };
 
-  const teamMembers = users.map((u) => {
-    const initials = `${u.firstName?.[0] ?? ""}${u.lastName?.[0] ?? ""}`
-      .toUpperCase()
-      .trim();
-    return {
-      id: u.id,
-      name: `${u.firstName} ${u.lastName}`.trim(),
-      email: u.email,
-      status: u.status,
-      initials: initials || "U",
-      avatar: "",
-    };
-  });
+  const handleRemoveMember = async (userId: string) => {
+    if (!userId) return;
+    try {
+      await dispatch(
+        removeUserFromSubProject({ subProjectId, userId }),
+      ).unwrap();
+      // refresh assigned users
+      dispatch(fetchSubProjectUsers({ subProjectId }));
+    } catch (e) {
+      // noop: optionally display a toast on error
+    }
+  };
 
-  const filteredTeamMembers = teamMembers.filter((member) => {
-    const matchesSearch =
-      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || member.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Pagination logic
+  const totalPages = Math.ceil(assignedUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = assignedUsers.slice(startIndex, endIndex);
 
-  console.log("employees", employees);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3>{t("subProjectTeam.title")}</h3>
-          <p className="text-muted-foreground">
-            {t("subProjectTeam.subtitle")}
-          </p>
-        </div>
-        <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#0073e6] text-white transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
-              <Plus className="h-4 w-4 mr-2" />
-              {t("subProjectTeam.assignMember")}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[450px]">
-            <DialogHeader>
-              <DialogTitle>
-                {t("subProjectTeam.assignTeamMemberTitle")}
-              </DialogTitle>
-              <DialogDescription>
-                {t("subProjectTeam.assignTeamMemberDescription")}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="member" className="text-right">
-                  {t("subProjectTeam.memberLabel")}
-                </Label>
-                <Select
-                  value={selectedMemberId}
-                  onValueChange={(v) => setSelectedMemberId(v)}
+    <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-base">
+            {t("subProjectTeam.title")}
+          </CardTitle>
+          {hasFullAccess && (
+            <Dialog
+              open={isAssignDialogOpen}
+              onOpenChange={setIsAssignDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  size="sm"
+                  className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
                 >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue
-                      placeholder={t("subProjectTeam.selectTeamMember")}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employeesForSelect.map((emp) => {
-                      const fullName =
-                        `${emp.firstName ?? ""} ${emp.lastName ?? ""}`.trim() ||
-                        "N/A";
-                      const initials = fullName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase();
-                      return (
-                        <SelectItem key={emp.id} value={emp.id}>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src="" alt={fullName} />
-                              <AvatarFallback className="text-[10px]">
-                                {initials}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm">{fullName}</span>
-                            <Badge variant="secondary" className="text-[10px] ">
-                              {emp.email}
-                            </Badge>
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-              {/**
-               * Additional fields are intentionally hidden for now per requirements.
-               *
-               * <div className="grid grid-cols-4 items-center gap-4"> ... Role ... </div>
-               * <div className="grid grid-cols-4 items-center gap-4"> ... Start Date ... </div>
-               * <div className="grid grid-cols-4 items-start gap-4"> ... Notes ... </div>
-               */}
-            </div>
-            <DialogFooter>
-              <Button
-                className="bg-[#E0F2FE] border-0 "
-                variant="outline"
-                onClick={() => setIsAssignDialogOpen(false)}
-              >
-                {t("subProjectTeam.cancel")}
-              </Button>
-              <Button
-                className="bg-[#0073e6] border-0 text-white"
-                disabled={!selectedMemberId}
-                onClick={handleAssignMember}
-              >
-                {t("subProjectTeam.assignMember")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        {/* <TabsList className="bg-[#2E343E] bg-opacity-10 items-center">
-          <TabsTrigger
-            value="team-members"
-            className="data-[state=active]:bg-[#2E343E]  data-[state=active]:text-white"
-          >
-            Team Members
-          </TabsTrigger>
-        </TabsList> */}
-
-        <TabsContent value="team-members" className="pt-4">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-2.5  top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t("subProjectTeam.searchPlaceholder")}
-                  className="pl-9 bg-white border border-gray-100 "
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-3">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[130px] border-0 bg-[#E0F2FE] transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
-                    <SelectValue
-                      placeholder={t("subProjectTeam.statusFilter")}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      {t("subProjectTeam.allStatus")}
-                    </SelectItem>
-                    <SelectItem value="active">
-                      {t("subProjectTeam.active")}
-                    </SelectItem>
-                    <SelectItem value="inactive">
-                      {t("subProjectTeam.inactive")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {loading && (
-            <div className="p-4 text-sm">
-              {t("subProjectTeam.loadingTeamMembers")}
-            </div>
-          )}
-          {error && (
-            <div className="p-4 text-sm text-red-500">
-              {t("subProjectTeam.error")}: {error}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTeamMembers.map((member) => (
-              <Card key={member.id}>
-                <CardContent className="p-4">
-                  <div className="flex justify-between">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={member.avatar} alt={member.name} />
-                        <AvatarFallback>{member.initials}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{member.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {member.email}
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge
-                            variant={
-                              member.status === "active"
-                                ? "default"
-                                : "secondary"
-                            }
-                            className="text-xs text-[#4AA785] bg-[#DEF8EE] "
-                          >
-                            {member.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          {t("subProjectTeam.viewDetails")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          {t("subProjectTeam.sendMessage")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => onRemove(member.id)}
-                        >
-                          {t("subProjectTeam.removeFromSubProject")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  <div className="mt-3 flex justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="bg-[#E0F2FE]"
-                      onClick={() => onRemove(member.id)}
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t("subProjectTeam.assignMember")}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>
+                    {t("subProjectTeam.assignTeamMemberTitle")}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {t("subProjectTeam.assignTeamMemberDescription")}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="member" className="text-right">
+                      {t("subProjectTeam.memberLabel")}
+                    </Label>
+                    <Select
+                      value={selectedMemberId}
+                      onValueChange={(v) => setSelectedMemberId(v)}
                     >
-                      <X className="h-4 w-4 mr-2" />
-                      {t("subProjectTeam.remove")}
-                    </Button>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue
+                          placeholder={t("subProjectTeam.selectTeamMember")}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {employeesForSelect.map((emp) => {
+                          const fullName =
+                            `${emp.firstName ?? ""} ${emp.lastName ?? ""}`.trim() ||
+                            "N/A";
+                          const initials = fullName
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)
+                            .toUpperCase();
+                          return (
+                            <SelectItem key={emp.id} value={emp.id}>
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage src="" alt={fullName} />
+                                  <AvatarFallback className="text-[10px]">
+                                    {initials}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-sm">{fullName}</span>
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px]"
+                                >
+                                  {emp.email}
+                                </Badge>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-
-            <Card className="border-dashed bg-[#F7F9FB] flex flex-col items-center justify-center p-6">
-              <div className="rounded-full border-dashed border-2 p-3 mb-3">
-                <Plus className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h4 className="mb-1">{t("subProjectTeam.addTeamMember")}</h4>
-              <p className="text-sm text-muted-foreground text-center mb-3">
-                {t("subProjectTeam.assignNewMember")}
-              </p>
-              <Button
-                className="bg-[#E0F2FE]"
-                onClick={() => setIsAssignDialogOpen(true)}
-              >
-                {t("subProjectTeam.assignMember")}
-              </Button>
-            </Card>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsAssignDialogOpen(false)}
+                  >
+                    {t("subProjectTeam.cancel")}
+                  </Button>
+                  <Button
+                    className="bg-[#0073e6] text-white flex items-center
+             px-4 py-2 rounded-md border-0
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px]"
+                    disabled={!selectedMemberId}
+                    onClick={handleAssignMember}
+                  >
+                    {t("subProjectTeam.assignMember")}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="py-4 text-sm text-muted-foreground">
+            {t("subProjectTeam.loadingTeamMembers")}
           </div>
-        </TabsContent>
+        ) : error ? (
+          <div className="py-4 text-sm text-destructive">{error}</div>
+        ) : (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[280px]">
+                    {t("subProjectTeam.memberLabel")}
+                  </TableHead>
+                  <TableHead>{t("subProjectTeam.email")}</TableHead>
+                  <TableHead>{t("subProjectTeam.status")}</TableHead>
+                  <TableHead className="w-[80px] text-right">
+                    {t("subProjectTeam.actions")}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {assignedUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="text-center text-muted-foreground"
+                    >
+                      {t("subProjectTeam.noTeamMembers")}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedUsers.map((u) => {
+                    const fullName =
+                      `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
+                    const initials = (fullName || u.email || "N/A")
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase();
+                    return (
+                      <TableRow key={u.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <AvatarImage src="" alt={fullName || u.email} />
+                              <AvatarFallback>{initials}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">
+                                {fullName || "N/A"}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {u.email}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{u.email}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className="capitalize text-[#4AA785] bg-[#DEF8EE] border-0"
+                          >
+                            {u.status || "unknown"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={() => handleRemoveMember(u.id)}
+                            title="Remove from sub-project"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
 
-        {/* Roles & Responsibilities tab removed as roles are not part of the API response */}
-      </Tabs>
-    </div>
+            {assignedUsers.length > itemsPerPage && (
+              <div className="flex items-center justify-between px-2 py-4">
+                <div className="text-sm text-muted-foreground">
+                  {t("common.showing")} {startIndex + 1} {t("common.to")}{" "}
+                  {Math.min(endIndex, assignedUsers.length)} {t("common.of")}{" "}
+                  {assignedUsers.length} {t("common.results")}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    {t("common.previous")}
+                  </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(page)}
+                        className={
+                          currentPage === page ? "bg-[#0073e6] text-white" : ""
+                        }
+                      >
+                        {page}
+                      </Button>
+                    ),
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    {t("common.next")}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
