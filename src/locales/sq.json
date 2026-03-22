@@ -201,8 +201,10 @@
     "viewDetails": "Shiko Detajet",
     "editProject": "Ndrysho Projektin",
     "deleteProject": "Fshi Projektin",
+
     "projectDetails": "Detajet e Projektit",
     "overview": "Përmbledhje",
+
     "services": "Shërbimet",
     "team": "Ekipi",
     "activity": "Aktiviteti",
@@ -623,6 +625,7 @@
     "nutrition": "Ushqyerja",
     "economicDevelopment": "Zhvillimi Ekonomik",
     "wash": "WASH",
+    "location": "Lokacioni",
     "status": "Statusi",
     "selectStatus": "Zgjedh statusin",
     "active": "Aktiv",
@@ -891,7 +894,7 @@
     "active": "Aktiv",
     "inactive": "Joaktiv",
     "pending": "Në Pritje",
-    "location": "Vendndodhja *",
+    "location": "Lokacioni",
     "startDate": "Data e Fillimit *",
     "endDate": "Data e Përfundimit *",
     "description": "Përshkrimi",

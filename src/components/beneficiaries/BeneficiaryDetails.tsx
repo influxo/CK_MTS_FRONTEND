@@ -213,10 +213,10 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
   const entitiesError = useSelector(selectBeneficiaryEntitiesError);
   const deliveriesSummary = useSelector(selectServiceDeliveriesSummary);
   const deliveriesSummaryLoading = useSelector(
-    selectServiceDeliveriesSummaryLoading
+    selectServiceDeliveriesSummaryLoading,
   );
   const deliveriesSummaryError = useSelector(
-    selectServiceDeliveriesSummaryError
+    selectServiceDeliveriesSummaryError,
   );
 
   const user = useSelector(selectCurrentUser);
@@ -224,7 +224,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
   // Determine role
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
   const isSysOrSuperAdmin = useMemo(() => {
     return normalizedRoles.some(
@@ -232,7 +232,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
         r === "sysadmin" ||
         r === "superadmin" ||
         r.includes("system admin") ||
-        r.includes("super admin")
+        r.includes("super admin"),
     );
   }, [normalizedRoles]);
 
@@ -292,11 +292,11 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
   // }, [activeTab, id, dispatch]);
 
   const handleEditInput = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { id: fieldId, value } = e.target as HTMLInputElement;
     setEditForm(
-      (prev) => ({ ...prev, [fieldId]: value } as UpdateBeneficiaryRequest)
+      (prev) => ({ ...prev, [fieldId]: value }) as UpdateBeneficiaryRequest,
     );
   };
 
@@ -693,7 +693,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                         id,
                         entityId: selectedAssociation.entityId,
                         entityType: selectedAssociation.entityType,
-                      }) as any
+                      }) as any,
                     ).unwrap();
                     setIsRemoveAssocOpen(false);
                     setSelectedAssociation(null);
@@ -757,7 +757,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                         <SelectItem key={subProject.id} value={subProject.id}>
                           {subProject.title}
                         </SelectItem>
-                      ))
+                      )),
                     )}
                   </SelectContent>
                 </Select>
@@ -947,99 +947,130 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
         </Dialog>
       </div>
 
-      <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0 w-full max-w-4xl mx-auto">
-        <CardContent className="p-6">
-          <div className="mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-5 gap-4 md:gap-6 items-start">
-            <div className="sm:col-span-1 flex justify-center sm:justify-start">
-              <Avatar className="h-16 w-16">
+      <Card className="bg-white drop-shadow-sm shadow-gray-50 border-0 w-full max-w-4xl ">
+        <CardContent className="p-6 md:p-8">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row gap-6 items-start">
+              <Avatar className="h-20 w-20 ring-4 ring-[#E5ECF6]">
                 <AvatarImage src={beneficiary.avatar} alt={beneficiary.name} />
-                <AvatarFallback>{beneficiary.initials}</AvatarFallback>
+                <AvatarFallback className="text-xl">
+                  {beneficiary.initials}
+                </AvatarFallback>
               </Avatar>
-            </div>
-            <div className="sm:col-span-4 space-y-2">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="font-medium text-2xl md:text-3xl break-words">
-                    {beneficiary.name}
-                  </h1>
-                  <Badge
-                    style={{ backgroundColor: "#DEF8EE", color: "#4AA785" }}
-                    variant={
-                      beneficiary.status === "active" ? "default" : "secondary"
-                    }
-                  >
-                    {beneficiary.status}
-                  </Badge>
-                  <div className="flex flex-wrap gap-1.5">
+
+              <div className="flex-1 space-y-3">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h1 className="font-semibold text-2xl md:text-3xl break-words">
+                      {beneficiary.name}
+                    </h1>
+                    <Badge
+                      style={{ backgroundColor: "#DEF8EE", color: "#4AA785" }}
+                      variant={
+                        beneficiary.status === "active"
+                          ? "default"
+                          : "secondary"
+                      }
+                      className="px-3 py-1"
+                    >
+                      {beneficiary.status}
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <ShieldAlert className="h-4 w-4" />
+                    <span className="font-medium">{beneficiary.pseudoId}</span>
+                    <span className="text-xs">(Pseudonymized ID)</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mt-2">
                     {beneficiary.tags.map((tag) => (
-                      <Badge key={tag} variant="outline">
+                      <Badge
+                        key={tag}
+                        variant="outline"
+                        className="bg-[#F0F9FF] border-[#BAE6FD]"
+                      >
                         {tag.replace("-", " ")}
                       </Badge>
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <ShieldAlert className="h-3.5 w-3.5" />
-                  <span>{beneficiary.pseudoId}</span>
-                  <span className="text-xs">(Pseudonymized ID)</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-[#F7F9FB] rounded-xl p-4 space-y-3">
+                <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                  Contact Information
+                </h3>
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm">{beneficiary.location}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm">{beneficiary.contactNumber}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm">
+                      Registered on{" "}
+                      {new Date(
+                        beneficiary.registrationDate,
+                      ).toLocaleDateString()}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                  <span>{beneficiary.location}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>{beneficiary.contactNumber}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>
-                    Registered on{" "}
-                    {new Date(
-                      beneficiary.registrationDate
-                    ).toLocaleDateString()}
-                  </span>
+              </div>
+
+              <div className="bg-[#F7F9FB] rounded-xl p-4 space-y-3">
+                <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                  Personal Details
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <User className="h-3.5 w-3.5" />
+                      <span>{t("beneficiaryDetails.gender")}</span>
+                    </div>
+                    <p className="text-sm font-medium pl-5">
+                      {beneficiary.gender}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span>{t("beneficiaryDetails.age")}</span>
+                    </div>
+                    <p className="text-sm font-medium pl-5">
+                      {beneficiary.age} {t("beneficiaryDetails.years")}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Home className="h-3.5 w-3.5" />
+                      <span>{t("beneficiaryDetails.household")}</span>
+                    </div>
+                    <p className="text-sm font-medium pl-5">
+                      {beneficiary.household}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <ShieldAlert className="h-3.5 w-3.5" />
+                      <span>{t("beneficiaryDetails.vulnerability")}</span>
+                    </div>
+                    <p className="text-sm font-medium pl-5">
+                      {beneficiary.vulnerabilityScore}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="sm:col-start-2 sm:col-span-4 flex flex-col items-start text-left gap-2">
-              <div className="flex mt-2 md:mt-4 flex-col gap-2 items-start text-left">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">
-                    {t("beneficiaryDetails.gender")}
-                  </span>
-                  <span className="text-lg font-medium">
-                    {beneficiary.gender}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">
-                    {t("beneficiaryDetails.age")}
-                  </span>
-                  <span className="ml-1">
-                    {beneficiary.age} {t("beneficiaryDetails.years")}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Home className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">
-                    {t("beneficiaryDetails.household")}
-                  </span>
-                  <span className="ml-1">{beneficiary.household}</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <ShieldAlert className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">
-                    {t("beneficiaryDetails.vulnerability")}
-                  </span>
-                  <span className="ml-1">{beneficiary.vulnerabilityScore}</span>
-                </div>
-              </div>
-              <div className="text-sm text-muted-foreground text-[#6B7280]">
-                Last updated: {new Date().toLocaleDateString()}
-              </div>
+
+            <div className="text-xs text-muted-foreground text-right border-t pt-3">
+              Last updated: {new Date().toLocaleDateString()}
             </div>
           </div>
         </CardContent>
@@ -1156,7 +1187,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                           </div>
                           <div className="font-medium">
                             {new Date(
-                              beneficiary.registrationDate
+                              beneficiary.registrationDate,
                             ).toLocaleDateString()}
                           </div>
                         </div>
@@ -1275,7 +1306,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                     <div className="text-3xl font-medium">
                       {deliveriesSummaryLoading
                         ? "—"
-                        : deliveriesSummary?.totalDeliveries ?? 0}
+                        : (deliveriesSummary?.totalDeliveries ?? 0)}
                     </div>
                     <div className="text-muted-foreground">
                       {t("beneficiaryDetails.totalServicesReceived")}
@@ -1296,7 +1327,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                       <span>
                         {deliveriesSummaryLoading
                           ? "—"
-                          : deliveriesSummary?.uniqueStaff ?? 0}
+                          : (deliveriesSummary?.uniqueStaff ?? 0)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -1306,7 +1337,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                       <span>
                         {deliveriesSummaryLoading
                           ? "—"
-                          : deliveriesSummary?.uniqueServices ?? 0}
+                          : (deliveriesSummary?.uniqueServices ?? 0)}
                       </span>
                     </div>
                   </div>
@@ -1434,7 +1465,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                               onClick={() =>
                                 s.formResponseId &&
                                 navigate(
-                                  `/beneficiaries/${id}/form/${s.formResponseId}`
+                                  `/beneficiaries/${id}/form/${s.formResponseId}`,
                                 )
                               }
                               title={
@@ -1554,7 +1585,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                       id,
                       page: servicesMeta.page - 1,
                       limit: servicesMeta.limit,
-                    })
+                    }),
                   )
                 }
               >
@@ -1575,7 +1606,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                       id,
                       page: servicesMeta.page + 1,
                       limit: servicesMeta.limit,
-                    })
+                    }),
                   )
                 }
               >
@@ -1625,7 +1656,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                                 <Badge key={idx} variant="outline">
                                   {a}
                                 </Badge>
-                              )
+                              ),
                             )}
                           </div>
                         ) : (
@@ -1661,7 +1692,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                                 <Badge key={idx} variant="outline">
                                   {d}
                                 </Badge>
-                              )
+                              ),
                             )}
                           </div>
                         ) : (
@@ -1679,7 +1710,7 @@ export function BeneficiaryDetails({ onBack }: BeneficiaryDetailsProps) {
                                 <Badge key={idx} variant="outline">
                                   {m}
                                 </Badge>
-                              )
+                              ),
                             )}
                           </div>
                         ) : (
