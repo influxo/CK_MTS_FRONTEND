@@ -3,17 +3,20 @@ import { useDispatch, useSelector } from "react-redux";
 import { BeneficiaryDemographics } from "../components/dashboard/BeneficiaryDemographics";
 import { FilterControls } from "../components/dashboard/FilterControls";
 import { FormSubmissions } from "../components/dashboard/FormSubmissions";
-import { KpiHighlights } from "../components/dashboard/KpiHighlights";
 import { RecentActivity } from "../components/dashboard/RecentActivity";
 import { ServiceDelivery } from "../components/dashboard/ServiceDelivery";
 import { SummaryMetrics } from "../components/dashboard/SummaryMetrics";
 
 import type { AppDispatch } from "../store";
 
-import { selectCurrentUser } from "../store/slices/authSlice";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
+import { selectCurrentUser } from "../store/slices/authSlice";
 
+import {
+  fetchProjects,
+  selectAllProjects,
+} from "../store/slices/projectsSlice";
 import {
   fetchDeliveriesSeries,
   fetchDeliveriesSummary,
@@ -24,10 +27,6 @@ import {
   fetchUserProjectsByUserId,
   selectUserProjectsTree,
 } from "../store/slices/userProjectsSlice";
-import {
-  selectAllProjects,
-  fetchProjects,
-} from "../store/slices/projectsSlice";
 
 export default function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -147,9 +146,9 @@ export default function Dashboard() {
       <div className="lg:col-span-2 py-6">
         <BeneficiaryDemographics />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2">
-          <KpiHighlights />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="">
+          {/* <KpiHighlights /> */}
           {/* <div className="lg:col-span-2">
             <KpiHighlights />
             </div>

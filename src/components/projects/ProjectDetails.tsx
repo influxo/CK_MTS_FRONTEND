@@ -2009,15 +2009,15 @@ export function ProjectDetails() {
                   </CardContent>
                 </Card>
 
-                <ProjectStats
+                {/* <ProjectStats
                   projectId={enhancedProject.id}
                   summary={summaryForCards}
-                />
+                /> */}
                 {/* <ProjectActivity projectId={enhancedProject.id} /> */}
               </div>
-              <div className="space-y-6">
+              {/* <div className="space-y-6">
                 <ProjectActivity projectId={enhancedProject.id} />
-              </div>
+              </div> */}
             </div>
           )}
         </TabsContent>
