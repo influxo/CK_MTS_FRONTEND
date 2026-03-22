@@ -100,7 +100,7 @@ export function EmployeesList({
   const normalizedRoles = useMemo(
     () =>
       (currentUser?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [currentUser?.roles]
+    [currentUser?.roles],
   );
   const isSysOrSuperAdmin = useMemo(() => {
     return normalizedRoles.some(
@@ -108,7 +108,7 @@ export function EmployeesList({
         r === "sysadmin" ||
         r === "superadmin" ||
         r.includes("system admin") ||
-        r.includes("super admin")
+        r.includes("super admin"),
     );
   }, [normalizedRoles]);
 
@@ -143,19 +143,21 @@ export function EmployeesList({
     name: `${e.firstName} ${e.lastName}`.trim(),
     email: e.email,
     role: normalizeRole(
-      e.roles && e.roles.length > 0 ? e.roles[0].name : "N/A"
+      e.roles && e.roles.length > 0 ? e.roles[0].name : "N/A",
     ),
     status:
       e.status === "active"
         ? "active"
         : e.status === "inactive"
-        ? "inactive"
-        : "pending",
+          ? "inactive"
+          : "pending",
     lastActive: e.lastLogin,
     projects: ["All Projects"],
     subProjects: [] as string[],
     twoFactorEnabled: e.twoFactorEnabled,
     createdAt: e.createdAt,
+    updatedAt: e.updatedAt,
+    emailVerified: e.emailVerified,
   }));
 
   if (isLoading) {
@@ -276,14 +278,15 @@ export function EmployeesList({
           <p className="text-muted-foreground">{t("dashboard.manageStaff")}</p>
         </div>
         <div className="flex gap-3">
-          <Button
+          {/* KTU I KENA PAS DO EXTRA FILTERS, KURRE SJAN PERDOR */}
+          {/* <Button
             variant="outline"
             className="bg-[#E0F2FE] border-0"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
             {t("employees.filters")}
-          </Button>
+          </Button> */}
           <Button
             onClick={onInviteClick}
             className="bg-[#0073e6] border-0 text-white"
@@ -320,7 +323,9 @@ export function EmployeesList({
                 ))}
               </SelectContent>
             </Select>
-            <Select value={projectFilter} onValueChange={setProjectFilter}>
+
+            {/* E kom hek ket filter se nuk kryn noj pune qysh dyhet, edhe nese bojm fetch, nuk kthen info qysh duhet */}
+            {/* <Select value={projectFilter} onValueChange={setProjectFilter}>
               <SelectTrigger className="w-[180px] bg-white border-gray-100 border transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Project" />
@@ -337,7 +342,7 @@ export function EmployeesList({
                   Youth Empowerment
                 </SelectItem>
               </SelectContent>
-            </Select>
+            </Select> */}
             <div className="flex gap-3">
               <Button
                 variant="outline"
@@ -467,10 +472,10 @@ export function EmployeesList({
                         {t("employees.employee")}
                       </TableHead>
                       <TableHead>{t("common.role")}</TableHead>
-                      <TableHead>{t("projects.title")}</TableHead>
-                      <TableHead>{t("subProjects.title")}</TableHead>
                       <TableHead>{t("employees.lastActive")}</TableHead>
                       <TableHead>{t("common.status")}</TableHead>
+                      <TableHead>{t("employees.updatedAt")}</TableHead>
+                      <TableHead>{t("employees.emailVerified")}</TableHead>
                       <TableHead>2FA</TableHead>
                       <TableHead className="text-right">
                         {t("common.actions")}
@@ -499,61 +504,6 @@ export function EmployeesList({
                           </div>
                         </TableCell>
                         <TableCell>{renderRoleBadge(employee.role)}</TableCell>
-                        <TableCell>
-                          <div className="max-w-[200px]">
-                            {employee.projects[0] === "All Projects" ? (
-                              <Badge
-                                variant="outline"
-                                className="bg-[#0073e6] text-white border-0"
-                              >
-                                All Projects
-                              </Badge>
-                            ) : (
-                              <div className="space-y-1">
-                                {employee.projects.map(
-                                  (project: string, index: number) => (
-                                    <div
-                                      key={index}
-                                      className="text-sm truncate"
-                                    >
-                                      {project}
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="max-w-[200px]">
-                            {employee.subProjects.length === 0 ? (
-                              <span className="text-muted-foreground text-sm">
-                                None
-                              </span>
-                            ) : employee.subProjects[0] ===
-                              "All Sub-Projects" ? (
-                              <Badge
-                                variant="outline"
-                                className="bg-[#2E343E] text-white border-0 "
-                              >
-                                All Sub-Projects
-                              </Badge>
-                            ) : (
-                              <div className="space-y-1">
-                                {employee.subProjects.map(
-                                  (subProject: string, index: number) => (
-                                    <div
-                                      key={index}
-                                      className="text-sm truncate"
-                                    >
-                                      {subProject}
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
                         <TableCell>
                           {employee.lastActive
                             ? formatDate(employee.lastActive)
@@ -584,6 +534,29 @@ export function EmployeesList({
                             </Badge>
                           )}
                         </TableCell>
+                        <TableCell className="text-sm">
+                          {employee.updatedAt
+                            ? formatDate(employee.updatedAt)
+                            : t("common.never")}
+                        </TableCell>
+                        <TableCell>
+                          {employee.emailVerified ? (
+                            <Badge
+                              variant="outline"
+                              className=" text-[#4AA785] bg-[#DEF8EE] border-0"
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              {t("common.verified")}
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="text-black/40 border-0 bg-black/5"
+                            >
+                              {t("common.notVerified")}
+                            </Badge>
+                          )}
+                        </TableCell>
                         <TableCell>
                           {employee.twoFactorEnabled ? (
                             <Badge
@@ -611,7 +584,7 @@ export function EmployeesList({
                               onClick={() => onEmployeeSelect(employee.id)}
                             >
                               <Eye className="h-4 w-4 mr-2" />
-                              Shiko
+                              {t("common.view")}
                             </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -628,12 +601,7 @@ export function EmployeesList({
                                   onClick={() => onEmployeeSelect(employee.id)}
                                 >
                                   <Pencil className="h-4 w-4 mr-2" />
-                                  Edit
-                                </DropdownMenuItem>
-
-                                <DropdownMenuItem>
-                                  <KeyRound className="h-4 w-4 mr-2" />
-                                  {t("employees.resetPassword")}
+                                  {t("common.edit")}
                                 </DropdownMenuItem>
 
                                 {isSysOrSuperAdmin && (
@@ -669,9 +637,8 @@ export function EmployeesList({
                         {t("employees.employee")}
                       </TableHead>
                       <TableHead>{t("common.role")}</TableHead>
-                      <TableHead>{t("projects.title")}</TableHead>
-                      <TableHead>{t("subProjects.title")}</TableHead>
                       <TableHead>{t("employees.invitedOn")}</TableHead>
+                      <TableHead>{t("employees.emailVerified")}</TableHead>
                       <TableHead>{t("common.status")}</TableHead>
                       <TableHead className="text-right">
                         {t("common.actions")}
@@ -700,57 +667,25 @@ export function EmployeesList({
                           </div>
                         </TableCell>
                         <TableCell>{renderRoleBadge(employee.role)}</TableCell>
-                        <TableCell>
-                          <div className="max-w-[200px]">
-                            {employee.projects[0] === "All Projects" ? (
-                              <Badge
-                                variant="outline"
-                                className="bg-primary/10"
-                              >
-                                All Projects
-                              </Badge>
-                            ) : (
-                              <div className="space-y-1">
-                                {employee.projects.map((project, index) => (
-                                  <div key={index} className="text-sm truncate">
-                                    {project}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="max-w-[200px]">
-                            {employee.subProjects.length === 0 ? (
-                              <span className="text-muted-foreground text-sm">
-                                None
-                              </span>
-                            ) : employee.subProjects[0] ===
-                              "All Sub-Projects" ? (
-                              <Badge
-                                variant="outline"
-                                className="bg-primary/10"
-                              >
-                                All Sub-Projects
-                              </Badge>
-                            ) : (
-                              <div className="space-y-1">
-                                {employee.subProjects.map(
-                                  (subProject, index) => (
-                                    <div
-                                      key={index}
-                                      className="text-sm truncate"
-                                    >
-                                      {subProject}
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
                         <TableCell>{formatDate(employee.createdAt)}</TableCell>
+                        <TableCell>
+                          {employee.emailVerified ? (
+                            <Badge
+                              variant="outline"
+                              className=" text-[#4AA785] bg-[#DEF8EE] border-0"
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              {t("common.verified")}
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="text-black/40 border-0 bg-black/5"
+                            >
+                              {t("common.notVerified")}
+                            </Badge>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
@@ -768,7 +703,7 @@ export function EmployeesList({
                               onClick={() => onEmployeeSelect(employee.id)}
                             >
                               <Eye className="h-4 w-4 mr-2" />
-                              Shiko
+                              {t("common.view")}
                             </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -785,12 +720,9 @@ export function EmployeesList({
                                   onClick={() => onEmployeeSelect(employee.id)}
                                 >
                                   <Pencil className="h-4 w-4 mr-2" />
-                                  Edit
+                                  {t("common.edit")}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Mail className="h-4 w-4 mr-2" />
-                                  Resend Invitation
-                                </DropdownMenuItem>
+
                                 {isSysOrSuperAdmin && (
                                   <DropdownMenuItem
                                     className="text-destructive"
@@ -799,7 +731,7 @@ export function EmployeesList({
                                     }
                                   >
                                     <Trash className="h-4 w-4 mr-2" />
-                                    Delete
+                                    {t("common.delete")}
                                   </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>
@@ -820,13 +752,15 @@ export function EmployeesList({
                 <Table className="min-w-[900px]">
                   <TableHeader className="bg-[#E5ECF6]">
                     <TableRow>
-                      <TableHead className="w-[250px]">Punëtori</TableHead>
-                      <TableHead>Roli</TableHead>
-                      <TableHead>Projektet</TableHead>
-                      <TableHead>Nën projektet</TableHead>
-                      <TableHead>Ftuar me</TableHead>
-                      <TableHead>Statusi</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="w-[250px]">
+                        {t("employees.employee")}
+                      </TableHead>
+                      <TableHead>{t("common.role")}</TableHead>
+                      <TableHead>{t("employees.createdAt")}</TableHead>
+                      <TableHead>{t("common.status")}</TableHead>
+                      <TableHead className="text-right">
+                        {t("common.actions")}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -851,67 +785,15 @@ export function EmployeesList({
                           </div>
                         </TableCell>
                         <TableCell>{renderRoleBadge(employee.role)}</TableCell>
-                        <TableCell>
-                          <div className="max-w-[200px]">
-                            {employee.projects[0] === "All Projects" ? (
-                              <Badge
-                                variant="outline"
-                                className="bg-primary/10"
-                              >
-                                All Projects
-                              </Badge>
-                            ) : (
-                              <div className="space-y-1">
-                                {employee.projects.map((project, index) => (
-                                  <div key={index} className="text-sm truncate">
-                                    {project}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="max-w-[200px]">
-                            {employee.subProjects.length === 0 ? (
-                              <span className="text-muted-foreground text-sm">
-                                None
-                              </span>
-                            ) : employee.subProjects[0] ===
-                              "All Sub-Projects" ? (
-                              <Badge
-                                variant="outline"
-                                className="bg-primary/10"
-                              >
-                                All Sub-Projects
-                              </Badge>
-                            ) : (
-                              <div className="space-y-1">
-                                {employee.subProjects.map(
-                                  (subProject, index) => (
-                                    <div
-                                      key={index}
-                                      className="text-sm truncate"
-                                    >
-                                      {subProject}
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {employee.lastActive
-                            ? formatDate(employee.lastActive)
-                            : "Never"}
+                        <TableCell className="text-sm">
+                          {formatDate(employee.createdAt)}
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
                             className="bg-[#EDEDFF] text-[#8A8CD9] border-0"
                           >
-                            Inactive
+                            {t("common.inactive")}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
@@ -923,7 +805,7 @@ export function EmployeesList({
                               onClick={() => onEmployeeSelect(employee.id)}
                             >
                               <Eye className="h-4 w-4 mr-2" />
-                              View
+                              {t("common.view")}
                             </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -940,16 +822,9 @@ export function EmployeesList({
                                   onClick={() => onEmployeeSelect(employee.id)}
                                 >
                                   <Pencil className="h-4 w-4 mr-2" />
-                                  Edit
+                                  {t("common.edit")}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Mail className="h-4 w-4 mr-2" />
-                                  Send Email
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <CheckCircle className="h-4 w-4 mr-2" />
-                                  Reactivate
-                                </DropdownMenuItem>
+
                                 {isSysOrSuperAdmin && (
                                   <DropdownMenuItem
                                     className="text-destructive"
@@ -958,7 +833,7 @@ export function EmployeesList({
                                     }
                                   >
                                     <Trash className="h-4 w-4 mr-2" />
-                                    Delete
+                                    {t("common.delete")}
                                   </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>
@@ -972,153 +847,21 @@ export function EmployeesList({
               </div>
             </Card>
           </TabsContent>
-
-          {/* <TabsContent value="invitations" className="pt-6">
-            <Card className="bg-[#F7F9FB]">
-              <div className="w-full overflow-x-auto">
-                <Table className="min-w-[900px]">
-                  <TableHeader className="bg-[#E5ECF6]">
-                    <TableRow>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Roli</TableHead>
-                      <TableHead>Projektet</TableHead>
-                      <TableHead>Ftuar nga</TableHead>
-                      <TableHead>Ftuar me</TableHead>
-                      <TableHead>Skadon</TableHead>
-                      <TableHead>Statusi</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredInvitations.map((invitation) => (
-                      <TableRow key={invitation.id}>
-                        <TableCell>
-                          <div className="font-medium">{invitation.email}</div>
-                        </TableCell>
-                        <TableCell>
-                          {renderRoleBadge(invitation.role)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="max-w-[200px]">
-                            {invitation.projects[0] === "All Projects" ? (
-                              <Badge
-                                variant="outline"
-                                className="bg-[#2E343E] text-white border-0"
-                              >
-                                All Projects
-                              </Badge>
-                            ) : (
-                              <div className="space-y-1">
-                                {invitation.projects.map(
-                                  (project: string, index: number) => (
-                                    <div
-                                      key={index}
-                                      className="text-sm truncate"
-                                    >
-                                      {project}
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>{invitation.invitedBy}</TableCell>
-                        <TableCell>
-                          {formatDate(invitation.invitedAt)}
-                        </TableCell>
-                        <TableCell>
-                          {formatDate(invitation.expiresAt)}
-                        </TableCell>
-                        <TableCell>
-                          {invitation.status === "pending" ? (
-                            <Badge
-                              variant="outline"
-                              className="bg-[#E2F5FF] text-[#59A8D4] border-0"
-                            >
-                              Pending
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant="outline"
-                              className="bg-[#FFFBD4] text-[#FFC555] border-0"
-                            >
-                              Expired
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            {invitation.status === "pending" ? (
-                              <>
-                                <Button
-                                  className="bg-[#2E343E] text-white border-0"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleResendInvite(invitation.id)
-                                  }
-                                >
-                                  <Mail className="h-4 w-4 mr-2" />
-                                  Resend
-                                </Button>
-                                <Button
-                                  className="hover:bg-black/10 text-black border-0"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleCancelInvite(invitation.id)
-                                  }
-                                >
-                                  <Trash className="h-4 w-4 mr-2" />
-                                  Cancel
-                                </Button>
-                              </>
-                            ) : (
-                              <Button
-                                className="bg-[#2E343E] text-white border-0"
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  handleResendInvite(invitation.id)
-                                }
-                              >
-                                <Mail className="h-4 w-4 mr-2" />
-                                Resend
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </Card>
-          </TabsContent> */}
         </Tabs>
       </div>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Employee</DialogTitle>
+            <DialogTitle>{t("employees.archiveEmployeeTitle")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this employee? This action cannot
-              be undone.
+              {t("employees.archiveEmployeeDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-muted-foreground">
-              All data associated with this employee will be permanently
-              removed. This includes:
+              {t("employees.archiveEmployeeNote")}
             </p>
-            <ul className="list-disc pl-5 mt-2 space-y-1 text-sm text-muted-foreground">
-              <li>Personal information</li>
-              <li>Project assignments</li>
-              <li>Activity history</li>
-              <li>Form submissions</li>
-            </ul>
           </div>
           <DialogFooter>
             <Button
@@ -1126,14 +869,16 @@ export function EmployeesList({
               onClick={() => setShowDeleteDialog(false)}
               disabled={isDeleting}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
-              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 text-white"
               onClick={confirmDelete}
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete Employee"}
+              {isDeleting
+                ? t("employees.archiving")
+                : t("employees.archiveEmployee")}
             </Button>
           </DialogFooter>
         </DialogContent>

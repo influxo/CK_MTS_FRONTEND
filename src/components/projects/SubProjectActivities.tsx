@@ -86,8 +86,8 @@ export function SubProjectActivities({
   const [status, setStatus] = useState("active");
   const [description, setDescription] = useState("");
   const [reportingFieldsRows, setReportingFieldsRows] = useState<
-    { key: string; type: string }[]
-  >([{ key: "", type: "text" }]);
+    { name: string; type: string; value: string }[]
+  >([{ name: "", type: "text", value: "" }]);
 
   // Filter activities from API for this sub-project
   const filteredActivities = activities.filter((activity) => {
@@ -234,14 +234,15 @@ export function SubProjectActivities({
                     <div key={idx} className="flex gap-2 items-center">
                       <Input
                         placeholder={t(
-                          "subProjectActivities.fieldKeyPlaceholder"
+                          "subProjectActivities.fieldNamePlaceholder",
                         )}
-                        value={row.key}
+                        value={row.name}
                         onChange={(e) => {
                           const next = [...reportingFieldsRows];
-                          next[idx] = { ...next[idx], key: e.target.value };
+                          next[idx] = { ...next[idx], name: e.target.value };
                           setReportingFieldsRows(next);
                         }}
+                        className="flex-1"
                       />
                       <Select
                         value={row.type}
@@ -251,10 +252,10 @@ export function SubProjectActivities({
                           setReportingFieldsRows(next);
                         }}
                       >
-                        <SelectTrigger className="w-[160px]">
+                        <SelectTrigger className="w-[120px]">
                           <SelectValue
                             placeholder={t(
-                              "subProjectActivities.typePlaceholder"
+                              "subProjectActivities.typePlaceholder",
                             )}
                           />
                         </SelectTrigger>
@@ -271,26 +272,24 @@ export function SubProjectActivities({
                           <SelectItem value="date">
                             {t("subProjectActivities.date")}
                           </SelectItem>
-                          <SelectItem value="time">
-                            {t("subProjectActivities.time")}
-                          </SelectItem>
-                          <SelectItem value="datetime">
-                            {t("subProjectActivities.datetime")}
-                          </SelectItem>
-                          <SelectItem value="select">
-                            {t("subProjectActivities.select")}
-                          </SelectItem>
-                          <SelectItem value="multiselect">
-                            {t("subProjectActivities.multiselect")}
-                          </SelectItem>
                         </SelectContent>
                       </Select>
+                      <Input
+                        placeholder={t("subProjectActivities.valuePlaceholder")}
+                        value={row.value}
+                        onChange={(e) => {
+                          const next = [...reportingFieldsRows];
+                          next[idx] = { ...next[idx], value: e.target.value };
+                          setReportingFieldsRows(next);
+                        }}
+                        className="flex-1"
+                      />
                       <Button
                         variant="ghost"
                         className="hover:bg-[#E0F2FE] hover:text-black"
                         onClick={() => {
                           const next = reportingFieldsRows.filter(
-                            (_, i) => i !== idx
+                            (_, i) => i !== idx,
                           );
                           setReportingFieldsRows(next);
                         }}
@@ -304,7 +303,7 @@ export function SubProjectActivities({
                     onClick={() =>
                       setReportingFieldsRows([
                         ...reportingFieldsRows,
-                        { key: "", type: "text" },
+                        { name: "", type: "text", value: "" },
                       ])
                     }
                   >
@@ -324,11 +323,27 @@ export function SubProjectActivities({
               <Button
                 className="bg-[#0073e6] border-0 text-white"
                 onClick={async () => {
-                  const reportingFields: Record<string, string> = {};
-                  reportingFieldsRows
-                    .filter((r) => r.key.trim().length > 0)
-                    .forEach((r) => {
-                      reportingFields[r.key.trim()] = r.type;
+                  const reportingFields = reportingFieldsRows
+                    .filter((r) => r.name.trim().length > 0)
+                    .map((r) => {
+                      let value: string | number = r.value;
+
+                      // Convert value based on type
+                      if (r.type === "number") {
+                        value = Number(r.value) || 0;
+                      } else if (r.type === "boolean") {
+                        value =
+                          r.value.toLowerCase() === "true" || r.value === "1"
+                            ? "true"
+                            : "false";
+                      }
+                      // For text, date, and other types, keep as string
+
+                      return {
+                        name: r.name.trim(),
+                        type: r.type,
+                        value,
+                      };
                     });
                   try {
                     await dispatch(
@@ -340,7 +355,7 @@ export function SubProjectActivities({
                         reportingFields,
                         status,
                         subprojectId: effectiveSubProjectId,
-                      })
+                      }),
                     ).unwrap();
                     // Reset form
                     setName("");
@@ -348,12 +363,14 @@ export function SubProjectActivities({
                     setFrequency("monthly");
                     setStatus("active");
                     setDescription("");
-                    setReportingFieldsRows([{ key: "", type: "text" }]);
+                    setReportingFieldsRows([
+                      { name: "", type: "text", value: "" },
+                    ]);
                     setIsCreateActivityDialogOpen(false);
                     // Refresh activities list
                     if (effectiveSubProjectId) {
                       dispatch(
-                        fetchSubprojectActivities(effectiveSubProjectId)
+                        fetchSubprojectActivities(effectiveSubProjectId),
                       );
                     }
                   } catch (e) {
@@ -510,7 +527,7 @@ export function SubProjectActivities({
                           onClick={() => {
                             if (projectId && effectiveSubProjectId) {
                               navigate(
-                                `/projects/${projectId}/subprojects/${effectiveSubProjectId}/activities/${activity.id}`
+                                `/projects/${projectId}/subprojects/${effectiveSubProjectId}/activities/${activity.id}`,
                               );
                             }
                           }}

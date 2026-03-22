@@ -92,18 +92,18 @@ export function ProjectTeam({
   // Exclude already assigned members from modal options
   const assignedIds = useMemo(
     () => new Set((assignedUsers || []).map((u) => u.id)),
-    [assignedUsers]
+    [assignedUsers],
   );
   const employeesForSelect = useMemo(
     () => (employees || []).filter((emp) => !assignedIds.has(emp.id)),
-    [employees, assignedIds]
+    [employees, assignedIds],
   );
 
   const handleAssignMember = async () => {
     if (!selectedMemberId) return;
     try {
       await dispatch(
-        assignUserToProject({ projectId, userId: selectedMemberId })
+        assignUserToProject({ projectId, userId: selectedMemberId }),
       ).unwrap();
       // refresh assigned users
       dispatch(fetchProjectUsers(projectId));
@@ -130,7 +130,9 @@ export function ProjectTeam({
     <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-base">{t('projectTeam.projectTeam')}</CardTitle>
+          <CardTitle className="text-base">
+            {t("projectTeam.projectTeam")}
+          </CardTitle>
           {(isSysOrSuperAdmin || isProgramManager) && (
             <Dialog
               open={isAssignDialogOpen}
@@ -145,27 +147,31 @@ export function ProjectTeam({
              hover:scale-[1.02] hover:-translate-y-[1px]"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  {t('projectTeam.assignMember')}
+                  {t("projectTeam.assignMember")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                  <DialogTitle>{t('projectTeam.assignMemberToProject')}</DialogTitle>
+                  <DialogTitle>
+                    {t("projectTeam.assignMemberToProject")}
+                  </DialogTitle>
                   <DialogDescription>
-                    {t('projectTeam.selectMemberDesc')}
+                    {t("projectTeam.selectMemberDesc")}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="member" className="text-right">
-                      {t('projectTeam.member')}
+                      {t("projectTeam.member")}
                     </Label>
                     <Select
                       value={selectedMemberId}
                       onValueChange={(v) => setSelectedMemberId(v)}
                     >
                       <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder={t('projectTeam.selectMember')} />
+                        <SelectValue
+                          placeholder={t("projectTeam.selectMember")}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {employeesForSelect.map((emp) => {
@@ -208,7 +214,7 @@ export function ProjectTeam({
                     variant="outline"
                     onClick={() => setIsAssignDialogOpen(false)}
                   >
-                    {t('projectTeam.cancel')}
+                    {t("projectTeam.cancel")}
                   </Button>
                   <Button
                     className="bg-[#0073e6] text-white flex items-center
@@ -218,7 +224,7 @@ export function ProjectTeam({
                     disabled={!selectedMemberId}
                     onClick={handleAssignMember}
                   >
-                    {t('projectTeam.assignMember')}
+                    {t("projectTeam.assignMember")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -229,7 +235,7 @@ export function ProjectTeam({
       <CardContent>
         {isLoading ? (
           <div className="py-4 text-sm text-muted-foreground">
-            {t('projectTeam.loadingTeam')}
+            {t("projectTeam.loadingTeam")}
           </div>
         ) : error ? (
           <div className="py-4 text-sm text-destructive">{error}</div>
@@ -237,10 +243,14 @@ export function ProjectTeam({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[280px]">{t('projectTeam.member')}</TableHead>
-                <TableHead>{t('projectTeam.email')}</TableHead>
-                <TableHead>{t('projectTeam.status')}</TableHead>
-                <TableHead className="w-[80px] text-right">{t('projectTeam.actions')}</TableHead>
+                <TableHead className="w-[280px]">
+                  {t("projectTeam.member")}
+                </TableHead>
+                <TableHead>{t("projectTeam.email")}</TableHead>
+                <TableHead>{t("projectTeam.status")}</TableHead>
+                <TableHead className="w-[80px] text-right">
+                  {t("projectTeam.actions")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -250,7 +260,7 @@ export function ProjectTeam({
                     colSpan={4}
                     className="text-center text-muted-foreground"
                   >
-                    {t('projectTeam.noTeamMembers')}
+                    {t("projectTeam.noTeamMembers")}
                   </TableCell>
                 </TableRow>
               ) : (

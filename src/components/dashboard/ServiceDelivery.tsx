@@ -1,27 +1,27 @@
-import * as React from "react";
 import { ChevronDown } from "lucide-react";
+import * as React from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import type { TimeUnit } from "../../services/services/serviceMetricsModels";
+import {
+  fetchDeliveriesSeries,
+  selectResetTrigger,
+  selectSeries,
+} from "../../store/slices/serviceMetricsSlice";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "../ui/data-display/card";
-import { Badge } from "../ui/data-display/badge";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  selectSeries,
-  fetchDeliveriesSeries,
-} from "../../store/slices/serviceMetricsSlice";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import type { TimeUnit } from "../../services/services/serviceMetricsModels";
 
 type Granularity = TimeUnit; // 'day' | 'week' | 'month' | 'quarter' | 'year'
 
@@ -76,6 +76,7 @@ function defaultWindowFor(g: Granularity): { from: Date; to: Date } {
 export function ServiceDelivery() {
   const dispatch: any = useDispatch();
   const series = useSelector(selectSeries);
+  const resetTrigger = useSelector(selectResetTrigger);
   const { loading, error, items, granularity } = series;
 
   // local UI state for custom range
@@ -104,7 +105,7 @@ export function ServiceDelivery() {
         const monday = startOfWeek(d);
         const startYear = new Date(d.getFullYear(), 0, 1);
         const diffDays = Math.floor(
-          (monday.getTime() - startYear.getTime()) / 86400000
+          (monday.getTime() - startYear.getTime()) / 86400000,
         );
         const week = Math.floor(diffDays / 7) + 1;
         return `W${week} ${d.getFullYear()}`;
@@ -159,7 +160,7 @@ export function ServiceDelivery() {
         groupBy: g,
         startDate: start.toISOString(),
         endDate: end.toISOString(),
-      })
+      }),
     );
   };
 
@@ -177,6 +178,16 @@ export function ServiceDelivery() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Reset local UI states when reset button is clicked
+  React.useEffect(() => {
+    if (resetTrigger > 0) {
+      setCustomOpen(false);
+      setCustomFrom("");
+      setCustomTo("");
+      setFiltersOpen(false);
+    }
+  }, [resetTrigger]);
 
   const g = (granularity || "week") as Granularity;
 

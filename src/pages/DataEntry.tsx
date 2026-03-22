@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SubProjectSelection } from "../components/data-entry/SubProjectSelection";
 import type { AppDispatch } from "../store";
 import { useTranslation } from "../hooks/useTranslation";
@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "../components/ui/form/select";
 import { Badge } from "../components/ui/data-display/badge";
+import { Button } from "../components/ui/button/button";
+import { RotateCcw } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import {
   fetchUserProjectsByUserId,
@@ -38,9 +40,10 @@ export function DataEntry({}: DataEntryModuleProps) {
   const dispatch = useDispatch<AppDispatch>();
   const [activeTab, setActiveTab] = useState<"entry" | "history">("entry");
   const [entityType, setEntityType] = useState<"project" | "subproject">(
-    "project"
+    "project",
   );
   const [selectedEntityId, setSelectedEntityId] = useState<string>("");
+  const submissionHistoryResetRef = useRef<(() => void) | null>(null);
 
   const { user } = useAuth();
   const projects = useSelector(selectAllProjects);
@@ -49,7 +52,7 @@ export function DataEntry({}: DataEntryModuleProps) {
 
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
   const isSysOrSuperAdmin = useMemo(() => {
     return normalizedRoles.some(
@@ -57,7 +60,7 @@ export function DataEntry({}: DataEntryModuleProps) {
         r === "sysadmin" ||
         r === "superadmin" ||
         r.includes("system admin") ||
-        r.includes("super admin")
+        r.includes("super admin"),
     );
   }, [normalizedRoles]);
 
@@ -89,6 +92,14 @@ export function DataEntry({}: DataEntryModuleProps) {
     });
     return flat as any;
   }, [isSysOrSuperAdmin, subprojects, userProjectsTree]);
+
+  const handleResetFilters = () => {
+    setEntityType("project");
+    setSelectedEntityId("");
+    if (submissionHistoryResetRef.current) {
+      submissionHistoryResetRef.current();
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -179,6 +190,15 @@ export function DataEntry({}: DataEntryModuleProps) {
                     </SelectContent>
                   </Select>
                 )}
+
+                <Button
+                  variant="outline"
+                  onClick={handleResetFilters}
+                  className="bg-orange-500 text-white border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] hover:bg-orange-600 w-full sm:w-auto"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  {t("dataEntry.resetFilters")}
+                </Button>
               </div>
 
               <div>
@@ -196,6 +216,9 @@ export function DataEntry({}: DataEntryModuleProps) {
                     selectedEntityId ? (entityType as any) : undefined
                   }
                   onBack={() => setActiveTab("entry")}
+                  onResetRefReady={(resetFn) => {
+                    submissionHistoryResetRef.current = resetFn;
+                  }}
                 />
               </div>
             </CardContent>

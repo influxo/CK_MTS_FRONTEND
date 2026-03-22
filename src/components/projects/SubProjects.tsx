@@ -1,5 +1,4 @@
 import {
-  Calendar,
   CheckCircle,
   FileEdit,
   Filter,
@@ -10,8 +9,8 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../store";
 
 import type {
@@ -19,9 +18,23 @@ import type {
   SubProject,
 } from "../../services/subprojects/subprojectModels";
 
+import { toast } from "sonner";
+import { useTranslation } from "../../hooks/useTranslation";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { selectCreateSuccessMessage } from "../../store/slices/projectsSlice";
+import {
+  clearSubprojectMessages,
+  createSubProject,
+  fetchSubProjectsByProjectId,
+  selectAllSubprojects,
+  selectSubprojectsError,
+  selectSubprojectsLoading,
+} from "../../store/slices/subProjectSlice";
+import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
+import { KOSOVO_CITIES } from "../../utils/cities";
+import { Button } from "../ui/button/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
-import { Button } from "../ui/button/button";
 import {
   Card,
   CardContent,
@@ -29,20 +42,13 @@ import {
   CardHeader,
 } from "../ui/data-display/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from "../ui/overlay/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/overlay/dropdown-menu";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/data-display/table";
 import { Input } from "../ui/form/input";
 import { Label } from "../ui/form/label";
 import {
@@ -52,29 +58,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/form/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/data-display/table";
-import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
 import { Textarea } from "../ui/form/textarea";
 import {
-  clearSubprojectMessages,
-  createSubProject,
-  fetchSubProjectsByProjectId,
-  selectAllSubprojects,
-  selectSubprojectsError,
-  selectSubprojectsLoading,
-} from "../../store/slices/subProjectSlice";
-import { selectCreateSuccessMessage } from "../../store/slices/projectsSlice";
-import { toast } from "sonner";
-import { selectCurrentUser } from "../../store/slices/authSlice";
-import { useTranslation } from "../../hooks/useTranslation";
-import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/overlay/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/overlay/dropdown-menu";
 
 interface SubProjectsProps {
   projectId?: string;
@@ -96,16 +95,16 @@ export function SubProjects({
   const dispatch = useDispatch<AppDispatch>();
 
   const subprojects = useSelector((state: RootState) =>
-    selectAllSubprojects(state)
+    selectAllSubprojects(state),
   );
   const isLoading = useSelector((state: RootState) =>
-    selectSubprojectsLoading(state)
+    selectSubprojectsLoading(state),
   );
   const error = useSelector((state: RootState) =>
-    selectSubprojectsError(state)
+    selectSubprojectsError(state),
   );
   const createSuccessMessage = useSelector((state: RootState) =>
-    selectCreateSuccessMessage(state)
+    selectCreateSuccessMessage(state),
   );
 
   // Role + user-assigned subprojects (from cache)
@@ -113,7 +112,7 @@ export function SubProjects({
   const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
   const isSubProjectManager = useMemo(() => {
     return normalizedRoles.some(
@@ -121,13 +120,13 @@ export function SubProjects({
         r === "sub-project manager" ||
         r === "sub project manager" ||
         r.includes("sub-project manager") ||
-        r.includes("sub project manager")
+        r.includes("sub project manager"),
     );
   }, [normalizedRoles]);
   const allowedSubprojectIds = useMemo(() => {
     try {
       const proj = (userProjectsTree || []).find(
-        (p: any) => p.id === projectId
+        (p: any) => p.id === projectId,
       );
       const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
       return new Set<string>(ids);
@@ -146,15 +145,15 @@ export function SubProjects({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [city, setCity] = useState("");
   const [status, setStatus] = useState<"active" | "inactive" | "pending">(
-    "active"
+    "active",
   );
 
   useEffect(() => {
     if (projectId) {
       if (user?.roles == null || user.roles.length === 0) return;
       if (isSubProjectManager) {
-        console.log("Skipping fetch subproject mng");
         return;
       }
       dispatch(fetchSubProjectsByProjectId({ projectId: projectId }));
@@ -172,6 +171,7 @@ export function SubProjects({
       setName("");
       setDescription("");
       setCategory("");
+      setCity("");
       setStatus("active");
       const t = setTimeout(() => {
         setIsCreateDialogOpen(false);
@@ -188,7 +188,7 @@ export function SubProjects({
 
   const handleCreateSubmit = async () => {
     if (!projectId) return;
-    if (!name.trim() || !category.trim()) {
+    if (!name.trim() || !category.trim() || !city.trim()) {
       return;
     }
 
@@ -196,6 +196,7 @@ export function SubProjects({
       name: name.trim(),
       description: description.trim(),
       category: category.trim(),
+      city: city.trim(),
       status,
       projectId,
     };
@@ -319,6 +320,26 @@ export function SubProjects({
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="city" className="text-right">
+                    {t("subProjects.city")}
+                  </Label>
+                  <Select
+                    value={city}
+                    onValueChange={(val) => setCity(val as string)}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder={t("subProjects.selectCity")} />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {KOSOVO_CITIES.map((cityName) => (
+                        <SelectItem key={cityName} value={cityName}>
+                          {cityName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">
                     {t("subProjects.status")}
                   </Label>
@@ -378,7 +399,12 @@ export function SubProjects({
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                   onClick={handleCreateSubmit}
-                  disabled={isLoading || !name.trim() || !category.trim()}
+                  disabled={
+                    isLoading ||
+                    !name.trim() ||
+                    !category.trim() ||
+                    !city.trim()
+                  }
                 >
                   {isLoading
                     ? t("subProjects.creating")
@@ -555,16 +581,17 @@ export function SubProjects({
           <Table>
             <TableHeader className="bg-[#E5ECF6]">
               <TableRow>
-                <TableHead className="w-[250px]">
+                <TableHead className="w-[200px]">
                   {t("subProjects.subProject")}
+                </TableHead>
+                <TableHead className="w-[250px]">
+                  {t("subProjects.description")}
                 </TableHead>
                 <TableHead>{t("subProjects.category")}</TableHead>
                 <TableHead>{t("subProjects.status")}</TableHead>
-                <TableHead>{t("subProjects.progress")}</TableHead>
-                <TableHead>{t("subProjects.timeline")}</TableHead>
                 <TableHead>{t("subProjects.location")}</TableHead>
-                <TableHead>{t("subProjects.lead")}</TableHead>
-                <TableHead>{t("subProjects.stats")}</TableHead>
+                <TableHead>{t("subProjects.createdAt")}</TableHead>
+                <TableHead>{t("subProjects.updatedAt")}</TableHead>
                 <TableHead className="text-right">
                   {t("subProjects.actions")}
                 </TableHead>
@@ -580,8 +607,10 @@ export function SubProjects({
                     >
                       {subProject.name}
                     </div>
-                    <div className="text-muted-foreground text-sm line-clamp-1">
-                      {subProject.description}
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-muted-foreground line-clamp-2">
+                      {subProject.description || "—"}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -613,45 +642,14 @@ export function SubProjects({
                         : t("subProjects.inactive")}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary"
-                          style={{ width: `0%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm">—%</span>
-                    </div>
+                  <TableCell className="text-sm">
+                    {subProject.city || "—"}
                   </TableCell>
                   <TableCell className="text-sm">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>— - —</span>
-                    </div>
+                    {new Date(subProject.createdAt).toLocaleDateString()}
                   </TableCell>
-                  <TableCell>—</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarFallback>
-                          {subProject.name.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>—</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm space-y-1">
-                      <div className="flex items-center gap-1">
-                        <Users className="h-3 w-3 text-muted-foreground" />
-                        <span>— {t("subProjects.beneficiaries")}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3 text-muted-foreground" />
-                        <span>— {t("subProjects.activities")}</span>
-                      </div>
-                    </div>
+                  <TableCell className="text-sm">
+                    {new Date(subProject.updatedAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -663,7 +661,7 @@ export function SubProjects({
                       >
                         {t("subProjects.view")}
                       </Button>
-                      <DropdownMenu>
+                      {/* <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
@@ -683,7 +681,7 @@ export function SubProjects({
                             {t("subProjects.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
-                      </DropdownMenu>
+                      </DropdownMenu> */}
                     </div>
                   </TableCell>
                 </TableRow>

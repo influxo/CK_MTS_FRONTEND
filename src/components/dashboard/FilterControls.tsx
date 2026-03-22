@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Download, Filter } from "lucide-react";
+import { Download, Filter, RotateCcw } from "lucide-react";
 import { Button } from "../ui/button/button";
 import {
   Select,
@@ -13,6 +13,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   setFilters,
   selectMetricsFilters,
+  resetFilters,
 } from "../../store/slices/serviceMetricsSlice";
 import {
   fetchSubProjectsByProjectId,
@@ -49,15 +50,18 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   const [subprojectId, setSubprojectId] = React.useState<string>("");
   const [timePreset, setTimePreset] = React.useState<string>("last-30-days");
   const [metric, setMetric] = React.useState<string>(
-    metricsFilters.metric || "submissions"
+    metricsFilters.metric || "submissions",
   );
   const [serviceId, setServiceId] = React.useState<string>(
-    metricsFilters.serviceId || ""
+    metricsFilters.serviceId || "",
   );
   const [formTemplateId, setFormTemplateId] = React.useState<string>(
-    metricsFilters.formTemplateId || ""
+    metricsFilters.formTemplateId || "",
   );
   const [showMore, setShowMore] = React.useState<boolean>(false);
+  const [customOpen, setCustomOpen] = React.useState<boolean>(false);
+  const [customFrom, setCustomFrom] = React.useState<string>("");
+  const [customTo, setCustomTo] = React.useState<string>("");
   // Control dropdown open state so pagination actions keep the menu open
   const [openServicesSelect, setOpenServicesSelect] = React.useState(false);
   const [openTemplatesSelect, setOpenTemplatesSelect] = React.useState(false);
@@ -72,7 +76,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
   const normalizedRoles = React.useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
   const isSubProjectManager = React.useMemo(() => {
     return normalizedRoles.some(
@@ -80,13 +84,13 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         r === "sub-project manager" ||
         r === "sub project manager" ||
         r.includes("sub-project manager") ||
-        r.includes("sub project manager")
+        r.includes("sub project manager"),
     );
   }, [normalizedRoles]);
   const allowedSubprojectIds = React.useMemo(() => {
     try {
       const proj = (userProjectsTree || []).find(
-        (p: any) => p.id === projectId
+        (p: any) => p.id === projectId,
       );
       const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
       return new Set<string>(ids);
@@ -106,11 +110,11 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   React.useEffect(() => {
     if (subprojectId) {
       dispatch(
-        getEntityServices({ entityId: subprojectId, entityType: "subproject" })
+        getEntityServices({ entityId: subprojectId, entityType: "subproject" }),
       );
     } else if (projectId) {
       dispatch(
-        getEntityServices({ entityId: projectId, entityType: "project" })
+        getEntityServices({ entityId: projectId, entityType: "project" }),
       );
     } else {
       dispatch(getAllServices({ page: 1, limit: 100 }));
@@ -142,13 +146,13 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         } else {
           // Fallback to redux state
           setTemplatesOptions(
-            (formsState as any)?.templates || (formsState as any) || []
+            (formsState as any)?.templates || (formsState as any) || [],
           );
           setTemplatesTotalPages(1);
         }
       } catch (e) {
         setTemplatesOptions(
-          (formsState as any)?.templates || (formsState as any) || []
+          (formsState as any)?.templates || (formsState as any) || [],
         );
         setTemplatesTotalPages(1);
       }
@@ -209,12 +213,53 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     } else if (value === "last-7-days") start.setDate(now.getDate() - 7);
     else if (value === "last-30-days") start.setDate(now.getDate() - 30);
     else if (value === "last-90-days") start.setDate(now.getDate() - 90);
-    else return; // ignore custom here; handled elsewhere if needed
+    else if (value === "custom") {
+      // Don't apply dates yet, let user toggle custom range inputs
+      return;
+    } else return;
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
     dispatch(
-      setFilters({ startDate: start.toISOString(), endDate: end.toISOString() })
+      setFilters({
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+      }),
     );
+  };
+
+  const onCustomApply = () => {
+    if (!customFrom || !customTo) return;
+    const from = new Date(customFrom);
+    const to = new Date(customTo);
+    from.setHours(0, 0, 0, 0);
+    to.setHours(23, 59, 59, 999);
+    dispatch(
+      setFilters({
+        startDate: from.toISOString(),
+        endDate: to.toISOString(),
+      }),
+    );
+    setCustomOpen(false);
+  };
+
+  const handleResetFilters = () => {
+    // Reset Redux global filters
+    dispatch(resetFilters());
+
+    // Reset all local filter states
+    setProjectId("");
+    setSubprojectId("");
+    setTimePreset("last-30-days");
+    setMetric("submissions");
+    setServiceId("");
+    setFormTemplateId("");
+    setShowMore(false);
+    setCustomOpen(false);
+    setCustomFrom("");
+    setCustomTo("");
+
+    // Reset pagination states
+    setTemplatesPage(1);
   };
 
   const servicesForSelect =
@@ -265,7 +310,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
               subprojects
                 .filter((sp) => sp.projectId === projectId)
                 .filter((sp) =>
-                  !isSubProjectManager ? true : allowedSubprojectIds.has(sp.id)
+                  !isSubProjectManager ? true : allowedSubprojectIds.has(sp.id),
                 )
                 .map((sp) => (
                   <SelectItem key={sp.id} value={sp.id}>
@@ -312,9 +357,70 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                 <SelectItem value="last-90-days">
                   {t("dashboard.last90Days")}
                 </SelectItem>
-                <SelectItem value="custom">
-                  {t("dashboard.customRange")}
-                </SelectItem>
+                <div className="border-t border-gray-100 my-1" />
+                <div className="px-2 py-1">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setCustomOpen((s) => !s);
+                    }}
+                    className="w-full text-left px-2 py-1.5 text-sm rounded-md hover:bg-gray-50"
+                    type="button"
+                  >
+                    {t("dashboard.customRange")}…
+                  </button>
+                  {customOpen && (
+                    <div className="px-2 pb-2 pt-2">
+                      <div className="grid grid-cols-1 gap-2">
+                        <label className="text-xs text-gray-600">
+                          From
+                          <input
+                            type="date"
+                            className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                            value={customFrom}
+                            onChange={(e) => setCustomFrom(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </label>
+                        <label className="text-xs text-gray-600">
+                          To
+                          <input
+                            type="date"
+                            className="mt-1 w-full border rounded-md px-2 py-1 text-sm"
+                            value={customTo}
+                            onChange={(e) => setCustomTo(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </label>
+                        <div className="flex justify-end gap-2 pt-1">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setCustomOpen(false);
+                            }}
+                            className="px-3 py-1.5 rounded-md text-sm border border-gray-200"
+                            type="button"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              onCustomApply();
+                            }}
+                            className="px-3 py-1.5 rounded-md text-sm bg-black text-white"
+                            type="button"
+                          >
+                            Apply
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </SelectContent>
             </Select>
 
@@ -360,7 +466,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                         ? Math.max(1, (servicesCurrentPage || 1) - 1)
                         : Math.min(
                             servicesTotalPages || 1,
-                            (servicesCurrentPage || 1) + 1
+                            (servicesCurrentPage || 1) + 1,
                           );
                     dispatch(getAllServices({ page: nextPage, limit: 100 }));
                     setOpenServicesSelect(true);
@@ -472,13 +578,24 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         <Button
           variant="outline"
           size="sm"
+          onClick={handleResetFilters}
+          className="bg-orange-500 text-white border-0 
+             transition-transform duration-200 ease-in-out 
+             hover:scale-105 hover:-translate-y-[1px] hover:bg-orange-600"
+        >
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Reset Filters
+        </Button>
+        {/* <Button
+          variant="outline"
+          size="sm"
           className="bg-[#0073e6] text-white border-0 
              transition-transform duration-200 ease-in-out 
              hover:scale-105 hover:-translate-y-[1px]"
         >
           <Download className="h-4 w-4 mr-2" />
           Export
-        </Button>
+        </Button> */}
       </div>
 
       {/* <div className="flex gap-4 justify-end">

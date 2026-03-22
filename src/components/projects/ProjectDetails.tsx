@@ -3,14 +3,18 @@ import {
   BarChart3,
   Calendar,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   ClipboardList,
   FileEdit,
   Filter,
   FolderKanban,
+  MapPin,
   Plus,
+  RotateCcw,
+  Search,
   TrendingDown,
   TrendingUp,
-  User,
   Users,
   X,
 } from "lucide-react";
@@ -31,12 +35,13 @@ import {
 import { toast } from "sonner";
 import { useTranslation } from "../../hooks/useTranslation";
 import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
+import { KOSOVO_CITIES } from "../../utils/cities";
 import formService from "../../services/forms/formService";
 import type { Project } from "../../services/projects/projectModels";
 import projectService from "../../services/projects/projectService";
 import type { TimeUnit } from "../../services/services/serviceMetricsModels";
-import servicesService from "../../services/services/serviceServices";
 import serviceMetricsService from "../../services/services/serviceMetricsService";
+import servicesService from "../../services/services/serviceServices";
 import type { AppDispatch } from "../../store";
 import { selectCurrentUser } from "../../store/slices/authSlice";
 import {
@@ -164,6 +169,7 @@ export function ProjectDetails() {
     "active" | "inactive" | "pending"
   >("active");
   const [editDescription, setEditDescription] = useState("");
+  const [editCity, setEditCity] = useState("");
   // Project-scoped metrics state
   const summaryState = useSelector(selectProjectMetricsSummary);
   const seriesState = useSelector(selectProjectMetricsSeries);
@@ -176,7 +182,7 @@ export function ProjectDetails() {
     "submissions" | "serviceDeliveries" | "uniqueBeneficiaries"
   >("submissions");
   const [serviceIdLocal, setServiceIdLocal] = useState<string | undefined>(
-    undefined
+    undefined,
   );
   const [formTemplateIdLocal, setFormTemplateIdLocal] = useState<
     string | undefined
@@ -194,7 +200,7 @@ export function ProjectDetails() {
   // Determine role
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
   const isSysOrSuperAdmin = useMemo(() => {
     return normalizedRoles.some(
@@ -202,13 +208,13 @@ export function ProjectDetails() {
         r === "sysadmin" ||
         r === "superadmin" ||
         r.includes("system admin") ||
-        r.includes("super admin")
+        r.includes("super admin"),
     );
   }, [normalizedRoles]);
 
   const isProgramManager = useMemo(() => {
     return normalizedRoles.some(
-      (r: string) => r === "program manager" || r.includes("program manager")
+      (r: string) => r === "program manager" || r.includes("program manager"),
     );
   }, [normalizedRoles]);
 
@@ -219,14 +225,14 @@ export function ProjectDetails() {
         r === "sub-project manager" ||
         r === "sub project manager" ||
         r.includes("sub-project manager") ||
-        r.includes("sub project manager")
+        r.includes("sub project manager"),
     );
   }, [normalizedRoles]);
 
   // Full access roles only: System Admin, Super Admin, Program Manager
   const hasFullAccess = useMemo(
     () => isSysOrSuperAdmin || isProgramManager,
-    [isSysOrSuperAdmin, isProgramManager]
+    [isSysOrSuperAdmin, isProgramManager],
   );
 
   // const employees = useSelector(selectAllEmployees);
@@ -249,7 +255,7 @@ export function ProjectDetails() {
     phone: "",
     email: "",
     address: "",
-    gender: "female",
+    gender: "F",
     municipality: "",
     nationality: "",
     status: "active",
@@ -274,7 +280,7 @@ export function ProjectDetails() {
   const addItem = (
     value: string,
     list: string[],
-    setter: (next: string[]) => void
+    setter: (next: string[]) => void,
   ) => {
     const v = (value || "").trim();
     if (!v) return;
@@ -284,7 +290,7 @@ export function ProjectDetails() {
   const removeItemAt = (
     index: number,
     list: string[],
-    setter: (next: string[]) => void
+    setter: (next: string[]) => void,
   ) => {
     setter(list.filter((_, i) => i !== index));
   };
@@ -294,6 +300,20 @@ export function ProjectDetails() {
     useState<string>("");
   const [associateSelectedSubProjects, setAssociateSelectedSubProjects] =
     useState<string[]>([]);
+
+  // Pagination state for beneficiaries list
+  const [beneficiariesList, setBeneficiariesList] = useState<any[]>([]);
+  const [beneficiariesPage, setBeneficiariesPage] = useState(1);
+  const [beneficiariesTotalPages, setBeneficiariesTotalPages] = useState(1);
+  const [beneficiariesFetchLoading, setBeneficiariesFetchLoading] =
+    useState(false);
+
+  // Search and pagination state for beneficiaries tab
+  const [beneficiariesSearchQuery, setBeneficiariesSearchQuery] = useState("");
+  const [debouncedBeneficiariesSearch, setDebouncedBeneficiariesSearch] =
+    useState("");
+  const [beneficiariesTabPage, setBeneficiariesTabPage] = useState(1);
+  const [beneficiariesTabLimit] = useState(20);
 
   // Get projects from Redux store
   const allProjects = useSelector(selectAllProjects);
@@ -365,6 +385,7 @@ export function ProjectDetails() {
     setEditCategory(project.category || "");
     setEditStatus(project.status as any);
     setEditDescription(project.description || "");
+    setEditCity(project.city || "");
   }, [project, isEditDialogOpen]);
 
   // useEffect(() => {
@@ -373,13 +394,21 @@ export function ProjectDetails() {
   //     dispatch(fetchEmployees());
   //   }
   // }, [dispatch, isSubProjectManager]);
-  // console.log("employees", employees);
 
   // Load beneficiaries for this project when the Beneficiaries tab is active
   const byEntityItems = useSelector(selectBeneficiariesByEntity);
   const byEntityLoading = useSelector(selectBeneficiariesByEntityLoading);
   const byEntityError = useSelector(selectBeneficiariesByEntityError);
   const byEntityMeta = useSelector(selectBeneficiariesByEntityPagination);
+
+  // Debounce search query for beneficiaries tab
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedBeneficiariesSearch(beneficiariesSearchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [beneficiariesSearchQuery]);
 
   // Ensure beneficiaries are fetched when the Beneficiaries tab is activated
   useEffect(() => {
@@ -388,16 +417,27 @@ export function ProjectDetails() {
       if (!hasFullAccess && !isSubProjectManager) {
         return;
       }
+      const searchParam = debouncedBeneficiariesSearch.trim() || undefined;
       dispatch(
         fetchBeneficiariesByEntity({
           entityId: id,
           entityType: "project",
-          page: 1,
-          limit: 20,
-        })
+          page: beneficiariesTabPage,
+          limit: beneficiariesTabLimit,
+          search: searchParam,
+        }),
       );
     }
-  }, [id, dispatch]);
+  }, [
+    id,
+    dispatch,
+    beneficiariesTabPage,
+    beneficiariesTabLimit,
+    debouncedBeneficiariesSearch,
+    hasFullAccess,
+    isSubProjectManager,
+    user?.roles,
+  ]);
 
   // Create/associate selectors
   const createLoading = useSelector(selectBeneficiaryIsLoading);
@@ -413,11 +453,11 @@ export function ProjectDetails() {
   // Exclude beneficiaries already assigned to this project from the 'Add Existing' select
   const assignedBeneficiaryIds = useMemo(
     () => new Set((byEntityItems || []).map((b) => b.id)),
-    [byEntityItems]
+    [byEntityItems],
   );
   const unassignedListItems = useMemo(
-    () => (listItems || []).filter((b) => !assignedBeneficiaryIds.has(b.id)),
-    [listItems, assignedBeneficiaryIds]
+    () => beneficiariesList.filter((b) => !assignedBeneficiaryIds.has(b.id)),
+    [beneficiariesList, assignedBeneficiaryIds],
   );
 
   // Subprojects of this project
@@ -459,7 +499,7 @@ export function ProjectDetails() {
   };
   const toggleSelectOne = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   };
 
@@ -489,7 +529,7 @@ export function ProjectDetails() {
         const monday = startOfWeek(d);
         const startYear = new Date(d.getFullYear(), 0, 1);
         const diffDays = Math.floor(
-          (monday.getTime() - startYear.getTime()) / 86400000
+          (monday.getTime() - startYear.getTime()) / 86400000,
         );
         const week = Math.floor(diffDays / 7) + 1;
         return `W${week} ${d.getFullYear()}`;
@@ -533,23 +573,39 @@ export function ProjectDetails() {
 
   const onTimePresetChange = (value: string) => {
     setTimePreset(value);
-    const now = new Date();
-    const end = new Date(now);
-    const start = new Date(now);
     if (value === "all-period") {
       setStartDate(undefined);
       setEndDate(undefined);
       return;
-    } else if (value === "last-7-days") start.setDate(now.getDate() - 7);
+    }
+    const now = new Date();
+    let start = new Date(now);
+    const end = new Date(now);
+    if (value === "last-7-days") start.setDate(now.getDate() - 7);
     else if (value === "last-30-days") start.setDate(now.getDate() - 30);
     else if (value === "last-90-days") start.setDate(now.getDate() - 90);
-    else {
-      return;
-    }
+    else return;
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
     setStartDate(start.toISOString());
     setEndDate(end.toISOString());
+  };
+
+  const handleResetFilters = () => {
+    setSelectedSubProjectId("");
+    setServiceIdLocal(undefined);
+    setFormTemplateIdLocal(undefined);
+    setMetricLocal("submissions");
+    setGranularity("week");
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setTimePreset("all-period");
+    setFiltersOpen(false);
+    setCustomOpen(false);
+    setCustomFrom("");
+    setCustomTo("");
+    setShowMoreLocal(false);
+    setChartType("line");
   };
 
   // Reset local filters when navigating to a different project
@@ -592,11 +648,10 @@ export function ProjectDetails() {
       dispatch(
         fetchSubProjectsByProjectId({
           projectId: id,
-        })
+        }),
       );
     }
   }, [dispatch, id]);
-  console.log("subprojects", subprojects.length);
 
   // Load services assigned to the effective entity (project or subproject)
   useEffect(() => {
@@ -629,7 +684,6 @@ export function ProjectDetails() {
     // Sub-Project Manager should not fetch overview metrics
     if (user?.roles == null || user.roles.length === 0) return;
     if (!hasFullAccess) {
-      console.log("Skipping fetch because user does not have full access");
       return;
     }
     const effectiveEntityType = selectedSubProjectId ? "subproject" : "project";
@@ -648,7 +702,7 @@ export function ProjectDetails() {
         ...commonFilters,
         startDate,
         endDate,
-      }) as any
+      }) as any,
     );
 
     // Series with granularity + metric
@@ -660,7 +714,7 @@ export function ProjectDetails() {
         endDate,
         groupBy: granularity,
         metric: metricLocal,
-      }) as any
+      }) as any,
     );
   }, [
     dispatch,
@@ -738,7 +792,7 @@ export function ProjectDetails() {
           entityType: "project",
           page: 1,
           limit: 20,
-        })
+        }),
       );
       dispatch(clearBeneficiaryMessages());
     }
@@ -747,9 +801,46 @@ export function ProjectDetails() {
   // Fetch beneficiaries list when "Add Existing" tab is visible in the Add dialog
   useEffect(() => {
     if (isAddDialogOpen && addBeneficiaryTab === "existing") {
-      dispatch(fetchBeneficiaries(undefined));
+      // Reset pagination and fetch first page
+      setBeneficiariesPage(1);
+      fetchBeneficiariesPage(1);
     }
   }, [isAddDialogOpen, addBeneficiaryTab, dispatch]);
+
+  // Fetch a specific page of beneficiaries
+  const fetchBeneficiariesPage = (page: number) => {
+    setBeneficiariesFetchLoading(true);
+    dispatch(fetchBeneficiaries({ page, limit: 20 }))
+      .unwrap()
+      .then((response) => {
+        setBeneficiariesList(response.items || []);
+        setBeneficiariesTotalPages(response.totalPages || 1);
+        setBeneficiariesFetchLoading(false);
+      })
+      .catch(() => {
+        setBeneficiariesFetchLoading(false);
+      });
+  };
+
+  // Pagination handlers
+  const handlePreviousPage = () => {
+    if (beneficiariesPage > 1 && !beneficiariesFetchLoading) {
+      const newPage = beneficiariesPage - 1;
+      setBeneficiariesPage(newPage);
+      fetchBeneficiariesPage(newPage);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (
+      beneficiariesPage < beneficiariesTotalPages &&
+      !beneficiariesFetchLoading
+    ) {
+      const newPage = beneficiariesPage + 1;
+      setBeneficiariesPage(newPage);
+      fetchBeneficiariesPage(newPage);
+    }
+  };
 
   const handleAssociateSubmit = async () => {
     if (!id) {
@@ -772,7 +863,7 @@ export function ProjectDetails() {
         associateBeneficiaryToEntities({
           id: associateSelectedBeneficiaryId,
           links,
-        })
+        }),
       ).unwrap();
       toast.success("Përfituesi u shtua me sukses", {
         style: {
@@ -790,7 +881,7 @@ export function ProjectDetails() {
           entityType: "project",
           page: 1,
           limit: 20,
-        })
+        }),
       );
     } catch (_) {
       // toast.error("Diçka shkoi gabim.", {
@@ -817,7 +908,7 @@ export function ProjectDetails() {
       phone: "",
       email: "",
       address: "",
-      gender: "female",
+      gender: "F",
       municipality: "",
       nationality: "",
       status: "active",
@@ -837,6 +928,30 @@ export function ProjectDetails() {
     setIsUrban(false);
     setHouseholdMembers("");
   };
+
+  // Validation for "Add New" tab - all required fields and at least one subproject
+  const isNewBeneficiaryFormValid = useMemo(() => {
+    const hasRequiredFields =
+      form.firstName.trim() !== "" &&
+      form.lastName.trim() !== "" &&
+      form.gender !== "" &&
+      form.dob !== "" &&
+      form.nationalId.trim() !== "" &&
+      form.status !== "";
+
+    // Must have at least one subproject selected
+    const hasSubproject = selectedSubProjects.length > 0;
+
+    return hasRequiredFields && hasSubproject;
+  }, [form, selectedSubProjects]);
+
+  // Validation for "Add Existing" tab - beneficiary selected and at least one subproject
+  const isExistingBeneficiaryFormValid = useMemo(() => {
+    const hasBeneficiary = associateSelectedBeneficiaryId !== "";
+    const hasSubproject = associateSelectedSubProjects.length > 0;
+
+    return hasBeneficiary && hasSubproject;
+  }, [associateSelectedBeneficiaryId, associateSelectedSubProjects]);
 
   const handleCreateSubmit = async () => {
     if (!form.firstName || !form.lastName || !form.gender || !form.status) {
@@ -901,7 +1016,7 @@ export function ProjectDetails() {
               associateBeneficiaryToEntities({
                 id: newId,
                 links,
-              })
+              }),
             ).unwrap();
             // Explicitly refetch to update the table immediately after association
             await dispatch(
@@ -910,7 +1025,7 @@ export function ProjectDetails() {
                 entityType: "project",
                 page: 1,
                 limit: 20,
-              })
+              }),
             );
           } catch (_) {
             // association error handled via slice selectors
@@ -1077,6 +1192,29 @@ export function ProjectDetails() {
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="city" className="text-right">
+                    {t("projectDetails.city")}
+                  </Label>
+                  <Select
+                    value={editCity}
+                    onValueChange={(v) => setEditCity(v)}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue
+                        placeholder={t("projectDetails.selectCity")}
+                      />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {KOSOVO_CITIES.map((cityName) => (
+                        <SelectItem key={cityName} value={cityName}>
+                          {cityName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">
                     {t("projectDetails.status")}
                   </Label>
@@ -1137,10 +1275,11 @@ export function ProjectDetails() {
                             : editCategory
                           : project?.category,
                       status: editStatus,
+                      city: editCity,
                     } as any;
                     try {
                       const res = await dispatch(
-                        updateProject({ id, body: payload }) as any
+                        updateProject({ id, body: payload }) as any,
                       ).unwrap();
                       if (res && res.success && res.data) {
                         setProject(res.data as any);
@@ -1191,53 +1330,51 @@ export function ProjectDetails() {
                     enhancedProject.status === "active"
                       ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
                       : enhancedProject.status === "pending"
-                      ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
-                      : {
-                          backgroundColor: "rgba(28,28,28,0.05)",
-                          color: "rgba(28,28,28,0.4)",
-                        }
+                        ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
+                        : {
+                            backgroundColor: "rgba(28,28,28,0.05)",
+                            color: "rgba(28,28,28,0.4)",
+                          }
                   }
                 >
                   {enhancedProject.status === "active"
                     ? "Active"
                     : enhancedProject.status === "pending"
-                    ? "Pending"
-                    : "Inactive"}
+                      ? "Pending"
+                      : "Inactive"}
                 </Badge>
               </div>
               {/* TODO:   */}
               <h3 className="text-xl font-normal  capitalize">
                 {enhancedProject.description}
               </h3>
+              {enhancedProject.city && (
+                <div className="flex items-center gap-1 mt-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {enhancedProject.city}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div>
-              {/* 2x2 grid of project summary cards */}
-              <div className=" grid grid-cols-1 sm:grid-cols-2  gap-4">
-                <div className=" bg-[#E5ECF6] rounded-xl p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-[#E5ECF6] rounded-xl p-4 sm:col-span-2">
                   <div className="text-sm text-muted-foreground">
                     {t("projectDetails.timeline")}
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {new Date(enhancedProject.startDate).toLocaleDateString()}{" "}
-                      - {new Date(enhancedProject.endDate).toLocaleDateString()}
+                      {new Date(
+                        enhancedProject.startDate,
+                      ).toLocaleDateString()}{" "}
                     </span>
                   </div>
                 </div>
 
-                <div className=" bg-[#E5ECF6] rounded-xl p-4">
-                  <div className="text-sm text-muted-foreground">
-                    {t("projectDetails.projectLeads")}
-                  </div>
-                  <div className="flex items-center gap-1 mt-1">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span>{enhancedProject.leads.join(", ")}</span>
-                  </div>
-                </div>
-
-                <div className=" bg-[#E5ECF6] rounded-xl p-4">
+                <div className="bg-[#E5ECF6] rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">
                     {t("projectDetails.subprojects")}
                   </div>
@@ -1249,7 +1386,7 @@ export function ProjectDetails() {
                   </div>
                 </div>
 
-                <div className=" bg-[#E5ECF6] rounded-xl p-4">
+                <div className="bg-[#E5ECF6] rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">
                     {t("projectDetails.beneficiaries")}
                   </div>
@@ -1314,14 +1451,14 @@ export function ProjectDetails() {
             >
               {t("projectDetails.beneficiaries")}
             </TabsTrigger>
-            <TabsTrigger
+            {/* <TabsTrigger
               value="reports"
               className={`rounded-none bg-transparent border-0 border-b-2 pb-3 hover:bg-transparent text-black ${
                 activeTab === "reports" ? "border-black" : "border-transparent"
               }`}
             >
               {t("projectDetails.reportsExports")}
-            </TabsTrigger>
+            </TabsTrigger> */}
           </div>
         </TabsList>
 
@@ -1403,6 +1540,16 @@ export function ProjectDetails() {
                       {showMoreLocal
                         ? t("projectDetails.hideFilters")
                         : t("projectDetails.moreFilters")}
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleResetFilters}
+                      className="w-full md:w-auto bg-orange-500 text-white border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] hover:bg-orange-600"
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Reset Filters
                     </Button>
                   </div>
 
@@ -1933,931 +2080,1017 @@ export function ProjectDetails() {
             )}
             {!byEntityLoading && !byEntityError && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
                   <h3 className="text-base font-medium">
                     {t("projectDetails.beneficiaries")} (
                     {byEntityMeta.totalItems})
                   </h3>
-                  <Dialog
-                    open={isAddDialogOpen}
-                    onOpenChange={setIsAddDialogOpen}
-                  >
-                    <DialogTrigger asChild>
-                      <Button
-                        className="bg-[#0073e6] text-white flex items-center
-             px-4 py-2 rounded-md border-0
-             transition-transform duration-200 ease-in-out
-             hover:scale-[1.02] hover:-translate-y-[1px]"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        {t("projectDetails.addBeneficiary")}
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>
-                          {t("projectDetails.addBeneficiary")}
-                        </DialogTitle>
-                        <DialogDescription>
-                          {t("projectDetails.addBeneficiaryDesc")}
-                        </DialogDescription>
-                      </DialogHeader>
-
-                      <Tabs
-                        value={addBeneficiaryTab}
-                        onValueChange={(v) =>
-                          setAddBeneficiaryTab(v as "new" | "existing")
+                  <div className="flex gap-3 w-full sm:w-auto">
+                    <div className="relative flex-1 sm:flex-initial sm:w-64">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder={t("projectDetails.searchBeneficiaries")}
+                        className="pl-9 bg-white border border-gray-100"
+                        value={beneficiariesSearchQuery}
+                        onChange={(e) =>
+                          setBeneficiariesSearchQuery(e.target.value)
                         }
-                      >
-                        <TabsList className="mb-4 bg-blue-50 items-center">
-                          <TabsTrigger
-                            value="new"
-                            className=" data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white  "
-                          >
-                            {t("projectDetails.addNew")}
-                          </TabsTrigger>
-                          <TabsTrigger
-                            value="existing"
-                            className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
-                          >
-                            {t("projectDetails.addExisting")}
-                          </TabsTrigger>
-                        </TabsList>
+                      />
+                    </div>
+                    <Dialog
+                      open={isAddDialogOpen}
+                      onOpenChange={setIsAddDialogOpen}
+                    >
+                      <DialogTrigger asChild>
+                        <Button
+                          className="bg-[#0073e6] text-white flex items-center
+               px-4 py-2 rounded-md border-0
+               transition-transform duration-200 ease-in-out
+               hover:scale-[1.02] hover:-translate-y-[1px]"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          {t("projectDetails.addBeneficiary")}
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>
+                            {t("projectDetails.addBeneficiary")}
+                          </DialogTitle>
+                          <DialogDescription>
+                            {t("projectDetails.addBeneficiaryDesc")}
+                          </DialogDescription>
+                        </DialogHeader>
 
-                        <TabsContent value="new" className="m-0 p-0">
-                          <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="firstName" className="text-right">
-                                {t("projectDetails.firstName")}
-                              </Label>
-                              <Input
-                                id="firstName"
-                                className="col-span-3"
-                                placeholder={t("projectDetails.enterFirstName")}
-                                value={form.firstName}
-                                onChange={(e) =>
-                                  setForm({
-                                    ...form,
-                                    firstName: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="lastName" className="text-right">
-                                {t("projectDetails.lastName")}
-                              </Label>
-                              <Input
-                                id="lastName"
-                                className="col-span-3"
-                                placeholder={t("projectDetails.enterLastName")}
-                                value={form.lastName}
-                                onChange={(e) =>
-                                  setForm({
-                                    ...form,
-                                    lastName: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label className="text-right">
-                                {t("projectDetails.gender")}
-                              </Label>
-                              <RadioGroup
-                                className="col-span-3 flex gap-4"
-                                value={form.gender}
-                                onValueChange={(val) =>
-                                  setForm({ ...form, gender: val })
-                                }
-                              >
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="female" id="female" />
-                                  <Label htmlFor="female">
-                                    {t("projectDetails.female")}
-                                  </Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="male" id="male" />
-                                  <Label htmlFor="male">
-                                    {t("projectDetails.male")}
-                                  </Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem value="other" id="other" />
-                                  <Label htmlFor="other">
-                                    {t("projectDetails.other")}
-                                  </Label>
-                                </div>
-                              </RadioGroup>
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="dob" className="text-right">
-                                {t("projectDetails.dateOfBirth")}
-                              </Label>
-                              <Input
-                                id="dob"
-                                type="date"
-                                className="col-span-3"
-                                value={form.dob}
-                                onChange={(e) =>
-                                  setForm({ ...form, dob: e.target.value })
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label
-                                htmlFor="nationalId"
-                                className="text-right"
-                              >
-                                {t("projectDetails.nationalId")}
-                              </Label>
-                              <Input
-                                id="nationalId"
-                                className="col-span-3"
-                                placeholder={t(
-                                  "projectDetails.enterNationalId"
-                                )}
-                                value={form.nationalId}
-                                onChange={(e) =>
-                                  setForm({
-                                    ...form,
-                                    nationalId: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="phone" className="text-right">
-                                {t("projectDetails.phone")}
-                              </Label>
-                              <Input
-                                id="phone"
-                                className="col-span-3"
-                                placeholder={t("projectDetails.enterPhone")}
-                                value={form.phone}
-                                onChange={(e) =>
-                                  setForm({ ...form, phone: e.target.value })
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="email" className="text-right">
-                                {t("projectDetails.email")}
-                              </Label>
-                              <Input
-                                id="email"
-                                type="email"
-                                className="col-span-3"
-                                placeholder={t("projectDetails.enterEmail")}
-                                value={form.email}
-                                onChange={(e) =>
-                                  setForm({ ...form, email: e.target.value })
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="address" className="text-right">
-                                {t("projectDetails.address")}
-                              </Label>
-                              <Input
-                                id="address"
-                                className="col-span-3"
-                                placeholder={t("projectDetails.enterAddress")}
-                                value={form.address}
-                                onChange={(e) =>
-                                  setForm({
-                                    ...form,
-                                    address: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label
-                                htmlFor="municipality"
-                                className="text-right"
-                              >
-                                {t("projectDetails.municipality")}
-                              </Label>
-                              <Input
-                                id="municipality"
-                                className="col-span-3"
-                                placeholder={t(
-                                  "projectDetails.enterMunicipality"
-                                )}
-                                value={form.municipality}
-                                onChange={(e) =>
-                                  setForm({
-                                    ...form,
-                                    municipality: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label
-                                htmlFor="nationality"
-                                className="text-right"
-                              >
-                                {t("projectDetails.nationality")}
-                              </Label>
-                              <Input
-                                id="nationality"
-                                className="col-span-3"
-                                placeholder={t(
-                                  "projectDetails.enterNationality"
-                                )}
-                                value={form.nationality}
-                                onChange={(e) =>
-                                  setForm({
-                                    ...form,
-                                    nationality: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="ethnicity" className="text-right">
-                                {t("projectDetails.ethnicity")}
-                              </Label>
-                              <Select
-                                value={ethnicity}
-                                onValueChange={setEthnicity}
-                              >
-                                <SelectTrigger className="col-span-3">
-                                  <SelectValue
-                                    placeholder={t(
-                                      "projectDetails.selectEthnicity"
-                                    )}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Shqiptar">
-                                    Shqiptar
-                                  </SelectItem>
-                                  <SelectItem value="Serb">Serb</SelectItem>
-                                  <SelectItem value="Boshnjak">
-                                    Boshnjak
-                                  </SelectItem>
-                                  <SelectItem value="Turk">Turk</SelectItem>
-                                  <SelectItem value="Ashkali">
-                                    Ashkali
-                                  </SelectItem>
-                                  <SelectItem value="Rom">Rom</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label className="text-right">
-                                {t("projectDetails.residence")}
-                              </Label>
-                              <RadioGroup
-                                className="col-span-3 flex gap-6"
-                                value={isUrban ? "urban" : "rural"}
-                                onValueChange={(val) =>
-                                  setIsUrban(val === "urban")
-                                }
-                              >
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem
-                                    value="rural"
-                                    id="residence-rural"
-                                  />
-                                  <Label htmlFor="residence-rural">
-                                    {t("projectDetails.rural")}
-                                  </Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <RadioGroupItem
-                                    value="urban"
-                                    id="residence-urban"
-                                  />
-                                  <Label htmlFor="residence-urban">
-                                    {t("projectDetails.urban")}
-                                  </Label>
-                                </div>
-                              </RadioGroup>
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label
-                                htmlFor="householdMembers"
-                                className="text-right"
-                              >
-                                {t("projectDetails.householdMembers")}
-                              </Label>
-                              <Input
-                                id="householdMembers"
-                                type="number"
-                                min={0}
-                                step={1}
-                                className="col-span-3"
-                                placeholder={t(
-                                  "projectDetails.enterHouseholdMembers"
-                                )}
-                                value={householdMembers}
-                                onChange={(e) =>
-                                  setHouseholdMembers(e.target.value)
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="status" className="text-right">
-                                {t("projectDetails.status")}
-                              </Label>
-                              <Select
-                                value={form.status}
-                                onValueChange={(val) =>
-                                  setForm({ ...form, status: val })
-                                }
-                              >
-                                <SelectTrigger className="col-span-3">
-                                  <SelectValue
-                                    placeholder={t(
-                                      "projectDetails.selectStatus"
-                                    )}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="active">
-                                    {t("projectDetails.active")}
-                                  </SelectItem>
-                                  <SelectItem value="inactive">
-                                    {t("projectDetails.inactive")}
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="border-t pt-2 mt-2">
-                              <div className="text-sm font-medium mb-2">
-                                {t("projectDetails.additionalDetails")}
-                              </div>
-                              <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                        <Tabs
+                          value={addBeneficiaryTab}
+                          onValueChange={(v) =>
+                            setAddBeneficiaryTab(v as "new" | "existing")
+                          }
+                        >
+                          <TabsList className="mb-4 bg-blue-50 items-center">
+                            <TabsTrigger
+                              value="new"
+                              className=" data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white  "
+                            >
+                              {t("projectDetails.addNew")}
+                            </TabsTrigger>
+                            <TabsTrigger
+                              value="existing"
+                              className="data-[state=active]:bg-[#0073e6]  data-[state=active]:text-white"
+                            >
+                              {t("projectDetails.addExisting")}
+                            </TabsTrigger>
+                          </TabsList>
+
+                          <TabsContent value="new" className="m-0 p-0">
+                            <div className="grid gap-4 py-4">
+                              <div className="grid grid-cols-4 items-center gap-4">
                                 <Label
-                                  htmlFor="allergies"
+                                  htmlFor="firstName"
                                   className="text-right"
                                 >
-                                  {t("projectDetails.allergies")}
+                                  {t("projectDetails.firstName")}
                                 </Label>
-                                <div className="col-span-3 space-y-2">
-                                  <div className="flex gap-2">
-                                    <Input
-                                      id="allergies"
+                                <Input
+                                  id="firstName"
+                                  className="col-span-3"
+                                  placeholder={t(
+                                    "projectDetails.enterFirstName",
+                                  )}
+                                  value={form.firstName}
+                                  onChange={(e) =>
+                                    setForm({
+                                      ...form,
+                                      firstName: e.target.value,
+                                    })
+                                  }
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label
+                                  htmlFor="lastName"
+                                  className="text-right"
+                                >
+                                  {t("projectDetails.lastName")}
+                                </Label>
+                                <Input
+                                  id="lastName"
+                                  className="col-span-3"
+                                  placeholder={t(
+                                    "projectDetails.enterLastName",
+                                  )}
+                                  value={form.lastName}
+                                  onChange={(e) =>
+                                    setForm({
+                                      ...form,
+                                      lastName: e.target.value,
+                                    })
+                                  }
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label className="text-right">
+                                  {t("projectDetails.gender")}
+                                </Label>
+                                <RadioGroup
+                                  className="col-span-3 flex gap-4"
+                                  value={form.gender}
+                                  onValueChange={(val) =>
+                                    setForm({ ...form, gender: val })
+                                  }
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="F" id="female" />
+                                    <Label htmlFor="female">
+                                      {t("projectDetails.female")}
+                                    </Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="M" id="male" />
+                                    <Label htmlFor="male">
+                                      {t("projectDetails.male")}
+                                    </Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="O" id="other" />
+                                    <Label htmlFor="other">
+                                      {t("projectDetails.other")}
+                                    </Label>
+                                  </div>
+                                </RadioGroup>
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="dob" className="text-right">
+                                  {t("projectDetails.dateOfBirth")}
+                                </Label>
+                                <Input
+                                  id="dob"
+                                  type="date"
+                                  className="col-span-3"
+                                  value={form.dob}
+                                  onChange={(e) =>
+                                    setForm({ ...form, dob: e.target.value })
+                                  }
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label
+                                  htmlFor="nationalId"
+                                  className="text-right"
+                                >
+                                  {t("projectDetails.nationalId")}
+                                </Label>
+                                <Input
+                                  id="nationalId"
+                                  className="col-span-3"
+                                  placeholder={t(
+                                    "projectDetails.enterNationalId",
+                                  )}
+                                  value={form.nationalId}
+                                  onChange={(e) =>
+                                    setForm({
+                                      ...form,
+                                      nationalId: e.target.value,
+                                    })
+                                  }
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="phone" className="text-right">
+                                  {t("projectDetails.phone")}
+                                </Label>
+                                <Input
+                                  id="phone"
+                                  className="col-span-3"
+                                  placeholder={t("projectDetails.enterPhone")}
+                                  value={form.phone}
+                                  onChange={(e) =>
+                                    setForm({ ...form, phone: e.target.value })
+                                  }
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="email" className="text-right">
+                                  {t("projectDetails.email")}
+                                </Label>
+                                <Input
+                                  id="email"
+                                  type="email"
+                                  className="col-span-3"
+                                  placeholder={t("projectDetails.enterEmail")}
+                                  value={form.email}
+                                  onChange={(e) =>
+                                    setForm({ ...form, email: e.target.value })
+                                  }
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="address" className="text-right">
+                                  {t("projectDetails.address")}
+                                </Label>
+                                <Input
+                                  id="address"
+                                  className="col-span-3"
+                                  placeholder={t("projectDetails.enterAddress")}
+                                  value={form.address}
+                                  onChange={(e) =>
+                                    setForm({
+                                      ...form,
+                                      address: e.target.value,
+                                    })
+                                  }
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label
+                                  htmlFor="municipality"
+                                  className="text-right"
+                                >
+                                  {t("projectDetails.municipality")}
+                                </Label>
+                                <Input
+                                  id="municipality"
+                                  className="col-span-3"
+                                  placeholder={t(
+                                    "projectDetails.enterMunicipality",
+                                  )}
+                                  value={form.municipality}
+                                  onChange={(e) =>
+                                    setForm({
+                                      ...form,
+                                      municipality: e.target.value,
+                                    })
+                                  }
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label
+                                  htmlFor="nationality"
+                                  className="text-right"
+                                >
+                                  {t("projectDetails.nationality")}
+                                </Label>
+                                <Input
+                                  id="nationality"
+                                  className="col-span-3"
+                                  placeholder={t(
+                                    "projectDetails.enterNationality",
+                                  )}
+                                  value={form.nationality}
+                                  onChange={(e) =>
+                                    setForm({
+                                      ...form,
+                                      nationality: e.target.value,
+                                    })
+                                  }
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label
+                                  htmlFor="ethnicity"
+                                  className="text-right"
+                                >
+                                  {t("projectDetails.ethnicity")}
+                                </Label>
+                                <Select
+                                  value={ethnicity}
+                                  onValueChange={setEthnicity}
+                                >
+                                  <SelectTrigger className="col-span-3">
+                                    <SelectValue
                                       placeholder={t(
-                                        "projectDetails.typeAndPressEnter"
+                                        "projectDetails.selectEthnicity",
                                       )}
-                                      value={allergiesInput}
-                                      onChange={(e) =>
-                                        setAllergiesInput(e.target.value)
-                                      }
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                          e.preventDefault();
+                                    />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Shqiptar">
+                                      Shqiptar
+                                    </SelectItem>
+                                    <SelectItem value="Serb">Serb</SelectItem>
+                                    <SelectItem value="Boshnjak">
+                                      Boshnjak
+                                    </SelectItem>
+                                    <SelectItem value="Turk">Turk</SelectItem>
+                                    <SelectItem value="Ashkali">
+                                      Ashkali
+                                    </SelectItem>
+                                    <SelectItem value="Rom">Rom</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label className="text-right">
+                                  {t("projectDetails.residence")}
+                                </Label>
+                                <RadioGroup
+                                  className="col-span-3 flex gap-6"
+                                  value={isUrban ? "urban" : "rural"}
+                                  onValueChange={(val) =>
+                                    setIsUrban(val === "urban")
+                                  }
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem
+                                      value="rural"
+                                      id="residence-rural"
+                                    />
+                                    <Label htmlFor="residence-rural">
+                                      {t("projectDetails.rural")}
+                                    </Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem
+                                      value="urban"
+                                      id="residence-urban"
+                                    />
+                                    <Label htmlFor="residence-urban">
+                                      {t("projectDetails.urban")}
+                                    </Label>
+                                  </div>
+                                </RadioGroup>
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label
+                                  htmlFor="householdMembers"
+                                  className="text-right"
+                                >
+                                  {t("projectDetails.householdMembers")}
+                                </Label>
+                                <Input
+                                  id="householdMembers"
+                                  type="number"
+                                  min={0}
+                                  step={1}
+                                  className="col-span-3"
+                                  placeholder={t(
+                                    "projectDetails.enterHouseholdMembers",
+                                  )}
+                                  value={householdMembers}
+                                  onChange={(e) =>
+                                    setHouseholdMembers(e.target.value)
+                                  }
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="status" className="text-right">
+                                  {t("projectDetails.status")}
+                                </Label>
+                                <Select
+                                  value={form.status}
+                                  onValueChange={(val) =>
+                                    setForm({ ...form, status: val })
+                                  }
+                                >
+                                  <SelectTrigger className="col-span-3">
+                                    <SelectValue
+                                      placeholder={t(
+                                        "projectDetails.selectStatus",
+                                      )}
+                                    />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="active">
+                                      {t("projectDetails.active")}
+                                    </SelectItem>
+                                    <SelectItem value="inactive">
+                                      {t("projectDetails.inactive")}
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="border-t pt-2 mt-2">
+                                <div className="text-sm font-medium mb-2">
+                                  {t("projectDetails.additionalDetails")}
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                                  <Label
+                                    htmlFor="allergies"
+                                    className="text-right"
+                                  >
+                                    {t("projectDetails.allergies")}
+                                  </Label>
+                                  <div className="col-span-3 space-y-2">
+                                    <div className="flex gap-2">
+                                      <Input
+                                        id="allergies"
+                                        placeholder={t(
+                                          "projectDetails.typeAndPressEnter",
+                                        )}
+                                        value={allergiesInput}
+                                        onChange={(e) =>
+                                          setAllergiesInput(e.target.value)
+                                        }
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            addItem(
+                                              allergiesInput,
+                                              allergies,
+                                              setAllergies,
+                                            );
+                                            setAllergiesInput("");
+                                          }
+                                        }}
+                                      />
+                                      <Button
+                                        className="hover:bg-blue-50 border-0"
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
                                           addItem(
                                             allergiesInput,
                                             allergies,
-                                            setAllergies
+                                            setAllergies,
                                           );
                                           setAllergiesInput("");
-                                        }
-                                      }}
-                                    />
-                                    <Button
-                                      className="hover:bg-blue-50 border-0"
-                                      type="button"
-                                      variant="outline"
-                                      onClick={() => {
-                                        addItem(
-                                          allergiesInput,
-                                          allergies,
-                                          setAllergies
-                                        );
-                                        setAllergiesInput("");
-                                      }}
-                                    >
-                                      <Plus className="h-4 w-4 mr-1" />{" "}
-                                      {t("projectDetails.add")}
-                                    </Button>
-                                  </div>
-                                  {allergies.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                      {allergies.map((a, idx) => (
-                                        <div
-                                          key={`${a}-${idx}`}
-                                          className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
-                                        >
-                                          <span>{a}</span>
-                                          <button
-                                            type="button"
-                                            className="hover:text-red-600"
-                                            onClick={() =>
-                                              removeItemAt(
-                                                idx,
-                                                allergies,
-                                                setAllergies
-                                              )
-                                            }
-                                            aria-label={`Remove ${a}`}
-                                          >
-                                            <X className="h-3 w-3" />
-                                          </button>
-                                        </div>
-                                      ))}
+                                        }}
+                                      >
+                                        <Plus className="h-4 w-4 mr-1" />{" "}
+                                        {t("projectDetails.add")}
+                                      </Button>
                                     </div>
-                                  )}
+                                    {allergies.length > 0 && (
+                                      <div className="flex flex-wrap gap-2">
+                                        {allergies.map((a, idx) => (
+                                          <div
+                                            key={`${a}-${idx}`}
+                                            className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                                          >
+                                            <span>{a}</span>
+                                            <button
+                                              type="button"
+                                              className="hover:text-red-600"
+                                              onClick={() =>
+                                                removeItemAt(
+                                                  idx,
+                                                  allergies,
+                                                  setAllergies,
+                                                )
+                                              }
+                                              aria-label={`Remove ${a}`}
+                                            >
+                                              <X className="h-3 w-3" />
+                                            </button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                                <Label
-                                  htmlFor="disabilities"
-                                  className="text-right"
-                                >
-                                  {t("projectDetails.disabilities")}
-                                </Label>
-                                <div className="col-span-3 space-y-2">
-                                  <div className="flex gap-2">
-                                    <Input
-                                      id="disabilities"
-                                      placeholder={t(
-                                        "projectDetails.typeAndPressEnter"
-                                      )}
-                                      value={disabilitiesInput}
-                                      onChange={(e) =>
-                                        setDisabilitiesInput(e.target.value)
-                                      }
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                          e.preventDefault();
+                                <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                                  <Label
+                                    htmlFor="disabilities"
+                                    className="text-right"
+                                  >
+                                    {t("projectDetails.disabilities")}
+                                  </Label>
+                                  <div className="col-span-3 space-y-2">
+                                    <div className="flex gap-2">
+                                      <Input
+                                        id="disabilities"
+                                        placeholder={t(
+                                          "projectDetails.typeAndPressEnter",
+                                        )}
+                                        value={disabilitiesInput}
+                                        onChange={(e) =>
+                                          setDisabilitiesInput(e.target.value)
+                                        }
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            addItem(
+                                              disabilitiesInput,
+                                              disabilities,
+                                              setDisabilities,
+                                            );
+                                            setDisabilitiesInput("");
+                                          }
+                                        }}
+                                      />
+                                      <Button
+                                        className="hover:bg-blue-50 border-0"
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
                                           addItem(
                                             disabilitiesInput,
                                             disabilities,
-                                            setDisabilities
+                                            setDisabilities,
                                           );
                                           setDisabilitiesInput("");
-                                        }
-                                      }}
-                                    />
-                                    <Button
-                                      className="hover:bg-blue-50 border-0"
-                                      type="button"
-                                      variant="outline"
-                                      onClick={() => {
-                                        addItem(
-                                          disabilitiesInput,
-                                          disabilities,
-                                          setDisabilities
-                                        );
-                                        setDisabilitiesInput("");
-                                      }}
-                                    >
-                                      <Plus className="h-4 w-4 mr-1" />{" "}
-                                      {t("projectDetails.add")}
-                                    </Button>
-                                  </div>
-                                  {disabilities.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                      {disabilities.map((d, idx) => (
-                                        <div
-                                          key={`${d}-${idx}`}
-                                          className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
-                                        >
-                                          <span>{d}</span>
-                                          <button
-                                            type="button"
-                                            className="hover:text-red-600"
-                                            onClick={() =>
-                                              removeItemAt(
-                                                idx,
-                                                disabilities,
-                                                setDisabilities
-                                              )
-                                            }
-                                            aria-label={`Remove ${d}`}
-                                          >
-                                            <X className="h-3 w-3" />
-                                          </button>
-                                        </div>
-                                      ))}
+                                        }}
+                                      >
+                                        <Plus className="h-4 w-4 mr-1" />{" "}
+                                        {t("projectDetails.add")}
+                                      </Button>
                                     </div>
-                                  )}
+                                    {disabilities.length > 0 && (
+                                      <div className="flex flex-wrap gap-2">
+                                        {disabilities.map((d, idx) => (
+                                          <div
+                                            key={`${d}-${idx}`}
+                                            className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                                          >
+                                            <span>{d}</span>
+                                            <button
+                                              type="button"
+                                              className="hover:text-red-600"
+                                              onClick={() =>
+                                                removeItemAt(
+                                                  idx,
+                                                  disabilities,
+                                                  setDisabilities,
+                                                )
+                                              }
+                                              aria-label={`Remove ${d}`}
+                                            >
+                                              <X className="h-3 w-3" />
+                                            </button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                                <Label
-                                  htmlFor="chronicConditions"
-                                  className="text-right"
-                                >
-                                  {t("projectDetails.chronicConditions")}
-                                </Label>
-                                <div className="col-span-3 space-y-2">
-                                  <div className="flex gap-2">
-                                    <Input
-                                      id="chronicConditions"
-                                      placeholder={t(
-                                        "projectDetails.typeAndPressEnter"
-                                      )}
-                                      value={chronicConditionsInput}
-                                      onChange={(e) =>
-                                        setChronicConditionsInput(
-                                          e.target.value
-                                        )
-                                      }
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                          e.preventDefault();
+                                <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                                  <Label
+                                    htmlFor="chronicConditions"
+                                    className="text-right"
+                                  >
+                                    {t("projectDetails.chronicConditions")}
+                                  </Label>
+                                  <div className="col-span-3 space-y-2">
+                                    <div className="flex gap-2">
+                                      <Input
+                                        id="chronicConditions"
+                                        placeholder={t(
+                                          "projectDetails.typeAndPressEnter",
+                                        )}
+                                        value={chronicConditionsInput}
+                                        onChange={(e) =>
+                                          setChronicConditionsInput(
+                                            e.target.value,
+                                          )
+                                        }
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            addItem(
+                                              chronicConditionsInput,
+                                              chronicConditions,
+                                              setChronicConditions,
+                                            );
+                                            setChronicConditionsInput("");
+                                          }
+                                        }}
+                                      />
+                                      <Button
+                                        className="hover:bg-blue-50 border-0"
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
                                           addItem(
                                             chronicConditionsInput,
                                             chronicConditions,
-                                            setChronicConditions
+                                            setChronicConditions,
                                           );
                                           setChronicConditionsInput("");
-                                        }
-                                      }}
-                                    />
-                                    <Button
-                                      className="hover:bg-blue-50 border-0"
-                                      type="button"
-                                      variant="outline"
-                                      onClick={() => {
-                                        addItem(
-                                          chronicConditionsInput,
-                                          chronicConditions,
-                                          setChronicConditions
-                                        );
-                                        setChronicConditionsInput("");
-                                      }}
-                                    >
-                                      <Plus className="h-4 w-4 mr-1" />{" "}
-                                      {t("projectDetails.add")}
-                                    </Button>
-                                  </div>
-                                  {chronicConditions.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                      {chronicConditions.map((c, idx) => (
-                                        <div
-                                          key={`${c}-${idx}`}
-                                          className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
-                                        >
-                                          <span>{c}</span>
-                                          <button
-                                            type="button"
-                                            className="hover:text-red-600"
-                                            onClick={() =>
-                                              removeItemAt(
-                                                idx,
-                                                chronicConditions,
-                                                setChronicConditions
-                                              )
-                                            }
-                                            aria-label={`Remove ${c}`}
-                                          >
-                                            <X className="h-3 w-3" />
-                                          </button>
-                                        </div>
-                                      ))}
+                                        }}
+                                      >
+                                        <Plus className="h-4 w-4 mr-1" />{" "}
+                                        {t("projectDetails.add")}
+                                      </Button>
                                     </div>
-                                  )}
+                                    {chronicConditions.length > 0 && (
+                                      <div className="flex flex-wrap gap-2">
+                                        {chronicConditions.map((c, idx) => (
+                                          <div
+                                            key={`${c}-${idx}`}
+                                            className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                                          >
+                                            <span>{c}</span>
+                                            <button
+                                              type="button"
+                                              className="hover:text-red-600"
+                                              onClick={() =>
+                                                removeItemAt(
+                                                  idx,
+                                                  chronicConditions,
+                                                  setChronicConditions,
+                                                )
+                                              }
+                                              aria-label={`Remove ${c}`}
+                                            >
+                                              <X className="h-3 w-3" />
+                                            </button>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                                <Label
-                                  htmlFor="medications"
-                                  className="text-right"
-                                >
-                                  {t("projectDetails.medications")}
-                                </Label>
-                                <div className="col-span-3 space-y-2">
-                                  <div className="flex gap-2">
-                                    <Input
-                                      id="medications"
-                                      placeholder={t(
-                                        "projectDetails.typeAndPressEnter"
-                                      )}
-                                      value={medicationsInput}
-                                      onChange={(e) =>
-                                        setMedicationsInput(e.target.value)
-                                      }
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                          e.preventDefault();
+                                <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                                  <Label
+                                    htmlFor="medications"
+                                    className="text-right"
+                                  >
+                                    {t("projectDetails.medications")}
+                                  </Label>
+                                  <div className="col-span-3 space-y-2">
+                                    <div className="flex gap-2">
+                                      <Input
+                                        id="medications"
+                                        placeholder={t(
+                                          "projectDetails.typeAndPressEnter",
+                                        )}
+                                        value={medicationsInput}
+                                        onChange={(e) =>
+                                          setMedicationsInput(e.target.value)
+                                        }
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            addItem(
+                                              medicationsInput,
+                                              medications,
+                                              setMedications,
+                                            );
+                                            setMedicationsInput("");
+                                          }
+                                        }}
+                                      />
+                                      <Button
+                                        className="hover:bg-blue-50 border-0"
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
                                           addItem(
                                             medicationsInput,
                                             medications,
-                                            setMedications
+                                            setMedications,
                                           );
                                           setMedicationsInput("");
-                                        }
-                                      }}
-                                    />
-                                    <Button
-                                      className="hover:bg-blue-50 border-0"
-                                      type="button"
-                                      variant="outline"
-                                      onClick={() => {
-                                        addItem(
-                                          medicationsInput,
-                                          medications,
-                                          setMedications
-                                        );
-                                        setMedicationsInput("");
-                                      }}
-                                    >
-                                      <Plus className="h-4 w-4 mr-1" />{" "}
-                                      {t("projectDetails.add")}
-                                    </Button>
-                                  </div>
-                                  {medications.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                      {medications.map((m, idx) => (
-                                        <div
-                                          key={`${m}-${idx}`}
-                                          className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
-                                        >
-                                          <span>{m}</span>
-                                          <button
-                                            type="button"
-                                            className="hover:text-red-600"
-                                            onClick={() =>
-                                              removeItemAt(
-                                                idx,
-                                                medications,
-                                                setMedications
-                                              )
-                                            }
-                                            aria-label={`Remove ${m}`}
+                                        }}
+                                      >
+                                        <Plus className="h-4 w-4 mr-1" />{" "}
+                                        {t("projectDetails.add")}
+                                      </Button>
+                                    </div>
+                                    {medications.length > 0 && (
+                                      <div className="flex flex-wrap gap-2">
+                                        {medications.map((m, idx) => (
+                                          <div
+                                            key={`${m}-${idx}`}
+                                            className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
                                           >
-                                            <X className="h-3 w-3" />
-                                          </button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-4 items-center gap-4 mb-2">
-                                <Label
-                                  htmlFor="bloodType"
-                                  className="text-right"
-                                >
-                                  {t("projectDetails.bloodType")}
-                                </Label>
-                                <Input
-                                  id="bloodType"
-                                  className="col-span-3"
-                                  placeholder={t(
-                                    "projectDetails.bloodTypePlaceholder"
-                                  )}
-                                  value={bloodTypeInput}
-                                  onChange={(e) =>
-                                    setBloodTypeInput(e.target.value)
-                                  }
-                                />
-                              </div>
-                              <div className="grid grid-cols-4 items-start gap-4">
-                                <Label
-                                  htmlFor="notes"
-                                  className="text-right mt-2"
-                                >
-                                  {t("projectDetails.notes")}
-                                </Label>
-                                <textarea
-                                  id="notes"
-                                  className="col-span-3 bg-white border border-input rounded-md p-2 min-h-[70px]"
-                                  placeholder={t(
-                                    "projectDetails.notesPlaceholder"
-                                  )}
-                                  value={notesInput}
-                                  onChange={(e) =>
-                                    setNotesInput(e.target.value)
-                                  }
-                                />
-                              </div>
-                              <div className="text-[11px] text-muted-foreground mt-2">
-                                {t("projectDetails.addEachItemIndividually")}
-                              </div>
-                            </div>
-
-                            {/* Sub-Project Associations (for this project) */}
-                            <div className="border-t pt-4 mt-4">
-                              <div className="space-y-2">
-                                <Label>
-                                  {t("projectDetails.subProjectAssociations")}
-                                </Label>
-                                <div className="mt-2 space-y-2">
-                                  {subprojectsLoading ? (
-                                    <div className="text-sm text-muted-foreground px-1">
-                                      {t("projectDetails.loadingSubProjects")}
-                                    </div>
-                                  ) : subprojectsError ? (
-                                    <div className="text-sm text-red-500 px-1">
-                                      {subprojectsError}
-                                    </div>
-                                  ) : (subprojects || []).filter(
-                                      (sp) => sp.projectId === id
-                                    ).length > 0 ? (
-                                    (subprojects || [])
-                                      .filter((sp) => sp.projectId === id)
-                                      .map((sp) => (
-                                        <div
-                                          key={sp.id}
-                                          className="flex items-center space-x-2"
-                                        >
-                                          <Checkbox
-                                            id={`sub-${sp.id}`}
-                                            checked={selectedSubProjects.includes(
-                                              sp.id
-                                            )}
-                                            onCheckedChange={() => {
-                                              setSelectedSubProjects((prev) =>
-                                                prev.includes(sp.id)
-                                                  ? prev.filter(
-                                                      (x) => x !== sp.id
-                                                    )
-                                                  : [...prev, sp.id]
-                                              );
-                                            }}
-                                          />
-                                          <Label
-                                            htmlFor={`sub-${sp.id}`}
-                                            className="font-normal"
-                                          >
-                                            {sp.name}
-                                          </Label>
-                                        </div>
-                                      ))
-                                  ) : (
-                                    <div className="text-sm text-muted-foreground px-1">
-                                      {t(
-                                        "projectDetails.noSubProjectsForProject"
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            {createError && (
-                              <div className="text-sm text-red-600">
-                                {createError}
-                              </div>
-                            )}
-                          </div>
-                        </TabsContent>
-
-                        <TabsContent value="existing" className="m-0 p-0">
-                          <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label className="text-right">
-                                {t("projectDetails.beneficiaryRequired")}
-                              </Label>
-                              <div className="col-span-3">
-                                {listLoading ? (
-                                  <div className="text-sm text-muted-foreground">
-                                    {t(
-                                      "projectDetails.loadingBeneficiariesList"
+                                            <span>{m}</span>
+                                            <button
+                                              type="button"
+                                              className="hover:text-red-600"
+                                              onClick={() =>
+                                                removeItemAt(
+                                                  idx,
+                                                  medications,
+                                                  setMedications,
+                                                )
+                                              }
+                                              aria-label={`Remove ${m}`}
+                                            >
+                                              <X className="h-3 w-3" />
+                                            </button>
+                                          </div>
+                                        ))}
+                                      </div>
                                     )}
                                   </div>
-                                ) : listError ? (
-                                  <div className="text-sm text-red-600">
-                                    {listError}
-                                  </div>
-                                ) : (
-                                  <Select
-                                    value={associateSelectedBeneficiaryId}
-                                    onValueChange={
-                                      setAssociateSelectedBeneficiaryId
-                                    }
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4 mb-2">
+                                  <Label
+                                    htmlFor="bloodType"
+                                    className="text-right"
                                   >
-                                    <SelectTrigger>
-                                      <SelectValue
-                                        placeholder={t(
-                                          "projectDetails.selectBeneficiary"
-                                        )}
-                                      />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-64 overflow-y-auto">
-                                      {unassignedListItems.map((b) => {
-                                        const pii: any = (b as any).pii || {};
-                                        const fullName =
-                                          `${pii.firstName || ""} ${
-                                            pii.lastName || ""
-                                          }`.trim() ||
-                                          b.pseudonym ||
-                                          b.id;
-                                        return (
-                                          <SelectItem key={b.id} value={b.id}>
-                                            {fullName} ({b.pseudonym})
-                                          </SelectItem>
-                                        );
-                                      })}
-                                    </SelectContent>
-                                  </Select>
-                                )}
+                                    {t("projectDetails.bloodType")}
+                                  </Label>
+                                  <Input
+                                    id="bloodType"
+                                    className="col-span-3"
+                                    placeholder={t(
+                                      "projectDetails.bloodTypePlaceholder",
+                                    )}
+                                    value={bloodTypeInput}
+                                    onChange={(e) =>
+                                      setBloodTypeInput(e.target.value)
+                                    }
+                                  />
+                                </div>
+                                <div className="grid grid-cols-4 items-start gap-4">
+                                  <Label
+                                    htmlFor="notes"
+                                    className="text-right mt-2"
+                                  >
+                                    {t("projectDetails.notes")}
+                                  </Label>
+                                  <textarea
+                                    id="notes"
+                                    className="col-span-3 bg-white border border-input rounded-md p-2 min-h-[70px]"
+                                    placeholder={t(
+                                      "projectDetails.notesPlaceholder",
+                                    )}
+                                    value={notesInput}
+                                    onChange={(e) =>
+                                      setNotesInput(e.target.value)
+                                    }
+                                  />
+                                </div>
+                                <div className="text-[11px] text-muted-foreground mt-2">
+                                  {t("projectDetails.addEachItemIndividually")}
+                                </div>
                               </div>
-                            </div>
 
-                            <div className="border-t pt-4 mt-2">
-                              <div className="space-y-2">
-                                <Label>
-                                  {t("projectDetails.subProjectAssociations")}
-                                </Label>
-                                <div className="mt-2 space-y-2">
-                                  {subprojectsLoading ? (
-                                    <div className="text-sm text-muted-foreground px-1">
-                                      {t("projectDetails.loadingSubProjects")}
-                                    </div>
-                                  ) : subprojectsError ? (
-                                    <div className="text-sm text-red-500 px-1">
-                                      {subprojectsError}
-                                    </div>
-                                  ) : (subprojects || []).filter(
-                                      (sp) => sp.projectId === id
-                                    ).length > 0 ? (
-                                    (subprojects || [])
-                                      .filter((sp) => sp.projectId === id)
-                                      .map((sp) => (
-                                        <div
-                                          key={sp.id}
-                                          className="flex items-center space-x-2"
-                                        >
-                                          <Checkbox
-                                            id={`assoc-sub-${sp.id}`}
-                                            checked={associateSelectedSubProjects.includes(
-                                              sp.id
-                                            )}
-                                            onCheckedChange={() => {
-                                              setAssociateSelectedSubProjects(
-                                                (prev) =>
-                                                  prev.includes(sp.id)
-                                                    ? prev.filter(
-                                                        (x) => x !== sp.id
-                                                      )
-                                                    : [...prev, sp.id]
-                                              );
-                                            }}
-                                          />
-                                          <Label
-                                            htmlFor={`assoc-sub-${sp.id}`}
-                                            className="font-normal"
+                              {/* Sub-Project Associations (for this project) */}
+                              <div className="border-t pt-4 mt-4">
+                                <div className="space-y-2">
+                                  <Label>
+                                    {t("projectDetails.subProjectAssociations")}
+                                  </Label>
+                                  <div className="mt-2 space-y-2">
+                                    {subprojectsLoading ? (
+                                      <div className="text-sm text-muted-foreground px-1">
+                                        {t("projectDetails.loadingSubProjects")}
+                                      </div>
+                                    ) : subprojectsError ? (
+                                      <div className="text-sm text-red-500 px-1">
+                                        {subprojectsError}
+                                      </div>
+                                    ) : (subprojects || []).filter(
+                                        (sp) => sp.projectId === id,
+                                      ).length > 0 ? (
+                                      (subprojects || [])
+                                        .filter((sp) => sp.projectId === id)
+                                        .map((sp) => (
+                                          <div
+                                            key={sp.id}
+                                            className="flex items-center space-x-2"
                                           >
-                                            {sp.name}
-                                          </Label>
-                                        </div>
-                                      ))
-                                  ) : (
-                                    <div className="text-sm text-muted-foreground px-1">
+                                            <Checkbox
+                                              id={`sub-${sp.id}`}
+                                              checked={selectedSubProjects.includes(
+                                                sp.id,
+                                              )}
+                                              onCheckedChange={() => {
+                                                setSelectedSubProjects(
+                                                  (prev) =>
+                                                    prev.includes(sp.id)
+                                                      ? prev.filter(
+                                                          (x) => x !== sp.id,
+                                                        )
+                                                      : [...prev, sp.id],
+                                                );
+                                              }}
+                                            />
+                                            <Label
+                                              htmlFor={`sub-${sp.id}`}
+                                              className="font-normal"
+                                            >
+                                              {sp.name}
+                                            </Label>
+                                          </div>
+                                        ))
+                                    ) : (
+                                      <div className="text-sm text-muted-foreground px-1">
+                                        {t(
+                                          "projectDetails.noSubProjectsForProject",
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {createError && (
+                                <div className="text-sm text-red-600">
+                                  {createError}
+                                </div>
+                              )}
+                            </div>
+                          </TabsContent>
+
+                          <TabsContent value="existing" className="m-0 p-0">
+                            <div className="grid gap-4 py-4">
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label className="text-right">
+                                  {t("projectDetails.beneficiaryRequired")}
+                                </Label>
+                                <div className="col-span-3">
+                                  {listLoading ? (
+                                    <div className="text-sm text-muted-foreground">
                                       {t(
-                                        "projectDetails.noSubProjectsForProject"
+                                        "projectDetails.loadingBeneficiariesList",
                                       )}
                                     </div>
+                                  ) : listError ? (
+                                    <div className="text-sm text-red-600">
+                                      {listError}
+                                    </div>
+                                  ) : (
+                                    <Select
+                                      value={associateSelectedBeneficiaryId}
+                                      onValueChange={
+                                        setAssociateSelectedBeneficiaryId
+                                      }
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue
+                                          placeholder={t(
+                                            "projectDetails.selectBeneficiary",
+                                          )}
+                                        />
+                                      </SelectTrigger>
+                                      <SelectContent className="max-h-64 overflow-y-auto">
+                                        {beneficiariesFetchLoading ? (
+                                          <div className="py-4 text-center text-sm text-muted-foreground">
+                                            Loading...
+                                          </div>
+                                        ) : unassignedListItems.length === 0 ? (
+                                          <div className="py-4 text-center text-sm text-muted-foreground">
+                                            No beneficiaries available
+                                          </div>
+                                        ) : (
+                                          <>
+                                            {unassignedListItems.map((b) => {
+                                              const pii: any =
+                                                (b as any).pii || {};
+                                              const fullName =
+                                                `${pii.firstName || ""} ${
+                                                  pii.lastName || ""
+                                                }`.trim() ||
+                                                b.pseudonym ||
+                                                b.id;
+                                              return (
+                                                <SelectItem
+                                                  key={b.id}
+                                                  value={b.id}
+                                                >
+                                                  {fullName} ({b.pseudonym})
+                                                </SelectItem>
+                                              );
+                                            })}
+                                            <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t bg-white px-2 py-2">
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.preventDefault();
+                                                  handlePreviousPage();
+                                                }}
+                                                disabled={
+                                                  beneficiariesPage === 1 ||
+                                                  beneficiariesFetchLoading
+                                                }
+                                                className="h-7 text-xs"
+                                              >
+                                                Previous
+                                              </Button>
+                                              <span className="text-xs text-muted-foreground">
+                                                Page {beneficiariesPage} of{" "}
+                                                {beneficiariesTotalPages}
+                                              </span>
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.preventDefault();
+                                                  handleNextPage();
+                                                }}
+                                                disabled={
+                                                  beneficiariesPage >=
+                                                    beneficiariesTotalPages ||
+                                                  beneficiariesFetchLoading
+                                                }
+                                                className="h-7 text-xs"
+                                              >
+                                                Next
+                                              </Button>
+                                            </div>
+                                          </>
+                                        )}
+                                      </SelectContent>
+                                    </Select>
                                   )}
                                 </div>
                               </div>
-                            </div>
-                          </div>
-                        </TabsContent>
-                      </Tabs>
 
-                      <DialogFooter>
-                        <Button
-                          variant="outline"
-                          onClick={() => setIsAddDialogOpen(false)}
-                        >
-                          {t("projectDetails.cancel")}
-                        </Button>
-                        {addBeneficiaryTab === "new" ? (
+                              <div className="border-t pt-4 mt-2">
+                                <div className="space-y-2">
+                                  <Label>
+                                    {t("projectDetails.subProjectAssociations")}
+                                  </Label>
+                                  <div className="mt-2 space-y-2">
+                                    {subprojectsLoading ? (
+                                      <div className="text-sm text-muted-foreground px-1">
+                                        {t("projectDetails.loadingSubProjects")}
+                                      </div>
+                                    ) : subprojectsError ? (
+                                      <div className="text-sm text-red-500 px-1">
+                                        {subprojectsError}
+                                      </div>
+                                    ) : (subprojects || []).filter(
+                                        (sp) => sp.projectId === id,
+                                      ).length > 0 ? (
+                                      (subprojects || [])
+                                        .filter((sp) => sp.projectId === id)
+                                        .map((sp) => (
+                                          <div
+                                            key={sp.id}
+                                            className="flex items-center space-x-2"
+                                          >
+                                            <Checkbox
+                                              id={`assoc-sub-${sp.id}`}
+                                              checked={associateSelectedSubProjects.includes(
+                                                sp.id,
+                                              )}
+                                              onCheckedChange={() => {
+                                                setAssociateSelectedSubProjects(
+                                                  (prev) =>
+                                                    prev.includes(sp.id)
+                                                      ? prev.filter(
+                                                          (x) => x !== sp.id,
+                                                        )
+                                                      : [...prev, sp.id],
+                                                );
+                                              }}
+                                            />
+                                            <Label
+                                              htmlFor={`assoc-sub-${sp.id}`}
+                                              className="font-normal"
+                                            >
+                                              {sp.name}
+                                            </Label>
+                                          </div>
+                                        ))
+                                    ) : (
+                                      <div className="text-sm text-muted-foreground px-1">
+                                        {t(
+                                          "projectDetails.noSubProjectsForProject",
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </TabsContent>
+                        </Tabs>
+
+                        <DialogFooter>
                           <Button
-                            className="bg-[#0073e6] text-white flex items-center
+                            variant="outline"
+                            onClick={() => setIsAddDialogOpen(false)}
+                          >
+                            {t("projectDetails.cancel")}
+                          </Button>
+                          {addBeneficiaryTab === "new" ? (
+                            <Button
+                              className="bg-[#0073e6] text-white flex items-center
              px-4 py-2 rounded-md border-0
              transition-transform duration-200 ease-in-out
-             hover:scale-[1.02] hover:-translate-y-[1px]"
-                            onClick={handleCreateSubmit}
-                            disabled={createLoading}
-                          >
-                            {createLoading
-                              ? t("projectDetails.saving")
-                              : t("projectDetails.save")}
-                          </Button>
-                        ) : (
-                          <Button
-                            className="bg-[#0073e6] text-white flex items-center
+             hover:scale-[1.02] hover:-translate-y-[1px]
+             disabled:opacity-50 disabled:cursor-not-allowed"
+                              onClick={handleCreateSubmit}
+                              disabled={
+                                !isNewBeneficiaryFormValid || createLoading
+                              }
+                            >
+                              {createLoading
+                                ? t("projectDetails.saving")
+                                : t("projectDetails.save")}
+                            </Button>
+                          ) : (
+                            <Button
+                              className="bg-[#0073e6] text-white flex items-center
              px-4 py-2 rounded-md border-0
              transition-transform duration-200 ease-in-out
-             hover:scale-[1.02] hover:-translate-y-[1px]"
-                            onClick={handleAssociateSubmit}
-                            disabled={
-                              associateLoading ||
-                              !associateSelectedBeneficiaryId
-                            }
-                          >
-                            {associateLoading
-                              ? t("projectDetails.associating")
-                              : t("projectDetails.associate")}
-                          </Button>
-                        )}
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+             hover:scale-[1.02] hover:-translate-y-[1px]
+             disabled:opacity-50 disabled:cursor-not-allowed"
+                              onClick={handleAssociateSubmit}
+                              disabled={
+                                !isExistingBeneficiaryFormValid ||
+                                associateLoading
+                              }
+                            >
+                              {associateLoading
+                                ? t("projectDetails.associating")
+                                : t("projectDetails.associate")}
+                            </Button>
+                          )}
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
                 <Table>
                   <TableHeader className="bg-[#E5ECF6]">
@@ -2925,21 +3158,21 @@ export function ProjectDetails() {
                                     color: "#4AA785",
                                   }
                                 : r.status === "pending"
-                                ? {
-                                    backgroundColor: "#E2F5FF",
-                                    color: "#59A8D4",
-                                  }
-                                : {
-                                    backgroundColor: "rgba(28,28,28,0.05)",
-                                    color: "rgba(28,28,28,0.4)",
-                                  }
+                                  ? {
+                                      backgroundColor: "#E2F5FF",
+                                      color: "#59A8D4",
+                                    }
+                                  : {
+                                      backgroundColor: "rgba(28,28,28,0.05)",
+                                      color: "rgba(28,28,28,0.4)",
+                                    }
                             }
                           >
                             {r.status === "active"
                               ? t("projectDetails.active")
                               : r.status === "pending"
-                              ? t("projectDetails.pending")
-                              : t("projectDetails.inactive")}
+                                ? t("projectDetails.pending")
+                                : t("projectDetails.inactive")}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -2985,6 +3218,96 @@ export function ProjectDetails() {
                     )}
                   </TableBody>
                 </Table>
+
+                {/* Pagination Controls */}
+                {byEntityMeta.totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="text-sm text-muted-foreground">
+                      Showing{" "}
+                      {(beneficiariesTabPage - 1) * beneficiariesTabLimit + 1}{" "}
+                      to{" "}
+                      {Math.min(
+                        beneficiariesTabPage * beneficiariesTabLimit,
+                        byEntityMeta.totalItems,
+                      )}{" "}
+                      of {byEntityMeta.totalItems} results
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setBeneficiariesTabPage(
+                            Math.max(1, beneficiariesTabPage - 1),
+                          )
+                        }
+                        disabled={beneficiariesTabPage === 1}
+                        className="hover:bg-[#E0F2FE] border-gray-200"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        {t("common.previous")}
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {Array.from(
+                          { length: Math.min(5, byEntityMeta.totalPages) },
+                          (_, i) => {
+                            let pageNum;
+                            if (byEntityMeta.totalPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (beneficiariesTabPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (
+                              beneficiariesTabPage >=
+                              byEntityMeta.totalPages - 2
+                            ) {
+                              pageNum = byEntityMeta.totalPages - 4 + i;
+                            } else {
+                              pageNum = beneficiariesTabPage - 2 + i;
+                            }
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={
+                                  beneficiariesTabPage === pageNum
+                                    ? "default"
+                                    : "outline"
+                                }
+                                size="sm"
+                                onClick={() => setBeneficiariesTabPage(pageNum)}
+                                className={
+                                  beneficiariesTabPage === pageNum
+                                    ? "bg-[#0073e6] text-white"
+                                    : "hover:bg-[#E0F2FE] border-gray-200"
+                                }
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          },
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setBeneficiariesTabPage(
+                            Math.min(
+                              byEntityMeta.totalPages,
+                              beneficiariesTabPage + 1,
+                            ),
+                          )
+                        }
+                        disabled={
+                          beneficiariesTabPage === byEntityMeta.totalPages
+                        }
+                        className="hover:bg-[#E0F2FE] border-gray-200"
+                      >
+                        {t("common.next")}
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </TabsContent>

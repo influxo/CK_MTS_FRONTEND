@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import authService from '../../services/auth/authService';
-import type { LoginRequest, LoginResponse, ResetPasswordRequest, ApiResponse, AcceptInvitationRequest } from '../../services/auth/authModels';
+import type { LoginRequest, LoginResponse, ResetPasswordRequest, ForgotPasswordRequest, ApiResponse, AcceptInvitationRequest, VerifyTotpRequest, VerifyTotpResponse } from '../../services/auth/authModels';
 import type { User } from '../../services/globalModels/User';
 
 // Define the auth state interface
@@ -11,6 +11,9 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  // MFA state
+  mfaRequired: boolean;
+  mfaTempToken: string | null;
 }
 
 // Get token from localStorage
@@ -23,6 +26,8 @@ const initialState: AuthState = {
   isAuthenticated: !!token,
   isLoading: false,
   error: null,
+  mfaRequired: false,
+  mfaTempToken: null,
 };
 
 // Async thunks for authentication actions
@@ -39,6 +44,23 @@ export const loginUser = createAsyncThunk<
     return response;
   } catch (error: any) {
     return rejectWithValue(error.message || 'Login failed');
+  }
+});
+
+// Verify TOTP code to complete login
+export const verifyTotp = createAsyncThunk<
+  VerifyTotpResponse,
+  VerifyTotpRequest,
+  { rejectValue: string }
+>('auth/verifyTotp', async (payload, { rejectWithValue }) => {
+  try {
+    const response = await authService.verifyTotp(payload);
+    if (!response.success) {
+      return rejectWithValue(response.message);
+    }
+    return response;
+  } catch (error: any) {
+    return rejectWithValue(error.message || 'Verification failed');
   }
 });
 
@@ -71,6 +93,22 @@ export const resetPassword = createAsyncThunk<
     return response;
   } catch (error: any) {
     return rejectWithValue(error.message || 'Password reset failed');
+  }
+});
+
+export const forgotPassword = createAsyncThunk<
+  ApiResponse,
+  ForgotPasswordRequest,
+  { rejectValue: string }
+>('auth/forgotPassword', async (payload, { rejectWithValue }) => {
+  try {
+    const response = await authService.forgotPassword(payload);
+    if (!response.success) {
+      return rejectWithValue(response.message);
+    }
+    return response;
+  } catch (error: any) {
+    return rejectWithValue(error.message || 'Failed to send reset email');
   }
 });
 
@@ -120,13 +158,44 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        if (action.payload.data) {
-          state.user = action.payload.data.user;
-          state.token = action.payload.data.token;
+        const data = action.payload.data;
+        if (data?.mfaRequired) {
+          state.mfaRequired = true;
+          state.mfaTempToken = data.mfaTempToken || null;
+          state.user = null;
+          state.token = null;
+          state.isAuthenticated = false;
+          return;
+        }
+        if (data) {
+          state.user = data.user;
+          state.token = data.token;
           state.isAuthenticated = true;
+          state.mfaRequired = false;
+          state.mfaTempToken = null;
         }
       })
       .addCase(loginUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Verify TOTP cases
+      .addCase(verifyTotp.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(verifyTotp.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const data = action.payload.data;
+        if (data) {
+          state.user = data.user;
+          state.token = data.token;
+          state.isAuthenticated = true;
+        }
+        state.mfaRequired = false;
+        state.mfaTempToken = null;
+      })
+      .addCase(verifyTotp.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
@@ -148,6 +217,8 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+        state.mfaRequired = false;
+        state.mfaTempToken = null;
       })
       // Reset password cases
       .addCase(resetPassword.pending, (state) => {
@@ -159,6 +230,18 @@ const authSlice = createSlice({
         // We don't update auth state here as the user will need to log in after reset
       })
       .addCase(resetPassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Forgot password cases
+      .addCase(forgotPassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
@@ -190,5 +273,7 @@ export const selectCurrentUser = (state: { auth: AuthState }) => state.auth.user
 export const selectIsAuthenticated = (state: { auth: AuthState }) => state.auth.isAuthenticated;
 export const selectAuthLoading = (state: { auth: AuthState }) => state.auth.isLoading;
 export const selectAuthError = (state: { auth: AuthState }) => state.auth.error;
+export const selectMfaRequired = (state: { auth: AuthState }) => state.auth.mfaRequired;
+export const selectMfaTempToken = (state: { auth: AuthState }) => state.auth.mfaTempToken;
 
 export default authSlice.reducer;

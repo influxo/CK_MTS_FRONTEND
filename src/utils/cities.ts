@@ -1,0 +1,32 @@
+// Kosovo cities list
+export const KOSOVO_CITIES = [
+  "Prishtina",
+  "Prizren",
+  "Gjilan",
+  "Ferizaj",
+  "Fushë Kosova",
+  "Mitrovicë",
+  "Gjakovë",
+  "Peja",
+  "Vushtrri",
+  "Podujeva",
+  "Rahovec",
+  "Lipjan",
+  "Suharekë",
+  "Kaçanik",
+  "Skenderaj",
+  "Obiliq",
+  "Shtime",
+  "Drenas",
+  "Viti",
+  "Klinë",
+  "Istog",
+  "Kamenicë",
+  "Graçanicë",
+  "Malishevë",
+  "Deçan",
+  "Shtërpcë",
+  "Dragash",
+] as const;
+
+export type KosovoCity = typeof KOSOVO_CITIES[number];

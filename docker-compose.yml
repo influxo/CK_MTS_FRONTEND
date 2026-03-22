@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  web:
+    # Build image from Dockerfile and serve via Vite preview (container port 4173)
+    build: .
+    image: ck_mts_frontend:latest
+    ports:
+      - "8080:4173"

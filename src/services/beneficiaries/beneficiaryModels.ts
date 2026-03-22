@@ -50,6 +50,7 @@ export interface GetBeneficiariesRequest {
   page?: number;
   limit?: number;
   status?: "active" | "inactive";
+  search?: string;
 }
 
 // List beneficiaries filtered by an entity (GET /beneficiaries/by-entity)
@@ -59,6 +60,7 @@ export interface GetBeneficiariesByEntityRequest {
   status?: "active" | "inactive";
   page?: number;
   limit?: number;
+  search?: string;
 }
 
 export interface BeneficiaryPIIEncField {

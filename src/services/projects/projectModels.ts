@@ -4,6 +4,7 @@ export interface CreateProjectRequest {
   description: string;
   category: string;
   status: "active" | "inactive" | "pending"; // if your status is enum-like
+  city?: string;
 }
 
 // Project model
@@ -13,6 +14,7 @@ export interface Project {
   description: string;
   category: string;
   status: "active" | "inactive" | "pending";
+  city?: string;
   createdAt: string; // string is better for ISO timestamps
   updatedAt: string;
 }
@@ -30,6 +32,7 @@ export interface UpdateProjectRequest {
   description?: string;
   category?: string;
   status?: "active" | "inactive" | "pending";
+  city?: string;
 }
 
 export interface UpdateProjectResponse {

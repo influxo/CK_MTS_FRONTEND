@@ -22,12 +22,24 @@ import {
 } from "../components/ui/navigation/tabs";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import authService from "../services/auth/authService";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../components/ui/overlay/dialog";
 
 export function Profile() {
   const { t } = useTranslation();
   const { user, isLoading, error, getProfile } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const navigate = useNavigate();
+  const [mfaStarting, setMfaStarting] = useState(false);
+  const [mfaConfirming, setMfaConfirming] = useState(false);
+  const [mfaDisabling, setMfaDisabling] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
+  const [setupInfo, setSetupInfo] = useState<{ secret: string; otpauthUrl: string; qrCodeDataUrl?: string } | null>(null);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
+  const [mfaError, setMfaError] = useState<string | null>(null);
+  const [mfaDialogOpen, setMfaDialogOpen] = useState(false);
+
+  // No auto-enable: user must enter a 6-digit code after scanning
 
   useEffect(() => {
     if (!user) {
@@ -279,14 +291,87 @@ export function Profile() {
                         </div>
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <Button
-                        variant="outline"
-                        className="bg-black/10 text-black"
-                        disabled
-                      >
-                        {t("profile.manage2FA")}
-                      </Button>
+                    {mfaError && (
+                      <div className="mt-4 p-2 rounded bg-red-50 text-red-700 border border-red-200 text-sm">{mfaError}</div>
+                    )}
+                    <div className="mt-4 space-y-4">
+                      {!user.twoFactorEnabled && (
+                        <Button
+                          variant="outline"
+                          className="bg-black/10 text-black"
+                          disabled={mfaStarting}
+                          onClick={async () => {
+                            setMfaError(null);
+                            setRecoveryCodes(null);
+                            setSetupInfo(null);
+                            setMfaCode("");
+                            setMfaDialogOpen(true);
+                            setMfaStarting(true);
+                            try {
+                              const res = await authService.startTotpSetup();
+                              if (res.success && res.data) setSetupInfo(res.data as any);
+                              else setMfaError(res.message);
+                            } catch (e: any) {
+                              setMfaError(e?.message || "Failed to start setup");
+                            } finally {
+                              setMfaStarting(false);
+                            }
+                          }}
+                        >
+                          Enable 2FA
+                        </Button>
+                      )}
+
+                      {user.twoFactorEnabled && (
+                        <div className="space-y-3">
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              disabled={mfaDisabling}
+                              onClick={async () => {
+                                setMfaError(null);
+                                setMfaDisabling(true);
+                                try {
+                                  const res = await authService.disableTotp();
+                                  if (!res.success) setMfaError(res.message);
+                                  await getProfile();
+                                } catch (e: any) {
+                                  setMfaError(e?.message || "Failed to disable 2FA");
+                                } finally {
+                                  setMfaDisabling(false);
+                                }
+                              }}
+                            >
+                              Disable 2FA
+                            </Button>
+                            <Button
+                              onClick={async () => {
+                                setMfaError(null);
+                                try {
+                                  const res = await authService.getRecoveryCodes();
+                                  if (res.success && res.data) setRecoveryCodes(res.data.recoveryCodes);
+                                  else setMfaError(res.message);
+                                } catch (e: any) {
+                                  setMfaError(e?.message || "Failed to get recovery codes");
+                                }
+                              }}
+                            >
+                              View Recovery Codes
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {recoveryCodes && (
+                        <div className="space-y-2">
+                          <div className="text-sm font-medium">Recovery Codes</div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                            {recoveryCodes.map((c) => (
+                              <div key={c} className="text-sm bg-white p-2 rounded font-mono select-all">{c}</div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -301,6 +386,95 @@ export function Profile() {
           {t("profile.noProfileData")}
         </div>
       )}
+
+      {/* 2FA Setup Modal */}
+      <Dialog open={mfaDialogOpen} onOpenChange={(open) => {
+        setMfaDialogOpen(open);
+        if (!open) {
+          setSetupInfo(null);
+          setMfaCode("");
+          setMfaError(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enable Two-Factor Authentication</DialogTitle>
+            <DialogDescription>
+              Scan the QR with your authenticator app, then enter the 6-digit code to enable 2FA.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {!setupInfo && (
+              <div className="text-sm text-muted-foreground">Preparing setup...</div>
+            )}
+            {setupInfo && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Scan QR</div>
+                  {setupInfo.qrCodeDataUrl ? (
+                    <img src={setupInfo.qrCodeDataUrl} alt="QR Code" className="w-48 h-48 bg-white p-2 rounded" />
+                  ) : (
+                    <div className="text-xs text-muted-foreground break-all">{setupInfo.otpauthUrl}</div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Secret</div>
+                  <div className="text-xs bg-white p-2 rounded break-all select-all">{setupInfo.secret}</div>
+                </div>
+              </div>
+            )}
+
+            {mfaError && (
+              <div className="p-2 rounded bg-red-50 text-red-700 border border-red-200 text-sm">{mfaError}</div>
+            )}
+
+            {/* Manual code entry (required) */}
+            {setupInfo && (
+              <div className="space-y-2">
+                <Label htmlFor="mfaCode">Enter 6-digit code</Label>
+                <Input
+                  id="mfaCode"
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/[^0-9]/g, ""))}
+                  inputMode="numeric"
+                  pattern="\\d*"
+                  maxLength={6}
+                  className="bg-black/5 border-0"
+                  placeholder="123456"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    className="bg-[#2E343E] text-white"
+                    disabled={mfaConfirming || mfaCode.length !== 6}
+                    onClick={async () => {
+                      setMfaError(null);
+                      setMfaConfirming(true);
+                      try {
+                        const res = await authService.confirmTotpSetup({ code: mfaCode });
+                        if (res.success) {
+                          setRecoveryCodes(res.data?.recoveryCodes || null);
+                          await getProfile();
+                          setMfaDialogOpen(false);
+                        } else {
+                          setMfaError(res.message);
+                        }
+                      } catch (e: any) {
+                        setMfaError(e?.message || "Failed to confirm 2FA");
+                      } finally {
+                        setMfaConfirming(false);
+                      }
+                    }}
+                  >
+                    {mfaConfirming ? "Enabling..." : "Confirm"}
+                  </Button>
+                  <Button variant="outline" onClick={() => setMfaDialogOpen(false)}>Cancel</Button>
+                </div>
+              </div>
+            )}
+
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

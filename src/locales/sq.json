@@ -28,6 +28,8 @@
     "pending": "Në pritje",
     "enabled": "Aktiv",
     "disabled": "Jo Aktiv",
+    "verified": "I verifikuar",
+    "notVerified": "I paverifikuar",
     "today": "Sot",
     "thisWeek": "Kjo javë",
     "thisMonth": "Ky muaj",
@@ -53,7 +55,10 @@
     "noData": "Nuk ka të dhëna",
     "resetFilters": "Rivendos Filtrat",
     "applyFilters": "Apliko Filtrat",
-    "disabilities": "Aftësi të Kufizuara"
+    "disabilities": "Aftësi të Kufizuara",
+    "show": "Shfaq",
+    "page": "Faqe",
+    "of": "nga"
   },
   "auth": {
     "login": "Hyr",
@@ -165,7 +170,11 @@
     "services": "Shërbimet",
     "mostFrequentService": "Shërbimi Më i Shpeshtë",
     "showMoreServices": "Shfaq më shumë shërbime",
-    "showLess": "Shfaq më pak"
+    "showLess": "Shfaq më pak",
+    "no_activity": "Asnjë aktivitet",
+    "loading": "Duke ngarkuar",
+    "form_submissions": "Dërgimet e Formularëve",
+    "project_changes": "Ndryshimet e Projektit"
   },
   "projects": {
     "title": "Projektet",
@@ -197,7 +206,9 @@
     "services": "Shërbimet",
     "team": "Ekipi",
     "activity": "Aktiviteti",
-    "to": "deri"
+    "to": "deri",
+    "city": "Qyteti",
+    "selectCity": "Zgjedh qytetin"
   },
   "subProjectsDetails": {
     "title": "Nën-Projektet",
@@ -212,6 +223,7 @@
     "title": "Përfituesit",
     "subtitle": "Menaxho informacionin e përfituesve dhe ndiq shërbimet",
     "searchBeneficiaries": "Kërko përfitues...",
+    "searchPlaceholder": "Kërko përfitues...",
     "beneficiaryName": "Emri i Përfituesit",
     "contactInfo": "Kontakti",
     "servicesReceived": "Shërbime të Marra",
@@ -573,6 +585,14 @@
     "invitedOn": "Ftuar më",
     "resendInvitation": "Ridërgo Ftesën",
     "sendEmail": "Dërgo Email",
+    "reactivate": "Riaktivizo",
+    "updatedAt": "Përditësuar më",
+    "createdAt": "Krijuar më",
+    "archiveEmployeeTitle": "Fshi Punonjësin",
+    "archiveEmployeeDescription": "Jeni të sigurt që dëshironi të fshini këtë punonjës?",
+    "archiveEmployeeNote": "Ky punonjës do të kalojë në statusin joaktiv. Llogaria dhe të dhënat e tyre do të ruhen dhe mund të riaktivizohen në çdo kohë.",
+    "archiveEmployee": "Fshini Punonjësin",
+    "archiving": "Duke arkivuar...",
     "managePermissions": "Menaxho Lejet",
     "filters": "Filtrat",
     "twoFactorStatus": "Statusi i Autentifikimit Dy-Faktorësh",
@@ -613,7 +633,7 @@
     "saveChanges": "Ruaj Ndryshimet",
     "projectUpdatedSuccess": "Projekti u përditësua me sukses",
     "somethingWentWrong": "Diçka shkoi gabim",
-    "timeline": "Afati Kohor",
+    "timeline": "Data e Krijimit",
     "projectLeads": "Drejtuesit e Projektit",
     "subprojects": "Nënprojektet",
     "beneficiaries": "Përfituesit",
@@ -660,6 +680,8 @@
     "noAccess": "Nuk keni akses",
     "loadingBeneficiaries": "Duke ngarkuar përfituesit...",
     "addBeneficiary": "Shto Përfitues",
+    "city": "Qyteti",
+    "selectCity": "Zgjedh qytetin",
     "addBeneficiaryDesc": "Përdorni skedat më poshtë për të shtuar një përfitues të ri ose për të asociuar një përfitues ekzistues me këtë projekt.",
     "addNew": "Shto të Ri",
     "addExisting": "Shto Ekzistues",
@@ -720,7 +742,8 @@
     "registration": "Regjistrimi",
     "actions": "Veprimet",
     "view": "Shiko",
-    "noBeneficiariesFound": "Nuk u gjetën përfitues"
+    "noBeneficiariesFound": "Nuk u gjetën përfitues",
+    "searchBeneficiaries": "Kërko përfitues"
   },
   "projectActivity": {
     "recentActivity": "Aktiviteti i Fundit",
@@ -825,7 +848,10 @@
     "lead": "Drejtues",
     "stats": "Statistikat",
     "view": "Shiko",
-    "actions": "Veprimet"
+    "actions": "Veprimet",
+    "createdAt": "Krijuar më",
+    "updatedAt": "Përditësuar më",
+    "selectSubProject": "Zgjedh nënprojektin"
   },
   "projectStats": {
     "keyStatistics": "Statistikat Kryesore",
@@ -979,7 +1005,10 @@
     "noBeneficiariesFound": "Nuk u gjetën përfitues.",
     "loadingSubprojectDetails": "Duke ngarkuar detajet e nënprojektit...",
     "error": "Gabim",
-    "noSubprojectFound": "Nuk u Gjet Nënprojekti"
+    "noSubprojectFound": "Nuk u Gjet Nënprojekt",
+    "searchBeneficiaries": "Kërko përfitues...",
+    "city": "Qyteti",
+    "selectCity": "Zgjedh qytetin"
   },
   "subProjectActivities": {
     "title": "Aktivitetet",
@@ -1033,7 +1062,9 @@
     "noActivitiesFound": "Nuk u gjetën aktivitete.",
     "editActivity": "Modifiko Aktivitetin",
     "exportDetails": "Eksporto Detajet",
-    "view": "Shiko"
+    "view": "Shiko",
+    "fieldNamePlaceholder": "Emri i fushës",
+    "valuePlaceholder": "Vlera"
   },
   "activityDetails": {
     "loading": "Duke ngarkuar detajet e aktivitetit...",
@@ -1143,13 +1174,18 @@
     "removeFromSubProject": "Hiq nga Nënprojekti",
     "remove": "Hiq",
     "addTeamMember": "Shto Anëtar të Ekipit",
-    "assignNewMember": "Cakto një anëtar të ri të ekipit për këtë nënprojekt"
+    "assignNewMember": "Cakto një anëtar të ri të ekipit për këtë nënprojekt",
+    "email": "Email",
+    "status": "Statusi",
+    "actions": "Veprimet",
+    "noTeamMembers": "Nuk ka anëtarë të ekipit të caktuar ende."
   },
   "dataEntry": {
     "title": "Futja e të Dhënave",
     "subtitle": "Dërgo formularë ose shiko historinë e dërgimeve",
     "dataEntryTab": "Futja e të Dhënave",
     "submissionHistoryTab": "Historia e Dërgimeve",
+    "resetFilters": "Fshi Filtrat",
     "entityType": "Lloji i Entitetit",
     "project": "Projekti",
     "subproject": "Nën-projekti",

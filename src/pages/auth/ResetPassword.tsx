@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Form, useNavigate, useLocation } from "react-router-dom";
+import { Form, useNavigate, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import {
   Card,
@@ -26,6 +26,7 @@ import reactLogo from "../../assets/react.svg";
 const ResetPassword = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { token } = useParams<{ token: string }>();
   const {
     resetPassword,
     isAuthenticated,
@@ -64,8 +65,16 @@ const ResetPassword = () => {
     setIsSubmitting(true);
 
     try {
-      await resetPassword(formData);
-      // Navigation is handled in the useEffect
+      if (!token) {
+        throw new Error("Invalid or missing token");
+      }
+      if (formData.password !== formData.confirmPassword) {
+        throw new Error("Passwords do not match");
+      }
+      const ok = await resetPassword({ token, password: formData.password, confirmPassword: formData.confirmPassword });
+      if (ok) {
+        navigate('/login');
+      }
     } catch (err) {
       console.error("Reset Password error:", err);
     } finally {

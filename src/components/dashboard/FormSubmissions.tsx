@@ -38,7 +38,10 @@ import formTemplatesApi from "../../services/forms/formServices";
 import subProjectService from "../../services/subprojects/subprojectService";
 import type { Project } from "../../services/projects/projectModels";
 import { useSelector } from "react-redux";
-import { selectMetricsFilters } from "../../store/slices/serviceMetricsSlice";
+import {
+  selectMetricsFilters,
+  selectResetTrigger,
+} from "../../store/slices/serviceMetricsSlice";
 import { selectCurrentUser } from "../../store/slices/authSlice";
 import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@radix-ui/react-tabs";
@@ -119,7 +122,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
   // Local filters (isolated)
   // Use undefined to indicate "inherit from global"
   const [metricLocal, setMetricLocal] = React.useState<MetricType | undefined>(
-    undefined
+    undefined,
   );
   const [serviceIdLocal, setServiceIdLocal] = React.useState<
     string | undefined
@@ -131,7 +134,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     string | undefined
   >(undefined);
   const [localEndDate, setLocalEndDate] = React.useState<string | undefined>(
-    undefined
+    undefined,
   );
 
   // Local project/subproject UI state
@@ -151,11 +154,12 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
 
   // Global filters
   const globalFilters = useSelector(selectMetricsFilters);
+  const resetTrigger = useSelector(selectResetTrigger);
   const user = useSelector(selectCurrentUser);
   const userProjectsTree = useSelector(selectUserProjectsTree as any) as any[];
   const normalizedRoles = React.useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
   const isSubProjectManager = React.useMemo(() => {
     return normalizedRoles.some(
@@ -163,7 +167,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
         r === "sub-project manager" ||
         r === "sub project manager" ||
         r.includes("sub-project manager") ||
-        r.includes("sub project manager")
+        r.includes("sub project manager"),
     );
   }, [normalizedRoles]);
 
@@ -202,7 +206,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
         const monday = startOfWeek(d);
         const startYear = new Date(d.getFullYear(), 0, 1);
         const diffDays = Math.floor(
-          (monday.getTime() - startYear.getTime()) / 86400000
+          (monday.getTime() - startYear.getTime()) / 86400000,
         );
         const week = Math.floor(diffDays / 7) + 1;
         return `W${week} ${d.getFullYear()}`;
@@ -263,7 +267,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     applyQuery(
       ((granularity as Granularity) || "week") as Granularity,
       from,
-      to
+      to,
     );
     setFiltersOpen(false);
     setCustomOpen(false);
@@ -349,10 +353,10 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
         if (isSubProjectManager) {
           try {
             const proj = (userProjectsTree || []).find(
-              (p: any) => p.id === effectiveProjectId
+              (p: any) => p.id === effectiveProjectId,
             );
             const allowed = new Set<string>(
-              (proj?.subprojects || []).map((sp: any) => sp.id)
+              (proj?.subprojects || []).map((sp: any) => sp.id),
             );
             options = options.filter((sp: any) => allowed.has(sp.id));
           } catch {}
@@ -375,14 +379,38 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     setGranularityLocal(undefined);
   }, [globalFilters]);
 
+  // Reset all local filters when reset button is clicked
+  React.useEffect(() => {
+    if (resetTrigger > 0) {
+      setHasLocalEntityOverride(false);
+      setProjectId("");
+      setSubprojectId("");
+      setMetricLocal(undefined);
+      setServiceIdLocal(undefined);
+      setFormTemplateIdLocal(undefined);
+      setLocalStartDate(undefined);
+      setLocalEndDate(undefined);
+      setGranularityLocal(undefined);
+      setGranularity("week");
+      setShowMoreLocal(false);
+      setChartType("line");
+      setFiltersOpen(false);
+      setCustomOpen(false);
+      setCustomFrom("");
+      setCustomTo("");
+      setServicesPage(1);
+      setTemplatesPage(1);
+    }
+  }, [resetTrigger]);
+
   // Fetch services when effective entity selection changes (local overrides take precedence, else global) with pagination
   React.useEffect(() => {
     (async () => {
       const effectiveEntityType = effectiveSubprojectId
         ? "subproject"
         : effectiveProjectId
-        ? "project"
-        : (globalFilters.entityType as any) || undefined;
+          ? "project"
+          : (globalFilters.entityType as any) || undefined;
       const effectiveEntityId =
         effectiveSubprojectId ||
         effectiveProjectId ||
@@ -438,8 +466,8 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
       subprojectId
         ? "subproject"
         : projectId
-        ? "project"
-        : globalFilters.entityType
+          ? "project"
+          : globalFilters.entityType
     ) as any;
     return {
       groupBy: effectiveGroupBy,
@@ -465,7 +493,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
         setGranularity(
           (res.granularity as Granularity) ||
             (params.groupBy as Granularity) ||
-            granularity
+            granularity,
         );
       } else {
         setItems([]);
@@ -558,9 +586,9 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
               {(metricLocal || globalFilters.metric) === "serviceDeliveries"
                 ? t("dashboard.serviceDeliveriesOverview")
                 : (metricLocal || globalFilters.metric) ===
-                  "uniqueBeneficiaries"
-                ? t("dashboard.uniqueBeneficiariesOverview")
-                : t("dashboard.formSubmissionsOverview")}
+                    "uniqueBeneficiaries"
+                  ? t("dashboard.uniqueBeneficiariesOverview")
+                  : t("dashboard.formSubmissionsOverview")}
             </CardTitle>
 
             <Tabs
@@ -729,7 +757,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                             ? Math.max(1, servicesPage - 1)
                             : Math.min(
                                 servicesTotalPages || 1,
-                                servicesPage + 1
+                                servicesPage + 1,
                               );
                         setServicesPage(nextPage);
                         setOpenServicesSelect(true);
@@ -795,7 +823,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                           ? Math.max(1, templatesPage - 1)
                           : Math.min(
                               templatesTotalPages || 1,
-                              templatesPage + 1
+                              templatesPage + 1,
                             );
                       setTemplatesPage(nextPage);
                       setOpenTemplatesSelect(true);

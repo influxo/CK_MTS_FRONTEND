@@ -27,7 +27,6 @@ interface ProjectExportProps {
 }
 
 export function ProjectExport({ projectId }: ProjectExportProps) {
-  console.log("projectId, veq sa me i ik unused declaration", projectId);
   return (
     <Card className="bg-[#F7F9FB] drop-shadow-sm shadow-gray-50 border-0">
       <Tabs defaultValue="reports">

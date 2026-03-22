@@ -38,6 +38,7 @@ interface ServiceMetricsState {
   filters: MetricsFilters;
   summary: SummaryState;
   series: SeriesState;
+  resetTrigger: number;
 }
 
 const initialState: ServiceMetricsState = {
@@ -64,6 +65,7 @@ const initialState: ServiceMetricsState = {
     groupedBy: null,
     lastKey: null,
   },
+  resetTrigger: 0,
 };
 
 export const fetchDeliveriesSummary = createAsyncThunk<
@@ -73,9 +75,13 @@ export const fetchDeliveriesSummary = createAsyncThunk<
 >(
   "serviceMetrics/fetchSummary",
   async (filters, { rejectWithValue }) => {
-    const response = await serviceMetricsService.getDeliveriesSummary(filters || {});
+    const response = await serviceMetricsService.getDeliveriesSummary(
+      filters || {},
+    );
     if (!response.success) {
-      return rejectWithValue(response.message || "Failed to fetch deliveries summary");
+      return rejectWithValue(
+        response.message || "Failed to fetch deliveries summary",
+      );
     }
     return response;
   },
@@ -87,7 +93,7 @@ export const fetchDeliveriesSummary = createAsyncThunk<
       // Skip if same params and not currently loading
       return prevKey !== key && !st.serviceMetrics.summary.loading;
     },
-  }
+  },
 );
 
 export const fetchDeliveriesSeries = createAsyncThunk<
@@ -97,9 +103,13 @@ export const fetchDeliveriesSeries = createAsyncThunk<
 >(
   "serviceMetrics/fetchSeries",
   async (params, { rejectWithValue }) => {
-    const response = await serviceMetricsService.getDeliveriesSeries(params || {});
+    const response = await serviceMetricsService.getDeliveriesSeries(
+      params || {},
+    );
     if (!response.success) {
-      return rejectWithValue(response.message || "Failed to fetch deliveries series");
+      return rejectWithValue(
+        response.message || "Failed to fetch deliveries series",
+      );
     }
     return response;
   },
@@ -110,7 +120,7 @@ export const fetchDeliveriesSeries = createAsyncThunk<
       const key = JSON.stringify(params || {});
       return prevKey !== key && !st.serviceMetrics.series.loading;
     },
-  }
+  },
 );
 
 const serviceMetricsSlice = createSlice({
@@ -122,6 +132,7 @@ const serviceMetricsSlice = createSlice({
     },
     resetFilters: (state) => {
       state.filters = initialState.filters;
+      state.resetTrigger = state.resetTrigger + 1;
     },
   },
   extraReducers: (builder) => {
@@ -142,7 +153,8 @@ const serviceMetricsSlice = createSlice({
       })
       .addCase(fetchDeliveriesSummary.rejected, (state, action) => {
         state.summary.loading = false;
-        state.summary.error = action.payload || "Failed to fetch deliveries summary";
+        state.summary.error =
+          action.payload || "Failed to fetch deliveries summary";
       })
       // Series
       .addCase(fetchDeliveriesSeries.pending, (state) => {
@@ -162,7 +174,8 @@ const serviceMetricsSlice = createSlice({
       })
       .addCase(fetchDeliveriesSeries.rejected, (state, action) => {
         state.series.loading = false;
-        state.series.error = action.payload || "Failed to fetch deliveries series";
+        state.series.error =
+          action.payload || "Failed to fetch deliveries series";
       });
   },
 });
@@ -170,8 +183,13 @@ const serviceMetricsSlice = createSlice({
 export const { setFilters, resetFilters } = serviceMetricsSlice.actions;
 
 // Selectors
-export const selectMetricsFilters = (state: any) => state.serviceMetrics.filters as MetricsFilters;
-export const selectSummary = (state: any) => state.serviceMetrics.summary as SummaryState;
-export const selectSeries = (state: any) => state.serviceMetrics.series as SeriesState;
+export const selectMetricsFilters = (state: any) =>
+  state.serviceMetrics.filters as MetricsFilters;
+export const selectSummary = (state: any) =>
+  state.serviceMetrics.summary as SummaryState;
+export const selectSeries = (state: any) =>
+  state.serviceMetrics.series as SeriesState;
+export const selectResetTrigger = (state: any) =>
+  state.serviceMetrics.resetTrigger as number;
 
 export default serviceMetricsSlice.reducer;

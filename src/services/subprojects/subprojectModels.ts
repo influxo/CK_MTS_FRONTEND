@@ -4,6 +4,7 @@ export interface SubProject {
   name: string;
   description: string;
   category: string;
+  city: string;
   status: "active" | "inactive" | "pending";
   projectId: string;
   createdAt: string; // string is better for ISO timestamps
@@ -22,6 +23,7 @@ export interface CreateSubProjectRequest {
   name: string;
   description: string;
   category: string;
+  city: string;
   status: "active" | "inactive" | "pending";
   projectId: string;
 }
@@ -51,6 +53,7 @@ export interface UpdateSubProjectRequest {
   name: string;
   description: string;
   category: string;
+  city: string;
   status: "active" | "inactive" | "pending";
 }
 

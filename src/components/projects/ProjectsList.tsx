@@ -7,14 +7,39 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "../ui/data-display/badge";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "../../hooks/useTranslation";
+import type {
+  CreateProjectRequest,
+  Project,
+} from "../../services/projects/projectModels";
+import type { AppDispatch } from "../../store";
+import {
+  createProject,
+  selectCreateSuccessMessage,
+  selectProjectsError,
+} from "../../store/slices/projectsSlice";
 import { Button } from "../ui/button/button";
+import { Badge } from "../ui/data-display/badge";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from "../ui/data-display/card";
+import { Progress } from "../ui/feedback/progress";
+import { Input } from "../ui/form/input";
+import { Label } from "../ui/form/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/form/select";
+import { Textarea } from "../ui/form/textarea";
+import { Tabs } from "../ui/navigation/tabs";
 import {
   Dialog,
   DialogContent,
@@ -30,33 +55,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/overlay/dropdown-menu";
-import { Input } from "../ui/form/input";
-import { Label } from "../ui/form/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/form/select";
-import { Tabs, TabsList, TabsTrigger } from "../ui/navigation/tabs";
-import { Textarea } from "../ui/form/textarea";
-import { Progress } from "../ui/feedback/progress";
-import type {
-  CreateProjectRequest,
-  CreateProjectResponse,
-  Project,
-} from "../../services/projects/projectModels";
-import projectService from "../../services/projects/projectService";
-import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch } from "../../store";
-import { useTranslation } from "../../hooks/useTranslation";
-import {
-  createProject,
-  selectCreateSuccessMessage,
-  selectProjectsError,
-} from "../../store/slices/projectsSlice";
-import { useNavigate } from "react-router-dom";
 
 // Mock project data
 const mockProjects = [
@@ -182,7 +180,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
   const navigate = useNavigate();
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -204,15 +202,6 @@ export function ProjectsList({ projects }: ProjectsListProps) {
     // Check required fields
     if (!formData.name.trim()) errors.name = "Name is required";
     if (!formData.category) errors.category = "Category is required";
-    // if (!formData.type) errors.type = "Type is required";
-    // if (!formData.startDate) errors.startDate = "Start date is required";
-    // if (!formData.endDate) errors.endDate = "End date is required";
-
-    // Additional validation could be added here
-    // For example, check if end date is after start date
-    // if (formData.startDate && formData.endDate && new Date(formData.endDate) < new Date(formData.startDate)) {
-    //   errors.endDate = "End date must be after start date";
-    // }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -232,45 +221,12 @@ export function ProjectsList({ projects }: ProjectsListProps) {
         // endDate: "",
         description: "",
       });
-    } else {
-      console.log("Form validation failed", formErrors);
     }
   };
-
-  // const submitCreateProject = async () => {
-  //   console.log("Form Data Submitted:", formData);
-
-  //   try {
-  //     const response: CreateProjectResponse =
-  //       await projectService.createProject(formData);
-
-  //     if (response.success && response.data) {
-  //       console.log("Project created successfully:", response.data);
-  //       // Optionally redirect or reset form
-  //       // setFormData({ name: "", category: "", status: "active", description: "" });
-  //     } else {
-  //       console.error("Error:", response.message);
-  //     }
-  //   } catch (err) {
-  //     console.error("Unexpected error while creating project:", err);
-  //   }
-  // };
 
   const submitCreateProject = () => {
     dispatch(createProject(formData));
   };
-  // Filter projects based on search and filters
-  // const filteredProjects = mockProjects.filter((project) => {
-  //   const matchesSearch =
-  //     project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //     project.description.toLowerCase().includes(searchQuery.toLowerCase());
-  //   const matchesStatus =
-  //     statusFilter === "all" || project.status === statusFilter;
-  //   const matchesCategory =
-  //     categoryFilter === "all" || project.category === categoryFilter;
-
-  //   return matchesSearch && matchesStatus && matchesCategory;
-  // });
 
   const categories = [...new Set(mockProjects.map((p) => p.category))];
 
@@ -278,29 +234,27 @@ export function ProjectsList({ projects }: ProjectsListProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2>{t('projects.title')}</h2>
-          <p className="text-muted-foreground">
-            {t('projects.subtitle')}
-          </p>
+          <h2>{t("projects.title")}</h2>
+          <p className="text-muted-foreground">{t("projects.subtitle")}</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-[#0272e3] text-white">
               <Plus className="h-4 w-4 mr-2" />
-              {t('projects.createProject')}
+              {t("projects.createProject")}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
-              <DialogTitle>{t('projects.createNewProject')}</DialogTitle>
+              <DialogTitle>{t("projects.createNewProject")}</DialogTitle>
               <DialogDescription>
-                {t('projects.allFieldsRequired')}
+                {t("projects.allFieldsRequired")}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="title" className="text-right">
-                  {t('projects.projectTitle')} *
+                  {t("projects.projectTitle")} *
                 </Label>
                 <Input
                   id="title"
@@ -308,7 +262,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                   className={`col-span-3 ${
                     formErrors.name ? "border-red-500" : ""
                   }`}
-                  placeholder={t('projects.enterProjectTitle')}
+                  placeholder={t("projects.enterProjectTitle")}
                   value={formData.name}
                   onChange={handleInputChange}
                 />
@@ -320,7 +274,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right">
-                  {t('projects.projectCategory')} *
+                  {t("projects.projectCategory")} *
                 </Label>
                 <Input
                   id="category"
@@ -328,7 +282,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                   className={`col-span-3 ${
                     formErrors.category ? "border-red-500" : ""
                   }`}
-                  placeholder={t('projects.enterProjectCategory')}
+                  placeholder={t("projects.enterProjectCategory")}
                   value={formData.category}
                   onChange={handleInputChange}
                 />
@@ -338,34 +292,10 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                   </p>
                 )}
               </div>
-              {/* <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="type" className="text-right">
-                  Type *
-                </Label>
-                <Select 
-                  value={formData.type} 
-                  onValueChange={(value) => handleSelectField(value, 'type')}
-                >
-                  <SelectTrigger className={`col-span-3 ${formErrors.type ? 'border-red-500' : ''}`}>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="service-delivery">
-                      Service Delivery
-                    </SelectItem>
-                    <SelectItem value="training">Training</SelectItem>
-                    <SelectItem value="construction">Construction</SelectItem>
-                    <SelectItem value="distribution">Distribution</SelectItem>
-                    <SelectItem value="research">Research</SelectItem>
-                  </SelectContent>
-                </Select>
-                {formErrors.type && (
-                  <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.type}</p>
-                )}
-              </div> */}
+
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="status" className="text-right">
-                  {t('projects.projectStatus')}
+                  {t("projects.projectStatus")}
                 </Label>
                 <Select
                   defaultValue="active"
@@ -382,47 +312,16 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                   </SelectContent>
                 </Select>
               </div>
-              {/* <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="start-date" className="text-right">
-                  Start Date *
-                </Label>
-                <Input 
-                  id="start-date" 
-                  name="startDate"
-                  type="date" 
-                  className={`col-span-3 ${formErrors.startDate ? 'border-red-500' : ''}`}
-                  value={formData.startDate} 
-                  onChange={handleInputChange}
-                />
-                {formErrors.startDate && (
-                  <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.startDate}</p>
-                )}
-              </div> */}
-              {/* <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="end-date" className="text-right">
-                  End Date *
-                </Label>
-                <Input 
-                  id="end-date" 
-                  name="endDate"
-                  type="date" 
-                  className={`col-span-3 ${formErrors.endDate ? 'border-red-500' : ''}`}
-                  value={formData.endDate} 
-                  onChange={handleInputChange}
-                />
-                {formErrors.endDate && (
-                  <p className="text-red-500 text-sm col-span-3 col-start-2">{formErrors.endDate}</p>
-                )}
-              </div> */}
+
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="description" className="text-right pt-2">
-                  {t('projects.projectDescription')}
+                  {t("projects.projectDescription")}
                 </Label>
                 <Textarea
                   id="description"
                   name="description"
                   className="col-span-3"
-                  placeholder={t('projects.provideDescription')}
+                  placeholder={t("projects.provideDescription")}
                   rows={3}
                   value={formData.description}
                   onChange={handleInputChange}
@@ -434,9 +333,11 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                 variant="outline"
                 onClick={() => setIsCreateDialogOpen(false)}
               >
-                {t('common.cancel')}
+                {t("common.cancel")}
               </Button>
-              <Button onClick={handleCreateProject}>{t('projects.createProject')}</Button>
+              <Button onClick={handleCreateProject}>
+                {t("projects.createProject")}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -447,7 +348,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t('projects.searchProjects')}
+              placeholder={t("projects.searchProjects")}
               className="pl-9 bg-black/5 border-0"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -460,10 +361,10 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t('projects.allStatus')}</SelectItem>
-                <SelectItem value="active">{t('common.active')}</SelectItem>
-                <SelectItem value="inactive">{t('common.inactive')}</SelectItem>
-                <SelectItem value="pending">{t('common.pending')}</SelectItem>
+                <SelectItem value="all">{t("projects.allStatus")}</SelectItem>
+                <SelectItem value="active">{t("common.active")}</SelectItem>
+                <SelectItem value="inactive">{t("common.inactive")}</SelectItem>
+                <SelectItem value="pending">{t("common.pending")}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -472,7 +373,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t('common.allCategories')}</SelectItem>
+                <SelectItem value="all">{t("common.allCategories")}</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category.toLowerCase()}>
                     {category}
@@ -507,18 +408,21 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                             project.status === "active"
                               ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
                               : project.status === "pending"
-                              ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
-                              : {
-                                  backgroundColor: "rgba(28,28,28,0.05)",
-                                  color: "rgba(28,28,28,0.4)",
-                                }
+                                ? {
+                                    backgroundColor: "#E2F5FF",
+                                    color: "#59A8D4",
+                                  }
+                                : {
+                                    backgroundColor: "rgba(28,28,28,0.05)",
+                                    color: "rgba(28,28,28,0.4)",
+                                  }
                           }
                         >
                           {project.status === "active"
                             ? "Active"
                             : project.status === "pending"
-                            ? "Pending"
-                            : "Inactive"}
+                              ? "Pending"
+                              : "Inactive"}
                         </Badge>
                       </div>
                     </div>
@@ -549,7 +453,9 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                   <div className="mt-4 space-y-3">
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">{t('projects.progress')}</span>
+                        <span className="text-gray-500">
+                          {t("projects.progress")}
+                        </span>
                         {/* <span>{project.progress}%</span> */}
                         <span>50%</span>
                       </div>
@@ -563,24 +469,28 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                       <div className="flex items-center gap-1">
                         <CheckCircle className="h-4 w-4 text-muted-foreground" />
                         {/* <span>{project.subProjects} Sub-projects</span> */}
-                        <span>5 {t('projects.subProjects')}</span>
+                        <span>5 {t("projects.subProjects")}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-4 w-4 text-muted-foreground" />
                         {/* <span>{project.beneficiaries} Beneficiaries</span> */}
-                        <span>100 {t('projects.beneficiaries')}</span>
+                        <span>100 {t("projects.beneficiaries")}</span>
                       </div>
                     </div>
                   </div>
                 </CardContent>
                 <CardFooter className="border-t pt-3 flex justify-between text-sm">
                   <div>
-                    <span className="text-muted-foreground">{t('common.date')}: </span>
+                    <span className="text-muted-foreground">
+                      {t("common.date")}:{" "}
+                    </span>
                     {/* {new Date(project.startDate).toLocaleDateString()} */}
                     {new Date(project.createdAt).toLocaleDateString()}
                   </div>
                   <div>
-                    <span className="text-muted-foreground">{t('projects.to')}: </span>
+                    <span className="text-muted-foreground">
+                      {t("projects.to")}:{" "}
+                    </span>
                     {/* {new Date(project.endDate).toLocaleDateString()} */}
                     {new Date(project.updatedAt).toLocaleDateString()}
                   </div>
@@ -624,18 +534,18 @@ export function ProjectsList({ projects }: ProjectsListProps) {
                           project.status === "active"
                             ? { backgroundColor: "#DEF8EE", color: "#4AA785" }
                             : project.status === "pending"
-                            ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
-                            : {
-                                backgroundColor: "rgba(28,28,28,0.05)",
-                                color: "rgba(28,28,28,0.4)",
-                              }
+                              ? { backgroundColor: "#E2F5FF", color: "#59A8D4" }
+                              : {
+                                  backgroundColor: "rgba(28,28,28,0.05)",
+                                  color: "rgba(28,28,28,0.4)",
+                                }
                         }
                       >
                         {project.status === "active"
-                          ? t('common.active')
+                          ? t("common.active")
                           : project.status === "pending"
-                          ? t('common.pending')
-                          : t('common.inactive')}
+                            ? t("common.pending")
+                            : t("common.inactive")}
                       </Badge>
                     </td>
                     <td className="p-3">

@@ -8,6 +8,8 @@ import type {
   GetUserProjectsResponse,
   GetMyTeamResponse,
   DeleteUserResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
 } from "./employeesModels";
 import { toast } from "sonner";
 
@@ -154,6 +156,41 @@ class EmployeesService {
       return {
         success: false,
         message: error.message || "Failed to delete user",
+      };
+    }
+  }
+
+  async resetPassword(
+    userId: string,
+    payload: ResetPasswordRequest
+  ): Promise<ResetPasswordResponse> {
+    try {
+      const response = await axiosInstance.post<ResetPasswordResponse>(
+        `${this.employeesEndpoint}/${userId}/reset-password`,
+        payload
+      );
+      toast.success("Fjalëkalimi u rivendos me sukses", {
+        style: {
+          backgroundColor: "#d1fae5",
+          color: "#065f46",
+          border: "1px solid #10b981",
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      toast.error("Dështoi rivendosja e fjalëkalimit", {
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #ef4444",
+        },
+      });
+      if (error.response) {
+        return error.response.data as ResetPasswordResponse;
+      }
+      return {
+        success: false,
+        message: error.message || "Failed to reset password",
       };
     }
   }

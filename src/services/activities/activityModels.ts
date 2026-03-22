@@ -1,12 +1,18 @@
 // Activity domain models and API contracts
 
+export interface ReportingField {
+  name: string;
+  type: string;
+  value: string | number;
+}
+
 export interface Activity {
   id: string;
   name: string;
   description: string;
   category: string;
   frequency: string; // e.g., "monthly"
-  reportingFields: Record<string, string>; // e.g., { beneficiaries: "number", location: "text" }
+  reportingFields: ReportingField[];
   subprojectId: string;
   status: string; // e.g., "active"
   createdAt: string; // ISO string
@@ -18,7 +24,7 @@ export interface CreateSubprojectActivityRequest {
   description: string;
   category: string;
   frequency: string;
-  reportingFields: Record<string, string>;
+  reportingFields: ReportingField[];
   status: string;
   subprojectId: string;
 }
@@ -46,7 +52,7 @@ export interface UpdateActivityRequest {
   description: string;
   category: string;
   frequency: string;
-  reportingFields: Record<string, string>;
+  reportingFields: ReportingField[];
   status: string;
 }
 

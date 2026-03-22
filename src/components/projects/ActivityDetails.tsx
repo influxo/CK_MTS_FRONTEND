@@ -18,7 +18,10 @@ import {
   selectAllEmployees,
 } from "../../store/slices/employeesSlice";
 import activityService from "../../services/activities/activityService";
-import type { Activity, ActivityUser } from "../../services/activities/activityModels";
+import type {
+  Activity,
+  ActivityUser,
+} from "../../services/activities/activityModels";
 import { Button } from "../ui/button/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
@@ -82,8 +85,8 @@ export function ActivityDetails() {
   const [status, setStatus] = useState("active");
   const [description, setDescription] = useState("");
   const [reportingFieldsRows, setReportingFieldsRows] = useState<
-    { key: string; type: string }[]
-  >([{ key: "", type: "text" }]);
+    { name: string; type: string; value: string }[]
+  >([{ name: "", type: "text", value: "" }]);
 
   // User role check and employees
   const dispatch = useDispatch<AppDispatch>();
@@ -91,7 +94,7 @@ export function ActivityDetails() {
   const employees = useSelector(selectAllEmployees);
   const normalizedRoles = useMemo(
     () => (user?.roles || []).map((r: any) => r.name?.toLowerCase?.() || ""),
-    [user?.roles]
+    [user?.roles],
   );
 
   const isAdmin = useMemo(() => {
@@ -102,7 +105,7 @@ export function ActivityDetails() {
         r === "system admin" ||
         r === "super admin" ||
         r.includes("system admin") ||
-        r.includes("super admin")
+        r.includes("super admin"),
     );
   }, [normalizedRoles]);
 
@@ -116,11 +119,11 @@ export function ActivityDetails() {
   // Filter out already assigned users from employee list
   const assignedUserIds = useMemo(
     () => new Set(activityUsers.map((u) => u.id)),
-    [activityUsers]
+    [activityUsers],
   );
   const employeesForSelect = useMemo(
     () => (employees || []).filter((emp) => !assignedUserIds.has(emp.id)),
-    [employees, assignedUserIds]
+    [employees, assignedUserIds],
   );
 
   const fetchActivity = async () => {
@@ -183,11 +186,16 @@ export function ActivityDetails() {
       setStatus(activity.status || "active");
       setDescription(activity.description || "");
 
-      // Convert reportingFields object to rows array
-      const fields = activity.reportingFields || {};
-      const rows = Object.entries(fields).map(([key, type]) => ({ key, type }));
+      // Convert reportingFields array to rows array
+      const fields = activity.reportingFields || [];
       setReportingFieldsRows(
-        rows.length > 0 ? rows : [{ key: "", type: "text" }]
+        fields.length > 0
+          ? fields.map((f) => ({
+              name: f.name,
+              type: f.type,
+              value: String(f.value),
+            }))
+          : [{ name: "", type: "text", value: "" }],
       );
     }
   }, [activity, isUpdateDialogOpen]);
@@ -195,11 +203,27 @@ export function ActivityDetails() {
   const handleUpdateSubmit = async () => {
     if (!activityId) return;
 
-    const reportingFields: Record<string, string> = {};
-    reportingFieldsRows
-      .filter((r) => r.key.trim().length > 0)
-      .forEach((r) => {
-        reportingFields[r.key.trim()] = r.type;
+    const reportingFields = reportingFieldsRows
+      .filter((r) => r.name.trim().length > 0)
+      .map((r) => {
+        let value: string | number = r.value;
+
+        // Convert value based on type
+        if (r.type === "number") {
+          value = Number(r.value) || 0;
+        } else if (r.type === "boolean") {
+          value =
+            r.value.toLowerCase() === "true" || r.value === "1"
+              ? "true"
+              : "false";
+        }
+        // For text, date, and other types, keep as string
+
+        return {
+          name: r.name.trim(),
+          type: r.type,
+          value,
+        };
       });
 
     try {
@@ -271,7 +295,10 @@ export function ActivityDetails() {
     if (!activityId || !userToRemove) return;
 
     try {
-      const response = await activityService.removeUserFromActivity(activityId, userToRemove.id);
+      const response = await activityService.removeUserFromActivity(
+        activityId,
+        userToRemove.id,
+      );
 
       if (response.success) {
         // Refresh activity users list
@@ -459,7 +486,7 @@ export function ActivityDetails() {
                     id="activity-description"
                     className="col-span-3"
                     placeholder={t(
-                      "subProjectActivities.descriptionPlaceholder"
+                      "subProjectActivities.descriptionPlaceholder",
                     )}
                     rows={3}
                     value={description}
@@ -475,14 +502,15 @@ export function ActivityDetails() {
                       <div key={idx} className="flex gap-2 items-center">
                         <Input
                           placeholder={t(
-                            "subProjectActivities.fieldKeyPlaceholder"
+                            "subProjectActivities.fieldNamePlaceholder",
                           )}
-                          value={row.key}
+                          value={row.name}
                           onChange={(e) => {
                             const next = [...reportingFieldsRows];
-                            next[idx] = { ...next[idx], key: e.target.value };
+                            next[idx] = { ...next[idx], name: e.target.value };
                             setReportingFieldsRows(next);
                           }}
+                          className="flex-1"
                         />
                         <Select
                           value={row.type}
@@ -492,10 +520,10 @@ export function ActivityDetails() {
                             setReportingFieldsRows(next);
                           }}
                         >
-                          <SelectTrigger className="w-[160px]">
+                          <SelectTrigger className="w-[120px]">
                             <SelectValue
                               placeholder={t(
-                                "subProjectActivities.typePlaceholder"
+                                "subProjectActivities.typePlaceholder",
                               )}
                             />
                           </SelectTrigger>
@@ -512,26 +540,26 @@ export function ActivityDetails() {
                             <SelectItem value="date">
                               {t("subProjectActivities.date")}
                             </SelectItem>
-                            <SelectItem value="time">
-                              {t("subProjectActivities.time")}
-                            </SelectItem>
-                            <SelectItem value="datetime">
-                              {t("subProjectActivities.datetime")}
-                            </SelectItem>
-                            <SelectItem value="select">
-                              {t("subProjectActivities.select")}
-                            </SelectItem>
-                            <SelectItem value="multiselect">
-                              {t("subProjectActivities.multiselect")}
-                            </SelectItem>
                           </SelectContent>
                         </Select>
+                        <Input
+                          placeholder={t(
+                            "subProjectActivities.valuePlaceholder",
+                          )}
+                          value={row.value}
+                          onChange={(e) => {
+                            const next = [...reportingFieldsRows];
+                            next[idx] = { ...next[idx], value: e.target.value };
+                            setReportingFieldsRows(next);
+                          }}
+                          className="flex-1"
+                        />
                         <Button
                           variant="ghost"
                           className="hover:bg-[#E0F2FE] hover:text-black"
                           onClick={() => {
                             const next = reportingFieldsRows.filter(
-                              (_, i) => i !== idx
+                              (_, i) => i !== idx,
                             );
                             setReportingFieldsRows(next);
                           }}
@@ -545,7 +573,7 @@ export function ActivityDetails() {
                       onClick={() =>
                         setReportingFieldsRows([
                           ...reportingFieldsRows,
-                          { key: "", type: "text" },
+                          { name: "", type: "text", value: "" },
                         ])
                       }
                     >
@@ -722,18 +750,22 @@ export function ActivityDetails() {
                 {t("activityDetails.reportingFields")}
               </h2>
             </div>
-            {activity.reportingFields &&
-            Object.keys(activity.reportingFields).length > 0 ? (
+            {activity.reportingFields && activity.reportingFields.length > 0 ? (
               <div className="grid gap-3 md:grid-cols-2">
-                {Object.entries(activity.reportingFields).map(([key, type]) => (
+                {activity.reportingFields.map((field, idx) => (
                   <div
-                    key={key}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    key={idx}
+                    className="flex flex-col p-3 bg-gray-50 rounded-lg space-y-1"
                   >
-                    <span className="font-medium">{key}</span>
-                    <Badge variant="outline" className="bg-white">
-                      {type}
-                    </Badge>
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{field.name}</span>
+                      <Badge variant="outline" className="bg-white">
+                        {field.type}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {String(field.value)}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -807,7 +839,10 @@ export function ActivityDetails() {
                                   </AvatarFallback>
                                 </Avatar>
                                 <span className="text-sm">{fullName}</span>
-                                <Badge variant="secondary" className="text-[10px]">
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px]"
+                                >
                                   {emp.email}
                                 </Badge>
                               </div>
@@ -869,7 +904,9 @@ export function ActivityDetails() {
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
                         <Badge
-                          variant={user.status === "active" ? "default" : "outline"}
+                          variant={
+                            user.status === "active" ? "default" : "outline"
+                          }
                           className={
                             user.status === "active"
                               ? "text-[#4AA785] bg-[#DEF8EE]"
@@ -900,7 +937,10 @@ export function ActivityDetails() {
       </Card>
 
       {/* Remove User Confirmation Dialog */}
-      <Dialog open={isRemoveUserDialogOpen} onOpenChange={setIsRemoveUserDialogOpen}>
+      <Dialog
+        open={isRemoveUserDialogOpen}
+        onOpenChange={setIsRemoveUserDialogOpen}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{t("activityDetails.removeUserTitle")}</DialogTitle>
@@ -977,6 +1017,6 @@ export function ActivityDetails() {
       </Card>
     </div>
   );
-};
+}
 
 export default ActivityDetails;

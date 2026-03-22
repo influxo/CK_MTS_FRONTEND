@@ -19,12 +19,12 @@ class ProjectService {
   private projectEndpoint = `${this.baseUrl}/projects`;
 
   async createProject(
-    project: CreateProjectRequest
+    project: CreateProjectRequest,
   ): Promise<CreateProjectResponse> {
     try {
       const response = await axiosInstance.post<CreateProjectResponse>(
         `${this.projectEndpoint}`,
-        project
+        project,
       );
 
       return response.data;
@@ -43,14 +43,14 @@ class ProjectService {
   async getAllProjects(): Promise<GetProjectsResponse> {
     try {
       const response = await axiosInstance.get<GetProjectsResponse>(
-        `${this.projectEndpoint}`
+        `${this.projectEndpoint}`,
       );
-      console.log('Projects API Response:', response.data);
+
       return response.data;
     } catch (error: any) {
-      console.error('Projects API Error:', error);
+      console.error("Projects API Error:", error);
       if (error.response) {
-        console.error('Error response:', error.response.data);
+        console.error("Error response:", error.response.data);
         return error.response.data as GetProjectsResponse;
       }
       return {
@@ -63,12 +63,12 @@ class ProjectService {
 
   async updateProject(
     id: string,
-    body: UpdateProjectRequest
+    body: UpdateProjectRequest,
   ): Promise<UpdateProjectResponse> {
     try {
       const response = await axiosInstance.put<UpdateProjectResponse>(
         `${this.projectEndpoint}/${encodeURIComponent(id)}`,
-        body
+        body,
       );
       return response.data;
     } catch (error: any) {
@@ -83,12 +83,12 @@ class ProjectService {
   }
 
   async assignUserToProject(
-    req: AssignUserToProjectRequest
+    req: AssignUserToProjectRequest,
   ): Promise<AssignUserToProjectResponse> {
     try {
       const response = await axiosInstance.post<AssignUserToProjectResponse>(
         `${this.projectEndpoint}/${encodeURIComponent(req.projectId)}/users`,
-        { userId: req.userId }
+        { userId: req.userId },
       );
       toast.success("Punëtori u shtua me sukses", {
         style: {
@@ -126,7 +126,7 @@ class ProjectService {
   async getProjectUsers(projectId: string): Promise<GetProjectUsersResponse> {
     try {
       const response = await axiosInstance.get<GetProjectUsersResponse>(
-        `${this.projectEndpoint}/${encodeURIComponent(projectId)}/users`
+        `${this.projectEndpoint}/${encodeURIComponent(projectId)}/users`,
       );
       return response.data;
     } catch (error: any) {
@@ -142,14 +142,14 @@ class ProjectService {
   }
 
   async removeUserFromProject(
-    req: RemoveUserFromProjectRequest
+    req: RemoveUserFromProjectRequest,
   ): Promise<RemoveUserFromProjectResponse> {
     try {
       const response =
         await axiosInstance.delete<RemoveUserFromProjectResponse>(
           `${this.projectEndpoint}/${encodeURIComponent(
-            req.projectId
-          )}/users/${encodeURIComponent(req.userId)}`
+            req.projectId,
+          )}/users/${encodeURIComponent(req.userId)}`,
         );
       toast.success("Punëtori u largua nga projekti me sukses", {
         style: {
