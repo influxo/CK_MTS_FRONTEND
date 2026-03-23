@@ -1665,6 +1665,7 @@ export function BeneficiariesList({
                 </span>
               </div>
               <Button
+                className="bg-[#E0F2FE]"
                 onClick={() => {
                   setIsAddDialogOpen(false);
                   resetForm();
@@ -1676,7 +1677,7 @@ export function BeneficiariesList({
               <Button
                 onClick={handleCreateSubmit}
                 disabled={!isFormValid || createLoading || associateLoading}
-                className="disabled:opacity-50 disabled:cursor-not-allowed"
+                className="disabled:opacity-50 bg-[#0073e6] text-white disabled:cursor-not-allowed"
               >
                 {createLoading
                   ? t("beneficiaries.creating")

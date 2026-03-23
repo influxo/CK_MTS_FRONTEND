@@ -175,27 +175,8 @@ export function Topbar({ title, toggleMobileSidebar }: TopbarProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Mobile Search */}
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="sm:hidden">
-              <Search className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="top" className="pt-10">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search anything..." className="pl-9 w-full" />
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        {/* No theme toggle - light mode only */}
-
-        {/* Language Switcher */}
         <LanguageSwitcher />
 
-        {/* Create Project */}
         {isSysOrSuperAdmin && (
           <Dialog
             open={isCreateDialogOpen}

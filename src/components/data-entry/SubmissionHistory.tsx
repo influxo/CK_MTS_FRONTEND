@@ -232,15 +232,6 @@ export function SubmissionHistory({
   return (
     <div className="space-y-6">
       <div className="flex gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          className="bg-[#E0F2FE] border-0 transition-transform duration-200 ease-in-out hover:scale-105 hover:-translate-y-[1px] text-black"
-          onClick={onBack}
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          {t("dataEntry.backToForms")}
-        </Button>
         <div>
           <h2>{t("dataEntry.submissionHistory")}</h2>
           <p className="text-muted-foreground">

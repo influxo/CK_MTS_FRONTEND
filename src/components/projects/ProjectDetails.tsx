@@ -1267,6 +1267,7 @@ export function ProjectDetails() {
                   {t("projectDetails.cancel")}
                 </Button>
                 <Button
+                  className="bg-[#0073e6] border-0 text-white"
                   onClick={async () => {
                     if (!id) return;
                     const payload = {
@@ -1352,19 +1353,19 @@ export function ProjectDetails() {
               <h3 className="text-xl font-normal  capitalize">
                 {enhancedProject.description}
               </h3>
-              {enhancedProject.city && (
+              {/* {enhancedProject.city && (
                 <div className="flex items-center gap-1 mt-2">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
                     {enhancedProject.city}
                   </span>
                 </div>
-              )}
+              )} */}
             </div>
 
             <div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-[#E5ECF6] rounded-xl p-4 sm:col-span-2">
+                <div className="bg-[#E5ECF6] rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">
                     {t("projectDetails.timeline")}
                   </div>
@@ -1377,6 +1378,18 @@ export function ProjectDetails() {
                     </span>
                   </div>
                 </div>
+
+                {enhancedProject.city && (
+                  <div className="bg-[#E5ECF6] rounded-xl p-4">
+                    <div className="text-sm text-muted-foreground">
+                      {t("projectDetails.location")}
+                    </div>
+                    <div className="flex items-center gap-1 mt-1">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span>{enhancedProject.city}</span>
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-[#E5ECF6] rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">
