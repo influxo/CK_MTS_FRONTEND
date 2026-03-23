@@ -17,6 +17,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { useTranslation } from "../../hooks/useTranslation";
+import type { ChronicCondition } from "../../services/constants/constantsService";
+import { fetchChronicConditions } from "../../services/constants/constantsService";
 import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
 import type { AppDispatch, RootState } from "../../store";
 import { selectCurrentUser } from "../../store/slices/authSlice";
@@ -487,6 +489,9 @@ export function BeneficiariesList({
   const [disabilitiesInput, setDisabilitiesInput] = useState("");
   const [chronicConditionsInput, setChronicConditionsInput] = useState("");
   const [medicationsInput, setMedicationsInput] = useState("");
+  const [availableChronicConditions, setAvailableChronicConditions] = useState<
+    ChronicCondition[]
+  >([]);
   const [bloodTypeInput, setBloodTypeInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
   const [ethnicity, setEthnicity] = useState("");
@@ -624,6 +629,21 @@ export function BeneficiariesList({
       dispatch(fetchUserProjectsByUserId(String(user.id)) as any);
     }
   }, [dispatch, isSysOrSuperAdmin, user?.id, userProjectsTree?.length]);
+
+  // Fetch chronic conditions from API
+  useEffect(() => {
+    const loadChronicConditions = async () => {
+      try {
+        const response = await fetchChronicConditions();
+        if (response.success && response.data) {
+          setAvailableChronicConditions(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch chronic conditions:", error);
+      }
+    };
+    loadChronicConditions();
+  }, []);
 
   // Close dialog and refresh list on successful create
   useEffect(() => {
@@ -778,8 +798,9 @@ export function BeneficiariesList({
       ];
       const chronicConditionsFinal = [
         ...chronicConditions,
-        ...(chronicConditionsInput.trim()
-          ? [chronicConditionsInput.trim()]
+        ...(chronicConditionsInput &&
+        !chronicConditions.includes(chronicConditionsInput)
+          ? [chronicConditionsInput]
           : []),
       ];
       const medicationsFinal = [
@@ -1351,36 +1372,42 @@ export function BeneficiariesList({
                   </Label>
                   <div className="col-span-3 space-y-2">
                     <div className="flex gap-2">
-                      <Input
-                        id="chronicConditions"
-                        placeholder={t("beneficiaries.typeAndPressEnter")}
+                      <Select
                         value={chronicConditionsInput}
-                        onChange={(e) =>
-                          setChronicConditionsInput(e.target.value)
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            addItem(
-                              chronicConditionsInput,
-                              chronicConditions,
-                              setChronicConditions,
-                            );
-                            setChronicConditionsInput("");
-                          }
-                        }}
-                      />
+                        onValueChange={(val) => setChronicConditionsInput(val)}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue
+                            placeholder={t("beneficiaries.selectCondition")}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableChronicConditions.map((condition) => (
+                            <SelectItem key={condition.id} value={condition.id}>
+                              {condition.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => {
-                          addItem(
-                            chronicConditionsInput,
-                            chronicConditions,
-                            setChronicConditions,
-                          );
-                          setChronicConditionsInput("");
+                          if (
+                            chronicConditionsInput &&
+                            !chronicConditions.includes(chronicConditionsInput)
+                          ) {
+                            setChronicConditions([
+                              ...chronicConditions,
+                              chronicConditionsInput,
+                            ]);
+                            setChronicConditionsInput("");
+                          }
                         }}
+                        disabled={
+                          !chronicConditionsInput ||
+                          chronicConditions.includes(chronicConditionsInput)
+                        }
                       >
                         <Plus className="h-4 w-4 mr-1" />{" "}
                         {t("beneficiaries.add")}
@@ -1388,28 +1415,34 @@ export function BeneficiariesList({
                     </div>
                     {chronicConditions.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {chronicConditions.map((c, idx) => (
-                          <div
-                            key={`${c}-${idx}`}
-                            className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
-                          >
-                            <span>{c}</span>
-                            <button
-                              type="button"
-                              className="hover:text-red-600"
-                              onClick={() =>
-                                removeItemAt(
-                                  idx,
-                                  chronicConditions,
-                                  setChronicConditions,
-                                )
-                              }
-                              aria-label={`Remove ${c}`}
+                        {chronicConditions.map((conditionId, idx) => {
+                          const condition = availableChronicConditions.find(
+                            (c) => c.id === conditionId,
+                          );
+                          const displayLabel = condition?.label || conditionId;
+                          return (
+                            <div
+                              key={`${conditionId}-${idx}`}
+                              className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
                             >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
+                              <span>{displayLabel}</span>
+                              <button
+                                type="button"
+                                className="hover:text-red-600"
+                                onClick={() =>
+                                  removeItemAt(
+                                    idx,
+                                    chronicConditions,
+                                    setChronicConditions,
+                                  )
+                                }
+                                aria-label={`Remove ${displayLabel}`}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

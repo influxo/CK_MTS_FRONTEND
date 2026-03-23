@@ -10,6 +10,19 @@ const axiosInstance = axios.create({
     "Cache-Control": "no-cache",
     "ngrok-skip-browser-warning": "true", // Skip ngrok browser warning
   },
+  paramsSerializer: (params: any) => {
+    const urlParams = new URLSearchParams();
+    Object.keys(params).forEach((key) => {
+      const value = params[key];
+      if (value === undefined || value === null) return;
+      if (Array.isArray(value)) {
+        value.forEach((v) => urlParams.append(key, v));
+      } else {
+        urlParams.append(key, value);
+      }
+    });
+    return urlParams.toString();
+  },
 });
 
 // Request interceptor
@@ -30,7 +43,7 @@ axiosInstance.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor
@@ -47,13 +60,17 @@ axiosInstance.interceptors.response.use(
       (originalRequest as any)._retry = true;
 
       // Only redirect to login if the failed request was authenticated
-      const headers = (originalRequest && originalRequest.headers) || {} as any;
+      const headers =
+        (originalRequest && originalRequest.headers) || ({} as any);
       const hasAuthHeader =
-        Boolean((headers as any)["Authorization"]) || Boolean((headers as any)["authorization"]);
+        Boolean((headers as any)["Authorization"]) ||
+        Boolean((headers as any)["authorization"]);
 
       // Define public routes where we should not force a redirect
       const currentPath = window.location.pathname;
-      const isPublicPath = ["/", "/login", "/accept-invitation"].includes(currentPath);
+      const isPublicPath = ["/", "/login", "/accept-invitation"].includes(
+        currentPath,
+      );
 
       if (hasAuthHeader && !isPublicPath) {
         localStorage.removeItem("token");
@@ -66,7 +83,7 @@ axiosInstance.interceptors.response.use(
     // e.g., show toast notifications for network errors
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;

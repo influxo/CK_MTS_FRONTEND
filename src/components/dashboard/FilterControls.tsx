@@ -1,5 +1,31 @@
+import { Filter, RotateCcw } from "lucide-react";
 import * as React from "react";
-import { Download, Filter, RotateCcw } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { useTranslation } from "../../hooks/useTranslation";
+import formTemplatesApi from "../../services/forms/formServices";
+import type { Project } from "../../services/projects/projectModels";
+import { selectCurrentUser } from "../../store/slices/authSlice";
+import { fetchForms, selectAllForms } from "../../store/slices/formsSlice";
+import {
+  resetFilters,
+  selectMetricsFilters,
+  setFilters,
+} from "../../store/slices/serviceMetricsSlice";
+import {
+  getAllServices,
+  getEntityServices,
+  selectAllServices,
+  selectEntityServices,
+  selectServicesCurrentPage,
+  selectServicesTotalPages,
+} from "../../store/slices/serviceSlice";
+import {
+  fetchSubProjectsByProjectId,
+  selectAllSubprojects,
+  selectSubprojectsLoading,
+} from "../../store/slices/subProjectSlice";
+import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
+import { KOSOVO_CITIES } from "../../utils/cities";
 import { Button } from "../ui/button/button";
 import {
   Select,
@@ -8,31 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/form/select";
-import type { Project } from "../../services/projects/projectModels";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  setFilters,
-  selectMetricsFilters,
-  resetFilters,
-} from "../../store/slices/serviceMetricsSlice";
-import {
-  fetchSubProjectsByProjectId,
-  selectAllSubprojects,
-  selectSubprojectsLoading,
-} from "../../store/slices/subProjectSlice";
-import {
-  getAllServices,
-  getEntityServices,
-  selectAllServices,
-  selectEntityServices,
-  selectServicesTotalPages,
-  selectServicesCurrentPage,
-} from "../../store/slices/serviceSlice";
-import { fetchForms, selectAllForms } from "../../store/slices/formsSlice";
-import formTemplatesApi from "../../services/forms/formServices";
-import { selectCurrentUser } from "../../store/slices/authSlice";
-import { useTranslation } from "../../hooks/useTranslation";
-import { selectUserProjectsTree } from "../../store/slices/userProjectsSlice";
 
 export function FilterControls({ projects }: { projects: Project[] }) {
   const { t } = useTranslation();
@@ -48,6 +49,13 @@ export function FilterControls({ projects }: { projects: Project[] }) {
 
   const [projectId, setProjectId] = React.useState<string>("");
   const [subprojectId, setSubprojectId] = React.useState<string>("");
+  const [city, setCity] = React.useState<string>("");
+  const [selectedProjectIds, setSelectedProjectIds] = React.useState<
+    Set<string>
+  >(new Set());
+  const [selectedSubprojectIds, setSelectedSubprojectIds] = React.useState<
+    Set<string>
+  >(new Set());
   const [timePreset, setTimePreset] = React.useState<string>("last-30-days");
   const [metric, setMetric] = React.useState<string>(
     metricsFilters.metric || "submissions",
@@ -89,37 +97,76 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   }, [normalizedRoles]);
   const allowedSubprojectIds = React.useMemo(() => {
     try {
+      if (selectedProjectIds.size !== 1) return new Set<string>();
+      const singleProjectId = Array.from(selectedProjectIds)[0];
       const proj = (userProjectsTree || []).find(
-        (p: any) => p.id === projectId,
+        (p: any) => p.id === singleProjectId,
       );
       const ids = (proj?.subprojects || []).map((sp: any) => sp.id);
       return new Set<string>(ids);
     } catch {
       return new Set<string>();
     }
-  }, [userProjectsTree, projectId]);
+  }, [userProjectsTree, selectedProjectIds]);
 
-  // Fetch subprojects when project changes
-  React.useEffect(() => {
-    if (projectId) {
-      dispatch(fetchSubProjectsByProjectId({ projectId }));
+  // Compute filtered projects/subprojects based on city
+  const filteredProjects = React.useMemo(() => {
+    if (!city) return projects;
+    return projects.filter((p) => p.city === city);
+  }, [projects, city]);
+
+  // Filter subprojects by selected project (only when exactly 1 project is selected)
+  const filteredSubprojects = React.useMemo(() => {
+    if (selectedProjectIds.size !== 1) return [];
+    const singleProjectId = Array.from(selectedProjectIds)[0];
+    const baseFiltered = subprojects.filter(
+      (sp) => sp.projectId === singleProjectId,
+    );
+
+    if (city) {
+      const parentProject = projects.find((p) => p.id === singleProjectId);
+      if (parentProject?.city !== city) return [];
     }
-  }, [dispatch, projectId]);
+
+    return baseFiltered.filter((sp) =>
+      !isSubProjectManager ? true : allowedSubprojectIds.has(sp.id),
+    );
+  }, [
+    subprojects,
+    selectedProjectIds,
+    city,
+    projects,
+    isSubProjectManager,
+    allowedSubprojectIds,
+  ]);
+
+  // Fetch subprojects when exactly 1 project is selected
+  React.useEffect(() => {
+    if (selectedProjectIds.size === 1) {
+      const singleProjectId = Array.from(selectedProjectIds)[0];
+      dispatch(fetchSubProjectsByProjectId({ projectId: singleProjectId }));
+    }
+  }, [dispatch, selectedProjectIds]);
 
   // Fetch services globally depending on selected entity (project/subproject)
   React.useEffect(() => {
-    if (subprojectId) {
+    if (selectedSubprojectIds.size === 1) {
+      const singleSubprojectId = Array.from(selectedSubprojectIds)[0];
       dispatch(
-        getEntityServices({ entityId: subprojectId, entityType: "subproject" }),
+        getEntityServices({
+          entityId: singleSubprojectId,
+          entityType: "subproject",
+        }),
       );
-    } else if (projectId) {
+    } else if (selectedProjectIds.size === 1) {
+      const singleProjectId = Array.from(selectedProjectIds)[0];
       dispatch(
-        getEntityServices({ entityId: projectId, entityType: "project" }),
+        getEntityServices({ entityId: singleProjectId, entityType: "project" }),
       );
     } else {
       dispatch(getAllServices({ page: 1, limit: 100 }));
     }
-  }, [dispatch, projectId, subprojectId]);
+  }, [dispatch, selectedProjectIds, selectedSubprojectIds]);
 
   // Fetch form templates once
   React.useEffect(() => {
@@ -131,11 +178,13 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     const load = async () => {
       try {
         const params: any = { page: templatesPage, limit: 100 };
-        if (subprojectId) {
-          params.subprojectId = subprojectId;
+        if (selectedSubprojectIds.size === 1) {
+          const singleSubprojectId = Array.from(selectedSubprojectIds)[0];
+          params.subprojectId = singleSubprojectId;
           params.entityType = "subproject";
-        } else if (projectId) {
-          params.projectId = projectId;
+        } else if (selectedProjectIds.size === 1) {
+          const singleProjectId = Array.from(selectedProjectIds)[0];
+          params.projectId = singleProjectId;
           params.entityType = "project";
         }
         const res = await formTemplatesApi.getFormTemplates(params);
@@ -159,43 +208,137 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     };
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templatesPage, projectId, subprojectId]);
+  }, [templatesPage, selectedProjectIds, selectedSubprojectIds]);
 
   // Reset templates page when entity scope changes
   React.useEffect(() => {
     setTemplatesPage(1);
-  }, [projectId, subprojectId]);
+  }, [selectedProjectIds, selectedSubprojectIds]);
 
   // Handlers
-  const onProjectChange = (value: string) => {
+  const onCityChange = (value: string) => {
     if (value === "all") {
+      setCity("");
+      setSelectedProjectIds(new Set());
+      setSelectedSubprojectIds(new Set());
       setProjectId("");
       setSubprojectId("");
-      dispatch(setFilters({ entityId: undefined, entityType: undefined }));
+      dispatch(
+        setFilters({
+          projectIds: undefined,
+          subprojectIds: undefined,
+        }),
+      );
       return;
     }
-    setProjectId(value);
+
+    setCity(value);
+    setSelectedProjectIds(new Set());
+    setSelectedSubprojectIds(new Set());
+    setProjectId("");
     setSubprojectId("");
-    dispatch(setFilters({ entityId: value, entityType: "project" }));
-    // Clear dependent filters
+
+    const matchingProjectIds = projects
+      .filter((p) => p.city === value)
+      .map((p) => p.id);
+
+    dispatch(
+      setFilters({
+        projectIds:
+          matchingProjectIds.length > 0 ? matchingProjectIds : undefined,
+        subprojectIds: undefined,
+      }),
+    );
+  };
+
+  const onProjectToggle = (projectId: string, checked: boolean) => {
+    const newSelection = new Set(selectedProjectIds);
+
+    if (checked) {
+      newSelection.add(projectId);
+    } else {
+      newSelection.delete(projectId);
+    }
+
+    setSelectedProjectIds(newSelection);
+    setSubprojectId("");
+    setSelectedSubprojectIds(new Set());
+
+    if (newSelection.size === 0) {
+      if (city) {
+        const matchingIds = filteredProjects.map((p) => p.id);
+        dispatch(
+          setFilters({
+            projectIds: matchingIds.length > 0 ? matchingIds : undefined,
+            subprojectIds: undefined,
+          }),
+        );
+      } else {
+        dispatch(
+          setFilters({
+            projectIds: undefined,
+            subprojectIds: undefined,
+          }),
+        );
+      }
+    } else {
+      dispatch(
+        setFilters({
+          projectIds: Array.from(newSelection),
+          subprojectIds: undefined,
+        }),
+      );
+    }
+
     setServiceId("");
     setFormTemplateId("");
     dispatch(setFilters({ serviceId: undefined, formTemplateId: undefined }));
   };
 
-  const onSubprojectChange = (value: string) => {
-    if (value === "all") {
-      setSubprojectId("");
-      if (projectId) {
-        dispatch(setFilters({ entityId: projectId, entityType: "project" }));
-      } else {
-        dispatch(setFilters({ entityId: undefined, entityType: undefined }));
-      }
-      return;
+  const onSubprojectToggle = (subprojectId: string, checked: boolean) => {
+    const newSelection = new Set(selectedSubprojectIds);
+
+    if (checked) {
+      newSelection.add(subprojectId);
+    } else {
+      newSelection.delete(subprojectId);
     }
-    setSubprojectId(value);
-    dispatch(setFilters({ entityId: value, entityType: "subproject" }));
-    // Clear dependent filters
+
+    setSelectedSubprojectIds(newSelection);
+
+    if (newSelection.size === 0) {
+      if (selectedProjectIds.size > 0) {
+        dispatch(
+          setFilters({
+            projectIds: Array.from(selectedProjectIds),
+            subprojectIds: undefined,
+          }),
+        );
+      } else if (city) {
+        const matchingIds = filteredProjects.map((p) => p.id);
+        dispatch(
+          setFilters({
+            projectIds: matchingIds,
+            subprojectIds: undefined,
+          }),
+        );
+      } else {
+        dispatch(
+          setFilters({
+            projectIds: undefined,
+            subprojectIds: undefined,
+          }),
+        );
+      }
+    } else {
+      dispatch(
+        setFilters({
+          subprojectIds: Array.from(newSelection),
+          projectIds: undefined,
+        }),
+      );
+    }
+
     setServiceId("");
     setFormTemplateId("");
     dispatch(setFilters({ serviceId: undefined, formTemplateId: undefined }));
@@ -249,6 +392,9 @@ export function FilterControls({ projects }: { projects: Project[] }) {
     // Reset all local filter states
     setProjectId("");
     setSubprojectId("");
+    setCity("");
+    setSelectedProjectIds(new Set());
+    setSelectedSubprojectIds(new Set());
     setTimePreset("last-30-days");
     setMetric("submissions");
     setServiceId("");
@@ -263,60 +409,206 @@ export function FilterControls({ projects }: { projects: Project[] }) {
   };
 
   const servicesForSelect =
-    subprojectId || projectId ? entityServices : allServices;
+    selectedSubprojectIds.size === 1 || selectedProjectIds.size === 1
+      ? entityServices
+      : allServices;
 
   return (
     <div className="flex flex-col  bg-[#F7F9FB]   drop-shadow-sm shadow-gray-50 gap-4 mb-6 p-4 bg-card rounded-lg ">
       <div className="flex flex-row flex-wrap gap-4 items-center w-full">
-        <Select value={projectId || "all"} onValueChange={onProjectChange}>
+        {/* City Filter */}
+        <Select value={city || "all"} onValueChange={onCityChange}>
           <SelectTrigger
-            className="w-full md:w-[180px] bg-white p-2 rounded-md  border-gray-100
+            className="w-full md:w-[180px] bg-white p-2 rounded-md border-gray-100
              transition-transform duration-200 ease-in-out
-             hover:scale-[1.02] hover:-translate-y-[1px] "
+             hover:scale-[1.02] hover:-translate-y-[1px]"
           >
-            <SelectValue placeholder={t("common.selectProject")} />
+            <SelectValue placeholder="Select City" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("common.allProjects")}</SelectItem>
-            {projects.map((project) => (
-              <SelectItem key={project.id} value={project.id}>
-                {project.name}
+          <SelectContent className="max-h-64">
+            <SelectItem value="all">All Cities</SelectItem>
+            {KOSOVO_CITIES.map((cityName) => (
+              <SelectItem key={cityName} value={cityName}>
+                {cityName}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <Select
-          value={subprojectId || "all"}
-          onValueChange={onSubprojectChange}
-          disabled={!projectId}
+          value={selectedProjectIds.size === 0 ? "all" : "selected"}
+          onValueChange={() => {}}
+        >
+          <SelectTrigger
+            className="w-full md:w-[180px] bg-white p-2 rounded-md  border-gray-100
+             transition-transform duration-200 ease-in-out
+             hover:scale-[1.02] hover:-translate-y-[1px] "
+          >
+            <SelectValue placeholder={t("common.selectProject")}>
+              {selectedProjectIds.size === 0
+                ? t("common.allProjects")
+                : `${selectedProjectIds.size} selected`}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all" onSelect={(e) => e.preventDefault()}>
+              <div
+                className="flex items-center gap-2 cursor-pointer"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedProjectIds(new Set());
+                  if (city) {
+                    const matchingIds = filteredProjects.map((p) => p.id);
+                    dispatch(
+                      setFilters({
+                        entityIds: matchingIds,
+                        entityType: "project",
+                        entityId: undefined,
+                      }),
+                    );
+                  } else {
+                    dispatch(
+                      setFilters({
+                        entityId: undefined,
+                        entityIds: undefined,
+                        entityType: undefined,
+                      }),
+                    );
+                  }
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedProjectIds.size === 0}
+                  readOnly
+                  className="rounded border-gray-300 pointer-events-none"
+                />
+                <span>{t("common.allProjects")}</span>
+              </div>
+            </SelectItem>
+            {filteredProjects.map((project) => (
+              <SelectItem
+                key={project.id}
+                value={project.id}
+                onSelect={(e) => e.preventDefault()}
+              >
+                <div
+                  className="flex items-center gap-2 cursor-pointer"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onProjectToggle(
+                      project.id,
+                      !selectedProjectIds.has(project.id),
+                    );
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedProjectIds.has(project.id)}
+                    readOnly
+                    className="rounded border-gray-300 pointer-events-none"
+                  />
+                  <span>{project.name}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={selectedSubprojectIds.size === 0 ? "all" : "selected"}
+          onValueChange={() => {}}
+          disabled={
+            selectedProjectIds.size === 0 || selectedProjectIds.size > 1
+          }
         >
           <SelectTrigger
             className="w-full md:w-[180px] bg-white border-0 border-gray-100 p-2 rounded-md 
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px] "
           >
-            <SelectValue placeholder={t("subProjects.selectSubProject")} />
+            <SelectValue placeholder={t("subProjects.selectSubProject")}>
+              {selectedSubprojectIds.size === 0
+                ? t("subProjectsDetails.allSubProjects")
+                : `${selectedSubprojectIds.size} selected`}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">
-              {t("subProjectsDetails.allSubProjects")}
+            <SelectItem value="all" onSelect={(e) => e.preventDefault()}>
+              <div
+                className="flex items-center gap-2 cursor-pointer"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedSubprojectIds(new Set());
+                  if (selectedProjectIds.size > 0) {
+                    dispatch(
+                      setFilters({
+                        projectIds: Array.from(selectedProjectIds),
+                        subprojectIds: undefined,
+                      }),
+                    );
+                  } else if (city) {
+                    const matchingIds = filteredProjects.map((p) => p.id);
+                    dispatch(
+                      setFilters({
+                        projectIds: matchingIds,
+                        subprojectIds: undefined,
+                      }),
+                    );
+                  } else {
+                    dispatch(
+                      setFilters({
+                        projectIds: undefined,
+                        subprojectIds: undefined,
+                      }),
+                    );
+                  }
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedSubprojectIds.size === 0}
+                  readOnly
+                  className="rounded border-gray-300 pointer-events-none"
+                />
+                <span>{t("subProjectsDetails.allSubProjects")}</span>
+              </div>
             </SelectItem>
             {subprojectsLoading ? (
               <SelectItem value="loading" disabled>
                 {t("common.loading")}
               </SelectItem>
             ) : (
-              subprojects
-                .filter((sp) => sp.projectId === projectId)
-                .filter((sp) =>
-                  !isSubProjectManager ? true : allowedSubprojectIds.has(sp.id),
-                )
-                .map((sp) => (
-                  <SelectItem key={sp.id} value={sp.id}>
-                    {sp.name}
-                  </SelectItem>
-                ))
+              filteredSubprojects.map((sp) => (
+                <SelectItem
+                  key={sp.id}
+                  value={sp.id}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <div
+                    className="flex items-center gap-2 cursor-pointer"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onSubprojectToggle(
+                        sp.id,
+                        !selectedSubprojectIds.has(sp.id),
+                      );
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSubprojectIds.has(sp.id)}
+                      readOnly
+                      className="rounded border-gray-300 pointer-events-none"
+                    />
+                    <span>{sp.name}</span>
+                  </div>
+                </SelectItem>
+              ))
             )}
           </SelectContent>
         </Select>

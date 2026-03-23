@@ -137,9 +137,13 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     undefined,
   );
 
-  // Local project/subproject UI state
-  const [projectId, setProjectId] = React.useState<string>("");
-  const [subprojectId, setSubprojectId] = React.useState<string>("");
+  // Local project/subproject UI state - multi-select
+  const [selectedProjectIds, setSelectedProjectIds] = React.useState<
+    Set<string>
+  >(new Set());
+  const [selectedSubprojectIds, setSelectedSubprojectIds] = React.useState<
+    Set<string>
+  >(new Set());
   const [hasLocalEntityOverride, setHasLocalEntityOverride] =
     React.useState<boolean>(false);
 
@@ -275,39 +279,44 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
 
   // Resolve projectId from global subproject when needed
   React.useEffect(() => {
-    const { entityId, entityType } = globalFilters as any;
-    if (entityType === "subproject" && entityId) {
+    const { subprojectIds } = globalFilters as any;
+    if (subprojectIds && subprojectIds.length === 1) {
+      const singleSubprojectId = subprojectIds[0];
       (async () => {
-        const res = await subProjectService.getSubProjectById({ id: entityId });
+        const res = await subProjectService.getSubProjectById({
+          id: singleSubprojectId,
+        });
         if (res.success && (res.data as any)?.projectId) {
           setGlobalDerivedProjectId((res.data as any).projectId as string);
         } else {
           setGlobalDerivedProjectId("");
         }
       })();
-    } else if (entityType === "project") {
-      setGlobalDerivedProjectId("");
     } else {
       setGlobalDerivedProjectId("");
     }
   }, [globalFilters]);
 
   // Effective entity IDs for display and data fetching
-  const globalEntityType = globalFilters.entityType as any;
   const globalProjectId =
-    globalEntityType === "project"
-      ? (globalFilters.entityId as string) || ""
+    globalFilters.projectIds && globalFilters.projectIds.length === 1
+      ? globalFilters.projectIds[0]
       : globalDerivedProjectId || "";
   const globalSubprojectId =
-    globalEntityType === "subproject"
-      ? (globalFilters.entityId as string) || ""
+    globalFilters.subprojectIds && globalFilters.subprojectIds.length === 1
+      ? globalFilters.subprojectIds[0]
       : "";
 
+  // For services/templates fetching, only use single IDs
   const effectiveProjectId = hasLocalEntityOverride
-    ? projectId
+    ? selectedProjectIds.size === 1
+      ? Array.from(selectedProjectIds)[0]
+      : ""
     : globalProjectId;
   const effectiveSubprojectId = hasLocalEntityOverride
-    ? subprojectId
+    ? selectedSubprojectIds.size === 1
+      ? Array.from(selectedSubprojectIds)[0]
+      : ""
     : globalSubprojectId;
 
   // Reset services pagination when scope changes (global vs project/subproject)
@@ -366,37 +375,43 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     })();
   }, [effectiveProjectId, isSubProjectManager, userProjectsTree]);
 
-  // Reset local overrides whenever global filters change so globals take precedence again
+  // Sync local filters with global filters when no local override
   React.useEffect(() => {
-    setHasLocalEntityOverride(false);
-    setProjectId("");
-    setSubprojectId("");
-    setMetricLocal(undefined);
-    setServiceIdLocal(undefined);
-    setFormTemplateIdLocal(undefined);
-    setLocalStartDate(undefined);
-    setLocalEndDate(undefined);
-    setGranularityLocal(undefined);
-  }, [globalFilters]);
+    if (!hasLocalEntityOverride) {
+      // Inherit from global filters
+      if (globalFilters.projectIds && globalFilters.projectIds.length > 0) {
+        setSelectedProjectIds(new Set(globalFilters.projectIds));
+      } else {
+        setSelectedProjectIds(new Set());
+      }
 
-  // Reset all local filters when reset button is clicked
+      if (
+        globalFilters.subprojectIds &&
+        globalFilters.subprojectIds.length > 0
+      ) {
+        setSelectedSubprojectIds(new Set(globalFilters.subprojectIds));
+      } else {
+        setSelectedSubprojectIds(new Set());
+      }
+    }
+  }, [
+    globalFilters.projectIds,
+    globalFilters.subprojectIds,
+    hasLocalEntityOverride,
+  ]);
+
+  // Also reset when resetTrigger increments
   React.useEffect(() => {
     if (resetTrigger > 0) {
       setHasLocalEntityOverride(false);
-      setProjectId("");
-      setSubprojectId("");
+      setSelectedProjectIds(new Set());
+      setSelectedSubprojectIds(new Set());
       setMetricLocal(undefined);
       setServiceIdLocal(undefined);
       setFormTemplateIdLocal(undefined);
       setLocalStartDate(undefined);
       setLocalEndDate(undefined);
       setGranularityLocal(undefined);
-      setGranularity("week");
-      setShowMoreLocal(false);
-      setChartType("line");
-      setFiltersOpen(false);
-      setCustomOpen(false);
-      setCustomFrom("");
       setCustomTo("");
       setServicesPage(1);
       setTemplatesPage(1);
@@ -410,12 +425,9 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
         ? "subproject"
         : effectiveProjectId
           ? "project"
-          : (globalFilters.entityType as any) || undefined;
+          : undefined;
       const effectiveEntityId =
-        effectiveSubprojectId ||
-        effectiveProjectId ||
-        globalFilters.entityId ||
-        undefined;
+        effectiveSubprojectId || effectiveProjectId || undefined;
       if (effectiveEntityType && effectiveEntityId) {
         const res = await servicesService.getEntityServices({
           entityId: effectiveEntityId,
@@ -439,8 +451,8 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
   }, [
     effectiveProjectId,
     effectiveSubprojectId,
-    globalFilters.entityId,
-    globalFilters.entityType,
+    globalFilters.projectIds,
+    globalFilters.subprojectIds,
     servicesPage,
   ]);
 
@@ -461,14 +473,24 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
       formTemplateIdLocal !== undefined
         ? formTemplateIdLocal || undefined
         : globalFilters.formTemplateId;
-    const effEntityId = subprojectId || projectId || globalFilters.entityId;
-    const effEntityType = (
-      subprojectId
-        ? "subproject"
-        : projectId
-          ? "project"
-          : globalFilters.entityType
-    ) as any;
+
+    // Use new projectIds/subprojectIds approach
+    let effProjectIds: string[] | undefined = undefined;
+    let effSubprojectIds: string[] | undefined = undefined;
+
+    if (hasLocalEntityOverride) {
+      // Local override: use selected sets
+      if (selectedSubprojectIds.size > 0) {
+        effSubprojectIds = Array.from(selectedSubprojectIds);
+      } else if (selectedProjectIds.size > 0) {
+        effProjectIds = Array.from(selectedProjectIds);
+      }
+    } else {
+      // Use global filters
+      effProjectIds = globalFilters.projectIds;
+      effSubprojectIds = globalFilters.subprojectIds;
+    }
+
     return {
       groupBy: effectiveGroupBy,
       startDate,
@@ -476,8 +498,8 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
       metric: effMetric,
       serviceId: effServiceId,
       formTemplateId: effFormTemplateId,
-      entityId: effEntityId,
-      entityType: effEntityType,
+      projectIds: effProjectIds,
+      subprojectIds: effSubprojectIds,
     } as any;
   }
 
@@ -511,8 +533,9 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     globalFilters,
-    projectId,
-    subprojectId,
+    selectedProjectIds,
+    selectedSubprojectIds,
+    hasLocalEntityOverride,
     metricLocal,
     serviceIdLocal,
     formTemplateIdLocal,
@@ -615,75 +638,154 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
           {/* Local-only filters for Form Submissions: project/subproject always visible; others hidden behind 'More Filters' */}
           <div className="flex flex-col gap-2 w-full lg:w-auto">
             <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
-              {/* Project (local override) */}
+              {/* Project (local override) - Multi-select */}
               <Select
-                value={
-                  hasLocalEntityOverride
-                    ? projectId || "all"
-                    : globalProjectId || "all"
-                }
-                onValueChange={(v) => {
-                  const id = v === "all" ? "" : v;
-                  setProjectId(id);
-                  setSubprojectId("");
-                  setHasLocalEntityOverride(id !== "");
-                  // Clear dependent local filters when switching entity
-                  setServiceIdLocal(undefined);
-                  setFormTemplateIdLocal(undefined);
-                }}
+                value={selectedProjectIds.size === 0 ? "all" : "selected"}
+                onValueChange={() => {}}
               >
                 <SelectTrigger
                   className="w-full sm:w-[180px] bg-white p-2 rounded-md border-gray-100
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                 >
-                  <SelectValue placeholder={t("common.selectProject")} />
+                  <SelectValue placeholder={t("common.selectProject")}>
+                    {selectedProjectIds.size === 0
+                      ? t("common.allProjects")
+                      : `${selectedProjectIds.size} selected`}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t("common.allProjects")}</SelectItem>
+                  <SelectItem value="all" onSelect={(e) => e.preventDefault()}>
+                    <div
+                      className="flex items-center gap-2 cursor-pointer"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Clear local selection and disable override to follow global
+                        setHasLocalEntityOverride(false);
+                        setServiceIdLocal(undefined);
+                        setFormTemplateIdLocal(undefined);
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedProjectIds.size === 0}
+                        readOnly
+                        className="rounded border-gray-300 pointer-events-none"
+                      />
+                      <span>{t("common.allProjects")}</span>
+                    </div>
+                  </SelectItem>
                   {(projects || []).map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
+                    <SelectItem
+                      key={project.id}
+                      value={project.id}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <div
+                        className="flex items-center gap-2 cursor-pointer"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const newSelection = new Set(selectedProjectIds);
+                          if (newSelection.has(project.id)) {
+                            newSelection.delete(project.id);
+                          } else {
+                            newSelection.add(project.id);
+                          }
+                          setSelectedProjectIds(newSelection);
+                          setSelectedSubprojectIds(new Set());
+                          setHasLocalEntityOverride(newSelection.size > 0);
+                          setServiceIdLocal(undefined);
+                          setFormTemplateIdLocal(undefined);
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedProjectIds.has(project.id)}
+                          readOnly
+                          className="rounded border-gray-300 pointer-events-none"
+                        />
+                        <span>{project.name}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-
-              {/* Subproject (local override) */}
+              {/* Subproject (local override) - Multi-select */}
               <Select
-                value={
-                  hasLocalEntityOverride
-                    ? subprojectId || "all"
-                    : globalSubprojectId || "all"
+                value={selectedSubprojectIds.size === 0 ? "all" : "selected"}
+                onValueChange={() => {}}
+                disabled={
+                  selectedProjectIds.size === 0 || selectedProjectIds.size > 1
                 }
-                onValueChange={(v) => {
-                  const id = v === "all" ? "" : v;
-                  setSubprojectId(id);
-                  setHasLocalEntityOverride(id !== "" || projectId !== "");
-                  // Clear dependent local filters when switching entity
-                  setServiceIdLocal(undefined);
-                  setFormTemplateIdLocal(undefined);
-                }}
-                disabled={!effectiveProjectId}
               >
                 <SelectTrigger
                   className="w-full sm:w-[180px] bg-white p-2 rounded-md border-gray-100
              transition-transform duration-200 ease-in-out
              hover:scale-[1.02] hover:-translate-y-[1px]"
                 >
-                  <SelectValue
-                    placeholder={t("subProjects.selectSubProject")}
-                  />
+                  <SelectValue placeholder={t("subProjects.selectSubProject")}>
+                    {selectedSubprojectIds.size === 0
+                      ? t("subProjectsDetails.allSubProjects")
+                      : `${selectedSubprojectIds.size} selected`}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">
-                    {t("subProjectsDetails.allSubProjects")}
+                  <SelectItem value="all" onSelect={(e) => e.preventDefault()}>
+                    <div
+                      className="flex items-center gap-2 cursor-pointer"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedSubprojectIds(new Set());
+                        setHasLocalEntityOverride(selectedProjectIds.size > 0);
+                        setServiceIdLocal(undefined);
+                        setFormTemplateIdLocal(undefined);
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedSubprojectIds.size === 0}
+                        readOnly
+                        className="rounded border-gray-300 pointer-events-none"
+                      />
+                      <span>{t("subProjectsDetails.allSubProjects")}</span>
+                    </div>
                   </SelectItem>
                   {subprojectsOptions
                     .filter((sp) => sp.projectId === effectiveProjectId)
                     .map((sp) => (
-                      <SelectItem key={sp.id} value={sp.id}>
-                        {sp.name}
+                      <SelectItem
+                        key={sp.id}
+                        value={sp.id}
+                        onSelect={(e) => e.preventDefault()}
+                      >
+                        <div
+                          className="flex items-center gap-2 cursor-pointer"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const newSelection = new Set(selectedSubprojectIds);
+                            if (newSelection.has(sp.id)) {
+                              newSelection.delete(sp.id);
+                            } else {
+                              newSelection.add(sp.id);
+                            }
+                            setSelectedSubprojectIds(newSelection);
+                            setHasLocalEntityOverride(true);
+                            setServiceIdLocal(undefined);
+                            setFormTemplateIdLocal(undefined);
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedSubprojectIds.has(sp.id)}
+                            readOnly
+                            className="rounded border-gray-300 pointer-events-none"
+                          />
+                          <span>{sp.name}</span>
+                        </div>
                       </SelectItem>
                     ))}
                 </SelectContent>

@@ -1,21 +1,13 @@
+import { BarChart3, ClipboardList, FolderKanban, Users } from "lucide-react";
+import { useSelector } from "react-redux";
+import { useTranslation } from "../../hooks/useTranslation";
+import { selectSummary } from "../../store/slices/serviceMetricsSlice";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "../ui/data-display/card";
-import { Badge } from "../ui/data-display/badge";
-import {
-  TrendingUp,
-  TrendingDown,
-  Users,
-  FolderKanban,
-  ClipboardList,
-  BarChart3,
-} from "lucide-react";
-import { useSelector } from "react-redux";
-import { selectSummary } from "../../store/slices/serviceMetricsSlice";
-import { useTranslation } from "../../hooks/useTranslation";
 
 export function SummaryMetrics() {
   const { t } = useTranslation();
@@ -35,7 +27,9 @@ export function SummaryMetrics() {
              hover:-translate-y-1 hover:shadow-md    border-0"
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm">{t('dashboard.servicesDelivered')}</CardTitle>
+          <CardTitle className="text-sm">
+            {t("dashboard.servicesDelivered")}
+          </CardTitle>
           <BarChart3 className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -44,14 +38,7 @@ export function SummaryMetrics() {
               <div className="text-2xl">
                 {loading ? "…" : data.totalDeliveries.toLocaleString()}
               </div>
-              <div className="flex items-center text-xs text-muted-foreground">
-                <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                +12% {t('dashboard.fromLastMonth')}
-              </div>
             </div>
-            <Badge variant="secondary" className="  text-black ">
-              Live
-            </Badge>
           </div>
         </CardContent>
       </Card>
@@ -63,7 +50,9 @@ export function SummaryMetrics() {
              hover:-translate-y-1 hover:shadow-md"
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm">{t('dashboard.uniqueBeneficiaries')}</CardTitle>
+          <CardTitle className="text-sm">
+            {t("dashboard.uniqueBeneficiaries")}
+          </CardTitle>
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -72,14 +61,7 @@ export function SummaryMetrics() {
               <div className="text-2xl">
                 {loading ? "…" : data.uniqueBeneficiaries.toLocaleString()}
               </div>
-              <div className="flex items-center text-xs text-muted-foreground">
-                <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                +8% {t('dashboard.fromLastMonth')}
-              </div>
             </div>
-            <Badge variant="secondary" className="text-black">
-              Live
-            </Badge>
           </div>
         </CardContent>
       </Card>
@@ -90,7 +72,9 @@ export function SummaryMetrics() {
              hover:-translate-y-1 hover:shadow-md  drop-shadow-sm shadow-gray-50"
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm">{t('dashboard.uniqueStaff')}</CardTitle>
+          <CardTitle className="text-sm">
+            {t("dashboard.uniqueStaff")}
+          </CardTitle>
           <ClipboardList className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -99,14 +83,7 @@ export function SummaryMetrics() {
               <div className="text-2xl">
                 {loading ? "…" : data.uniqueStaff.toLocaleString()}
               </div>
-              <div className="flex items-center text-xs text-muted-foreground">
-                <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
-                Snapshot
-              </div>
             </div>
-            <Badge variant="secondary" className="  text-black ">
-              Live
-            </Badge>
           </div>
         </CardContent>
       </Card>
@@ -126,14 +103,7 @@ export function SummaryMetrics() {
               <div className="text-2xl">
                 {loading ? "…" : data.uniqueServices.toLocaleString()}
               </div>
-              <div className="flex items-center text-xs text-muted-foreground">
-                <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                Snapshot
-              </div>
             </div>
-            <Badge variant="secondary" className="  text-black ">
-              Live
-            </Badge>
           </div>
         </CardContent>
       </Card>

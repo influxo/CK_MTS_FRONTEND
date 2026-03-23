@@ -674,8 +674,7 @@ export function SubProjectDetails() {
     }
 
     const commonFilters = {
-      entityId: subprojectId,
-      entityType: "subproject" as any,
+      subprojectIds: [subprojectId],
       serviceId: serviceIdLocal,
       formTemplateId: formTemplateIdLocal,
     } as any;
@@ -723,8 +722,7 @@ export function SubProjectDetails() {
       }
       try {
         const res = await serviceMetricsService.getDeliveriesSeries({
-          entityId: subprojectId,
-          entityType: "subproject" as any,
+          subprojectIds: [subprojectId],
           groupBy: granularity,
           metric: "submissions",
           startDate,
