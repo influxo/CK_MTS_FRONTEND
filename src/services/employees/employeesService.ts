@@ -20,7 +20,7 @@ class EmployeesService {
   async getAllEmployees(): Promise<GetEmployeesResponse> {
     try {
       const response = await axiosInstance.get<GetEmployeesResponse>(
-        `${this.employeesEndpoint}`
+        `${this.employeesEndpoint}`,
       );
       return response.data;
     } catch (error: any) {
@@ -38,7 +38,7 @@ class EmployeesService {
   async getEmployeeById(userId: string): Promise<GetEmployeeByIdResponse> {
     try {
       const response = await axiosInstance.get<GetEmployeeByIdResponse>(
-        `${this.employeesEndpoint}/${userId}`
+        `${this.employeesEndpoint}/${userId}`,
       );
       return response.data;
     } catch (error: any) {
@@ -56,12 +56,12 @@ class EmployeesService {
 
   async updateEmployee(
     userId: string,
-    payload: UpdateUserRequest
+    payload: UpdateUserRequest,
   ): Promise<UpdateUserResponse> {
     try {
       const response = await axiosInstance.put<UpdateUserResponse>(
         `${this.employeesEndpoint}/${userId}`,
-        payload
+        payload,
       );
       toast.success("Punëtori u modifikua me sukses", {
         style: {
@@ -94,7 +94,7 @@ class EmployeesService {
   async getUserProjects(userId: string): Promise<GetUserProjectsResponse> {
     try {
       const response = await axiosInstance.get<GetUserProjectsResponse>(
-        `${this.employeesEndpoint}/${userId}/projects`
+        `${this.employeesEndpoint}/${userId}/projects`,
       );
       return response.data;
     } catch (error: any) {
@@ -114,7 +114,7 @@ class EmployeesService {
     try {
       // absolute URL per requirement; relies on axiosInstance to attach token
       const response = await axiosInstance.get<GetMyTeamResponse>(
-        `http://localhost:3001/api/users/my-team`
+        `${this.employeesEndpoint}/my-team`, // Use dynamic URL
       );
       return response.data;
     } catch (error: any) {
@@ -132,7 +132,7 @@ class EmployeesService {
   async deleteEmployee(userId: string): Promise<DeleteUserResponse> {
     try {
       const response = await axiosInstance.delete<DeleteUserResponse>(
-        `${this.employeesEndpoint}/${userId}`
+        `${this.employeesEndpoint}/${userId}`,
       );
       toast.success("Punëtori u fshi me sukses", {
         style: {
@@ -162,12 +162,12 @@ class EmployeesService {
 
   async resetPassword(
     userId: string,
-    payload: ResetPasswordRequest
+    payload: ResetPasswordRequest,
   ): Promise<ResetPasswordResponse> {
     try {
       const response = await axiosInstance.post<ResetPasswordResponse>(
         `${this.employeesEndpoint}/${userId}/reset-password`,
-        payload
+        payload,
       );
       toast.success("Fjalëkalimi u rivendos me sukses", {
         style: {

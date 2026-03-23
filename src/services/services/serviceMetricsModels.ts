@@ -1,7 +1,10 @@
 export type TimeUnit = "day" | "week" | "month" | "quarter" | "year";
 export type GroupField = "service" | "user" | "beneficiary";
 export type GroupedByKey = "serviceId" | "staffUserId" | "beneficiaryId" | null;
-export type MetricType = "submissions" | "serviceDeliveries" | "uniqueBeneficiaries";
+export type MetricType =
+  | "submissions"
+  | "serviceDeliveries"
+  | "uniqueBeneficiaries";
 
 export interface DeliveriesFilters {
   serviceId?: string;
@@ -9,7 +12,10 @@ export interface DeliveriesFilters {
   staffUserId?: string;
   beneficiaryId?: string;
   entityId?: string;
+  entityIds?: string[];
   entityType?: "project" | "subproject" | "activity";
+  projectIds?: string[];
+  subprojectIds?: string[];
   formResponseId?: string;
   formTemplateId?: string;
   formTemplateIds?: string[];

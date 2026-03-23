@@ -54,15 +54,24 @@ const AcceptInvitation = () => {
   const from = location.state?.from?.pathname || "/dashboard";
 
   useEffect(() => {
-    // Parse token and email from the URL query parameters
     const params = new URLSearchParams(location.search);
     const t = params.get("token") || "";
     const emailParam = params.get("email") || "";
+
     setToken(t);
+
     if (emailParam) {
+      let safeEmail = emailParam;
+
+      try {
+        safeEmail = decodeURIComponent(emailParam);
+      } catch (e) {
+        console.warn("Invalid email encoding:", emailParam);
+      }
+
       setFormData((prev) => ({
         ...prev,
-        email: decodeURIComponent(emailParam),
+        email: safeEmail,
       }));
     }
   }, [location.search]);
@@ -103,14 +112,12 @@ const AcceptInvitation = () => {
     const passwordMeetsRules = minLenOk && hasUpper && hasSpecial;
 
     if (!passwordMeetsRules) {
-      setValidationError(
-        t('validation.passwordRequirements')
-      );
+      setValidationError(t("validation.passwordRequirements"));
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setValidationError(t('validation.passwordMismatch'));
+      setValidationError(t("validation.passwordMismatch"));
       return;
     }
     setIsSubmitting(true);
@@ -169,10 +176,10 @@ const AcceptInvitation = () => {
           <Card className="w-full border-0 max-w-md">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold text-center">
-                {t('auth.acceptInvitation')}
+                {t("auth.acceptInvitation")}
               </CardTitle>
               <CardDescription className="text-center">
-                {t('auth.setPasswordToActivate')}
+                {t("auth.setPasswordToActivate")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -194,7 +201,7 @@ const AcceptInvitation = () => {
               )}
               <Form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>{t('common.email')}</Label>
+                  <Label>{t("common.email")}</Label>
                   <Input
                     className="bg-black/5 border-0 focus:ring-1 focus:border-1 focus:ring-black/5 focus:border-black/5"
                     id="email"
@@ -209,12 +216,12 @@ const AcceptInvitation = () => {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label>{t('common.password')}</Label>
+                    <Label>{t("common.password")}</Label>
                     <a
                       href="/forgot-password"
                       className="text-sm text-[#00a6ff]"
                     >
-                      {t('auth.forgotPassword')}
+                      {t("auth.forgotPassword")}
                     </a>
                   </div>
                   <div className="relative">
@@ -236,7 +243,9 @@ const AcceptInvitation = () => {
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
                       className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                       title={showPassword ? "Hide password" : "Show password"}
                       disabled={isLoading}
                     >
@@ -245,9 +254,11 @@ const AcceptInvitation = () => {
                   </div>
                   {formData.password && !passwordMeetsRules && (
                     <ul className="text-sm text-red-600 mt-1 list-disc pl-5">
-                      {!minLenOk && <li>{t('validation.minimum8Characters')}</li>}
-                      {!hasUpper && <li>{t('validation.oneUppercase')}</li>}
-                      {!hasSpecial && <li>{t('validation.oneSpecialChar')}</li>}
+                      {!minLenOk && (
+                        <li>{t("validation.minimum8Characters")}</li>
+                      )}
+                      {!hasUpper && <li>{t("validation.oneUppercase")}</li>}
+                      {!hasSpecial && <li>{t("validation.oneSpecialChar")}</li>}
                     </ul>
                   )}
                 </div>
@@ -269,7 +280,9 @@ const AcceptInvitation = () => {
                       type="button"
                       onClick={() => setShowConfirm((prev) => !prev)}
                       className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-                      aria-label={showConfirm ? "Hide password" : "Show password"}
+                      aria-label={
+                        showConfirm ? "Hide password" : "Show password"
+                      }
                       title={showConfirm ? "Hide password" : "Show password"}
                       disabled={isLoading}
                     >

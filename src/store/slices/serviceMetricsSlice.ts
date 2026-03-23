@@ -46,7 +46,10 @@ const initialState: ServiceMetricsState = {
     startDate: undefined,
     endDate: undefined,
     entityId: undefined,
+    entityIds: undefined,
     entityType: undefined,
+    projectIds: undefined,
+    subprojectIds: undefined,
     groupBy: "month",
     groupField: undefined,
     metric: "submissions",
@@ -134,6 +137,16 @@ const serviceMetricsSlice = createSlice({
       state.filters = initialState.filters;
       state.resetTrigger = state.resetTrigger + 1;
     },
+    clearMetricsData: (state) => {
+      state.summary.loading = false;
+      state.summary.error = null;
+      state.summary.data = null;
+      state.summary.lastKey = null;
+      state.series.loading = false;
+      state.series.error = null;
+      state.series.items = [];
+      state.series.lastKey = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -180,7 +193,8 @@ const serviceMetricsSlice = createSlice({
   },
 });
 
-export const { setFilters, resetFilters } = serviceMetricsSlice.actions;
+export const { setFilters, resetFilters, clearMetricsData } =
+  serviceMetricsSlice.actions;
 
 // Selectors
 export const selectMetricsFilters = (state: any) =>

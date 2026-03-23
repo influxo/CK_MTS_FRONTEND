@@ -211,7 +211,8 @@
     "form_submissions": "Form Submissions",
     "project_changes": "Project Changes",
     "showMoreServices": "Show more services",
-    "showLess": "Show less"
+    "showLess": "Show less",
+    "cities": "All Cities"
   },
   "projects": {
     "title": "Projects",
@@ -675,6 +676,7 @@
     "projectLeads": "Project Leads",
     "subprojects": "Subprojects",
     "beneficiaries": "Beneficiaries",
+    "location": "Location",
     "overview": "Overview",
     "services": "Services",
     "team": "Team",
@@ -1046,7 +1048,8 @@
     "noSubprojectFound": "No Subproject Found",
     "searchBeneficiaries": "Search beneficiaries...",
     "city": "City",
-    "selectCity": "Select city"
+    "selectCity": "Select city",
+    "selectCondition": "Select condition"
   },
   "subProjectActivities": {
     "title": "Activities",

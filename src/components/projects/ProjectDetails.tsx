@@ -35,7 +35,8 @@ import {
 import { toast } from "sonner";
 import { useTranslation } from "../../hooks/useTranslation";
 import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
-import { KOSOVO_CITIES } from "../../utils/cities";
+import type { ChronicCondition } from "../../services/constants/constantsService";
+import { fetchChronicConditions } from "../../services/constants/constantsService";
 import formService from "../../services/forms/formService";
 import type { Project } from "../../services/projects/projectModels";
 import projectService from "../../services/projects/projectService";
@@ -63,6 +64,7 @@ import {
   selectBeneficiaryIsLoading,
 } from "../../store/slices/beneficiarySlice";
 import {
+  clearProjectMetricsData,
   fetchProjectDeliveriesSeries,
   fetchProjectDeliveriesSummary,
   selectAllProjects,
@@ -77,6 +79,7 @@ import {
   selectSubprojectsError,
   selectSubprojectsLoading,
 } from "../../store/slices/subProjectSlice";
+import { KOSOVO_CITIES } from "../../utils/cities";
 import { Button } from "../ui/button/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
@@ -121,10 +124,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/overlay/dialog";
-import { ProjectActivity } from "./ProjectActivity";
 import { ProjectExport } from "./ProjectExport";
 import { ProjectServices } from "./ProjectServices";
-import { ProjectStats } from "./ProjectStats";
 import { ProjectTeam } from "./ProjectTeam";
 import { SubProjects } from "./SubProjects";
 
@@ -133,7 +134,7 @@ const mockProjectDetails = {
   id: "proj-001",
   title: "Rural Healthcare Initiative",
   category: "Healthcare",
-  type: "Service Delivery",
+  // type: "Service Delivery",
   status: "active",
   progress: 65,
   subProjects: 4,
@@ -240,7 +241,10 @@ export function ProjectDetails() {
   // const employeeError = useSelector(selectEmployeesError);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedSubProjectId, setSelectedSubProjectId] = useState<string>("");
+  const [selectedSubprojectIds, setSelectedSubprojectIds] = useState<
+    Set<string>
+  >(new Set());
+  const [cityFilter, setCityFilter] = useState<string>("");
 
   // Create Beneficiary dialog state and form
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -270,6 +274,9 @@ export function ProjectDetails() {
   const [disabilitiesInput, setDisabilitiesInput] = useState("");
   const [chronicConditionsInput, setChronicConditionsInput] = useState("");
   const [medicationsInput, setMedicationsInput] = useState("");
+  const [availableChronicConditions, setAvailableChronicConditions] = useState<
+    ChronicCondition[]
+  >([]);
   const [bloodTypeInput, setBloodTypeInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
   const [selectedSubProjects, setSelectedSubProjects] = useState<string[]>([]);
@@ -465,6 +472,15 @@ export function ProjectDetails() {
   const subprojectsLoading = useSelector(selectSubprojectsLoading);
   const subprojectsError = useSelector(selectSubprojectsError);
 
+  // Subprojects filtered by city (for overview filters)
+  const filteredSubprojects = useMemo(() => {
+    const projectSubs = (subprojects || []).filter(
+      (sp: any) => sp.projectId === id,
+    );
+    if (!cityFilter) return projectSubs;
+    return projectSubs.filter((sp: any) => sp.city === cityFilter);
+  }, [subprojects, id, cityFilter]);
+
   // Build a view model for table rendering similar to BeneficiariesList
   const tableRows = byEntityItems.map((b) => {
     const pii: any = (b as any).pii || {};
@@ -592,7 +608,8 @@ export function ProjectDetails() {
   };
 
   const handleResetFilters = () => {
-    setSelectedSubProjectId("");
+    setCityFilter("");
+    setSelectedSubprojectIds(new Set());
     setServiceIdLocal(undefined);
     setFormTemplateIdLocal(undefined);
     setMetricLocal("submissions");
@@ -611,7 +628,8 @@ export function ProjectDetails() {
   // Reset local filters when navigating to a different project
   useEffect(() => {
     // Clear entity selection overrides
-    setSelectedSubProjectId("");
+    setCityFilter("");
+    setSelectedSubprojectIds(new Set());
     // Reset filter values to their defaults
     setServiceIdLocal(undefined);
     setFormTemplateIdLocal(undefined);
@@ -642,6 +660,21 @@ export function ProjectDetails() {
     })();
   }, [hasFullAccess, user?.roles]);
 
+  // Fetch chronic conditions from API
+  useEffect(() => {
+    const loadChronicConditions = async () => {
+      try {
+        const response = await fetchChronicConditions();
+        if (response.success && response.data) {
+          setAvailableChronicConditions(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch chronic conditions:", error);
+      }
+    };
+    loadChronicConditions();
+  }, []);
+
   // Load subprojects for this project for filter dropdown (independent of Beneficiaries tab)
   useEffect(() => {
     if (id) {
@@ -663,10 +696,13 @@ export function ProjectDetails() {
         return;
       }
 
-      const effectiveEntityType = selectedSubProjectId
-        ? "subproject"
-        : "project";
-      const effectiveEntityId = selectedSubProjectId || id;
+      // Only fetch entity services when exactly 1 subproject is selected
+      const effectiveEntityType =
+        selectedSubprojectIds.size === 1 ? "subproject" : "project";
+      const effectiveEntityId =
+        selectedSubprojectIds.size === 1
+          ? Array.from(selectedSubprojectIds)[0]
+          : id;
 
       const res = await servicesService.getEntityServices({
         entityId: effectiveEntityId,
@@ -675,7 +711,7 @@ export function ProjectDetails() {
 
       setServicesOptions(res && res.success ? res.items || [] : []);
     })();
-  }, [id, selectedSubProjectId, hasFullAccess, user?.roles]);
+  }, [id, selectedSubprojectIds, hasFullAccess, user?.roles]);
 
   // Fetch project metrics whenever Overview is active and filters change
   useEffect(() => {
@@ -686,12 +722,31 @@ export function ProjectDetails() {
     if (!hasFullAccess) {
       return;
     }
-    const effectiveEntityType = selectedSubProjectId ? "subproject" : "project";
-    const effectiveEntityId = selectedSubProjectId || id;
+
+    // When a city is selected, scope to its subprojects instead of the whole project
+    let effectiveProjectIds: string[] | undefined = [id];
+    let effectiveSubprojectIds: string[] | undefined = undefined;
+
+    if (selectedSubprojectIds.size > 0) {
+      // Explicit subproject selection takes priority
+      effectiveProjectIds = undefined;
+      effectiveSubprojectIds = Array.from(selectedSubprojectIds);
+    } else if (cityFilter) {
+      // City is selected but no specific subprojects — scope to all city subprojects
+      const citySubIds = filteredSubprojects.map((sp: any) => sp.id);
+      if (citySubIds.length === 0) {
+        // City has no subprojects — clear stale data and show null state
+        dispatch(clearProjectMetricsData());
+        setSeriesSummary(null);
+        return;
+      }
+      effectiveProjectIds = undefined;
+      effectiveSubprojectIds = citySubIds;
+    }
 
     const commonFilters = {
-      entityId: effectiveEntityId,
-      entityType: effectiveEntityType as any,
+      projectIds: effectiveProjectIds,
+      subprojectIds: effectiveSubprojectIds,
       serviceId: serviceIdLocal,
       formTemplateId: formTemplateIdLocal,
     } as any;
@@ -720,7 +775,9 @@ export function ProjectDetails() {
     dispatch,
     id,
     activeTab,
-    selectedSubProjectId,
+    selectedSubprojectIds,
+    cityFilter,
+    filteredSubprojects,
     startDate,
     endDate,
     granularity,
@@ -741,16 +798,29 @@ export function ProjectDetails() {
         setSeriesSummary(null);
         return;
       }
-      const effectiveEntityType = selectedSubProjectId
-        ? "subproject"
-        : "project";
-      const effectiveEntityId = selectedSubProjectId || id;
+
+      // Determine entity scope (mirrors the main metrics effect above)
+      let effectiveProjectIds: string[] | undefined = [id];
+      let effectiveSubprojectIds: string[] | undefined = undefined;
+
+      if (selectedSubprojectIds.size > 0) {
+        effectiveProjectIds = undefined;
+        effectiveSubprojectIds = Array.from(selectedSubprojectIds);
+      } else if (cityFilter) {
+        const citySubIds = filteredSubprojects.map((sp: any) => sp.id);
+        if (citySubIds.length === 0) {
+          // Already handled by the main metrics effect above
+          return;
+        }
+        effectiveProjectIds = undefined;
+        effectiveSubprojectIds = citySubIds;
+      }
+
       try {
         const res = await serviceMetricsService.getDeliveriesSeries({
-          entityId: effectiveEntityId,
-          entityType: effectiveEntityType as any,
+          projectIds: effectiveProjectIds,
+          subprojectIds: effectiveSubprojectIds,
           groupBy: granularity,
-          // metric can be anything; summary block is aggregate across metrics
           metric: "submissions",
           startDate,
           endDate,
@@ -769,7 +839,9 @@ export function ProjectDetails() {
   }, [
     activeTab,
     id,
-    selectedSubProjectId,
+    selectedSubprojectIds,
+    cityFilter,
+    filteredSubprojects,
     granularity,
     startDate,
     endDate,
@@ -969,8 +1041,9 @@ export function ProjectDetails() {
       ];
       const chronicConditionsFinal = [
         ...chronicConditions,
-        ...(chronicConditionsInput.trim()
-          ? [chronicConditionsInput.trim()]
+        ...(chronicConditionsInput &&
+        !chronicConditions.includes(chronicConditionsInput)
+          ? [chronicConditionsInput]
           : []),
       ];
       const medicationsFinal = [
@@ -1095,7 +1168,7 @@ export function ProjectDetails() {
   const enhancedProject = {
     ...project,
     title: project.name,
-    type: mockProjectDetails.type,
+    // type: mockProjectDetails.type,
     progress: mockProjectDetails.progress,
     subProjects: mockProjectDetails.subProjects,
     beneficiaries: mockProjectDetails.beneficiaries,
@@ -1263,6 +1336,7 @@ export function ProjectDetails() {
                   {t("projectDetails.cancel")}
                 </Button>
                 <Button
+                  className="bg-[#0073e6] border-0 text-white"
                   onClick={async () => {
                     if (!id) return;
                     const payload = {
@@ -1322,7 +1396,7 @@ export function ProjectDetails() {
                 >
                   {enhancedProject.category}
                 </Badge>
-                <Badge variant="outline">{enhancedProject.type}</Badge>
+                {/* <Badge variant="outline">{enhancedProject.type}</Badge> */}
                 <Badge
                   variant="default"
                   className="border-0"
@@ -1348,19 +1422,19 @@ export function ProjectDetails() {
               <h3 className="text-xl font-normal  capitalize">
                 {enhancedProject.description}
               </h3>
-              {enhancedProject.city && (
+              {/* {enhancedProject.city && (
                 <div className="flex items-center gap-1 mt-2">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
                     {enhancedProject.city}
                   </span>
                 </div>
-              )}
+              )} */}
             </div>
 
             <div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-[#E5ECF6] rounded-xl p-4 sm:col-span-2">
+                <div className="bg-[#E5ECF6] rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">
                     {t("projectDetails.timeline")}
                   </div>
@@ -1373,6 +1447,18 @@ export function ProjectDetails() {
                     </span>
                   </div>
                 </div>
+
+                {enhancedProject.city && (
+                  <div className="bg-[#E5ECF6] rounded-xl p-4">
+                    <div className="text-sm text-muted-foreground">
+                      {t("projectDetails.location")}
+                    </div>
+                    <div className="flex items-center gap-1 mt-1">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span>{enhancedProject.city}</span>
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-[#E5ECF6] rounded-xl p-4">
                   <div className="text-sm text-muted-foreground">
@@ -1474,33 +1560,109 @@ export function ProjectDetails() {
                 <h1>{t("projectDetails.overview")}</h1>
                 <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 w-full md:gap-6">
                   <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 w-full md:w-auto">
-                    {/* Subproject selector */}
+                    {/* City Filter */}
                     <Select
-                      value={selectedSubProjectId || "all"}
-                      onValueChange={(v) => {
-                        const idVal = v === "all" ? "" : v;
-                        setSelectedSubProjectId(idVal);
-                        // clear dependent local filters when switching entity
+                      value={cityFilter || "all"}
+                      onValueChange={(value) => {
+                        if (value === "all") {
+                          setCityFilter("");
+                        } else {
+                          setCityFilter(value);
+                        }
+                        setSelectedSubprojectIds(new Set());
                         setServiceIdLocal(undefined);
                         setFormTemplateIdLocal(undefined);
                       }}
                     >
+                      <SelectTrigger className="w-full md:w-[180px] bg-white border-gray-100 hover:scale-[1.02] hover:-translate-y-[1px]">
+                        <SelectValue placeholder={t("projectDetails.city")} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-64">
+                        <SelectItem value="all">
+                          {t("dashboard.cities")}
+                        </SelectItem>
+                        {KOSOVO_CITIES.map((cityName) => (
+                          <SelectItem key={cityName} value={cityName}>
+                            {cityName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Subproject selector - Multi-select */}
+                    <Select
+                      value={
+                        selectedSubprojectIds.size === 0 ? "all" : "selected"
+                      }
+                      onValueChange={() => {}}
+                    >
                       <SelectTrigger className="w-full md:w-[220px] bg-white border-gray-100 hover:scale-[1.02] hover:-translate-y-[1px]">
                         <SelectValue
                           placeholder={t("projectDetails.subprojects")}
-                        />
+                        >
+                          {selectedSubprojectIds.size === 0
+                            ? t("projectDetails.allSubprojects")
+                            : `${selectedSubprojectIds.size} selected`}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">
-                          {t("projectDetails.allSubprojects")}
+                        <SelectItem
+                          value="all"
+                          onSelect={(e) => e.preventDefault()}
+                        >
+                          <div
+                            className="flex items-center gap-2 cursor-pointer"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setSelectedSubprojectIds(new Set());
+                              setServiceIdLocal(undefined);
+                              setFormTemplateIdLocal(undefined);
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedSubprojectIds.size === 0}
+                              readOnly
+                              className="rounded border-gray-300 pointer-events-none"
+                            />
+                            <span>{t("projectDetails.allSubprojects")}</span>
+                          </div>
                         </SelectItem>
-                        {(subprojects || [])
-                          .filter((sp: any) => sp.projectId === id)
-                          .map((sp: any) => (
-                            <SelectItem key={sp.id} value={sp.id}>
-                              {sp.name}
-                            </SelectItem>
-                          ))}
+                        {filteredSubprojects.map((sp: any) => (
+                          <SelectItem
+                            key={sp.id}
+                            value={sp.id}
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            <div
+                              className="flex items-center gap-2 cursor-pointer"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const newSelection = new Set(
+                                  selectedSubprojectIds,
+                                );
+                                if (newSelection.has(sp.id)) {
+                                  newSelection.delete(sp.id);
+                                } else {
+                                  newSelection.add(sp.id);
+                                }
+                                setSelectedSubprojectIds(newSelection);
+                                setServiceIdLocal(undefined);
+                                setFormTemplateIdLocal(undefined);
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedSubprojectIds.has(sp.id)}
+                                readOnly
+                                className="rounded border-gray-300 pointer-events-none"
+                              />
+                              <span>{sp.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
 
@@ -2009,15 +2171,15 @@ export function ProjectDetails() {
                   </CardContent>
                 </Card>
 
-                <ProjectStats
+                {/* <ProjectStats
                   projectId={enhancedProject.id}
                   summary={summaryForCards}
-                />
+                /> */}
                 {/* <ProjectActivity projectId={enhancedProject.id} /> */}
               </div>
-              <div className="space-y-6">
+              {/* <div className="space-y-6">
                 <ProjectActivity projectId={enhancedProject.id} />
-              </div>
+              </div> */}
             </div>
           )}
         </TabsContent>
@@ -2623,41 +2785,56 @@ export function ProjectDetails() {
                                   </Label>
                                   <div className="col-span-3 space-y-2">
                                     <div className="flex gap-2">
-                                      <Input
-                                        id="chronicConditions"
-                                        placeholder={t(
-                                          "projectDetails.typeAndPressEnter",
-                                        )}
+                                      <Select
                                         value={chronicConditionsInput}
-                                        onChange={(e) =>
-                                          setChronicConditionsInput(
-                                            e.target.value,
-                                          )
+                                        onValueChange={(val) =>
+                                          setChronicConditionsInput(val)
                                         }
-                                        onKeyDown={(e) => {
-                                          if (e.key === "Enter") {
-                                            e.preventDefault();
-                                            addItem(
-                                              chronicConditionsInput,
-                                              chronicConditions,
-                                              setChronicConditions,
-                                            );
-                                            setChronicConditionsInput("");
-                                          }
-                                        }}
-                                      />
+                                      >
+                                        <SelectTrigger className="flex-1">
+                                          <SelectValue
+                                            placeholder={t(
+                                              "subProjectDetails.selectCondition",
+                                            )}
+                                          />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-[300px] overflow-y-auto">
+                                          {availableChronicConditions.map(
+                                            (condition) => (
+                                              <SelectItem
+                                                key={condition.id}
+                                                value={condition.id}
+                                              >
+                                                {condition.label}
+                                              </SelectItem>
+                                            ),
+                                          )}
+                                        </SelectContent>
+                                      </Select>
                                       <Button
                                         className="hover:bg-blue-50 border-0"
                                         type="button"
                                         variant="outline"
                                         onClick={() => {
-                                          addItem(
-                                            chronicConditionsInput,
-                                            chronicConditions,
-                                            setChronicConditions,
-                                          );
-                                          setChronicConditionsInput("");
+                                          if (
+                                            chronicConditionsInput &&
+                                            !chronicConditions.includes(
+                                              chronicConditionsInput,
+                                            )
+                                          ) {
+                                            setChronicConditions([
+                                              ...chronicConditions,
+                                              chronicConditionsInput,
+                                            ]);
+                                            setChronicConditionsInput("");
+                                          }
                                         }}
+                                        disabled={
+                                          !chronicConditionsInput ||
+                                          chronicConditions.includes(
+                                            chronicConditionsInput,
+                                          )
+                                        }
                                       >
                                         <Plus className="h-4 w-4 mr-1" />{" "}
                                         {t("projectDetails.add")}
@@ -2665,28 +2842,38 @@ export function ProjectDetails() {
                                     </div>
                                     {chronicConditions.length > 0 && (
                                       <div className="flex flex-wrap gap-2">
-                                        {chronicConditions.map((c, idx) => (
-                                          <div
-                                            key={`${c}-${idx}`}
-                                            className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
-                                          >
-                                            <span>{c}</span>
-                                            <button
-                                              type="button"
-                                              className="hover:text-red-600"
-                                              onClick={() =>
-                                                removeItemAt(
-                                                  idx,
-                                                  chronicConditions,
-                                                  setChronicConditions,
-                                                )
-                                              }
-                                              aria-label={`Remove ${c}`}
-                                            >
-                                              <X className="h-3 w-3" />
-                                            </button>
-                                          </div>
-                                        ))}
+                                        {chronicConditions.map(
+                                          (conditionId, idx) => {
+                                            const condition =
+                                              availableChronicConditions.find(
+                                                (c) => c.id === conditionId,
+                                              );
+                                            const displayLabel =
+                                              condition?.label || conditionId;
+                                            return (
+                                              <div
+                                                key={`${conditionId}-${idx}`}
+                                                className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                                              >
+                                                <span>{displayLabel}</span>
+                                                <button
+                                                  type="button"
+                                                  className="hover:text-red-600"
+                                                  onClick={() =>
+                                                    removeItemAt(
+                                                      idx,
+                                                      chronicConditions,
+                                                      setChronicConditions,
+                                                    )
+                                                  }
+                                                  aria-label={`Remove ${displayLabel}`}
+                                                >
+                                                  <X className="h-3 w-3" />
+                                                </button>
+                                              </div>
+                                            );
+                                          },
+                                        )}
                                       </div>
                                     )}
                                   </div>

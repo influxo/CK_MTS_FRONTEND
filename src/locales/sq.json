@@ -174,7 +174,8 @@
     "no_activity": "Asnjë aktivitet",
     "loading": "Duke ngarkuar",
     "form_submissions": "Dërgimet e Formularëve",
-    "project_changes": "Ndryshimet e Projektit"
+    "project_changes": "Ndryshimet e Projektit",
+    "cities": "Të gjitha Qytetet"
   },
   "projects": {
     "title": "Projektet",
@@ -201,8 +202,10 @@
     "viewDetails": "Shiko Detajet",
     "editProject": "Ndrysho Projektin",
     "deleteProject": "Fshi Projektin",
+
     "projectDetails": "Detajet e Projektit",
     "overview": "Përmbledhje",
+
     "services": "Shërbimet",
     "team": "Ekipi",
     "activity": "Aktiviteti",
@@ -623,6 +626,7 @@
     "nutrition": "Ushqyerja",
     "economicDevelopment": "Zhvillimi Ekonomik",
     "wash": "WASH",
+    "location": "Lokacioni",
     "status": "Statusi",
     "selectStatus": "Zgjedh statusin",
     "active": "Aktiv",
@@ -891,7 +895,7 @@
     "active": "Aktiv",
     "inactive": "Joaktiv",
     "pending": "Në Pritje",
-    "location": "Vendndodhja *",
+    "location": "Lokacioni",
     "startDate": "Data e Fillimit *",
     "endDate": "Data e Përfundimit *",
     "description": "Përshkrimi",
@@ -1008,7 +1012,8 @@
     "noSubprojectFound": "Nuk u Gjet Nënprojekt",
     "searchBeneficiaries": "Kërko përfitues...",
     "city": "Qyteti",
-    "selectCity": "Zgjedh qytetin"
+    "selectCity": "Zgjedh qytetin",
+    "selectCondition": "Zgjedh gjendjen"
   },
   "subProjectActivities": {
     "title": "Aktivitetet",

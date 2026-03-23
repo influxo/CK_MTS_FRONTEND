@@ -198,7 +198,7 @@ export const associateBeneficiaryToEntities = createAsyncThunk<
   const res = await beneficiaryService.associateBeneficiaryToEntities(params);
   if (!res.success) {
     return rejectWithValue(
-      res.message || "Failed to associate beneficiary to entities"
+      res.message || "Failed to associate beneficiary to entities",
     );
   }
   return res;
@@ -212,7 +212,7 @@ export const fetchBeneficiariesByEntity = createAsyncThunk<
   const res = await beneficiaryService.getBeneficiariesByEntity(params);
   if (!res.success) {
     return rejectWithValue(
-      res.message || "Failed to fetch beneficiaries by entity"
+      res.message || "Failed to fetch beneficiaries by entity",
     );
   }
   return res;
@@ -238,7 +238,7 @@ export const fetchBeneficiaryServices = createAsyncThunk<
   const res = await beneficiaryService.getBeneficiaryServices(params);
   if (!res.success) {
     return rejectWithValue(
-      res.message || "Failed to fetch beneficiary services"
+      res.message || "Failed to fetch beneficiary services",
     );
   }
   return res;
@@ -252,7 +252,7 @@ export const fetchBeneficiaryEntities = createAsyncThunk<
   const res = await beneficiaryService.getBeneficiaryEntities(params);
   if (!res.success) {
     return rejectWithValue(
-      res.message || "Failed to fetch beneficiary entities"
+      res.message || "Failed to fetch beneficiary entities",
     );
   }
   return res;
@@ -265,16 +265,15 @@ export const removeBeneficiaryEntityAssociation = createAsyncThunk<
 >(
   "beneficiaries/removeEntityAssociation",
   async (params, { rejectWithValue }) => {
-    const res = await beneficiaryService.removeBeneficiaryEntityAssociation(
-      params
-    );
+    const res =
+      await beneficiaryService.removeBeneficiaryEntityAssociation(params);
     if (!res.success) {
       return rejectWithValue(
-        res.message || "Failed to remove beneficiary entity association"
+        res.message || "Failed to remove beneficiary entity association",
       );
     }
     return res;
-  }
+  },
 );
 
 // Service deliveries summary metrics
@@ -288,11 +287,11 @@ export const fetchServiceDeliveriesSummary = createAsyncThunk<
     const res = await beneficiaryService.getServiceDeliveriesSummary(params);
     if (!res.success) {
       return rejectWithValue(
-        res.message || "Failed to fetch service deliveries summary"
+        res.message || "Failed to fetch service deliveries summary",
       );
     }
     return res;
-  }
+  },
 );
 
 export const deleteBeneficiaryById = createAsyncThunk<
@@ -494,7 +493,7 @@ const beneficiarySlice = createSlice({
         removeBeneficiaryEntityAssociation.fulfilled,
         (state, _action) => {
           state.isLoading = false;
-        }
+        },
       )
       .addCase(removeBeneficiaryEntityAssociation.rejected, (state, action) => {
         state.isLoading = false;
@@ -517,7 +516,7 @@ const beneficiarySlice = createSlice({
           state.list = state.list.map((item) =>
             item.id === action.payload.data!.id
               ? { ...item, ...action.payload.data }
-              : item
+              : item,
           );
         }
         // Sync detail if same record is open
@@ -613,7 +612,7 @@ export const selectBeneficiariesPagination = createSelector(
     limit: beneficiaries.limit,
     totalItems: beneficiaries.totalItems,
     totalPages: beneficiaries.totalPages,
-  })
+  }),
 );
 
 export const selectBeneficiaryDetail = (state: {
@@ -663,7 +662,7 @@ export const selectBeneficiaryServicesMeta = createSelector(
     limit: beneficiaries.servicesLimit,
     totalItems: beneficiaries.servicesTotalItems,
     totalPages: beneficiaries.servicesTotalPages,
-  })
+  }),
 );
 
 export const selectBeneficiaryEntities = (state: {
@@ -714,7 +713,7 @@ export const selectBeneficiariesByEntityPagination = createSelector(
     limit: beneficiaries.byEntityLimit,
     totalItems: beneficiaries.byEntityTotalItems,
     totalPages: beneficiaries.byEntityTotalPages,
-  })
+  }),
 );
 
 // association selectors

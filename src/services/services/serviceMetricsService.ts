@@ -13,14 +13,11 @@ class ServiceMetricsService {
   private servicesEndpoint = `${this.baseUrl}/services`;
 
   async getDeliveriesSummary(
-    params: DeliveriesFilters = {}
+    params: DeliveriesFilters = {},
   ): Promise<DeliveriesSummaryResponse> {
     try {
       // Map params
       const mapped: any = {
-        // entity filters
-        entityId: params.entityId,
-        entityType: params.entityType,
         // date range
         fromDate: params.startDate,
         toDate: params.endDate,
@@ -32,6 +29,23 @@ class ServiceMetricsService {
         // staff filter
         staffUserId: params.staffUserId,
       };
+
+      // Project/Subproject filtering: singular if 1 item, plural if multiple
+      if (params.projectIds) {
+        if (params.projectIds.length === 1) {
+          mapped.projectId = params.projectIds[0];
+        } else if (params.projectIds.length > 1) {
+          mapped.projectIds = params.projectIds;
+        }
+      }
+
+      if (params.subprojectIds) {
+        if (params.subprojectIds.length === 1) {
+          mapped.subprojectId = params.subprojectIds[0];
+        } else if (params.subprojectIds.length > 1) {
+          mapped.subprojectIds = params.subprojectIds;
+        }
+      }
 
       // Use services metrics endpoint when filtering by staff (field operator view)
       const endpoint = params.staffUserId
@@ -94,7 +108,7 @@ class ServiceMetricsService {
   }
 
   async getDeliveriesSeries(
-    params: DeliveriesSeriesParams = {}
+    params: DeliveriesSeriesParams = {},
   ): Promise<DeliveriesSeriesResponse> {
     try {
       // Decide which endpoint to use
@@ -102,12 +116,12 @@ class ServiceMetricsService {
 
       // Map to API params
       const mapped: any = {
-        metric: (params as any).metric || (useServices ? "serviceDeliveries" : "submissions"),
+        metric:
+          (params as any).metric ||
+          (useServices ? "serviceDeliveries" : "submissions"),
         groupBy: params.groupBy,
         // Some APIs expect 'granularity' instead of 'groupBy'
         granularity: params.groupBy,
-        entityId: params.entityId,
-        entityType: params.entityType,
         fromDate: params.startDate,
         toDate: params.endDate,
         serviceId: params.serviceId,
@@ -117,6 +131,23 @@ class ServiceMetricsService {
         formTemplateIds: params.formTemplateIds,
         staffUserId: params.staffUserId,
       };
+
+      // Project/Subproject filtering: singular if 1 item, plural if multiple
+      if (params.projectIds) {
+        if (params.projectIds.length === 1) {
+          mapped.projectId = params.projectIds[0];
+        } else if (params.projectIds.length > 1) {
+          mapped.projectIds = params.projectIds;
+        }
+      }
+
+      if (params.subprojectIds) {
+        if (params.subprojectIds.length === 1) {
+          mapped.subprojectId = params.subprojectIds[0];
+        } else if (params.subprojectIds.length > 1) {
+          mapped.subprojectIds = params.subprojectIds;
+        }
+      }
 
       // Use services metrics endpoint when filtering by staff
       const endpoint = useServices
@@ -132,15 +163,33 @@ class ServiceMetricsService {
           metric?: string;
           granularity?: any;
           series?: Array<{ periodStart: string; value: number }>;
-          items?: Array<{ periodStart?: string; timestamp?: string; value?: number; count?: number }>;
+          items?: Array<{
+            periodStart?: string;
+            timestamp?: string;
+            value?: number;
+            count?: number;
+          }>;
           summary?: any;
-          mostFrequentServices?: Array<{ serviceId: string; name: string; count: number }>;
+          mostFrequentServices?: Array<{
+            serviceId: string;
+            name: string;
+            count: number;
+          }>;
         };
         // Top-level fallbacks
-        items?: Array<{ periodStart?: string; timestamp?: string; value?: number; count?: number }>;
+        items?: Array<{
+          periodStart?: string;
+          timestamp?: string;
+          value?: number;
+          count?: number;
+        }>;
         granularity?: any;
         summary?: any;
-        mostFrequentServices?: Array<{ serviceId: string; name: string; count: number }>;
+        mostFrequentServices?: Array<{
+          serviceId: string;
+          name: string;
+          count: number;
+        }>;
         message?: string;
       };
       if (!dyn.success || (!dyn.data && !dyn.items)) {
@@ -156,8 +205,9 @@ class ServiceMetricsService {
       // Adapt dynamic series -> deliveries series model
       const dataNode: any = (dyn as any).data || {};
       const itemsNode: any =
-        (dataNode && dataNode.items !== undefined ? dataNode.items : undefined) ??
-        (dyn as any).items;
+        (dataNode && dataNode.items !== undefined
+          ? dataNode.items
+          : undefined) ?? (dyn as any).items;
 
       let rawSeries: any[] = [];
       if (Array.isArray(itemsNode)) {
@@ -173,8 +223,8 @@ class ServiceMetricsService {
           typeof s.periodStart === "string"
             ? s.periodStart
             : typeof s.timestamp === "string"
-            ? s.timestamp
-            : new Date((s.periodStart || s.timestamp) as any).toISOString(),
+              ? s.timestamp
+              : new Date((s.periodStart || s.timestamp) as any).toISOString(),
         count: Number((s.value ?? s.count) || 0),
       }));
 
@@ -185,7 +235,9 @@ class ServiceMetricsService {
         (dyn as any).summary;
       const mostFrequentServices =
         (dataNode && dataNode.mostFrequentServices) ||
-        (itemsNode && typeof itemsNode === "object" && itemsNode.mostFrequentServices) ||
+        (itemsNode &&
+          typeof itemsNode === "object" &&
+          itemsNode.mostFrequentServices) ||
         (summary && (summary as any).mostFrequentServices) ||
         (dyn as any).mostFrequentServices;
 

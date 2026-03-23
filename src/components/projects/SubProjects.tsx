@@ -321,7 +321,7 @@ export function SubProjects({
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="city" className="text-right">
-                    {t("subProjects.city")}
+                    {t("subProjectDetails.city")}
                   </Label>
                   <Select
                     value={city}
