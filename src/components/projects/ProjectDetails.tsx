@@ -64,6 +64,7 @@ import {
   selectBeneficiaryIsLoading,
 } from "../../store/slices/beneficiarySlice";
 import {
+  clearProjectMetricsData,
   fetchProjectDeliveriesSeries,
   fetchProjectDeliveriesSummary,
   selectAllProjects,
@@ -243,6 +244,7 @@ export function ProjectDetails() {
   const [selectedSubprojectIds, setSelectedSubprojectIds] = useState<
     Set<string>
   >(new Set());
+  const [cityFilter, setCityFilter] = useState<string>("");
 
   // Create Beneficiary dialog state and form
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -470,6 +472,15 @@ export function ProjectDetails() {
   const subprojectsLoading = useSelector(selectSubprojectsLoading);
   const subprojectsError = useSelector(selectSubprojectsError);
 
+  // Subprojects filtered by city (for overview filters)
+  const filteredSubprojects = useMemo(() => {
+    const projectSubs = (subprojects || []).filter(
+      (sp: any) => sp.projectId === id,
+    );
+    if (!cityFilter) return projectSubs;
+    return projectSubs.filter((sp: any) => sp.city === cityFilter);
+  }, [subprojects, id, cityFilter]);
+
   // Build a view model for table rendering similar to BeneficiariesList
   const tableRows = byEntityItems.map((b) => {
     const pii: any = (b as any).pii || {};
@@ -597,6 +608,7 @@ export function ProjectDetails() {
   };
 
   const handleResetFilters = () => {
+    setCityFilter("");
     setSelectedSubprojectIds(new Set());
     setServiceIdLocal(undefined);
     setFormTemplateIdLocal(undefined);
@@ -616,6 +628,7 @@ export function ProjectDetails() {
   // Reset local filters when navigating to a different project
   useEffect(() => {
     // Clear entity selection overrides
+    setCityFilter("");
     setSelectedSubprojectIds(new Set());
     // Reset filter values to their defaults
     setServiceIdLocal(undefined);
@@ -709,12 +722,31 @@ export function ProjectDetails() {
     if (!hasFullAccess) {
       return;
     }
+
+    // When a city is selected, scope to its subprojects instead of the whole project
+    let effectiveProjectIds: string[] | undefined = [id];
+    let effectiveSubprojectIds: string[] | undefined = undefined;
+
+    if (selectedSubprojectIds.size > 0) {
+      // Explicit subproject selection takes priority
+      effectiveProjectIds = undefined;
+      effectiveSubprojectIds = Array.from(selectedSubprojectIds);
+    } else if (cityFilter) {
+      // City is selected but no specific subprojects — scope to all city subprojects
+      const citySubIds = filteredSubprojects.map((sp: any) => sp.id);
+      if (citySubIds.length === 0) {
+        // City has no subprojects — clear stale data and show null state
+        dispatch(clearProjectMetricsData());
+        setSeriesSummary(null);
+        return;
+      }
+      effectiveProjectIds = undefined;
+      effectiveSubprojectIds = citySubIds;
+    }
+
     const commonFilters = {
-      projectIds: selectedSubprojectIds.size > 0 ? undefined : [id],
-      subprojectIds:
-        selectedSubprojectIds.size > 0
-          ? Array.from(selectedSubprojectIds)
-          : undefined,
+      projectIds: effectiveProjectIds,
+      subprojectIds: effectiveSubprojectIds,
       serviceId: serviceIdLocal,
       formTemplateId: formTemplateIdLocal,
     } as any;
@@ -744,6 +776,8 @@ export function ProjectDetails() {
     id,
     activeTab,
     selectedSubprojectIds,
+    cityFilter,
+    filteredSubprojects,
     startDate,
     endDate,
     granularity,
@@ -764,15 +798,29 @@ export function ProjectDetails() {
         setSeriesSummary(null);
         return;
       }
+
+      // Determine entity scope (mirrors the main metrics effect above)
+      let effectiveProjectIds: string[] | undefined = [id];
+      let effectiveSubprojectIds: string[] | undefined = undefined;
+
+      if (selectedSubprojectIds.size > 0) {
+        effectiveProjectIds = undefined;
+        effectiveSubprojectIds = Array.from(selectedSubprojectIds);
+      } else if (cityFilter) {
+        const citySubIds = filteredSubprojects.map((sp: any) => sp.id);
+        if (citySubIds.length === 0) {
+          // Already handled by the main metrics effect above
+          return;
+        }
+        effectiveProjectIds = undefined;
+        effectiveSubprojectIds = citySubIds;
+      }
+
       try {
         const res = await serviceMetricsService.getDeliveriesSeries({
-          projectIds: selectedSubprojectIds.size > 0 ? undefined : [id],
-          subprojectIds:
-            selectedSubprojectIds.size > 0
-              ? Array.from(selectedSubprojectIds)
-              : undefined,
+          projectIds: effectiveProjectIds,
+          subprojectIds: effectiveSubprojectIds,
           groupBy: granularity,
-          // metric can be anything; summary block is aggregate across metrics
           metric: "submissions",
           startDate,
           endDate,
@@ -792,6 +840,8 @@ export function ProjectDetails() {
     activeTab,
     id,
     selectedSubprojectIds,
+    cityFilter,
+    filteredSubprojects,
     granularity,
     startDate,
     endDate,
@@ -1510,6 +1560,35 @@ export function ProjectDetails() {
                 <h1>{t("projectDetails.overview")}</h1>
                 <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 w-full md:gap-6">
                   <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center gap-3 w-full md:w-auto">
+                    {/* City Filter */}
+                    <Select
+                      value={cityFilter || "all"}
+                      onValueChange={(value) => {
+                        if (value === "all") {
+                          setCityFilter("");
+                        } else {
+                          setCityFilter(value);
+                        }
+                        setSelectedSubprojectIds(new Set());
+                        setServiceIdLocal(undefined);
+                        setFormTemplateIdLocal(undefined);
+                      }}
+                    >
+                      <SelectTrigger className="w-full md:w-[180px] bg-white border-gray-100 hover:scale-[1.02] hover:-translate-y-[1px]">
+                        <SelectValue placeholder={t("projectDetails.city")} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-64">
+                        <SelectItem value="all">
+                          {t("dashboard.cities")}
+                        </SelectItem>
+                        {KOSOVO_CITIES.map((cityName) => (
+                          <SelectItem key={cityName} value={cityName}>
+                            {cityName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
                     {/* Subproject selector - Multi-select */}
                     <Select
                       value={
@@ -1550,42 +1629,40 @@ export function ProjectDetails() {
                             <span>{t("projectDetails.allSubprojects")}</span>
                           </div>
                         </SelectItem>
-                        {(subprojects || [])
-                          .filter((sp: any) => sp.projectId === id)
-                          .map((sp: any) => (
-                            <SelectItem
-                              key={sp.id}
-                              value={sp.id}
-                              onSelect={(e) => e.preventDefault()}
+                        {filteredSubprojects.map((sp: any) => (
+                          <SelectItem
+                            key={sp.id}
+                            value={sp.id}
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            <div
+                              className="flex items-center gap-2 cursor-pointer"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const newSelection = new Set(
+                                  selectedSubprojectIds,
+                                );
+                                if (newSelection.has(sp.id)) {
+                                  newSelection.delete(sp.id);
+                                } else {
+                                  newSelection.add(sp.id);
+                                }
+                                setSelectedSubprojectIds(newSelection);
+                                setServiceIdLocal(undefined);
+                                setFormTemplateIdLocal(undefined);
+                              }}
                             >
-                              <div
-                                className="flex items-center gap-2 cursor-pointer"
-                                onMouseDown={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  const newSelection = new Set(
-                                    selectedSubprojectIds,
-                                  );
-                                  if (newSelection.has(sp.id)) {
-                                    newSelection.delete(sp.id);
-                                  } else {
-                                    newSelection.add(sp.id);
-                                  }
-                                  setSelectedSubprojectIds(newSelection);
-                                  setServiceIdLocal(undefined);
-                                  setFormTemplateIdLocal(undefined);
-                                }}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedSubprojectIds.has(sp.id)}
-                                  readOnly
-                                  className="rounded border-gray-300 pointer-events-none"
-                                />
-                                <span>{sp.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
+                              <input
+                                type="checkbox"
+                                checked={selectedSubprojectIds.has(sp.id)}
+                                readOnly
+                                className="rounded border-gray-300 pointer-events-none"
+                              />
+                              <span>{sp.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
 

@@ -175,6 +175,14 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
     );
   }, [normalizedRoles]);
 
+  // Filter projects to match global city selection (mirrors FilterControls behaviour)
+  const filteredProjects = React.useMemo(() => {
+    if (!globalFilters.projectIds) return projects; // no city filter active
+    if (globalFilters.projectIds.length === 0) return []; // city with no projects
+    const allowed = new Set(globalFilters.projectIds);
+    return projects.filter((p) => allowed.has(p.id));
+  }, [projects, globalFilters.projectIds]);
+
   // UI state for dropdown + custom range
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const [customOpen, setCustomOpen] = React.useState(false);
@@ -378,20 +386,28 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
   // Sync local filters with global filters when no local override
   React.useEffect(() => {
     if (!hasLocalEntityOverride) {
-      // Inherit from global filters
-      if (globalFilters.projectIds && globalFilters.projectIds.length > 0) {
-        setSelectedProjectIds(new Set(globalFilters.projectIds));
-      } else {
-        setSelectedProjectIds(new Set());
-      }
-
-      if (
-        globalFilters.subprojectIds &&
-        globalFilters.subprojectIds.length > 0
-      ) {
-        setSelectedSubprojectIds(new Set(globalFilters.subprojectIds));
-      } else {
-        setSelectedSubprojectIds(new Set());
+      // No local override — show "All Projects / All Subprojects" in local dropdowns.
+      // buildMergedParams already uses globalFilters.projectIds/subprojectIds directly,
+      // so the data fetching stays correct without mirroring IDs into selectedProjectIds.
+      setSelectedProjectIds(new Set());
+      setSelectedSubprojectIds(new Set());
+    } else {
+      // Local override is active — validate that locally selected projects
+      // are still within the global city scope; if not, reset override
+      const allowedIds = globalFilters.projectIds
+        ? new Set(globalFilters.projectIds)
+        : null;
+      if (allowedIds) {
+        const stillValid = Array.from(selectedProjectIds).filter((id) =>
+          allowedIds.has(id),
+        );
+        if (stillValid.length !== selectedProjectIds.size) {
+          setSelectedProjectIds(new Set(stillValid));
+          setSelectedSubprojectIds(new Set());
+          if (stillValid.length === 0) {
+            setHasLocalEntityOverride(false);
+          }
+        }
       }
     }
   }, [
@@ -505,6 +521,17 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
 
   async function loadSeriesMerged() {
     const params = buildMergedParams();
+
+    // If a city is selected but has no projects, projectIds will be []
+    // Skip fetching to avoid getting all-projects data from the backend
+    if (Array.isArray(params.projectIds) && params.projectIds.length === 0) {
+      setItems([]);
+      setSummaryExtra(null);
+      setMostFrequentServices([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const res = await serviceMetricsService.getDeliveriesSeries(params);
@@ -676,7 +703,7 @@ export function FormSubmissions({ projects }: { projects: Project[] }) {
                       <span>{t("common.allProjects")}</span>
                     </div>
                   </SelectItem>
-                  {(projects || []).map((project) => (
+                  {(filteredProjects || []).map((project) => (
                     <SelectItem
                       key={project.id}
                       value={project.id}

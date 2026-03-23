@@ -18,6 +18,7 @@ import {
   selectAllProjects,
 } from "../store/slices/projectsSlice";
 import {
+  clearMetricsData,
   fetchDeliveriesSeries,
   fetchDeliveriesSummary,
   resetFilters,
@@ -99,6 +100,14 @@ export default function Dashboard() {
     }
     if (!user) return; // wait until user profile is available to determine role filters
     const base = metricsFilters || ({} as any);
+
+    // If a city is selected but has no projects, projectIds will be []
+    // In that case skip fetching (backend would return all-projects data) and clear stale data
+    if (Array.isArray(base.projectIds) && base.projectIds.length === 0) {
+      dispatch(clearMetricsData());
+      return;
+    }
+
     const filters =
       isFieldOperator && user?.id
         ? { ...base, staffUserId: String(user.id) }

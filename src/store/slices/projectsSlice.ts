@@ -128,7 +128,7 @@ export const assignUserToProject = createAsyncThunk<
   const response = await projectService.assignUserToProject(req);
   if (!response.success) {
     return rejectWithValue(
-      response.message || "Failed to assign user to project"
+      response.message || "Failed to assign user to project",
     );
   }
   return response;
@@ -154,7 +154,7 @@ export const removeUserFromProject = createAsyncThunk<
   const response = await projectService.removeUserFromProject(req);
   if (!response.success) {
     return rejectWithValue(
-      response.message || "Failed to remove user from project"
+      response.message || "Failed to remove user from project",
     );
   }
   return response;
@@ -175,7 +175,7 @@ export const fetchProjectDeliveriesSummary = createAsyncThunk<
     });
     if (!response.success) {
       return rejectWithValue(
-        response.message || "Failed to fetch project deliveries summary"
+        response.message || "Failed to fetch project deliveries summary",
       );
     }
     return response;
@@ -190,7 +190,7 @@ export const fetchProjectDeliveriesSummary = createAsyncThunk<
       });
       return prevKey !== key && !st.projects.metrics.summary.loading;
     },
-  }
+  },
 );
 
 export const fetchProjectDeliveriesSeries = createAsyncThunk<
@@ -207,7 +207,7 @@ export const fetchProjectDeliveriesSeries = createAsyncThunk<
     });
     if (!response.success) {
       return rejectWithValue(
-        response.message || "Failed to fetch project deliveries series"
+        response.message || "Failed to fetch project deliveries series",
       );
     }
     return response;
@@ -222,7 +222,7 @@ export const fetchProjectDeliveriesSeries = createAsyncThunk<
       });
       return prevKey !== key && !st.projects.metrics.series.loading;
     },
-  }
+  },
 );
 
 const projectsSlice = createSlice({
@@ -235,6 +235,16 @@ const projectsSlice = createSlice({
       state.error = null;
       state.assignUserSuccessMessage = null;
       state.removeUserSuccessMessage = null;
+    },
+    clearProjectMetricsData(state) {
+      state.metrics.summary.loading = false;
+      state.metrics.summary.error = null;
+      state.metrics.summary.data = null;
+      state.metrics.summary.lastKey = null;
+      state.metrics.series.loading = false;
+      state.metrics.series.error = null;
+      state.metrics.series.items = [];
+      state.metrics.series.lastKey = null;
     },
   },
   extraReducers: (builder) => {
@@ -390,7 +400,8 @@ const projectsSlice = createSlice({
   },
 });
 
-export const { clearProjectMessages } = projectsSlice.actions;
+export const { clearProjectMessages, clearProjectMetricsData } =
+  projectsSlice.actions;
 
 export const selectAllProjects = (state: { projects: ProjectsState }) =>
   state.projects.projects;

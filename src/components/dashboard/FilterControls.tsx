@@ -244,8 +244,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
 
     dispatch(
       setFilters({
-        projectIds:
-          matchingProjectIds.length > 0 ? matchingProjectIds : undefined,
+        projectIds: matchingProjectIds,
         subprojectIds: undefined,
       }),
     );
@@ -269,7 +268,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         const matchingIds = filteredProjects.map((p) => p.id);
         dispatch(
           setFilters({
-            projectIds: matchingIds.length > 0 ? matchingIds : undefined,
+            projectIds: matchingIds,
             subprojectIds: undefined,
           }),
         );
@@ -318,7 +317,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
         const matchingIds = filteredProjects.map((p) => p.id);
         dispatch(
           setFilters({
-            projectIds: matchingIds,
+            projectIds: matchingIds.length > 0 ? matchingIds : [],
             subprojectIds: undefined,
           }),
         );
@@ -462,9 +461,8 @@ export function FilterControls({ projects }: { projects: Project[] }) {
                     const matchingIds = filteredProjects.map((p) => p.id);
                     dispatch(
                       setFilters({
-                        entityIds: matchingIds,
-                        entityType: "project",
-                        entityId: undefined,
+                        projectIds: matchingIds.length > 0 ? matchingIds : [],
+                        subprojectIds: undefined,
                       }),
                     );
                   } else {
