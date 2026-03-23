@@ -1378,10 +1378,10 @@ export function BeneficiariesList({
                       >
                         <SelectTrigger className="flex-1">
                           <SelectValue
-                            placeholder={t("beneficiaries.selectCondition")}
+                            placeholder={t("subProjectDetails.selectCondition")}
                           />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="max-h-[300px] overflow-y-auto">
                           {availableChronicConditions.map((condition) => (
                             <SelectItem key={condition.id} value={condition.id}>
                               {condition.label}

@@ -426,7 +426,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
             <SelectValue placeholder="Select City" />
           </SelectTrigger>
           <SelectContent className="max-h-64">
-            <SelectItem value="all">All Cities</SelectItem>
+            <SelectItem value="all">{t("dashboard.cities")}</SelectItem>
             {KOSOVO_CITIES.map((cityName) => (
               <SelectItem key={cityName} value={cityName}>
                 {cityName}
@@ -878,30 +878,7 @@ export function FilterControls({ projects }: { projects: Project[] }) {
           <RotateCcw className="h-4 w-4 mr-2" />
           Reset Filters
         </Button>
-        {/* <Button
-          variant="outline"
-          size="sm"
-          className="bg-[#0073e6] text-white border-0 
-             transition-transform duration-200 ease-in-out 
-             hover:scale-105 hover:-translate-y-[1px]"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Export
-        </Button> */}
       </div>
-
-      {/* <div className="flex gap-4 justify-end">
-        <Button
-          variant="outline"
-          size="sm"
-          className="bg-[#0073e6] text-white border-0 
-             transition-transform duration-200 ease-in-out 
-             hover:scale-105 hover:-translate-y-[1px]"
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Export
-        </Button>
-      </div> */}
     </div>
   );
 }

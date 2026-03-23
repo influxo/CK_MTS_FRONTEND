@@ -35,7 +35,8 @@ import {
 import { toast } from "sonner";
 import { useTranslation } from "../../hooks/useTranslation";
 import type { CreateBeneficiaryRequest } from "../../services/beneficiaries/beneficiaryModels";
-import { KOSOVO_CITIES } from "../../utils/cities";
+import type { ChronicCondition } from "../../services/constants/constantsService";
+import { fetchChronicConditions } from "../../services/constants/constantsService";
 import formService from "../../services/forms/formService";
 import type { Project } from "../../services/projects/projectModels";
 import projectService from "../../services/projects/projectService";
@@ -77,6 +78,7 @@ import {
   selectSubprojectsError,
   selectSubprojectsLoading,
 } from "../../store/slices/subProjectSlice";
+import { KOSOVO_CITIES } from "../../utils/cities";
 import { Button } from "../ui/button/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/data-display/avatar";
 import { Badge } from "../ui/data-display/badge";
@@ -121,10 +123,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/overlay/dialog";
-import { ProjectActivity } from "./ProjectActivity";
 import { ProjectExport } from "./ProjectExport";
 import { ProjectServices } from "./ProjectServices";
-import { ProjectStats } from "./ProjectStats";
 import { ProjectTeam } from "./ProjectTeam";
 import { SubProjects } from "./SubProjects";
 
@@ -133,7 +133,7 @@ const mockProjectDetails = {
   id: "proj-001",
   title: "Rural Healthcare Initiative",
   category: "Healthcare",
-  type: "Service Delivery",
+  // type: "Service Delivery",
   status: "active",
   progress: 65,
   subProjects: 4,
@@ -272,6 +272,9 @@ export function ProjectDetails() {
   const [disabilitiesInput, setDisabilitiesInput] = useState("");
   const [chronicConditionsInput, setChronicConditionsInput] = useState("");
   const [medicationsInput, setMedicationsInput] = useState("");
+  const [availableChronicConditions, setAvailableChronicConditions] = useState<
+    ChronicCondition[]
+  >([]);
   const [bloodTypeInput, setBloodTypeInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
   const [selectedSubProjects, setSelectedSubProjects] = useState<string[]>([]);
@@ -644,6 +647,21 @@ export function ProjectDetails() {
     })();
   }, [hasFullAccess, user?.roles]);
 
+  // Fetch chronic conditions from API
+  useEffect(() => {
+    const loadChronicConditions = async () => {
+      try {
+        const response = await fetchChronicConditions();
+        if (response.success && response.data) {
+          setAvailableChronicConditions(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch chronic conditions:", error);
+      }
+    };
+    loadChronicConditions();
+  }, []);
+
   // Load subprojects for this project for filter dropdown (independent of Beneficiaries tab)
   useEffect(() => {
     if (id) {
@@ -973,8 +991,9 @@ export function ProjectDetails() {
       ];
       const chronicConditionsFinal = [
         ...chronicConditions,
-        ...(chronicConditionsInput.trim()
-          ? [chronicConditionsInput.trim()]
+        ...(chronicConditionsInput &&
+        !chronicConditions.includes(chronicConditionsInput)
+          ? [chronicConditionsInput]
           : []),
       ];
       const medicationsFinal = [
@@ -1099,7 +1118,7 @@ export function ProjectDetails() {
   const enhancedProject = {
     ...project,
     title: project.name,
-    type: mockProjectDetails.type,
+    // type: mockProjectDetails.type,
     progress: mockProjectDetails.progress,
     subProjects: mockProjectDetails.subProjects,
     beneficiaries: mockProjectDetails.beneficiaries,
@@ -1327,7 +1346,7 @@ export function ProjectDetails() {
                 >
                   {enhancedProject.category}
                 </Badge>
-                <Badge variant="outline">{enhancedProject.type}</Badge>
+                {/* <Badge variant="outline">{enhancedProject.type}</Badge> */}
                 <Badge
                   variant="default"
                   className="border-0"
@@ -2689,41 +2708,56 @@ export function ProjectDetails() {
                                   </Label>
                                   <div className="col-span-3 space-y-2">
                                     <div className="flex gap-2">
-                                      <Input
-                                        id="chronicConditions"
-                                        placeholder={t(
-                                          "projectDetails.typeAndPressEnter",
-                                        )}
+                                      <Select
                                         value={chronicConditionsInput}
-                                        onChange={(e) =>
-                                          setChronicConditionsInput(
-                                            e.target.value,
-                                          )
+                                        onValueChange={(val) =>
+                                          setChronicConditionsInput(val)
                                         }
-                                        onKeyDown={(e) => {
-                                          if (e.key === "Enter") {
-                                            e.preventDefault();
-                                            addItem(
-                                              chronicConditionsInput,
-                                              chronicConditions,
-                                              setChronicConditions,
-                                            );
-                                            setChronicConditionsInput("");
-                                          }
-                                        }}
-                                      />
+                                      >
+                                        <SelectTrigger className="flex-1">
+                                          <SelectValue
+                                            placeholder={t(
+                                              "subProjectDetails.selectCondition",
+                                            )}
+                                          />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-[300px] overflow-y-auto">
+                                          {availableChronicConditions.map(
+                                            (condition) => (
+                                              <SelectItem
+                                                key={condition.id}
+                                                value={condition.id}
+                                              >
+                                                {condition.label}
+                                              </SelectItem>
+                                            ),
+                                          )}
+                                        </SelectContent>
+                                      </Select>
                                       <Button
                                         className="hover:bg-blue-50 border-0"
                                         type="button"
                                         variant="outline"
                                         onClick={() => {
-                                          addItem(
-                                            chronicConditionsInput,
-                                            chronicConditions,
-                                            setChronicConditions,
-                                          );
-                                          setChronicConditionsInput("");
+                                          if (
+                                            chronicConditionsInput &&
+                                            !chronicConditions.includes(
+                                              chronicConditionsInput,
+                                            )
+                                          ) {
+                                            setChronicConditions([
+                                              ...chronicConditions,
+                                              chronicConditionsInput,
+                                            ]);
+                                            setChronicConditionsInput("");
+                                          }
                                         }}
+                                        disabled={
+                                          !chronicConditionsInput ||
+                                          chronicConditions.includes(
+                                            chronicConditionsInput,
+                                          )
+                                        }
                                       >
                                         <Plus className="h-4 w-4 mr-1" />{" "}
                                         {t("projectDetails.add")}
@@ -2731,28 +2765,38 @@ export function ProjectDetails() {
                                     </div>
                                     {chronicConditions.length > 0 && (
                                       <div className="flex flex-wrap gap-2">
-                                        {chronicConditions.map((c, idx) => (
-                                          <div
-                                            key={`${c}-${idx}`}
-                                            className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
-                                          >
-                                            <span>{c}</span>
-                                            <button
-                                              type="button"
-                                              className="hover:text-red-600"
-                                              onClick={() =>
-                                                removeItemAt(
-                                                  idx,
-                                                  chronicConditions,
-                                                  setChronicConditions,
-                                                )
-                                              }
-                                              aria-label={`Remove ${c}`}
-                                            >
-                                              <X className="h-3 w-3" />
-                                            </button>
-                                          </div>
-                                        ))}
+                                        {chronicConditions.map(
+                                          (conditionId, idx) => {
+                                            const condition =
+                                              availableChronicConditions.find(
+                                                (c) => c.id === conditionId,
+                                              );
+                                            const displayLabel =
+                                              condition?.label || conditionId;
+                                            return (
+                                              <div
+                                                key={`${conditionId}-${idx}`}
+                                                className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs bg-[#E5ECF6]"
+                                              >
+                                                <span>{displayLabel}</span>
+                                                <button
+                                                  type="button"
+                                                  className="hover:text-red-600"
+                                                  onClick={() =>
+                                                    removeItemAt(
+                                                      idx,
+                                                      chronicConditions,
+                                                      setChronicConditions,
+                                                    )
+                                                  }
+                                                  aria-label={`Remove ${displayLabel}`}
+                                                >
+                                                  <X className="h-3 w-3" />
+                                                </button>
+                                              </div>
+                                            );
+                                          },
+                                        )}
                                       </div>
                                     )}
                                   </div>
